@@ -1,5 +1,5 @@
 use kloenk::run;
 
 fn main() {
-    run();
+    pollster::block_on(run());
 }
