@@ -1,27 +1,35 @@
 [package]
 name = "kloenk"
 version = "0.1.0"
+authors = ["Jelmer Alphenaar <https://github.com/jelmerta>"]
 edition = "2021"
+license = "GPL-3.0-or-later"
+description = "Some game"
+repository = "https://github.com/Jelmerta/Kloenk"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "kloenk"
+path = "src/main.rs"
 
 [dependencies]
-winit = "0.29.4"
-env_logger = "0.10"
-cfg-if = "1"
-console_log = "1.0"
+cfg-if = "1.0.0"
+winit = { version = "0.29.4", features = ["rwh_05"] } # https://www.reddit.com/r/rust/comments/1856u5a/what_is_the_state_of_winit_x_wgpu/ We downgrade to raw-window-handle 0.5 such that wgpu works correctly. WGPU does not have 0.6 yet.
+env_logger = "0.10.1"
 log = "0.4.20"
+wgpu = "0.18.0"
+pollster = "0.3.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.6"
-wgpu = { version = "0.18"}
-wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4.30"
-web-sys = { version = "0.3", features = [
+console_log = "1.0"
+wgpu = { version = "0.18", features = ["webgl"]} # Probably won't need webgl as we are trying to use WebGPU
+wasm-bindgen = "=0.2.89"
+wasm-bindgen-futures = "0.4.39"
+web-sys = { version = "0.3.64", features = [
     "Document",
     "Window",
     "Element",
 ]}
-
-[lib]
-crate-type = ["cdylib", "rlib"]
