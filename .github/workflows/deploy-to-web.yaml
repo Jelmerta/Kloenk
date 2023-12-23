@@ -21,9 +21,6 @@ jobs:
       - name: Build Project (WASM/JS/HTML)
         run: trunk build
 
-      - name: Go to build directory
-        run: cd dist
-
       - name: Build local container
         if: ${{ env.ACT }}
         uses: docker/build-push-action@v5
