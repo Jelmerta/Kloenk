@@ -4,4 +4,4 @@ FROM nginx:alpine
 ADD dist /usr/share/nginx/html
 
 # Might need this when setting up new server?
-COPY build/resources/web/nginx.conf /etc/nginx/conf.d/default.conf
+#COPY build/resources/web/nginx.conf /etc/nginx/conf.d/default.conf
