@@ -10,6 +10,9 @@ jobs:
       - name: Checkout project
         uses: actions/checkout@v2
 
+      - name: Add target
+        run: rustup target add wasm32-unknown-unknown
+
       - name: Download compiler
         uses: jetli/trunk-action@v0.4.0
         with:
