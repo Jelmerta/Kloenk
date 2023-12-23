@@ -44,6 +44,6 @@ impl Texture {
             }
         );
 
-        Self {texture, view, sampler}
+        Self { texture, view, sampler }
     }
 }
