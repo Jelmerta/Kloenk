@@ -15,6 +15,7 @@ log = "0.4"
 wgpu = "0.18"
 pollster = "0.3"
 bytemuck = { version = "1.12", features = [ "derive" ] }
+cgmath = "0.18"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.6"
@@ -29,8 +30,10 @@ web-sys = { version = "0.3", features = [
 ]}
 
 [[bin]]
-name = "kloenk"
+name = "kloenk_bin"
 path = "src/main.rs"
+#cfg = "web_sys_unstable_apis" #Hm, probably only required for web...
+
 
 #[package]
 #name = "kloenk"
