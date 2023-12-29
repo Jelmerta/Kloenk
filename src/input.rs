@@ -2,10 +2,10 @@ use winit::event::{ElementState, KeyboardInput, VirtualKeyCode};
 
 #[derive(Debug, Default)]
 pub struct input {
-    up_pressed: bool,
-    down_pressed: bool,
-    left_pressed: bool,
-    right_pressed: bool,
+    pub up_pressed: bool,
+    pub down_pressed: bool,
+    pub left_pressed: bool,
+    pub right_pressed: bool,
 }
 
 impl input {
@@ -13,10 +13,10 @@ impl input {
         Default::default()
     }
 
-    pub fn update(&mut self, key: KeyboardInput) {
-        let keycode = key.virtual_keycode.unwrap();
-        let state = key.state;
-        let is_pressed = state == ElementState::Pressed;
+    pub fn update(&mut self, keycode: &VirtualKeyCode, state: &ElementState) {
+        // let keycode = key.virtual_keycode.unwrap();
+        // let state = key.state;
+        let is_pressed = *state == ElementState::Pressed;
 
         match keycode {
             VirtualKeyCode::W => {
