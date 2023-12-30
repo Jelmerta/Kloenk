@@ -55,8 +55,6 @@ pub async fn run() {
     let mut game_state = game_state::GameState::new();
     let mut input_handler = input::input::new();
 
-    // let game_system = GameSystem::new();
-
     event_loop.run(move |event, _, control_flow| {
         match event {
             Event::WindowEvent {
@@ -97,8 +95,6 @@ pub async fn run() {
                 }
             }
             Event::RedrawRequested(window_id) if window_id == state.window().id() => {
-
-                // state.update();
                 GameSystem::update(&mut game_state, &input_handler);
                 match state.render(&game_state) {
                     Ok(_) => {}

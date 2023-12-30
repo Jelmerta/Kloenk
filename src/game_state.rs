@@ -1,9 +1,12 @@
 pub struct GameState {
+    pub player: Entity,
     pub entities: Vec<Entity>,
 }
 
 pub struct Entity {
     pub position: Position,
+    pub previous_position: Position,
+    pub hitbox: f32,
 }
 
 impl Entity {
@@ -15,6 +18,7 @@ impl Entity {
 pub struct Position {
     pub x: f32,
     pub y: f32,
+    pub z: f32,
 }
 
 impl Position {
@@ -34,19 +38,33 @@ impl GameState {
             position: Position {
                 x: 0.0,
                 y: 0.0,
-            }
+                z: 0.0,
+            },
+            previous_position: Position {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            hitbox: 0.5,
         };
         let enemy = Entity {
             position: Position {
-                x: 1.0,
-                y: 1.0,
-            }
+                x: 1.1,
+                y: 1.1,
+                z: 0.0,
+            },
+            previous_position: Position {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            hitbox: 0.51,
         };
 
-        entities.push(player);
         entities.push(enemy);
 
         Self {
+            player: player,
             entities: entities,
         }
     }
