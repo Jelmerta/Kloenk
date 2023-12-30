@@ -14,4 +14,4 @@ Cargo.lock
 *.pdb
 
 # Don't check in IDE files
-.idea
+.idea/
