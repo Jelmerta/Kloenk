@@ -16,9 +16,6 @@ impl GameSystem {
     }
 
     fn resolve_movement(game_state: &mut GameState, input: &input) {
-        console::log_1(&(game_state.player.position.x).into());
-        console::log_1(&(game_state.player.previous_position.x).into());
-
         if input.up_pressed {
             game_state.player.previous_position = Position {
                 x: game_state.player.position.x.clone(),
