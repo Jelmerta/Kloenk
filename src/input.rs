@@ -19,27 +19,25 @@ impl input {
         match keycode {
             VirtualKeyCode::W => {
                 self.up_pressed = is_pressed;
-                return
+                return;
             }
 
             VirtualKeyCode::S => {
                 self.down_pressed = is_pressed;
-                return
+                return;
             }
 
             VirtualKeyCode::A => {
                 self.left_pressed = is_pressed;
-                return
+                return;
             }
 
             VirtualKeyCode::D => {
                 self.right_pressed = is_pressed;
-                return
+                return;
             }
 
-            _ => {
-
-            }
+            _ => {}
         }
     }
 }

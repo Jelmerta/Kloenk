@@ -2,7 +2,7 @@ name: deploy-to-web
 run-name: Deploying application to web
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
 jobs:
   build:
     runs-on: ubuntu-latest

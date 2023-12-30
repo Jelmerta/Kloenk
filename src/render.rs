@@ -1,12 +1,12 @@
 use std::{iter, mem};
-use std::ops::Deref;
-use wgpu::util::DeviceExt;
-use winit::window::Window;
-use winit::event::WindowEvent;
+
 use cgmath::prelude::*;
 use web_sys::console;
-use crate::game_state::{GameState};
+use wgpu::util::DeviceExt;
+use winit::event::WindowEvent;
+use winit::window::Window;
 
+use crate::game_state::GameState;
 use crate::texture;
 
 struct Camera {
@@ -153,7 +153,7 @@ impl InstanceRaw {
                     offset: mem::size_of::<[f32; 12]>() as wgpu::BufferAddress,
                     shader_location: 8,
                 },
-            ]
+            ],
         }
     }
 }
@@ -501,7 +501,6 @@ impl State {
     pub fn update(&mut self) {
         // switch (input)
         // self.in
-
     }
 
     pub fn render(&mut self, game_state: &GameState) -> Result<(), wgpu::SurfaceError> {
@@ -553,7 +552,7 @@ impl State {
                 console::log_1(&"Hi".into());
                 let position = entity.get_position();
                 let instance = Instance {
-                    position: cgmath::Vector3 {x : position.get_x(), y: 0.0, z: position.get_y()},
+                    position: cgmath::Vector3 { x: position.get_x(), y: 0.0, z: position.get_y() },
                     rotation: cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(0.0)),
                 };
                 instances.push(instance);
@@ -568,12 +567,12 @@ impl State {
 
             let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
             let instance_buffer = self.device.create_buffer_init(
-                    &wgpu::util::BufferInitDescriptor {
-                        label: Some("Instance Buffer"),
-                        contents: bytemuck::cast_slice(&instance_data),
-                        usage: wgpu::BufferUsages::VERTEX,
-                    }
-                );
+                &wgpu::util::BufferInitDescriptor {
+                    label: Some("Instance Buffer"),
+                    contents: bytemuck::cast_slice(&instance_data),
+                    usage: wgpu::BufferUsages::VERTEX,
+                }
+            );
             self.instance_buffer = instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
 
             // Add buffers to render pass
