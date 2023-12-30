@@ -1,20 +1,19 @@
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
 use wgpu::util::DeviceExt;
-
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
-    window::{WindowBuilder},
+    window::WindowBuilder,
 };
+
+use crate::game_system::GameSystem;
 
 mod texture;
 mod input;
 mod game_state;
 mod render;
 mod game_system;
-
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
-use crate::game_system::GameSystem;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
@@ -75,7 +74,8 @@ pub async fn run() {
                             ..
                         } => *control_flow = ControlFlow::Exit,
                         WindowEvent::KeyboardInput {
-                            input: KeyboardInput { state: element_state,
+                            input: KeyboardInput {
+                                state: element_state,
                                 virtual_keycode: Some(key),
                                 ..
                             },

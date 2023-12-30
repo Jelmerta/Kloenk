@@ -1,5 +1,3 @@
-
-
 // use std::default::Default;
 // use winit::{
 //     event::*,

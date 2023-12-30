@@ -1,4 +1,5 @@
 use web_sys::console;
+
 use crate::game_state::{Entity, GameState, Position};
 use crate::input::input;
 
