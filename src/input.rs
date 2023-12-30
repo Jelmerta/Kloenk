@@ -1,4 +1,4 @@
-use winit::event::{ElementState, KeyboardInput, VirtualKeyCode};
+use winit::event::{ElementState, VirtualKeyCode};
 
 #[derive(Debug, Default)]
 pub struct input {
@@ -14,8 +14,6 @@ impl input {
     }
 
     pub fn update(&mut self, keycode: &VirtualKeyCode, state: &ElementState) {
-        // let keycode = key.virtual_keycode.unwrap();
-        // let state = key.state;
         let is_pressed = *state == ElementState::Pressed;
 
         match keycode {

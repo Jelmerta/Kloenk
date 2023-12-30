@@ -4,6 +4,7 @@ use wgpu::util::DeviceExt;
 use winit::window::Window;
 use winit::event::WindowEvent;
 use cgmath::prelude::*;
+use web_sys::console;
 use crate::game_state::{GameState};
 
 use crate::texture;
@@ -549,6 +550,7 @@ impl State {
             // Set buffer data
             let mut instances = Vec::new();
             for entity in game_state.get_entities().into_iter() {
+                console::log_1(&"Hi".into());
                 let position = entity.get_position();
                 let instance = Instance {
                     position: cgmath::Vector3 {x : position.get_x(), y: 0.0, z: position.get_y()},
@@ -556,6 +558,14 @@ impl State {
                 };
                 instances.push(instance);
             }
+
+            let player_position = game_state.player.get_position();
+            let player_instance = Instance {
+                position: cgmath::Vector3 { x: player_position.get_x(), y: 0.0, z: player_position.get_y() },
+                rotation: cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(0.0)),
+            };
+            instances.push(player_instance);
+
             let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
             let instance_buffer = self.device.create_buffer_init(
                     &wgpu::util::BufferInitDescriptor {
