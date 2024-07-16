@@ -66,18 +66,11 @@ impl GameSystem {
 fn resolve_collisions(game_state: &mut GameState) {
     for entity in &game_state.entities {
         if check_collision(&game_state.player, &entity) { // don't match itself
-            console::log_1(&"lol".into());
-
-            console::log_1(&(game_state.player.previous_position.x).into());
-            console::log_1(&(game_state.player.position.x).into());
-
             game_state.player.position = Position {
                 x: game_state.player.previous_position.x.clone(),
                 y: game_state.player.previous_position.y.clone(),
                 z: game_state.player.previous_position.z.clone(),
             };
-            console::log_1(&(game_state.player.previous_position.x).into());
-            console::log_1(&(game_state.player.position.x).into());
         }
     }
 }

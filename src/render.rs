@@ -22,7 +22,8 @@ struct Camera {
 impl Camera {
     fn build_view_projection_matrix(&self) -> cgmath::Matrix4<f32> {
         let view = cgmath::Matrix4::look_at_rh(self.eye, self.target, self.up);
-        let projection = cgmath::perspective(cgmath::Deg(self.fov_y_degrees), self.aspect, self.z_near, self.z_far);
+        // let projection = cgmath::perspective(cgmath::Deg(self.fov_y_degrees), self.aspect, self.z_near, self.z_far); // Perspective projection
+        let projection = cgmath::ortho(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5); // Isometric projection
         return OPENGL_TO_WGPU_MATRIX * projection * view;
     }
 }
@@ -80,7 +81,7 @@ pub struct State {
     instance_buffer: wgpu::Buffer,
 }
 
-#[repr(C)]  // Not sure what this effectively does here
+#[repr(C)] // Not sure what this effectively does here
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)] // Read up more about bytemuck, to cast our VERTICES as a &[u8]
 struct Vertex {
     position: [f32; 3],
@@ -93,16 +94,18 @@ impl Vertex {
             array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
             attributes: &[
-                wgpu::VertexAttribute { // Vertices
+                wgpu::VertexAttribute {
+                    // Vertices
                     format: wgpu::VertexFormat::Float32x3,
                     offset: 0,
                     shader_location: 0,
                 },
-                wgpu::VertexAttribute { // Color
+                wgpu::VertexAttribute {
+                    // Color
                     format: wgpu::VertexFormat::Float32x3,
                     offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
                     shader_location: 1,
-                }
+                },
             ],
         }
     }
@@ -116,7 +119,9 @@ struct Instance {
 impl Instance {
     fn to_raw(&self) -> InstanceRaw {
         InstanceRaw {
-            model: (cgmath::Matrix4::from_translation(self.position) * cgmath::Matrix4::from(self.rotation)).into(),
+            model: (cgmath::Matrix4::from_translation(self.position)
+                * cgmath::Matrix4::from(self.rotation))
+            .into(),
         }
     }
 }
@@ -159,64 +164,91 @@ impl InstanceRaw {
 }
 
 const TRIANGLE: &[Vertex] = &[
-    Vertex { position: [0.0, 0.5, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [-0.5, -0.5, 0.0], color: [0.0, 1.0, 0.0] },
-    Vertex { position: [0.5, -0.5, 0.0], color: [0.0, 0.0, 1.0] },
+    Vertex {
+        position: [0.0, 0.5, 0.0],
+        color: [1.0, 0.0, 0.0],
+    },
+    Vertex {
+        position: [-0.5, -0.5, 0.0],
+        color: [0.0, 1.0, 0.0],
+    },
+    Vertex {
+        position: [0.5, -0.5, 0.0],
+        color: [0.0, 0.0, 1.0],
+    },
 ];
 
 const PENTAGON: &[Vertex] = &[
-    Vertex { position: [-0.0868241, 0.49240386, 0.0], color: [0.5, 0.0, 0.5] }, // A
-    Vertex { position: [-0.49513406, 0.06958647, 0.0], color: [1.0, 0.0, 0.0] }, // B
-    Vertex { position: [-0.21918549, -0.44939706, 0.0], color: [0.0, 1.0, 0.0] }, // C
-    Vertex { position: [0.35966998, -0.3473291, 0.0], color: [0.0, 0.0, 1.0] }, // D
-    Vertex { position: [0.44147372, 0.2347359, 0.0], color: [0.0, 0.5, 0.5] }, // E
+    Vertex {
+        position: [-0.0868241, 0.49240386, 0.0],
+        color: [0.5, 0.0, 0.5],
+    }, // A
+    Vertex {
+        position: [-0.49513406, 0.06958647, 0.0],
+        color: [1.0, 0.0, 0.0],
+    }, // B
+    Vertex {
+        position: [-0.21918549, -0.44939706, 0.0],
+        color: [0.0, 1.0, 0.0],
+    }, // C
+    Vertex {
+        position: [0.35966998, -0.3473291, 0.0],
+        color: [0.0, 0.0, 1.0],
+    }, // D
+    Vertex {
+        position: [0.44147372, 0.2347359, 0.0],
+        color: [0.0, 0.5, 0.5],
+    }, // E
 ];
 
-const PENTAGON_INDICES: &[u16] = &[
-    0, 1, 4,
-    1, 2, 4,
-    2, 3, 4,
-];
+const PENTAGON_INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
 
 // Hm, does using indices lose me the ability to color sides of the vertices differently? Great if you use textures, but otherwise kinda sucks. Would not be able to draw something like a rubiks cube. Onless we can define these in the index buffer instead i guess?
 const CUBE: &[Vertex] = &[
     // Top ccw as seen from top
-    Vertex { position: [0.5, 0.5, 0.5], color: [0.5, 0.0, 0.0] }, // Red
-    Vertex { position: [0.5, 0.5, -0.5], color: [0.0, 0.5, 0.0] }, // Green
-    Vertex { position: [-0.5, 0.5, -0.5], color: [0.5, 0.5, 0.0] }, // Yellow
-    Vertex { position: [-0.5, 0.5, 0.5], color: [0.5, 0.0, 0.5] }, // Purple
-
+    Vertex {
+        position: [0.5, 0.5, 0.5],
+        color: [0.5, 0.0, 0.0],
+    }, // Red
+    Vertex {
+        position: [0.5, 0.5, -0.5],
+        color: [0.0, 0.5, 0.0],
+    }, // Green
+    Vertex {
+        position: [-0.5, 0.5, -0.5],
+        color: [0.5, 0.5, 0.0],
+    }, // Yellow
+    Vertex {
+        position: [-0.5, 0.5, 0.5],
+        color: [0.5, 0.0, 0.5],
+    }, // Purple
     // Bottom ccw as seen from top
-    Vertex { position: [0.5, -0.5, 0.5], color: [0.0, 0.0, 0.5] }, // Blue
-    Vertex { position: [0.5, -0.5, -0.5], color: [0.0, 0.5, 0.5] }, // Cyan
-    Vertex { position: [-0.5, -0.5, -0.5], color: [0.0, 0.0, 0.0] }, // Black
-    Vertex { position: [-0.5, -0.5, 0.5], color: [0.5, 0.5, 0.5] }, // White
+    Vertex {
+        position: [0.5, -0.5, 0.5],
+        color: [0.0, 0.0, 0.5],
+    }, // Blue
+    Vertex {
+        position: [0.5, -0.5, -0.5],
+        color: [0.0, 0.5, 0.5],
+    }, // Cyan
+    Vertex {
+        position: [-0.5, -0.5, -0.5],
+        color: [0.0, 0.0, 0.0],
+    }, // Black
+    Vertex {
+        position: [-0.5, -0.5, 0.5],
+        color: [0.5, 0.5, 0.5],
+    }, // White
 ];
 
 const CUBE_INDICES: &[u16] = &[
     // Top
-    0, 1, 2,
-    0, 2, 3,
-
-    // Bottom
-    4, 7, 6,
-    4, 6, 5,
-
-    // Left
-    0, 3, 7,
-    0, 7, 4,
-
-    // Right
-    1, 6, 2,
-    1, 5, 6,
-
-    // Front
-    0, 4, 5,
-    0, 5, 1,
-
-    // Back
-    2, 6, 7,
-    2, 7, 3,
+    0, 1, 2, 0, 2, 3, // Bottom
+    4, 7, 6, 4, 6, 5, // Left
+    0, 3, 7, 0, 7, 4, // Right
+    1, 6, 2, 1, 5, 6, // Front
+    0, 4, 5, 0, 5, 1, // Back
+    2, 6, 7, 2, 7, 3,
 ];
 
 impl State {
@@ -303,47 +335,41 @@ impl State {
         let mut camera_uniform = CameraUniform::new();
         camera_uniform.update_view_projection(&camera);
 
-        let camera_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Camera Buffer"),
-                contents: bytemuck::cast_slice(&[camera_uniform]),
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, // what is COPY_DST?
-            }
-        );
+        let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Camera Buffer"),
+            contents: bytemuck::cast_slice(&[camera_uniform]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, // what is COPY_DST?
+        });
 
-        let camera_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("Camera Bind Group Layout"),
-            entries: &[
-                wgpu::BindGroupLayoutEntry {
+        let camera_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("Camera Bind Group Layout"),
+                entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
                     visibility: wgpu::ShaderStages::VERTEX,
-                    ty: wgpu::BindingType::Buffer { // Binding type, horrible naming
+                    ty: wgpu::BindingType::Buffer {
+                        // Binding type, horrible naming
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
                     count: None,
-                }
-            ],
-        });
+                }],
+            });
 
         let camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Camera Bind Group"),
             layout: &camera_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: camera_buffer.as_entire_binding(),
-                }
-            ],
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: camera_buffer.as_entire_binding(),
+            }],
         });
 
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[
-                    &camera_bind_group_layout,
-                ],
+                bind_group_layouts: &[&camera_bind_group_layout],
                 push_constant_ranges: &[],
             });
 
@@ -353,10 +379,7 @@ impl State {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[
-                    Vertex::desc(),
-                    InstanceRaw::desc(),
-                ],
+                buffers: &[Vertex::desc(), InstanceRaw::desc()],
             },
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
@@ -401,21 +424,17 @@ impl State {
         // );
         // let num_vertices = TRIANGLE.len() as u32;
 
-        let vertex_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(CUBE),
-                usage: wgpu::BufferUsages::VERTEX,
-            }
-        );
+        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Vertex Buffer"),
+            contents: bytemuck::cast_slice(CUBE),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
 
-        let index_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(CUBE_INDICES),
-                usage: wgpu::BufferUsages::INDEX,
-            }
-        );
+        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Index Buffer"),
+            contents: bytemuck::cast_slice(CUBE_INDICES),
+            usage: wgpu::BufferUsages::INDEX,
+        });
         let num_indices = CUBE_INDICES.len() as u32;
 
         let depth_texture = texture::Texture::create_depth_texture(&device, &config);
@@ -451,13 +470,11 @@ impl State {
         // let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
         // Tmp assign a buffer. Should be removed.
         let instance_data = Vec::new().iter().map(Instance::to_raw).collect::<Vec<_>>();
-        let instance_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Instance Buffer"),
-                contents: bytemuck::cast_slice(&instance_data),
-                usage: wgpu::BufferUsages::VERTEX,
-            }
-        );
+        let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Instance Buffer"),
+            contents: bytemuck::cast_slice(&instance_data),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
 
         Self {
             window,
@@ -549,30 +566,43 @@ impl State {
             // Set buffer data
             let mut instances = Vec::new();
             for entity in game_state.get_entities().into_iter() {
-                console::log_1(&"Hi".into());
                 let position = entity.get_position();
                 let instance = Instance {
-                    position: cgmath::Vector3 { x: position.get_x(), y: 0.0, z: position.get_y() },
-                    rotation: cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(0.0)),
+                    position: cgmath::Vector3 {
+                        x: position.get_x(),
+                        y: 0.0,
+                        z: position.get_y(),
+                    },
+                    rotation: cgmath::Quaternion::from_axis_angle(
+                        cgmath::Vector3::unit_z(),
+                        cgmath::Deg(0.0),
+                    ),
                 };
                 instances.push(instance);
             }
 
             let player_position = game_state.player.get_position();
             let player_instance = Instance {
-                position: cgmath::Vector3 { x: player_position.get_x(), y: 0.0, z: player_position.get_y() },
-                rotation: cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(0.0)),
+                position: cgmath::Vector3 {
+                    x: player_position.get_x(),
+                    y: 0.0,
+                    z: player_position.get_y(),
+                },
+                rotation: cgmath::Quaternion::from_axis_angle(
+                    cgmath::Vector3::unit_z(),
+                    cgmath::Deg(0.0),
+                ),
             };
             instances.push(player_instance);
 
             let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
-            let instance_buffer = self.device.create_buffer_init(
-                &wgpu::util::BufferInitDescriptor {
-                    label: Some("Instance Buffer"),
-                    contents: bytemuck::cast_slice(&instance_data),
-                    usage: wgpu::BufferUsages::VERTEX,
-                }
-            );
+            let instance_buffer =
+                self.device
+                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                        label: Some("Instance Buffer"),
+                        contents: bytemuck::cast_slice(&instance_data),
+                        usage: wgpu::BufferUsages::VERTEX,
+                    });
             self.instance_buffer = instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
 
             // Add buffers to render pass
@@ -592,3 +622,4 @@ impl State {
         Ok(())
     }
 }
+
