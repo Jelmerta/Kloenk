@@ -23,7 +23,7 @@ impl Camera {
     fn build_view_projection_matrix(&self) -> cgmath::Matrix4<f32> {
         let view = cgmath::Matrix4::look_at_rh(self.eye, self.target, self.up);
         // let projection = cgmath::perspective(cgmath::Deg(self.fov_y_degrees), self.aspect, self.z_near, self.z_far); // Perspective projection
-        let projection = cgmath::ortho(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5); // Isometric projection
+        let projection = cgmath::ortho(-1., 1., -1., 1., 0.1, 100.); // Isometric projection. I don't really grok near and far yet
         return OPENGL_TO_WGPU_MATRIX * projection * view;
     }
 }
@@ -322,8 +322,11 @@ impl State {
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
         });
 
+        let total_distance = 200000.; // Verify naming, probbaly not total distance
+        let equal_camera_distance = f32::sqrt(total_distance / 3.0);
+
         let camera = Camera {
-            eye: (2.0, 2.0, 2.0).into(),
+            eye: (equal_camera_distance, equal_camera_distance, equal_camera_distance).into(),
             target: (0.0, 0.0, 0.0).into(),
             up: cgmath::Vector3::unit_y(),
             aspect: config.width as f32 / config.height as f32,
