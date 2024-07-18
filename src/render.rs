@@ -6,36 +6,9 @@ use wgpu::util::DeviceExt;
 use winit::event::WindowEvent;
 use winit::window::Window;
 
+use crate::camera::Camera;
 use crate::game_state::GameState;
 use crate::texture;
-
-struct Camera {
-    eye: cgmath::Point3<f32>,
-    target: cgmath::Point3<f32>,
-    up: cgmath::Vector3<f32>,
-    aspect: f32,
-    fov_y_degrees: f32,
-    z_near: f32,
-    z_far: f32,
-}
-
-impl Camera {
-    fn build_view_projection_matrix(&self) -> cgmath::Matrix4<f32> {
-        let view = cgmath::Matrix4::look_at_rh(self.eye, self.target, self.up);
-        // let projection = cgmath::perspective(cgmath::Deg(self.fov_y_degrees), self.aspect, self.z_near, self.z_far); // Perspective projection
-        let projection = cgmath::ortho(-1., 1., -1., 1., 0.1, 100.); // Isometric projection. I don't really grok near and far yet
-        return OPENGL_TO_WGPU_MATRIX * projection * view;
-    }
-}
-
-// This is just used to convert OpenGL's coordinate system to WGPUs (as used in Metal/DX)
-#[rustfmt::skip] // ? just for formatting as 4x4?
-pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
-    1.0, 0.0, 0.0, 0.0,
-    0.0, 1.0, 0.0, 0.0,
-    0.0, 0.0, 0.5, 0.5,
-    0.0, 0.0, 0.0, 1.0,
-);
 
 // We need this for Rust to store our data correctly for the shaders
 #[repr(C)]
@@ -322,18 +295,7 @@ impl State {
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
         });
 
-        let total_distance = 200000.; // Verify naming, probbaly not total distance
-        let equal_camera_distance = f32::sqrt(total_distance / 3.0);
-
-        let camera = Camera {
-            eye: (equal_camera_distance, equal_camera_distance, equal_camera_distance).into(),
-            target: (0.0, 0.0, 0.0).into(),
-            up: cgmath::Vector3::unit_y(),
-            aspect: config.width as f32 / config.height as f32,
-            fov_y_degrees: 45.0,
-            z_near: 0.1,
-            z_far: 100.0,
-        };
+        let camera = Camera::new();
 
         let mut camera_uniform = CameraUniform::new();
         camera_uniform.update_view_projection(&camera);

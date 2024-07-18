@@ -14,6 +14,7 @@ mod input;
 mod game_state;
 mod render;
 mod game_system;
+mod camera;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
@@ -82,6 +83,9 @@ pub async fn run() {
                             ..
                         } => {
                             input_handler.update(key, element_state);
+                        }
+                        WindowEvent::MouseWheel { delta, .. } => {
+                            
                         }
                         WindowEvent::Resized(physical_size) => {
                             state.resize(*physical_size);
