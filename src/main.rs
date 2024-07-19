@@ -1,4 +1,3 @@
-// Test
 use kloenk::run;
 
 fn main() {

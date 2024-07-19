@@ -1,13 +1,13 @@
 use std::{iter, mem};
 
-use cgmath::prelude::*;
+use cgmath::{prelude::*, Point3};
 use web_sys::console;
 use wgpu::util::DeviceExt;
 use winit::event::WindowEvent;
 use winit::window::Window;
 
-use crate::camera::Camera;
-use crate::game_state::GameState;
+use crate::camera::{Camera, self};
+use crate::game_state::{GameState, Position, self};
 use crate::texture;
 
 // We need this for Rust to store our data correctly for the shaders
@@ -486,6 +486,22 @@ impl State {
     }
 
     pub fn render(&mut self, game_state: &GameState) -> Result<(), wgpu::SurfaceError> {
+        // Update the camera in render with the game state data to build the new view
+        // projection
+        self.camera.eye = Point3 {
+            x: game_state.camera.position.x.clone(),
+            y: game_state.camera.position.y.clone(),
+            z: game_state.camera.position.z.clone(),
+        };
+        self.camera_uniform.update_view_projection(&self.camera);
+
+        self.queue.write_buffer(
+            &self.camera_buffer,
+            0,
+            bytemuck::cast_slice(&[self.camera_uniform]),
+        );
+
+
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
@@ -559,6 +575,8 @@ impl State {
                 ),
             };
             instances.push(player_instance);
+
+
 
             let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
             let instance_buffer =

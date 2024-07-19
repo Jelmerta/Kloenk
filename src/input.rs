@@ -1,4 +1,5 @@
-use winit::event::{ElementState, VirtualKeyCode};
+use winit::event::{ElementState, VirtualKeyCode, MouseScrollDelta};
+use winit::dpi::PhysicalPosition;
 
 #[derive(Debug, Default)]
 pub struct input {
@@ -6,6 +7,7 @@ pub struct input {
     pub down_pressed: bool,
     pub left_pressed: bool,
     pub right_pressed: bool,
+    pub scrolled_amount: f32,
 }
 
 impl input {
@@ -39,5 +41,14 @@ impl input {
 
             _ => {}
         }
+    }
+
+    pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
+        self.scrolled_amount = match delta {
+            MouseScrollDelta::PixelDelta(PhysicalPosition {
+                y: scroll, ..
+            }) => *scroll as f32,
+            MouseScrollDelta::LineDelta(_, scroll) => scroll * 100.0,
+        };
     }
 }

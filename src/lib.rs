@@ -1,3 +1,5 @@
+use env_logger::Logger;
+use log::log;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 use wgpu::util::DeviceExt;
@@ -85,7 +87,8 @@ pub async fn run() {
                             input_handler.update(key, element_state);
                         }
                         WindowEvent::MouseWheel { delta, .. } => {
-                            
+                            input_handler.process_scroll(delta);
+                            true;
                         }
                         WindowEvent::Resized(physical_size) => {
                             state.resize(*physical_size);
@@ -99,7 +102,7 @@ pub async fn run() {
                 }
             }
             Event::RedrawRequested(window_id) if window_id == state.window().id() => {
-                GameSystem::update(&mut game_state, &input_handler);
+                GameSystem::update(&mut game_state, &mut input_handler);
                 match state.render(&game_state) {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
