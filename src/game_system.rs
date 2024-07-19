@@ -1,5 +1,6 @@
 use web_sys::console;
 
+use crate::{camera, game_state};
 use crate::game_state::{Entity, GameState, Position};
 use crate::input::input;
 
@@ -10,10 +11,25 @@ impl GameSystem {
         Self {}
     }
 
-    pub fn update(game_state: &mut GameState, input: &input) {
+    pub fn update(game_state: &mut GameState, input: &mut input) {
         // let entities = &mut game_state.entities;
-
+        Self::update_camera(game_state, input);
         Self::resolve_movement(game_state, input);
+    }
+
+    fn update_camera(game_state: &mut GameState, input: &mut input) {
+        log::warn!("Updated camera");
+        game_state.camera.previous_position = Position {
+            x: game_state.camera.position.x.clone(),
+            y: game_state.camera.position.y.clone(),
+            z: game_state.camera.position.z.clone(),
+        };
+
+        game_state.camera.position.x += input.scrolled_amount;
+        game_state.camera.position.y += input.scrolled_amount;
+        game_state.camera.position.z += input.scrolled_amount;
+
+        input.scrolled_amount = 0.0;
     }
 
     fn resolve_movement(game_state: &mut GameState, input: &input) {
