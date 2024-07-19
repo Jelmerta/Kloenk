@@ -48,7 +48,8 @@ impl input {
             MouseScrollDelta::PixelDelta(PhysicalPosition {
                 y: scroll, ..
             }) => *scroll as f32,
-            MouseScrollDelta::LineDelta(_, scroll) => scroll * 100.0,
+            _ => panic!("LineDelta not implemented"),
+            // MouseScrollDelta::LineDelta(_, scroll) => *scroll,
         };
     }
 }

@@ -22,7 +22,7 @@ impl Camera {
     pub fn new() -> Self {
         Self {
             target: (0.0, 0.0, 0.0).into(),
-            eye: (102.0, 112.0, 112.0).into(),
+            eye: (0.0, 0.0, 0.0).into(),
             up: Vector3::unit_y(),
             z_near: 0.1,
             z_far: 100.0,
@@ -31,9 +31,7 @@ impl Camera {
 
     pub fn build_view_projection_matrix(&self) -> cgmath::Matrix4<f32> 
     {
-        log::warn!("{:?}", self.eye);
         let view = cgmath::Matrix4::look_at_rh(self.eye, self.target, self.up);
-        log::warn!("{:?}", view);
         // let projection = cgmath::perspective(cgmath::Deg(self.fov_y_degrees), self.aspect, self.z_near, self.z_far); // Perspective projection
         let projection = cgmath::ortho(-1., 1., -1., 1., self.z_near, self.z_far); // Isometric projection. I don't really grok near and far yet
         return OPENGL_TO_WGPU_MATRIX * projection * view;

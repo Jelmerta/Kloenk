@@ -5,6 +5,8 @@ use crate::game_state::{Entity, GameState, Position};
 use crate::input::input;
 
 pub struct GameSystem {}
+pub const MIN_CAMERA_DISTANCE: f32 = 100.0;
+pub const MAX_CAMERA_DISTANCE: f32 = 500.0;
 
 impl GameSystem {
     pub fn new() -> Self {
@@ -18,16 +20,26 @@ impl GameSystem {
     }
 
     fn update_camera(game_state: &mut GameState, input: &mut input) {
-        log::warn!("Updated camera");
+        let normalised_scroll_amount: f32 = -input.scrolled_amount * 0.1;
         game_state.camera.previous_position = Position {
             x: game_state.camera.position.x.clone(),
             y: game_state.camera.position.y.clone(),
             z: game_state.camera.position.z.clone(),
         };
-
-        game_state.camera.position.x += input.scrolled_amount;
-        game_state.camera.position.y += input.scrolled_amount;
-        game_state.camera.position.z += input.scrolled_amount;
+        
+        if (game_state.camera.position.x + normalised_scroll_amount <= MIN_CAMERA_DISTANCE) {
+            game_state.camera.position.x = MIN_CAMERA_DISTANCE;
+            game_state.camera.position.y = MIN_CAMERA_DISTANCE;
+            game_state.camera.position.z = MIN_CAMERA_DISTANCE;
+        } else if (game_state.camera.position.x + normalised_scroll_amount >= MAX_CAMERA_DISTANCE) {
+            game_state.camera.position.x = MAX_CAMERA_DISTANCE;
+            game_state.camera.position.y = MAX_CAMERA_DISTANCE;
+            game_state.camera.position.z = MAX_CAMERA_DISTANCE;
+        } else {
+            game_state.camera.position.x += normalised_scroll_amount;
+            game_state.camera.position.y += normalised_scroll_amount;
+            game_state.camera.position.z += normalised_scroll_amount;
+        }
 
         input.scrolled_amount = 0.0;
     }
