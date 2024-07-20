@@ -4,7 +4,9 @@ use crate::{camera, game_state};
 use crate::game_state::{Entity, GameState, Position};
 use crate::input::input;
 
-pub struct GameSystem {}
+pub struct GameSystem {
+    camera_distance: f32,
+}
 
 pub const BASE_SPEED: f32 = 0.01;
 
@@ -13,37 +15,51 @@ pub const MAX_CAMERA_DISTANCE: f32 = 500.0;
 
 impl GameSystem {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            camera_distance: 150.0,
+        }
     }
 
     pub fn update(game_state: &mut GameState, input: &mut input) {
         // let entities = &mut game_state.entities;
-        Self::update_camera(game_state, input);
         Self::resolve_movement(game_state, input);
+        Self::update_camera(game_state, input);
     }
 
     fn update_camera(game_state: &mut GameState, input: &mut input) {
         let normalised_scroll_amount: f32 = -input.scrolled_amount * 0.1;
-        game_state.camera.previous_position = Position {
-            x: game_state.camera.position.x.clone(),
-            y: game_state.camera.position.y.clone(),
-            z: game_state.camera.position.z.clone(),
-        };
-        
-        if (game_state.camera.position.x + normalised_scroll_amount <= MIN_CAMERA_DISTANCE) {
-            game_state.camera.position.x = MIN_CAMERA_DISTANCE;
-            game_state.camera.position.y = MIN_CAMERA_DISTANCE;
-            game_state.camera.position.z = MIN_CAMERA_DISTANCE;
-        } else if (game_state.camera.position.x + normalised_scroll_amount >= MAX_CAMERA_DISTANCE) {
-            game_state.camera.position.x = MAX_CAMERA_DISTANCE;
-            game_state.camera.position.y = MAX_CAMERA_DISTANCE;
-            game_state.camera.position.z = MAX_CAMERA_DISTANCE;
+        // game_state.camera.previous_position = Position {
+        //     x: game_state.camera.position.x.clone(),
+        //     y: game_state.camera.position.y.clone(),
+        //     z: game_state.camera.position.z.clone(),
+        // };
+        // 
+        // if (game_state.camera.position.x + normalised_scroll_amount <= MIN_CAMERA_DISTANCE) {
+        //     game_state.camera.position.x = MIN_CAMERA_DISTANCE;
+        //     game_state.camera.position.y = MIN_CAMERA_DISTANCE;
+        //     game_state.camera.position.z = MIN_CAMERA_DISTANCE;
+        // } else if (game_state.camera.position.x + normalised_scroll_amount >= MAX_CAMERA_DISTANCE) {
+        //     game_state.camera.position.x = MAX_CAMERA_DISTANCE;
+        //     game_state.camera.position.y = MAX_CAMERA_DISTANCE;
+        //     game_state.camera.position.z = MAX_CAMERA_DISTANCE;
+        // } else {
+        //     game_state.camera.position.x += normalised_scroll_amount;
+        //     game_state.camera.position.y += normalised_scroll_amount;
+        //     game_state.camera.position.z += normalised_scroll_amount;
+        // }
+
+
+        if (game_state.camera_distance + normalised_scroll_amount <= MIN_CAMERA_DISTANCE) {
+            game_state.camera_distance = MIN_CAMERA_DISTANCE;
+        } else if (game_state.camera_distance + normalised_scroll_amount >= MAX_CAMERA_DISTANCE) {
+            game_state.camera_distance = MAX_CAMERA_DISTANCE;
         } else {
-            game_state.camera.position.x += normalised_scroll_amount;
-            game_state.camera.position.y += normalised_scroll_amount;
-            game_state.camera.position.z += normalised_scroll_amount;
+            game_state.camera_distance += normalised_scroll_amount;
         }
 
+
+
+        // game_state.camera.position.x = game_state.player.position.x + self.camera_distance;
         input.scrolled_amount = 0.0;
     }
 

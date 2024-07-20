@@ -2,7 +2,7 @@ use cgmath::*;
 
 #[derive(Debug)]
 pub struct Camera {
-    target: Point3<f32>,
+    pub target: Point3<f32>,
     pub eye: Point3<f32>, // Or: position
     up: Vector3<f32>,
     z_near: f32,
@@ -33,7 +33,9 @@ impl Camera {
     {
         let view = cgmath::Matrix4::look_at_rh(self.eye, self.target, self.up);
         // let projection = cgmath::perspective(cgmath::Deg(self.fov_y_degrees), self.aspect, self.z_near, self.z_far); // Perspective projection
-        let projection = cgmath::ortho(-1., 1., -1., 1., self.z_near, self.z_far); // Isometric projection. I don't really grok near and far yet
+        // let projection = cgmath::ortho(-1., 1., -1., 1., self.z_near, self.z_far); // Isometric projection. I don't really grok near and far yet
+        
+        let projection = cgmath::ortho(-800.0/600.0, 800.0/600.0, -1., 1., self.z_near, self.z_far); // Isometric projection. I don't really grok near and far yet
         return OPENGL_TO_WGPU_MATRIX * projection * view;
     }
 }

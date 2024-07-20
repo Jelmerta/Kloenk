@@ -2,7 +2,7 @@ pub const TOTAL_DISTANCE: f32 = 200000.; // Verify naming, probbaly not total di
 
 pub struct GameState {
     pub player: Entity,
-    pub camera: Entity,
+    pub camera_distance: f32,
     pub entities: Vec<Entity>,
 }
 
@@ -51,22 +51,22 @@ impl GameState {
             hitbox: 0.5,
         };
 
-        let starting_camera_distance: f32 = f32::sqrt(TOTAL_DISTANCE / 3.0);
-        let camera = Entity {
-            previous_position: Position { // previous position probably not really used right now
+        let camera_distance = f32::sqrt(TOTAL_DISTANCE / 3.0);
+        // let camera = Entity {
+            // previous_position: Position { // previous position probably not really used right now
                 // for camera.
-                x: starting_camera_distance,
-                y: starting_camera_distance,
-                z: starting_camera_distance,
-            },
-            position: Position {
-                x: starting_camera_distance,
-                y: starting_camera_distance,
-                z: starting_camera_distance,
-            },
-            hitbox: 0.0, // Doesn't make sense for a camera... Not sure if camera really belongs
-            // here. Might make hitbox a trait or something like that too
-        };
+                // x: starting_camera_distance,
+                // y: starting_camera_distance,
+                // z: starting_camera_distance,
+            // },
+            // position: Position {
+                // x: starting_camera_distance,
+        //         y: starting_camera_distance,
+        //         z: starting_camera_distance,
+        //     },
+        //     hitbox: 0.0, // Doesn't make sense for a camera... Not sure if camera really belongs
+        //     // here. Might make hitbox a trait or something like that too
+        // };
 
         let enemy = Entity {
             position: Position {
@@ -86,7 +86,7 @@ impl GameState {
 
         Self {
             player: player,
-            camera: camera,
+            camera_distance: camera_distance,
             entities: entities,
         }
     }
