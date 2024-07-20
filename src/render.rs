@@ -488,13 +488,23 @@ impl State {
     pub fn render(&mut self, game_state: &GameState) -> Result<(), wgpu::SurfaceError> {
         // Update the camera in render with the game state data to build the new view
         // projection
+        
+        // Use 45 degrees for isometric view.
+        let angle = std::f32::consts::FRAC_PI_4;
         self.camera.eye = Point3 {
-            x: game_state.camera.position.x.clone(),
-            y: game_state.camera.position.y.clone(),
-            z: game_state.camera.position.z.clone(),
+            x: game_state.player.position.x + game_state.camera_distance * angle.cos(),
+            // y: game_state.player.position.y + game_state.camera_distance * angle.cos(),
+            y: game_state.player.position.y + game_state.camera_distance,
+            z: game_state.player.position.z + game_state.camera_distance * angle.sin(),
         };
+        self.camera.target = Point3 {
+            x : game_state.player.position.x.clone(),
+            y : 0.0, // player does not have an upwards direction yet
+            z : game_state.player.position.y.clone(), // This can be confusing: our 2d world has x
+            // and y. in 3d the y is seen as vertical
+        };
+      
         self.camera_uniform.update_view_projection(&self.camera);
-
         self.queue.write_buffer(
             &self.camera_buffer,
             0,
