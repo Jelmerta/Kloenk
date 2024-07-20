@@ -7,6 +7,9 @@ pub struct input {
     pub down_pressed: bool,
     pub left_pressed: bool,
     pub right_pressed: bool,
+
+    pub left_shift_pressed: bool,
+
     pub scrolled_amount: f32,
 }
 
@@ -37,6 +40,10 @@ impl input {
             VirtualKeyCode::D => {
                 self.right_pressed = is_pressed;
                 return;
+            }
+
+            VirtualKeyCode::LShift => {
+                self.left_shift_pressed = is_pressed;
             }
 
             _ => {}

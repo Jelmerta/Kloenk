@@ -5,6 +5,9 @@ use crate::game_state::{Entity, GameState, Position};
 use crate::input::input;
 
 pub struct GameSystem {}
+
+pub const BASE_SPEED: f32 = 0.01;
+
 pub const MIN_CAMERA_DISTANCE: f32 = 100.0;
 pub const MAX_CAMERA_DISTANCE: f32 = 500.0;
 
@@ -45,14 +48,19 @@ impl GameSystem {
     }
 
     fn resolve_movement(game_state: &mut GameState, input: &input) {
+        let mut movement_speed: f32 = BASE_SPEED;
+        if (input.left_shift_pressed) {
+            movement_speed *= 2.5;
+        }
+
         if input.up_pressed {
             game_state.player.previous_position = Position {
                 x: game_state.player.position.x.clone(),
                 y: game_state.player.position.y.clone(),
                 z: game_state.player.position.z.clone(),
             };
-            game_state.player.position.x -= 0.01;
-            game_state.player.position.y -= 0.01;
+            game_state.player.position.x -= movement_speed;
+            game_state.player.position.y -= movement_speed;
             resolve_collisions(game_state)
         }
 
@@ -62,8 +70,8 @@ impl GameSystem {
                 y: game_state.player.position.y.clone(),
                 z: game_state.player.position.z.clone(),
             };
-            game_state.player.position.x += 0.01;
-            game_state.player.position.y += 0.01;
+            game_state.player.position.x += movement_speed;
+            game_state.player.position.y += movement_speed;
             resolve_collisions(game_state)
         }
 
@@ -73,8 +81,8 @@ impl GameSystem {
                 y: game_state.player.position.y.clone(),
                 z: game_state.player.position.z.clone(),
             };
-            game_state.player.position.x -= 0.01;
-            game_state.player.position.y += 0.01;
+            game_state.player.position.x -= movement_speed;
+            game_state.player.position.y += movement_speed;
             resolve_collisions(game_state)
         }
 
@@ -84,8 +92,8 @@ impl GameSystem {
                 y: game_state.player.position.y.clone(),
                 z: game_state.player.position.z.clone(),
             };
-            game_state.player.position.x += 0.01;
-            game_state.player.position.y -= 0.01;
+            game_state.player.position.x += movement_speed;
+            game_state.player.position.y -= movement_speed;
             resolve_collisions(game_state)
         }
     }
