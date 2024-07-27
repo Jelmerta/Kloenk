@@ -17,6 +17,8 @@ mod game_state;
 mod render;
 mod game_system;
 mod camera;
+mod model;
+mod resources;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
