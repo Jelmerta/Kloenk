@@ -5,18 +5,18 @@ use crate::game_state::{Entity, GameState, Position};
 use crate::input::input;
 
 pub struct GameSystem {
-    camera_distance: f32,
 }
 
 pub const BASE_SPEED: f32 = 0.01;
 
 pub const MIN_CAMERA_DISTANCE: f32 = 100.0;
 pub const MAX_CAMERA_DISTANCE: f32 = 500.0;
+pub const CAMERA_MOVEMENT_SPEED: f32 = 3.0;
+pub const CAMERA_TOP_BOTTOM_LIMIT: f32 = 10.0;
 
 impl GameSystem {
     pub fn new() -> Self {
         Self {
-            camera_distance: 150.0,
         }
     }
 
@@ -27,6 +27,40 @@ impl GameSystem {
     }
 
     fn update_camera(game_state: &mut GameState, input: &mut input) {
+        if (input.up_pressed) {
+            game_state.camera_rotation_y_degrees = game_state.camera_rotation_y_degrees + CAMERA_MOVEMENT_SPEED;
+        }
+
+        if (input.down_pressed) {
+            game_state.camera_rotation_y_degrees = game_state.camera_rotation_y_degrees - CAMERA_MOVEMENT_SPEED;
+        }
+
+        if (input.right_pressed) {
+            game_state.camera_rotation_x_degrees = game_state.camera_rotation_x_degrees - CAMERA_MOVEMENT_SPEED;
+        }
+
+        if (input.left_pressed) {
+            game_state.camera_rotation_x_degrees = game_state.camera_rotation_x_degrees + CAMERA_MOVEMENT_SPEED;
+        }
+
+        // We do this to keep the degrees in range of 0 to 359.99.. which modulo would not do...
+        // does this matter though... seems the effect is the same...
+        if game_state.camera_rotation_x_degrees < 0.0 {
+            game_state.camera_rotation_x_degrees += 360.0;
+        }
+        
+        if game_state.camera_rotation_x_degrees >= 360.0 {
+            game_state.camera_rotation_x_degrees -= 360.0;
+        }
+
+        if game_state.camera_rotation_y_degrees < 180.0 + CAMERA_TOP_BOTTOM_LIMIT {
+            game_state.camera_rotation_y_degrees = 180.0 + CAMERA_TOP_BOTTOM_LIMIT;
+        }
+
+        if game_state.camera_rotation_y_degrees >= 360.0 - CAMERA_TOP_BOTTOM_LIMIT {
+            game_state.camera_rotation_y_degrees = 360.0 - CAMERA_TOP_BOTTOM_LIMIT;
+        }
+
         let normalised_scroll_amount: f32 = -input.scrolled_amount * 0.1;
         // game_state.camera.previous_position = Position {
         //     x: game_state.camera.position.x.clone(),
@@ -47,6 +81,7 @@ impl GameSystem {
         //     game_state.camera.position.y += normalised_scroll_amount;
         //     game_state.camera.position.z += normalised_scroll_amount;
         // }
+        //
 
 
         if (game_state.camera_distance + normalised_scroll_amount <= MIN_CAMERA_DISTANCE) {
@@ -69,7 +104,7 @@ impl GameSystem {
             movement_speed *= 2.5;
         }
 
-        if input.up_pressed {
+        if input.w_pressed {
             game_state.player.previous_position = Position {
                 x: game_state.player.position.x.clone(),
                 y: game_state.player.position.y.clone(),
@@ -80,7 +115,7 @@ impl GameSystem {
             resolve_collisions(game_state)
         }
 
-        if input.down_pressed {
+        if input.s_pressed {
             game_state.player.previous_position = Position {
                 x: game_state.player.position.x.clone(),
                 y: game_state.player.position.y.clone(),
@@ -91,7 +126,7 @@ impl GameSystem {
             resolve_collisions(game_state)
         }
 
-        if input.left_pressed {
+        if input.a_pressed {
             game_state.player.previous_position = Position {
                 x: game_state.player.position.x.clone(),
                 y: game_state.player.position.y.clone(),
@@ -102,7 +137,7 @@ impl GameSystem {
             resolve_collisions(game_state)
         }
 
-        if input.right_pressed {
+        if input.d_pressed {
             game_state.player.previous_position = Position {
                 x: game_state.player.position.x.clone(),
                 y: game_state.player.position.y.clone(),

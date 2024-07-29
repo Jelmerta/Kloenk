@@ -3,6 +3,9 @@ pub const TOTAL_DISTANCE: f32 = 200000.; // Verify naming, probbaly not total di
 pub struct GameState {
     pub player: Entity,
     pub camera_distance: f32,
+    pub camera_rotation_x_degrees: f32,// as seen on a sphere, to figure out the position of the camera. it is not
+    // the direction the camera is pointed at
+    pub camera_rotation_y_degrees: f32,
     pub entities: Vec<Entity>,
 }
 
@@ -87,6 +90,8 @@ impl GameState {
         Self {
             player: player,
             camera_distance: camera_distance,
+            camera_rotation_x_degrees: 225.0,
+            camera_rotation_y_degrees: 315.0,
             entities: entities,
         }
     }
