@@ -802,11 +802,18 @@ impl State {
         
         // Use 45 degrees for isometric view.
         let angle = std::f32::consts::FRAC_PI_4;
+        let rad_x = f32::to_radians(game_state.camera_rotation_x_degrees);
+        let rad_y = f32::to_radians(game_state.camera_rotation_y_degrees);
+        log::warn!("{}, {}", rad_x, rad_y);
         self.camera.eye = Point3 {
-            x: game_state.player.position.x + game_state.camera_distance * angle.cos(),
-            // y: game_state.player.position.y + game_state.camera_distance * angle.cos(),
-            y: game_state.player.position.y + game_state.camera_distance,
-            z: game_state.player.position.z + game_state.camera_distance * angle.sin(),
+            // x: game_state.player.position.x + game_state.camera_distance * angle.cos(),
+            // y: game_state.player.position.y + game_state.camera_distance,
+            // z: game_state.player.position.z + game_state.camera_distance * angle.sin(),
+            
+            x: game_state.player.position.x + game_state.camera_distance * rad_y.sin() * rad_x.cos(),
+            y: game_state.player.position.y + game_state.camera_distance * rad_y.cos(),
+            z: game_state.player.position.z + game_state.camera_distance * rad_y.sin() * rad_x.sin(),
+
         };
         self.camera.target = Point3 {
             x : game_state.player.position.x.clone(),

@@ -3,15 +3,15 @@ use winit::dpi::PhysicalPosition;
 
 #[derive(Debug, Default)]
 pub struct input {
+    pub w_pressed: bool,
+    pub s_pressed: bool,
+    pub a_pressed: bool,
+    pub d_pressed: bool,
+
     pub up_pressed: bool,
     pub down_pressed: bool,
     pub left_pressed: bool,
     pub right_pressed: bool,
-
-    pub u_pressed: bool,
-    pub j_pressed: bool,
-    pub h_pressed: bool,
-    pub k_pressed: bool,
 
     pub left_shift_pressed: bool,
 
@@ -28,22 +28,22 @@ impl input {
 
         match keycode {
             VirtualKeyCode::W => {
-                self.up_pressed = is_pressed;
+                self.w_pressed = is_pressed;
                 return;
             }
 
             VirtualKeyCode::S => {
-                self.down_pressed = is_pressed;
+                self.s_pressed = is_pressed;
                 return;
             }
 
             VirtualKeyCode::A => {
-                self.left_pressed = is_pressed;
+                self.a_pressed = is_pressed;
                 return;
             }
 
             VirtualKeyCode::D => {
-                self.right_pressed = is_pressed;
+                self.d_pressed = is_pressed;
                 return;
             }
 
@@ -51,20 +51,20 @@ impl input {
                 self.left_shift_pressed = is_pressed;
             }
 
-            VirtualKeyCode::U => {
-                self.u_pressed = is_pressed;
+            VirtualKeyCode::Up => {
+                self.up_pressed = is_pressed;
             }
 
-            VirtualKeyCode::J => {
-                self.j_pressed = is_pressed;
+            VirtualKeyCode::Down => {
+                self.down_pressed = is_pressed;
             }
 
-            VirtualKeyCode::H => {
-                self.h_pressed = is_pressed;
+            VirtualKeyCode::Left => {
+                self.left_pressed = is_pressed;
             }
             
-            VirtualKeyCode::K => {
-                self.k_pressed = is_pressed;
+            VirtualKeyCode::Right => {
+                self.right_pressed = is_pressed;
             }
             _ => {}
         }
