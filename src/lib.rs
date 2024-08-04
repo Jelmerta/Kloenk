@@ -57,7 +57,7 @@ pub async fn run() {
     let mut state = render::State::new(window).await;
 
     let mut game_state = game_state::GameState::new();
-    let mut input_handler = input::input::new();
+    let mut input_handler = input::Input::new();
 
     event_loop.run(move |event, _, control_flow| {
         match event {

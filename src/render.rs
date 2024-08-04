@@ -60,10 +60,15 @@ pub struct State {
     // unsafe references to the window's resources.
     window: Window,
     render_pipeline: wgpu::RenderPipeline,
+    render_pipeline_ui: wgpu::RenderPipeline,
     camera: Camera,
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
+    camera_ui: Camera,
+    camera_uniform_ui: CameraUniform,
+    camera_buffer_ui: wgpu::Buffer,
+    camera_bind_group_ui: wgpu::BindGroup,
     // models: Vec<model::Model>,
     //obj_model: model::Model,
     vertex_buffer: wgpu::Buffer,
@@ -71,6 +76,7 @@ pub struct State {
     num_indices: u32,
     depth_texture: texture::Texture,
     instance_buffer: wgpu::Buffer,
+    inv_instance_buffer: wgpu::Buffer,
     diffuse_bind_group: wgpu::BindGroup,
 }
 
@@ -507,6 +513,85 @@ impl State {
             }),
             multiview: None,
         });
+        
+        let camera_ui = Camera::new();
+
+        let mut camera_uniform_ui = CameraUniform::new();
+        camera_uniform_ui.update_view_projection(&camera_ui);
+
+        let camera_buffer_ui = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Camera Buffer UI"),
+            contents: bytemuck::cast_slice(&[camera_uniform_ui]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, // what is COPY_DST?
+        });
+
+        let camera_bind_group_layout_ui =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("Camera Bind Group Layout UI"),
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        // Binding type, horrible naming
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
+
+        let camera_bind_group_ui = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Camera Bind Group UI"),
+            layout: &camera_bind_group_layout_ui,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: camera_buffer_ui.as_entire_binding(),
+            }],
+        });
+
+        let render_pipeline_layout_ui =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Render Pipeline Layout UI"),
+                bind_group_layouts: &[&texture_bind_group_layout, &camera_bind_group_layout_ui],
+                push_constant_ranges: &[],
+            });
+
+        let render_pipeline_ui = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("Render Pipeline UI"),
+            layout: Some(&render_pipeline_layout_ui),
+            vertex: wgpu::VertexState {
+                module: &shader,
+                entry_point: "vs_main",
+                // buffers: &[model::ModelVertex::desc(), InstanceRaw::desc()],
+                buffers: &[model::TexVertex::desc(), InstanceRaw::desc()],
+            },
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw,
+                cull_mode: Some(wgpu::Face::Back),
+                unclipped_depth: false,
+                polygon_mode: wgpu::PolygonMode::Fill,
+                conservative: false,
+            },
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &shader,
+                entry_point: "fs_main",
+                targets: &[Some(wgpu::ColorTargetState {
+                    format: config.format,
+                    blend: Some(wgpu::BlendState::REPLACE),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+            }),
+            multiview: None,
+        });
 
         // let vertex_buffer = device.create_buffer_init(
         //     &wgpu::util::BufferInitDescriptor {
@@ -750,6 +835,13 @@ impl State {
             usage: wgpu::BufferUsages::VERTEX,
         });
 
+        let inv_instance_data = Vec::new().iter().map(Instance::to_raw).collect::<Vec<_>>();
+        let inv_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Inventory Instance Buffer"),
+            contents: bytemuck::cast_slice(&inv_instance_data),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
+        
         Self {
             window,
             surface,
@@ -758,16 +850,22 @@ impl State {
             config,
             size,
             render_pipeline,
+            render_pipeline_ui,
             camera,
             camera_uniform,
             camera_buffer,
             camera_bind_group,
+            camera_ui,
+            camera_uniform_ui,
+            camera_buffer_ui,
+            camera_bind_group_ui,
             vertex_buffer,
             index_buffer,
             num_indices,
             //obj_model: garfield,
             depth_texture,
             instance_buffer,
+            inv_instance_buffer,
             diffuse_bind_group,
         }
     }
@@ -804,16 +902,10 @@ impl State {
         let angle = std::f32::consts::FRAC_PI_4;
         let rad_x = f32::to_radians(game_state.camera_rotation_x_degrees);
         let rad_y = f32::to_radians(game_state.camera_rotation_y_degrees);
-        log::warn!("{}, {}", rad_x, rad_y);
         self.camera.eye = Point3 {
-            // x: game_state.player.position.x + game_state.camera_distance * angle.cos(),
-            // y: game_state.player.position.y + game_state.camera_distance,
-            // z: game_state.player.position.z + game_state.camera_distance * angle.sin(),
-            
             x: game_state.player.position.x + game_state.camera_distance * rad_y.sin() * rad_x.cos(),
             y: game_state.player.position.y + game_state.camera_distance * rad_y.cos(),
             z: game_state.player.position.z + game_state.camera_distance * rad_y.sin() * rad_x.sin(),
-
         };
         self.camera.target = Point3 {
             x : game_state.player.position.x.clone(),
@@ -908,6 +1000,7 @@ impl State {
 
 
 
+
             let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
             let instance_buffer =
                 self.device
@@ -924,13 +1017,122 @@ impl State {
             render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             render_pass.draw_indexed(0..self.num_indices, 0, 0..instances.len() as _);
+            drop(render_pass);
+        }
+            // UI
+            if (game_state.inventory_toggled) {
+                let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                   label: Some("Render Pass UI"),
+                    color_attachments: &[
+                    Some(wgpu::RenderPassColorAttachment {
+                        view: &view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Load,
+                            store: wgpu::StoreOp::Store
+                        },
+                    })],
+                   depth_stencil_attachment: None,
+                    occlusion_query_set: None,
+                    timestamp_writes: None,
+                 });
+            
+            render_pass_ui.set_pipeline(&self.render_pipeline_ui);
+            render_pass_ui.set_bind_group(0, &self.diffuse_bind_group, &[]);
+            render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
+        //         self.camera.eye = Point3 {
+        //             x: 5.0,
+        //             y: 5.0,
+        //             z: 5.0,
+        //         };
+                 // self.camera.target = Point3 {
+                 //     x: game_state.player.get_position().get_x(),
+                 //     y: 0.0,
+                 //     z: 0.0, 
+                 // }; 
+
+            log::warn!("{:?}", self.camera.eye);
+            log::warn!("{}, {}", game_state.player.position.x, game_state.player.position.y);
+            self.camera_ui.eye = Point3 {
+                x: 0.0,
+                y: 0.0,
+                z: 100.0,
+            };
+
+        self.camera_ui.target = Point3 {
+            x : 0.0,
+            y : 0.0, // player does not have an upwards direction yet
+            z : 0.0, // This can be confusing: our 2d world has x
+            // and y. in 3d the y is seen as vertical
+        };
+
+                self.camera_uniform_ui.update_view_projection(&self.camera_ui);
+                self.queue.write_buffer(
+                    &self.camera_buffer_ui,
+                   0,
+                    bytemuck::cast_slice(&[self.camera_uniform_ui]),
+                );
+
+
+                let mut inv_instance_data = Vec::new();
+
+                let inventory_instance = Instance {
+                    position: cgmath::Vector3 {
+                       x: game_state.inventory_position.get_x(),
+                       y: game_state.inventory_position.get_y(),
+                       z: 0.0,
+                   },
+                    rotation: cgmath::Quaternion::from_axis_angle(
+                        cgmath::Vector3::unit_z(),
+                        cgmath::Deg(0.0),
+                    ),
+                 };
+              inv_instance_data.push(Instance::to_raw(&inventory_instance));
+
+            let mut instances = 1;
+                if (game_state.inventory_has_item) {
+                let inventory_item_instance = Instance {
+                    position: cgmath::Vector3 {
+                       x: game_state.inventory_position.get_x() + 0.5,
+                       y: game_state.inventory_position.get_y() - 0.5,
+                       z: -60.0,
+                   },
+                    rotation: cgmath::Quaternion::from_axis_angle(
+                        cgmath::Vector3::unit_z(),
+                        cgmath::Deg(0.0),
+                    ),
+                 };
+                inv_instance_data.push(Instance::to_raw(&inventory_item_instance));
+                    instances = 2;
+                }
+
+            let inv_instance_buffer =
+                self.device
+                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                        label: Some("Inventory Instance Buffer"),
+                        contents: bytemuck::cast_slice(&inv_instance_data),
+                        usage: wgpu::BufferUsages::VERTEX,
+                    });
+            self.inv_instance_buffer = inv_instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
+            //
+
+            render_pass_ui.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass_ui.set_vertex_buffer(1, self.inv_instance_buffer.slice(..));
+            render_pass_ui.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+                render_pass_ui.draw_indexed(0..self.num_indices, 0, 0..instances as _);
+            drop(render_pass_ui);
+            }
+
+            // if ( 
+            // instances.push(inventory_items_instance);
+            //
 
             //use model::DrawModel;
             // let garfield = self.models.pop().unwrap();
             // let mesh = &garfield.meshes[0];
             // render_pass.draw_mesh_instanced(&garfield.meshes[0].clone(), 0..instances.len() as u32);
             //render_pass.draw_model_instanced(&self.obj_model, 0..instances.len() as u32);
-        }
+        
 
         self.queue.submit(iter::once(encoder.finish()));
         output.present();
