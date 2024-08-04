@@ -2,23 +2,52 @@ use winit::event::{ElementState, VirtualKeyCode, MouseScrollDelta};
 use winit::dpi::PhysicalPosition;
 
 #[derive(Debug, Default)]
-pub struct input {
-    pub w_pressed: bool,
-    pub s_pressed: bool,
-    pub a_pressed: bool,
-    pub d_pressed: bool,
+pub struct KeyPress {
+    pub is_pressed: bool,
+    pub was_pressed: bool,
+}
 
-    pub up_pressed: bool,
-    pub down_pressed: bool,
-    pub left_pressed: bool,
-    pub right_pressed: bool,
+impl KeyPress {
+    pub fn new() -> Self {
+        Default::default()
+    }
 
-    pub left_shift_pressed: bool,
+    pub fn set_press_state(&mut self, new_state: bool) {
+        self.was_pressed = self.is_pressed;
+        self.is_pressed = new_state;
+    }
+
+    // TODO HMM different for movement and opening menus
+    pub fn is_toggled_on(&mut self) -> bool {
+        // Once pressed , we do not get n update every frame, so we just make sure that this method
+        // is not called again every frame by setting was pressed
+        let is_toggled = !self.was_pressed && self.is_pressed;
+        self.was_pressed = true;
+        is_toggled
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct Input {
+    pub w_pressed: KeyPress,
+    pub s_pressed: KeyPress,
+    pub a_pressed: KeyPress,
+    pub d_pressed: KeyPress,
+
+    pub i_pressed: KeyPress,
+    pub g_pressed: KeyPress,
+
+    pub up_pressed: KeyPress,
+    pub down_pressed: KeyPress,
+    pub left_pressed: KeyPress,
+    pub right_pressed: KeyPress,
+
+    pub left_shift_pressed: KeyPress,
 
     pub scrolled_amount: f32,
 }
 
-impl input {
+impl Input {
     pub fn new() -> Self {
         Default::default()
     }
@@ -28,43 +57,53 @@ impl input {
 
         match keycode {
             VirtualKeyCode::W => {
-                self.w_pressed = is_pressed;
+                self.w_pressed.set_press_state(is_pressed);
                 return;
             }
 
             VirtualKeyCode::S => {
-                self.s_pressed = is_pressed;
+                self.s_pressed.set_press_state(is_pressed);
                 return;
             }
 
             VirtualKeyCode::A => {
-                self.a_pressed = is_pressed;
+                self.a_pressed.set_press_state(is_pressed);
                 return;
             }
 
             VirtualKeyCode::D => {
-                self.d_pressed = is_pressed;
+                self.d_pressed.set_press_state(is_pressed);
                 return;
             }
 
+            VirtualKeyCode::I => {
+                self.i_pressed.set_press_state(is_pressed);
+                return;
+            }
+
+            VirtualKeyCode::G => {
+                self.g_pressed.set_press_state(is_pressed);
+                return;
+            }
+            
             VirtualKeyCode::LShift => {
-                self.left_shift_pressed = is_pressed;
+                self.left_shift_pressed.set_press_state(is_pressed);
             }
 
             VirtualKeyCode::Up => {
-                self.up_pressed = is_pressed;
+                self.up_pressed.set_press_state(is_pressed);
             }
 
             VirtualKeyCode::Down => {
-                self.down_pressed = is_pressed;
+                self.down_pressed.set_press_state(is_pressed);
             }
 
             VirtualKeyCode::Left => {
-                self.left_pressed = is_pressed;
+                self.left_pressed.set_press_state(is_pressed);
             }
             
             VirtualKeyCode::Right => {
-                self.right_pressed = is_pressed;
+                self.right_pressed.set_press_state(is_pressed);
             }
             _ => {}
         }

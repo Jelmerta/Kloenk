@@ -7,6 +7,10 @@ pub struct GameState {
     // the direction the camera is pointed at
     pub camera_rotation_y_degrees: f32,
     pub entities: Vec<Entity>,
+    pub inventory_toggled: bool,
+    pub inventory_position: Position, // Could be 2d. values between -1 and 1?
+    pub inventory_has_item: bool,// should be an item list
+    //
 }
 
 pub struct Entity {
@@ -87,12 +91,21 @@ impl GameState {
 
         entities.push(enemy);
 
+        
+
         Self {
             player: player,
             camera_distance: camera_distance,
             camera_rotation_x_degrees: 225.0,
             camera_rotation_y_degrees: 315.0,
             entities: entities,
+            inventory_toggled: false,
+            inventory_position: Position { // TODO Not used for some reason????
+                x: 1.33,
+                y: -0.9,
+                z: 0.0,
+            },
+            inventory_has_item: true,
         }
     }
 

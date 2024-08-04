@@ -2,7 +2,7 @@ use web_sys::console;
 
 use crate::{camera, game_state};
 use crate::game_state::{Entity, GameState, Position};
-use crate::input::input;
+use crate::input::Input;
 
 pub struct GameSystem {
 }
@@ -20,26 +20,37 @@ impl GameSystem {
         }
     }
 
-    pub fn update(game_state: &mut GameState, input: &mut input) {
+    pub fn update(game_state: &mut GameState, input: &mut Input) {
         // let entities = &mut game_state.entities;
+        Self::handle_inventory(game_state, input);
         Self::resolve_movement(game_state, input);
         Self::update_camera(game_state, input);
     }
 
-    fn update_camera(game_state: &mut GameState, input: &mut input) {
-        if (input.up_pressed) {
+    fn handle_inventory(game_state: &mut GameState, input: &mut Input) {
+        if (input.i_pressed.is_toggled_on()) {
+            game_state.inventory_toggled = !game_state.inventory_toggled;
+        }
+
+        if (input.g_pressed.is_toggled_on()) {
+            game_state.inventory_has_item = !game_state.inventory_has_item;
+        }
+    }
+
+    fn update_camera(game_state: &mut GameState, input: &mut Input) {
+        if (input.up_pressed.is_pressed) {
             game_state.camera_rotation_y_degrees = game_state.camera_rotation_y_degrees + CAMERA_MOVEMENT_SPEED;
         }
 
-        if (input.down_pressed) {
+        if (input.down_pressed.is_pressed) {
             game_state.camera_rotation_y_degrees = game_state.camera_rotation_y_degrees - CAMERA_MOVEMENT_SPEED;
         }
 
-        if (input.right_pressed) {
+        if (input.right_pressed.is_pressed) {
             game_state.camera_rotation_x_degrees = game_state.camera_rotation_x_degrees - CAMERA_MOVEMENT_SPEED;
         }
 
-        if (input.left_pressed) {
+        if (input.left_pressed.is_pressed) {
             game_state.camera_rotation_x_degrees = game_state.camera_rotation_x_degrees + CAMERA_MOVEMENT_SPEED;
         }
 
@@ -98,13 +109,13 @@ impl GameSystem {
         input.scrolled_amount = 0.0;
     }
 
-    fn resolve_movement(game_state: &mut GameState, input: &input) {
+    fn resolve_movement(game_state: &mut GameState, input: &Input) {
         let mut movement_speed: f32 = BASE_SPEED;
-        if (input.left_shift_pressed) {
+        if (input.left_shift_pressed.is_pressed) {
             movement_speed *= 2.5;
         }
 
-        if input.w_pressed {
+        if input.w_pressed.is_pressed {
             game_state.player.previous_position = Position {
                 x: game_state.player.position.x.clone(),
                 y: game_state.player.position.y.clone(),
@@ -115,7 +126,7 @@ impl GameSystem {
             resolve_collisions(game_state)
         }
 
-        if input.s_pressed {
+        if input.s_pressed.is_pressed {
             game_state.player.previous_position = Position {
                 x: game_state.player.position.x.clone(),
                 y: game_state.player.position.y.clone(),
@@ -126,7 +137,7 @@ impl GameSystem {
             resolve_collisions(game_state)
         }
 
-        if input.a_pressed {
+        if input.a_pressed.is_pressed {
             game_state.player.previous_position = Position {
                 x: game_state.player.position.x.clone(),
                 y: game_state.player.position.y.clone(),
@@ -137,7 +148,7 @@ impl GameSystem {
             resolve_collisions(game_state)
         }
 
-        if input.d_pressed {
+        if input.d_pressed.is_pressed {
             game_state.player.previous_position = Position {
                 x: game_state.player.position.x.clone(),
                 y: game_state.player.position.y.clone(),
