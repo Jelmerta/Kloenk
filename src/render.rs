@@ -4,19 +4,19 @@ use std::{iter, mem, primitive};
 use cgmath::{prelude::*, Point3};
 use gltf::iter::Meshes;
 use gltf::mesh::util::indices;
+use gltf::texture as gltf_texture;
+use gltf::Gltf;
+use wasm_bindgen::prelude::*;
 use web_sys::console;
 use wgpu::util::DeviceExt;
 use winit::event::WindowEvent;
 use winit::window::Window;
-use gltf::Gltf;
-use gltf::texture as gltf_texture;
-use wasm_bindgen::prelude::*; 
 
-use crate::camera::{Camera, self};
-use crate::game_state::{GameState, Position, self};
-use crate::texture;
-use crate::model::{self, TexVertex};
+use crate::camera::{self, Camera};
+use crate::game_state::{self, GameState, Position};
 use crate::model::Vertex;
+use crate::model::{self, TexVertex};
+use crate::texture;
 // use crate::resources::load_binary;
 
 // #[wasm_bindgen(start)]
@@ -79,7 +79,6 @@ pub struct State {
     inv_instance_buffer: wgpu::Buffer,
     diffuse_bind_group: wgpu::BindGroup,
 }
-
 
 struct Instance {
     position: cgmath::Vector3<f32>,
@@ -227,7 +226,7 @@ const CUBE_TEX: &[model::TexVertex] = &[
     }, // Yellow
     model::TexVertex {
         position: [-0.5, 0.5, 0.5],
-            tex_coords: [0.0, 0.0],
+        tex_coords: [0.0, 0.0],
     }, // Purple
     // Bottom ccw as seen from top
     model::TexVertex {
@@ -341,18 +340,16 @@ impl State {
             // height: 256,
             depth_or_array_layers: 1,
         };
-        let diffuse_texture = device.create_texture(
-            &wgpu::TextureDescriptor {
-                size: texture_size,
-                mip_level_count: 1,
-                sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::Rgba8UnormSrgb,
-                usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-                label: Some("diffuse_texture"),
-                view_formats: &[],
-            },
-        );
+        let diffuse_texture = device.create_texture(&wgpu::TextureDescriptor {
+            size: texture_size,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+            label: Some("diffuse_texture"),
+            view_formats: &[],
+        });
         // log::warn!("{:?}", diffuse_rgba);
 
         queue.write_texture(
@@ -371,7 +368,8 @@ impl State {
             texture_size,
         );
 
-        let diffuse_texture_view = diffuse_texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let diffuse_texture_view =
+            diffuse_texture.create_view(&wgpu::TextureViewDescriptor::default());
         let diffuse_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
             address_mode_u: wgpu::AddressMode::ClampToEdge,
             address_mode_v: wgpu::AddressMode::ClampToEdge,
@@ -387,7 +385,7 @@ impl State {
                 entries: &[
                     wgpu::BindGroupLayoutEntry {
                         binding: 0,
-                        visibility:  wgpu::ShaderStages::FRAGMENT,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
                             view_dimension: wgpu::TextureViewDimension::D2,
@@ -405,22 +403,20 @@ impl State {
                 label: Some("texture_bind_group_layout"),
             });
 
-        let diffuse_bind_group = device.create_bind_group(
-            &wgpu::BindGroupDescriptor {
-                layout: &texture_bind_group_layout,
-                entries: &[
-                    wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: wgpu::BindingResource::TextureView(&diffuse_texture_view),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: wgpu::BindingResource::Sampler(&diffuse_sampler),
-                    }
-                ],
-                label: Some("diffuse_bind_group"),
-            }
-        );
+        let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &texture_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&diffuse_texture_view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&diffuse_sampler),
+                },
+            ],
+            label: Some("diffuse_bind_group"),
+        });
         // ----- end texture stuff
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -513,7 +509,7 @@ impl State {
             }),
             multiview: None,
         });
-        
+
         let camera_ui = Camera::new();
 
         let mut camera_uniform_ui = CameraUniform::new();
@@ -601,29 +597,29 @@ impl State {
         //     }
         // );
         // let num_vertices = TRIANGLE.len() as u32;
-// let (document, buffers, images) = gltf::import("examples/Box.gltf")?;
-    // let gltf_data = include_bytes!("../models/garfield/scene.gltf");
-    // let gltf = Gltf::from_slice(gltf_data).expect("Failed to load Garfield");
-    // log::warn!("{:?}", gltf.scenes());
-    //     log::warn!("Hi?");
-    //     // let gltf = Gltf::open("models/garfield/scene.gltf").expect("Failed to load garfield kartfield");
-    //     // log::debug!("{:?}", gltf);
-    //     // for scene in gltf.scenes() {
-    //     //     for node in scene.nodes() {
-    //     //       println!(
-    //     //       "Node #{} has {} children",
-    //     //       node.index(),
-    //     //          node.children().count(),
-    //     //       );
-    //     //     }
-    //     // }
-    //     //
+        // let (document, buffers, images) = gltf::import("examples/Box.gltf")?;
+        // let gltf_data = include_bytes!("../models/garfield/scene.gltf");
+        // let gltf = Gltf::from_slice(gltf_data).expect("Failed to load Garfield");
+        // log::warn!("{:?}", gltf.scenes());
+        //     log::warn!("Hi?");
+        //     // let gltf = Gltf::open("models/garfield/scene.gltf").expect("Failed to load garfield kartfield");
+        //     // log::debug!("{:?}", gltf);
+        //     // for scene in gltf.scenes() {
+        //     //     for node in scene.nodes() {
+        //     //       println!(
+        //     //       "Node #{} has {} children",
+        //     //       node.index(),
+        //     //          node.children().count(),
+        //     //       );
+        //     //     }
+        //     // }
+        //     //
 
         // let mut vertices: Vec<TexVertex> = Vec::new();
-    //     let mut buffer_data = Vec::new();
-    //     // buffer_data.push("2312".as_bytes());
-    // 
-    // 
+        //     let mut buffer_data = Vec::new();
+        //     // buffer_data.push("2312".as_bytes());
+        //
+        //
 
         // Barely know what the buffers do yet...
         // for buffer in gltf.buffers() {
@@ -642,44 +638,43 @@ impl State {
         //     }
         // }
 
-
-// let mut buffer_data = Vec::new();
-//     for buffer in gltf.buffers() {
-//         match buffer.source() {
-//             gltf::buffer::Source::Uri(uri) => {
-//                 // let uri = percent_encoding::percent_decode_str(uri)
-//                     // .decode_utf8()
-//                     // .unwrap();
-//                 // let uri = uri.as_ref();
-//                 // let buffer_bytes = match DataUri::parse(uri) {
-//                 //     Ok(data_uri) if VALID_MIME_TYPES.contains(&data_uri.mime_type) => {
-//                         // data_uri.decode()?
-//                     // }
-//                     // Ok(_) => return Err(GltfError::BufferFormatUnsupported),
-//                     // Err(()) => {
-//                         // TODO: Remove this and add dep
-//                         // let buffer_path = load_context.path().parent().unwrap().join(uri);
-//                         // load_context.read_asset_bytes(buffer_path).await?
-//                     // }
-//                 // };
-//                 // buffer_data.push();
-//             }
-//             gltf::buffer::Source::Bin => {
-//                 if let Some(blob) = gltf.blob.as_deref() {
-//                     buffer_data.push(blob.into());
-//                 } else {
-//                     panic!(":)");
-//                 }
-//             }
-//         }
-//     }
+        // let mut buffer_data = Vec::new();
+        //     for buffer in gltf.buffers() {
+        //         match buffer.source() {
+        //             gltf::buffer::Source::Uri(uri) => {
+        //                 // let uri = percent_encoding::percent_decode_str(uri)
+        //                     // .decode_utf8()
+        //                     // .unwrap();
+        //                 // let uri = uri.as_ref();
+        //                 // let buffer_bytes = match DataUri::parse(uri) {
+        //                 //     Ok(data_uri) if VALID_MIME_TYPES.contains(&data_uri.mime_type) => {
+        //                         // data_uri.decode()?
+        //                     // }
+        //                     // Ok(_) => return Err(GltfError::BufferFormatUnsupported),
+        //                     // Err(()) => {
+        //                         // TODO: Remove this and add dep
+        //                         // let buffer_path = load_context.path().parent().unwrap().join(uri);
+        //                         // load_context.read_asset_bytes(buffer_path).await?
+        //                     // }
+        //                 // };
+        //                 // buffer_data.push();
+        //             }
+        //             gltf::buffer::Source::Bin => {
+        //                 if let Some(blob) = gltf.blob.as_deref() {
+        //                     buffer_data.push(blob.into());
+        //                 } else {
+        //                     panic!(":)");
+        //                 }
+        //             }
+        //         }
+        //     }
 
         // let mut meshes = Vec::new();
         // for mesh in gltf.meshes() {
         //             // log::warn!("Mesh: {}", mesh.name().unwrap_or("Unnamed").into());
         //     // for primitive in mesh.primitives() {
         //         // let reader = primitive.reader(|buffer| Some(&buffer_data[buffer.index()]));
-        //         // let positions: Vec<[f32; 3]> = if let Some(positions_accessor) = primitive.get(&gltf::Semantic::Positions) { // Hard to read imo 
+        //         // let positions: Vec<[f32; 3]> = if let Some(positions_accessor) = primitive.get(&gltf::Semantic::Positions) { // Hard to read imo
         //             // let reader = positions_accessor.reader();
         // //             reader.into_f32().map(|p| [p[0], p[1], p[2]]).collect()
         // //         } else {
@@ -689,49 +684,49 @@ impl State {
         // // }
         //     // }
         //     //
-        //    
+        //
         //     mesh.primitives().for_each(|primitive| {
         //         let reader = primitive.reader(|buffer| Some(&buffer_data[buffer.index()]));
         //     // let reader = primitive.reader(|buffer| Some(buffer_data[buffer.index()].as_slice()));
 
-                // let mut vertices = Vec::new();
-                // if let Some(vertex_attibute) = reader.read_positions() {
-                //     vertex_attibute.for_each(|vertex| {
-                //         vertices.push(TexVertex {
-                //             position: vertex,
-                //             tex_coords: Default::default(),
-                //         })
-                //     });
-                // }
+        // let mut vertices = Vec::new();
+        // if let Some(vertex_attibute) = reader.read_positions() {
+        //     vertex_attibute.for_each(|vertex| {
+        //         vertices.push(TexVertex {
+        //             position: vertex,
+        //             tex_coords: Default::default(),
+        //         })
+        //     });
+        // }
 
-                // if let Some(normal_attribute) = reader.read_normals()
-                
-                // if let Some(tex_coord_attribute) = reader.read_tex_coords(0).map(|tex_coord_index| tex_coord_index.into_f32()) { // We map so that
-                //     let mut tex_coord_index = 0;
-                //     tex_coord_attribute.for_each(|tex_coord| {
-                //         vertices[tex_coord_index].tex_coords = tex_coord;
+        // if let Some(normal_attribute) = reader.read_normals()
 
-                //         tex_coord_index += 1; // does ++ not work?
-                //     }); 
-                // // we can increase the index of tex coords accordingly
-                // } 
+        // if let Some(tex_coord_attribute) = reader.read_tex_coords(0).map(|tex_coord_index| tex_coord_index.into_f32()) { // We map so that
+        //     let mut tex_coord_index = 0;
+        //     tex_coord_attribute.for_each(|tex_coord| {
+        //         vertices[tex_coord_index].tex_coords = tex_coord;
 
-                // let mut indices = Vec::new();
-                // if let Some(indices_raw) = reader.read_indices() {
-                //     indices.append(&mut indices_raw.into_u32().collect::<Vec<u32>>());
-                // }
+        //         tex_coord_index += 1; // does ++ not work?
+        //     });
+        // // we can increase the index of tex coords accordingly
+        // }
 
-                // let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                //     label: Some("Vertex buffer"),
-                //     contents: bytemuck::cast_slice(&vertices),
-                //     usage: wgpu::BufferUsages::VERTEX,
-                // });
+        // let mut indices = Vec::new();
+        // if let Some(indices_raw) = reader.read_indices() {
+        //     indices.append(&mut indices_raw.into_u32().collect::<Vec<u32>>());
+        // }
 
-                // let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                //     label: Some("Index buffer"),
-                //     contents: bytemuck::cast_slice(&indices),
-                //     usage: wgpu::BufferUsages::INDEX,
-                // });
+        // let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //     label: Some("Vertex buffer"),
+        //     contents: bytemuck::cast_slice(&vertices),
+        //     usage: wgpu::BufferUsages::VERTEX,
+        // });
+
+        // let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //     label: Some("Index buffer"),
+        //     contents: bytemuck::cast_slice(&indices),
+        //     usage: wgpu::BufferUsages::INDEX,
+        // });
 
         //         meshes.push(model::Mesh {
         //             name: "Garfield".to_string(),
@@ -739,7 +734,7 @@ impl State {
         //             index_buffer,
         //             num_elements: indices.len() as u32,
         //             material: 0,
-        //         })  
+        //         })
         //     });
         // }
         // //
@@ -748,7 +743,7 @@ impl State {
         // // // let mut materials = Vec::new();
         // // for obj_material in object_materials? {
         //     // gltf.1
-        //     
+        //
         //     // let diffuse_texture = load_tex;
         //     // let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
         //     //     layout,
@@ -783,7 +778,7 @@ impl State {
         //     contents: bytemuck::cast_slice(CUBE),
         //     usage: wgpu::BufferUsages::VERTEX,
         // });
-         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(CUBE_TEX),
             usage: wgpu::BufferUsages::VERTEX,
@@ -841,7 +836,7 @@ impl State {
             contents: bytemuck::cast_slice(&inv_instance_data),
             usage: wgpu::BufferUsages::VERTEX,
         });
-        
+
         Self {
             window,
             surface,
@@ -897,30 +892,31 @@ impl State {
     pub fn render(&mut self, game_state: &GameState) -> Result<(), wgpu::SurfaceError> {
         // Update the camera in render with the game state data to build the new view
         // projection
-        
+
         // Use 45 degrees for isometric view.
         let angle = std::f32::consts::FRAC_PI_4;
         let rad_x = f32::to_radians(game_state.camera_rotation_x_degrees);
         let rad_y = f32::to_radians(game_state.camera_rotation_y_degrees);
         self.camera.eye = Point3 {
-            x: game_state.player.position.x + game_state.camera_distance * rad_y.sin() * rad_x.cos(),
+            x: game_state.player.position.x
+                + game_state.camera_distance * rad_y.sin() * rad_x.cos(),
             y: game_state.player.position.y + game_state.camera_distance * rad_y.cos(),
-            z: game_state.player.position.z + game_state.camera_distance * rad_y.sin() * rad_x.sin(),
+            z: game_state.player.position.z
+                + game_state.camera_distance * rad_y.sin() * rad_x.sin(),
         };
         self.camera.target = Point3 {
-            x : game_state.player.position.x.clone(),
-            y : 0.0, // player does not have an upwards direction yet
-            z : game_state.player.position.y.clone(), // This can be confusing: our 2d world has x
-            // and y. in 3d the y is seen as vertical
+            x: game_state.player.position.x.clone(),
+            y: 0.0, // player does not have an upwards direction yet
+            z: game_state.player.position.y.clone(), // This can be confusing: our 2d world has x
+                    // and y. in 3d the y is seen as vertical
         };
-      
+
         self.camera_uniform.update_view_projection(&self.camera);
         self.queue.write_buffer(
             &self.camera_buffer,
             0,
             bytemuck::cast_slice(&[self.camera_uniform]),
         );
-
 
         let output = self.surface.get_current_texture()?;
         let view = output
@@ -961,7 +957,7 @@ impl State {
                 occlusion_query_set: None,
                 timestamp_writes: None,
             });
-            
+
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
@@ -998,9 +994,6 @@ impl State {
             };
             instances.push(player_instance);
 
-
-
-
             let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
             let instance_buffer =
                 self.device
@@ -1019,92 +1012,85 @@ impl State {
             render_pass.draw_indexed(0..self.num_indices, 0, 0..instances.len() as _);
             drop(render_pass);
         }
-            // UI
-            if (game_state.inventory_toggled) {
-                let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                   label: Some("Render Pass UI"),
-                    color_attachments: &[
-                    Some(wgpu::RenderPassColorAttachment {
-                        view: &view,
-                        resolve_target: None,
-                        ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Load,
-                            store: wgpu::StoreOp::Store
-                        },
-                    })],
-                   depth_stencil_attachment: None,
-                    occlusion_query_set: None,
-                    timestamp_writes: None,
-                 });
-            
+        // UI
+        if (game_state.inventory_toggled) {
+            let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Render Pass UI"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Load,
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                occlusion_query_set: None,
+                timestamp_writes: None,
+            });
+
             render_pass_ui.set_pipeline(&self.render_pipeline_ui);
             render_pass_ui.set_bind_group(0, &self.diffuse_bind_group, &[]);
             render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
-        //         self.camera.eye = Point3 {
-        //             x: 5.0,
-        //             y: 5.0,
-        //             z: 5.0,
-        //         };
-                 // self.camera.target = Point3 {
-                 //     x: game_state.player.get_position().get_x(),
-                 //     y: 0.0,
-                 //     z: 0.0, 
-                 // }; 
 
             log::warn!("{:?}", self.camera.eye);
-            log::warn!("{}, {}", game_state.player.position.x, game_state.player.position.y);
+            log::warn!(
+                "{}, {}",
+                game_state.player.position.x,
+                game_state.player.position.y
+            );
             self.camera_ui.eye = Point3 {
                 x: 0.0,
                 y: 0.0,
                 z: 100.0,
             };
 
-        self.camera_ui.target = Point3 {
-            x : 0.0,
-            y : 0.0, // player does not have an upwards direction yet
-            z : 0.0, // This can be confusing: our 2d world has x
-            // and y. in 3d the y is seen as vertical
-        };
+            self.camera_ui.target = Point3 {
+                x: 0.0,
+                y: 0.0, // player does not have an upwards direction yet
+                z: 0.0, // This can be confusing: our 2d world has x
+                        // and y. in 3d the y is seen as vertical
+            };
 
-                self.camera_uniform_ui.update_view_projection(&self.camera_ui);
-                self.queue.write_buffer(
-                    &self.camera_buffer_ui,
-                   0,
-                    bytemuck::cast_slice(&[self.camera_uniform_ui]),
-                );
+            self.camera_uniform_ui
+                .update_view_projection(&self.camera_ui);
+            self.queue.write_buffer(
+                &self.camera_buffer_ui,
+                0,
+                bytemuck::cast_slice(&[self.camera_uniform_ui]),
+            );
 
+            let mut inv_instance_data = Vec::new();
 
-                let mut inv_instance_data = Vec::new();
-
-                let inventory_instance = Instance {
-                    position: cgmath::Vector3 {
-                       x: game_state.inventory_position.get_x(),
-                       y: game_state.inventory_position.get_y(),
-                       z: 0.0,
-                   },
-                    rotation: cgmath::Quaternion::from_axis_angle(
-                        cgmath::Vector3::unit_z(),
-                        cgmath::Deg(0.0),
-                    ),
-                 };
-              inv_instance_data.push(Instance::to_raw(&inventory_instance));
+            let inventory_instance = Instance {
+                position: cgmath::Vector3 {
+                    x: game_state.inventory_position.get_x(),
+                    y: game_state.inventory_position.get_y(),
+                    z: 0.0,
+                },
+                rotation: cgmath::Quaternion::from_axis_angle(
+                    cgmath::Vector3::unit_z(),
+                    cgmath::Deg(0.0),
+                ),
+            };
+            inv_instance_data.push(Instance::to_raw(&inventory_instance));
 
             let mut instances = 1;
-                if (game_state.inventory_has_item) {
+            if (game_state.inventory_has_item) {
                 let inventory_item_instance = Instance {
                     position: cgmath::Vector3 {
-                       x: game_state.inventory_position.get_x() + 0.5,
-                       y: game_state.inventory_position.get_y() - 0.5,
-                       z: -60.0,
-                   },
+                        x: game_state.inventory_position.get_x() + 0.5,
+                        y: game_state.inventory_position.get_y() - 0.5,
+                        z: -60.0,
+                    },
                     rotation: cgmath::Quaternion::from_axis_angle(
                         cgmath::Vector3::unit_z(),
                         cgmath::Deg(0.0),
                     ),
-                 };
+                };
                 inv_instance_data.push(Instance::to_raw(&inventory_item_instance));
-                    instances = 2;
-                }
+                instances = 2;
+            }
 
             let inv_instance_buffer =
                 self.device
@@ -1114,25 +1100,24 @@ impl State {
                         usage: wgpu::BufferUsages::VERTEX,
                     });
             self.inv_instance_buffer = inv_instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
-            //
+                                                            //
 
             render_pass_ui.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass_ui.set_vertex_buffer(1, self.inv_instance_buffer.slice(..));
             render_pass_ui.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-                render_pass_ui.draw_indexed(0..self.num_indices, 0, 0..instances as _);
+            render_pass_ui.draw_indexed(0..self.num_indices, 0, 0..instances as _);
             drop(render_pass_ui);
-            }
+        }
 
-            // if ( 
-            // instances.push(inventory_items_instance);
-            //
+        // if (
+        // instances.push(inventory_items_instance);
+        //
 
-            //use model::DrawModel;
-            // let garfield = self.models.pop().unwrap();
-            // let mesh = &garfield.meshes[0];
-            // render_pass.draw_mesh_instanced(&garfield.meshes[0].clone(), 0..instances.len() as u32);
-            //render_pass.draw_model_instanced(&self.obj_model, 0..instances.len() as u32);
-        
+        //use model::DrawModel;
+        // let garfield = self.models.pop().unwrap();
+        // let mesh = &garfield.meshes[0];
+        // render_pass.draw_mesh_instanced(&garfield.meshes[0].clone(), 0..instances.len() as u32);
+        //render_pass.draw_model_instanced(&self.obj_model, 0..instances.len() as u32);
 
         self.queue.submit(iter::once(encoder.finish()));
         output.present();
@@ -1140,4 +1125,3 @@ impl State {
         Ok(())
     }
 }
-
