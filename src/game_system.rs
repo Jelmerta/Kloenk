@@ -12,7 +12,8 @@ pub const BASE_SPEED: f32 = 0.01;
 pub const MIN_CAMERA_DISTANCE: f32 = 100.0;
 pub const MAX_CAMERA_DISTANCE: f32 = 500.0;
 pub const CAMERA_MOVEMENT_SPEED: f32 = 3.0;
-pub const CAMERA_TOP_BOTTOM_LIMIT: f32 = 10.0;
+pub const CAMERA_BOTTOM_LIMIT: f32 = 280.0;
+pub const CAMERA_TOP_LIMIT: f32 = 350.0;
 
 impl GameSystem {
     pub fn new() -> Self {
@@ -64,12 +65,12 @@ impl GameSystem {
             game_state.camera_rotation_x_degrees -= 360.0;
         }
 
-        if game_state.camera_rotation_y_degrees < 180.0 + CAMERA_TOP_BOTTOM_LIMIT {
-            game_state.camera_rotation_y_degrees = 180.0 + CAMERA_TOP_BOTTOM_LIMIT;
+        if game_state.camera_rotation_y_degrees < CAMERA_BOTTOM_LIMIT {
+            game_state.camera_rotation_y_degrees = CAMERA_BOTTOM_LIMIT;
         }
 
-        if game_state.camera_rotation_y_degrees >= 360.0 - CAMERA_TOP_BOTTOM_LIMIT {
-            game_state.camera_rotation_y_degrees = 360.0 - CAMERA_TOP_BOTTOM_LIMIT;
+        if game_state.camera_rotation_y_degrees >= CAMERA_TOP_LIMIT {
+            game_state.camera_rotation_y_degrees = CAMERA_TOP_LIMIT;
         }
 
         let normalised_scroll_amount: f32 = -input.scrolled_amount * 0.1;

@@ -94,13 +94,13 @@ impl GameState {
         
 
         Self {
-            player: player,
-            camera_distance: camera_distance,
+            player,
+            camera_distance,
             camera_rotation_x_degrees: 225.0,
             camera_rotation_y_degrees: 315.0,
-            entities: entities,
+            entities,
             inventory_toggled: false,
-            inventory_position: Position { // TODO Not used for some reason????
+            inventory_position: Position {
                 x: 1.33,
                 y: -0.9,
                 z: 0.0,
