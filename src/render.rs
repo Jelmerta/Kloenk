@@ -82,6 +82,7 @@ pub struct State {
 
 struct Instance {
     position: cgmath::Vector3<f32>,
+    scale: cgmath::Matrix4<f32>,
     rotation: cgmath::Quaternion<f32>,
 }
 
@@ -89,6 +90,7 @@ impl Instance {
     fn to_raw(&self) -> InstanceRaw {
         InstanceRaw {
             model: (cgmath::Matrix4::from_translation(self.position)
+                * self.scale
                 * cgmath::Matrix4::from(self.rotation))
             .into(),
         }
@@ -972,6 +974,7 @@ impl State {
                         y: 0.0,
                         z: position.get_y(),
                     },
+                    scale: cgmath::Matrix4::identity(), 
                     rotation: cgmath::Quaternion::from_axis_angle(
                         cgmath::Vector3::unit_z(),
                         cgmath::Deg(0.0),
@@ -987,12 +990,32 @@ impl State {
                     y: 0.0,
                     z: player_position.get_y(),
                 },
+                scale: cgmath::Matrix4::identity(),
                 rotation: cgmath::Quaternion::from_axis_angle(
                     cgmath::Vector3::unit_z(),
                     cgmath::Deg(0.0),
                 ),
             };
             instances.push(player_instance);
+
+            
+            
+            let plane_position = game_state.plane.get_position();
+            let plane_instance = Instance {
+                position: cgmath::Vector3 {
+                    x: plane_position.get_x(),
+                    y: plane_position.get_z(),
+                    z: plane_position.get_y(),
+                },
+                scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(game_state.plane.size.x, game_state.plane.size.z, game_state.plane.size.y, 1.0)),
+                rotation: cgmath::Quaternion::from_axis_angle(
+                    cgmath::Vector3::unit_z(),
+                    cgmath::Deg(0.0),
+                ),
+            };
+            instances.push(plane_instance);
+
+
 
             let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
             let instance_buffer =
@@ -1013,7 +1036,7 @@ impl State {
             drop(render_pass);
         }
         // UI
-        if (game_state.inventory_toggled) {
+        if game_state.inventory_toggled {
             let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass UI"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -1062,6 +1085,7 @@ impl State {
                     y: game_state.inventory_position.get_y(),
                     z: 0.0,
                 },
+                scale: cgmath::Matrix4::identity(),
                 rotation: cgmath::Quaternion::from_axis_angle(
                     cgmath::Vector3::unit_z(),
                     cgmath::Deg(0.0),
@@ -1077,6 +1101,7 @@ impl State {
                         y: game_state.inventory_position.get_y() - 0.5,
                         z: -60.0,
                     },
+                    scale: cgmath::Matrix4::identity(),
                     rotation: cgmath::Quaternion::from_axis_angle(
                         cgmath::Vector3::unit_z(),
                         cgmath::Deg(0.0),
