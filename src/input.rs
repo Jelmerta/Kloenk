@@ -35,6 +35,7 @@ pub struct Input {
     pub d_pressed: KeyPress,
 
     pub i_pressed: KeyPress,
+    pub e_pressed: KeyPress,
     pub g_pressed: KeyPress,
 
     pub up_pressed: KeyPress,
@@ -78,6 +79,11 @@ impl Input {
 
             VirtualKeyCode::I => {
                 self.i_pressed.set_press_state(is_pressed);
+                return;
+            }
+
+            VirtualKeyCode::E => {
+                self.e_pressed.set_press_state(is_pressed);
                 return;
             }
 

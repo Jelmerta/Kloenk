@@ -1076,7 +1076,7 @@ impl State {
             inv_instance_data.push(Instance::to_raw(&inventory_instance));
 
             let mut instances = 1;
-            if (game_state.inventory_has_item) {
+            if (game_state.inventory_item_count > 0) {
                 let inventory_item_instance = Instance {
                     position: cgmath::Vector3 {
                         x: game_state.inventory_position.get_x() + 0.5,
