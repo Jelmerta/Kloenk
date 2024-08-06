@@ -1033,12 +1033,6 @@ impl State {
             render_pass_ui.set_bind_group(0, &self.diffuse_bind_group, &[]);
             render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
 
-            log::warn!("{:?}", self.camera.eye);
-            log::warn!(
-                "{}, {}",
-                game_state.player.position.x,
-                game_state.player.position.y
-            );
             self.camera_ui.eye = Point3 {
                 x: 0.0,
                 y: 0.0,

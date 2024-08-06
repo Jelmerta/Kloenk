@@ -1,4 +1,5 @@
-use winit::event::{ElementState, VirtualKeyCode, MouseScrollDelta};
+use log::warn;
+use winit::event::{ElementState, VirtualKeyCode, MouseScrollDelta, MouseButton, WindowEvent};
 use winit::dpi::PhysicalPosition;
 
 #[derive(Debug, Default)]
@@ -44,6 +45,8 @@ pub struct Input {
     pub right_pressed: KeyPress,
 
     pub left_shift_pressed: KeyPress,
+    
+    pub right_mouse_clicked: KeyPress,
 
     pub scrolled_amount: f32,
 }
@@ -111,6 +114,19 @@ impl Input {
             VirtualKeyCode::Right => {
                 self.right_pressed.set_press_state(is_pressed);
             }
+            _ => {}
+        }
+    }
+
+    pub fn process_mouse_button(&mut self, button: &MouseButton, state: &ElementState) { 
+        let is_pressed = *state == ElementState::Pressed;
+       
+        match button {
+            MouseButton::Right => {
+                self.right_mouse_clicked.set_press_state(is_pressed);
+                return;
+            }
+
             _ => {}
         }
     }

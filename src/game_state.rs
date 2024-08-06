@@ -3,18 +3,17 @@ use std::sync::atomic::{AtomicU32, Ordering};
 pub const TOTAL_DISTANCE: f32 = 200000.; // Verify naming, probbaly not total distance
 
 pub struct GameState {
-    
     pub player: Entity,
     pub camera_distance: f32,
-    pub camera_rotation_x_degrees: f32,// as seen on a sphere, to figure out the position of the camera. it is not
+    pub camera_rotation_x_degrees: f32, // as seen on a sphere, to figure out the position of the camera. it is not
     // the direction the camera is pointed at
     pub camera_rotation_y_degrees: f32,
     pub current_entity_id: AtomicU32,
     pub entities: Vec<Entity>,
     pub inventory_toggled: bool,
     pub inventory_position: Position, // Could be 2d. values between -1 and 1?
-    pub inventory_item_count: u32,// should be an item list
-    //
+    pub inventory_item_count: u32,    // should be an item list
+                                      //
 }
 
 pub struct Entity {
@@ -30,6 +29,7 @@ impl Entity {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct Position {
     pub x: f32,
     pub y: f32,
@@ -66,14 +66,14 @@ impl GameState {
 
         let camera_distance = f32::sqrt(TOTAL_DISTANCE / 3.0);
         // let camera = Entity {
-            // previous_position: Position { // previous position probably not really used right now
-                // for camera.
-                // x: starting_camera_distance,
-                // y: starting_camera_distance,
-                // z: starting_camera_distance,
-            // },
-            // position: Position {
-                // x: starting_camera_distance,
+        // previous_position: Position { // previous position probably not really used right now
+        // for camera.
+        // x: starting_camera_distance,
+        // y: starting_camera_distance,
+        // z: starting_camera_distance,
+        // },
+        // position: Position {
+        // x: starting_camera_distance,
         //         y: starting_camera_distance,
         //         z: starting_camera_distance,
         //     },
@@ -99,8 +99,6 @@ impl GameState {
 
         entities.push(enemy);
 
-        
-
         Self {
             player,
             camera_distance,
@@ -118,7 +116,8 @@ impl GameState {
         }
     }
 
-    pub fn get_entities(&self) -> &Vec<Entity> { // &?
+    pub fn get_entities(&self) -> &Vec<Entity> {
+        // &?
         &self.entities
     }
 
@@ -129,8 +128,17 @@ impl GameState {
     pub(crate) fn add_item_to_inventory(&mut self) {
         self.inventory_item_count = self.inventory_item_count + 1;
     }
-    
+
     pub fn get_entity(&self, id: u32) -> Option<&Entity> {
         self.entities.iter().find(|entity| entity.id == id)
+    }
+
+    pub fn new_entity(&self, placement_position: Position) -> Entity {
+        return Entity {
+            id: self.current_entity_id.fetch_add(1, Ordering::SeqCst),
+            position: placement_position,
+            previous_position: placement_position,
+            hitbox: 0.51,
+        }
     }
 }

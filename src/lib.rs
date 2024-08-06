@@ -88,6 +88,9 @@ pub async fn run() {
                         } => {
                             input_handler.update(key, element_state);
                         }
+                        WindowEvent::MouseInput { state, button, .. } => {
+                            input_handler.process_mouse_button(button, state);
+                        }
                         WindowEvent::MouseWheel { delta, .. } => {
                             input_handler.process_scroll(delta);
                             true;

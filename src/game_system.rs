@@ -24,6 +24,7 @@ impl GameSystem {
     pub fn update(game_state: &mut GameState, input: &mut Input) {
         // let entities = &mut game_state.entities;
         Self::handle_item_pickup(game_state, input);
+        Self::handle_item_placement(game_state, input);
         Self::handle_inventory(game_state, input);
         Self::resolve_movement(game_state, input);
         Self::update_camera(game_state, input);
@@ -32,14 +33,11 @@ impl GameSystem {
     fn handle_item_pickup(game_state: &mut GameState, input: &mut Input) { // mut input just for is
         // toggled on. could possibly be changed
         if input.e_pressed.is_toggled_on() {
-            log::warn!("e pressed");
             let near_item_id = Self::find_near_item_id(game_state);
             if let Some(near_item_id_unpacked) = near_item_id {
-                log::warn!("Found near item");
                 if !Self::in_item_pickup_range(&game_state, near_item_id_unpacked) {
                     return;
                 } else {
-                    log::warn!("meming");
                     game_state.remove_entity_from_world(near_item_id_unpacked);
                     game_state.add_item_to_inventory();
                 }
@@ -66,6 +64,21 @@ impl GameSystem {
     // probably should be a method on player or something
     fn in_item_pickup_range(game_state: &GameState, near_item_id: u32) -> bool {
         return Self::distance_2d(game_state.player.get_position(), game_state.get_entity(near_item_id).expect("entity should exist").get_position()) < ITEM_PICKUP_RANGE;
+    }
+
+    fn handle_item_placement(game_state: &mut GameState, input: &mut Input) {
+        if input.right_mouse_clicked.is_toggled_on() {
+            if game_state.inventory_item_count > 0 {
+                let placed_position = Position { 
+                        x: game_state.player.position.x - 1.1,
+                        y: game_state.player.position.y - 1.1,
+                        z: game_state.player.position.z,
+                };
+                let entity = game_state.new_entity(placed_position);
+                game_state.entities.push(entity);
+                game_state.inventory_item_count = game_state.inventory_item_count - 1;
+            }
+        }
     }
 
     fn handle_inventory(game_state: &mut GameState, input: &mut Input) {
