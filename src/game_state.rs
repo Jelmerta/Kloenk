@@ -10,6 +10,7 @@ pub struct GameState {
     pub camera_rotation_y_degrees: f32,
     pub current_entity_id: AtomicU32,
     pub entities: Vec<Entity>,
+    pub plane: Entity,
     pub inventory_toggled: bool,
     pub inventory_position: Position, // Could be 2d. values between -1 and 1?
     pub inventory_item_count: u32,    // should be an item list
@@ -20,6 +21,7 @@ pub struct Entity {
     pub id: u32,
     pub position: Position,
     pub previous_position: Position,
+    pub size: Position, // HAcky reuse of position just a [f32; 3]?
     pub hitbox: f32,
 }
 
@@ -44,6 +46,10 @@ impl Position {
     pub fn get_y(&self) -> f32 {
         self.y
     }
+
+    pub fn get_z(&self) -> f32 {
+        self.z
+    }
 }
 
 impl GameState {
@@ -60,6 +66,11 @@ impl GameState {
                 x: 0.0,
                 y: 0.0,
                 z: 0.0,
+            },
+            size: Position {
+                x: 1.0,
+                y: 1.0,
+                z: 1.0,
             },
             hitbox: 0.5,
         };
@@ -94,10 +105,35 @@ impl GameState {
                 y: 0.0,
                 z: 0.0,
             },
+            size: Position {
+                x: 1.0,
+                y: 1.0,
+                z: 1.0,
+            },
             hitbox: 0.51,
         };
 
         entities.push(enemy);
+
+        let plane = Entity {
+            id: u32::MAX - 1,
+            position: Position {
+                x: 0.0,
+                y: 0.0,
+                z: -0.5,
+            },
+            previous_position: Position {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            size: Position {
+                x: 25.0,
+                y: 25.0,
+                z: 0.1,
+            },
+            hitbox: 0.0,
+        };
 
         Self {
             player,
@@ -106,6 +142,7 @@ impl GameState {
             camera_rotation_y_degrees: 315.0,
             current_entity_id,
             entities,
+            plane,
             inventory_toggled: false,
             inventory_position: Position {
                 x: 1.33,
@@ -138,6 +175,11 @@ impl GameState {
             id: self.current_entity_id.fetch_add(1, Ordering::SeqCst),
             position: placement_position,
             previous_position: placement_position,
+            size: Position {
+                x: 1.0,
+                y: 1.0,
+                z: 1.0,
+            },
             hitbox: 0.51,
         }
     }
