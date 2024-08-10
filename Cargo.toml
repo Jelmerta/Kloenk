@@ -49,6 +49,8 @@ name = "kloenk_bin"
 path = "src/main.rs"
 #cfg = "web_sys_unstable_apis" #Hm, probably only required for web...
 
+# [package.metadata.trunk]
+# files = ["resources"]
 
 #[package]
 #name = "kloenk"

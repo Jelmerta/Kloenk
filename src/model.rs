@@ -84,7 +84,7 @@ pub struct Mesh {
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
     pub num_elements: u32,
-    pub material: usize,
+    // pub material: usize,
 }
 
 pub struct Material {
@@ -124,7 +124,7 @@ where
         instances: Range<u32>,
     ) {
         self.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
-        self.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+        self.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
         self.draw_indexed(0..mesh.num_elements, 0, instances);
     }
 

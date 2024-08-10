@@ -1,5 +1,4 @@
-use log::warn;
-use winit::event::{ElementState, VirtualKeyCode, MouseScrollDelta, MouseButton, WindowEvent};
+use winit::event::{ElementState, VirtualKeyCode, MouseScrollDelta, MouseButton};
 use winit::dpi::PhysicalPosition;
 
 #[derive(Debug, Default)]
@@ -9,16 +8,11 @@ pub struct KeyPress {
 }
 
 impl KeyPress {
-    pub fn new() -> Self {
-        Default::default()
-    }
-
     pub fn set_press_state(&mut self, new_state: bool) {
         self.was_pressed = self.is_pressed;
         self.is_pressed = new_state;
     }
 
-    // TODO HMM different for movement and opening menus
     pub fn is_toggled_on(&mut self) -> bool {
         // Once pressed , we do not get n update every frame, so we just make sure that this method
         // is not called again every frame by setting was pressed
@@ -37,7 +31,6 @@ pub struct Input {
 
     pub i_pressed: KeyPress,
     pub e_pressed: KeyPress,
-    pub g_pressed: KeyPress,
 
     pub up_pressed: KeyPress,
     pub down_pressed: KeyPress,
@@ -90,11 +83,6 @@ impl Input {
                 return;
             }
 
-            VirtualKeyCode::G => {
-                self.g_pressed.set_press_state(is_pressed);
-                return;
-            }
-            
             VirtualKeyCode::LShift => {
                 self.left_shift_pressed.set_press_state(is_pressed);
             }
