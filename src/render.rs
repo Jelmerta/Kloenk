@@ -21,7 +21,7 @@ use crate::camera::Camera;
 use crate::game_state::GameState;
 use crate::model::Vertex;
 use crate::model::{self};
-use crate::{texture, resources};
+use crate::{resources, texture};
 use model::DrawModel;
 // use crate::resources::load_binary;
 
@@ -137,8 +137,6 @@ impl InstanceRaw {
     }
 }
 
-
-
 impl State {
     pub async fn new(window: Window) -> Self {
         let size = window.inner_size();
@@ -228,7 +226,7 @@ impl State {
                 label: Some("texture_bind_group_layout"),
             });
 
-               // ----- end texture stuff
+        // ----- end texture stuff
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
@@ -591,17 +589,45 @@ impl State {
         // });
 
         let mut model_map: HashMap<String, model::Model> = HashMap::new();
-        
-        let perocaca = resources::load_model("resources/perocaca.jpg", &device, &queue, &texture_bind_group_layout).await.unwrap();
+
+        let perocaca = resources::load_model(
+            "resources/perocaca.jpg",
+            &device,
+            &queue,
+            &texture_bind_group_layout,
+        )
+        .await
+        .unwrap();
         model_map.insert("perocaca".to_string(), perocaca);
 
-        let character = resources::load_model("resources/character.jpg", &device, &queue, &texture_bind_group_layout).await.unwrap();
+        let character = resources::load_model(
+            "resources/character.jpg",
+            &device,
+            &queue,
+            &texture_bind_group_layout,
+        )
+        .await
+        .unwrap();
         model_map.insert("character".to_string(), character);
-        
-        let sword = resources::load_model("resources/sword.jpg", &device, &queue, &texture_bind_group_layout).await.unwrap();
+
+        let sword = resources::load_model(
+            "resources/sword.jpg",
+            &device,
+            &queue,
+            &texture_bind_group_layout,
+        )
+        .await
+        .unwrap();
         model_map.insert("sword".to_string(), sword);
-    
-        let grass = resources::load_model("resources/grass.jpg", &device, &queue, &texture_bind_group_layout).await.unwrap();
+
+        let grass = resources::load_model(
+            "resources/grass.jpg",
+            &device,
+            &queue,
+            &texture_bind_group_layout,
+        )
+        .await
+        .unwrap();
         model_map.insert("grass".to_string(), grass);
 
         let depth_texture = texture::DepthTexture::create_depth_texture(&device, &config);
@@ -613,7 +639,7 @@ impl State {
             contents: bytemuck::cast_slice(&instance_data),
             usage: wgpu::BufferUsages::VERTEX,
         });
-        
+
         let player_instance_data = Vec::new().iter().map(Instance::to_raw).collect::<Vec<_>>();
         let player_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("player Instance Buffer"),
@@ -627,7 +653,7 @@ impl State {
             contents: bytemuck::cast_slice(&plane_instance_data),
             usage: wgpu::BufferUsages::VERTEX,
         });
-        
+
         let inv_instance_data = Vec::new().iter().map(Instance::to_raw).collect::<Vec<_>>();
         let inv_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Inventory Instance Buffer"),
@@ -673,7 +699,8 @@ impl State {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-            self.depth_texture = texture::DepthTexture::create_depth_texture(&self.device, &self.config);
+            self.depth_texture =
+                texture::DepthTexture::create_depth_texture(&self.device, &self.config);
         }
     }
 
@@ -684,8 +711,8 @@ impl State {
 
     // Perhaps we want to use this instead of changing data in render method
     // pub fn update(&mut self) {
-        // switch (input)
-        // self.in
+    // switch (input)
+    // self.in
     // }
 
     pub fn render(&mut self, game_state: &GameState) -> Result<(), wgpu::SurfaceError> {
@@ -767,7 +794,7 @@ impl State {
                         y: 0.0,
                         z: position.get_y(),
                     },
-                    scale: cgmath::Matrix4::identity(), 
+                    scale: cgmath::Matrix4::identity(),
                     rotation: cgmath::Quaternion::from_axis_angle(
                         cgmath::Vector3::unit_z(),
                         cgmath::Deg(0.0),
@@ -785,11 +812,18 @@ impl State {
                         usage: wgpu::BufferUsages::VERTEX,
                     });
             self.instance_buffer = instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
-            
-            render_pass.set_bind_group(0, &self.model_map.get("sword").unwrap().materials[0].bind_group, &[]);
+
+            render_pass.set_bind_group(
+                0,
+                &self.model_map.get("sword").unwrap().materials[0].bind_group,
+                &[],
+            );
             render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
-            render_pass.draw_mesh_instanced(&self.model_map.get("sword").unwrap().meshes[0], 0..instances.len() as u32);
-            
+            render_pass.draw_mesh_instanced(
+                &self.model_map.get("sword").unwrap().meshes[0],
+                0..instances.len() as u32,
+            );
+
             let player_position = game_state.player.get_position();
             let player_instance = Instance {
                 position: cgmath::Vector3 {
@@ -806,7 +840,10 @@ impl State {
             let mut player_instances = Vec::new();
             player_instances.push(player_instance);
 
-            let player_instance_data = player_instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
+            let player_instance_data = player_instances
+                .iter()
+                .map(Instance::to_raw)
+                .collect::<Vec<_>>();
             let player_instance_buffer =
                 self.device
                     .create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -815,18 +852,17 @@ impl State {
                         usage: wgpu::BufferUsages::VERTEX,
                     });
             self.player_instance_buffer = player_instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
-            
-          
 
-
-
-
-
-            render_pass.set_bind_group(0, &self.model_map.get("character").unwrap().materials[0].bind_group, &[]);
+            render_pass.set_bind_group(
+                0,
+                &self.model_map.get("character").unwrap().materials[0].bind_group,
+                &[],
+            );
             render_pass.set_vertex_buffer(1, self.player_instance_buffer.slice(..));
-            render_pass.draw_mesh_instanced(&self.model_map.get("character").unwrap().meshes[0], 0..1);
+            render_pass
+                .draw_mesh_instanced(&self.model_map.get("character").unwrap().meshes[0], 0..1);
             // drop(render_pass);
-           
+
             let mut plane_instances = Vec::new();
             let plane_position = game_state.plane.get_position();
             let plane_instance = Instance {
@@ -835,7 +871,12 @@ impl State {
                     y: plane_position.get_z(),
                     z: plane_position.get_y(),
                 },
-                scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(game_state.plane.size.x, game_state.plane.size.z, game_state.plane.size.y, 1.0)),
+                scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
+                    game_state.plane.size.x,
+                    game_state.plane.size.z,
+                    game_state.plane.size.y,
+                    1.0,
+                )),
                 rotation: cgmath::Quaternion::from_axis_angle(
                     cgmath::Vector3::unit_z(),
                     cgmath::Deg(0.0),
@@ -843,7 +884,10 @@ impl State {
             };
             plane_instances.push(plane_instance);
 
-            let plane_instance_data = plane_instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
+            let plane_instance_data = plane_instances
+                .iter()
+                .map(Instance::to_raw)
+                .collect::<Vec<_>>();
             let plane_instance_buffer =
                 self.device
                     .create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -853,9 +897,16 @@ impl State {
                     });
 
             self.plane_instance_buffer = plane_instance_buffer;
-            render_pass.set_bind_group(0, &self.model_map.get("grass").unwrap().materials[0].bind_group, &[]);
+            render_pass.set_bind_group(
+                0,
+                &self.model_map.get("grass").unwrap().materials[0].bind_group,
+                &[],
+            );
             render_pass.set_vertex_buffer(1, self.plane_instance_buffer.slice(..));
-            render_pass.draw_mesh_instanced(&self.model_map.get("grass").unwrap().meshes[0], 0..plane_instances.len() as u32);
+            render_pass.draw_mesh_instanced(
+                &self.model_map.get("grass").unwrap().meshes[0],
+                0..plane_instances.len() as u32,
+            );
             drop(render_pass);
         }
         // UI
@@ -876,7 +927,11 @@ impl State {
             });
 
             render_pass_ui.set_pipeline(&self.render_pipeline_ui);
-            render_pass_ui.set_bind_group(0, &self.model_map.get("perocaca").unwrap().materials[0].bind_group, &[]);
+            render_pass_ui.set_bind_group(
+                0,
+                &self.model_map.get("sword").unwrap().materials[0].bind_group,
+                &[],
+            );
             render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
 
             self.camera_ui.eye = Point3 {
@@ -899,7 +954,7 @@ impl State {
                 0,
                 bytemuck::cast_slice(&[self.camera_uniform_ui]),
             );
-  
+
             let mut inv_instance_data = Vec::new();
 
             let inventory_instance = Instance {
@@ -944,10 +999,24 @@ impl State {
             self.inv_instance_buffer = inv_instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
                                                             //
 
-            render_pass_ui.set_vertex_buffer(0, self.model_map.get("perocaca").unwrap().meshes[0].vertex_buffer.slice(..));
+            render_pass_ui.set_vertex_buffer(
+                0,
+                self.model_map.get("sword").unwrap().meshes[0]
+                    .vertex_buffer
+                    .slice(..),
+            );
             render_pass_ui.set_vertex_buffer(1, self.inv_instance_buffer.slice(..));
-            render_pass_ui.set_index_buffer(self.model_map.get("perocaca").unwrap().meshes[0].index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass_ui.draw_indexed(0..self.model_map.get("perocaca").unwrap().meshes[0].num_elements, 0, 0..instances as _);
+            render_pass_ui.set_index_buffer(
+                self.model_map.get("sword").unwrap().meshes[0]
+                    .index_buffer
+                    .slice(..),
+                wgpu::IndexFormat::Uint16,
+            );
+            render_pass_ui.draw_indexed(
+                0..self.model_map.get("sword").unwrap().meshes[0].num_elements,
+                0,
+                0..instances as _,
+            );
             drop(render_pass_ui);
         }
 
