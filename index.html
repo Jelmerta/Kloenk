@@ -2,6 +2,7 @@
 <head>
     <title>Kloenk</title>
     <link data-bin="kloenk_bin" data-trunk rel="rust"/>
+    <link data-trunk rel="copy-dir" href="resources" /> <!-- copies resources folder such that it is served and accessible for wasm application -->
 </head>
 <body id="kloenk-wasm">
     <script type="module">
@@ -14,11 +15,3 @@
     </script>
 </body>
 </html>
-
-        <!-- import { prevent_default_context_menu } from './main.js'; -->
-        <!-- import('./pkg/kloenk.js').then(module => { -->
-        <!--     // Initialize the WASM module -->
-        <!--     module.default(); -->
-        <!--     // Call the function to prevent the default context menu -->
-        <!--     prevent_default_context_menu(); -->
-        <!-- }); -->

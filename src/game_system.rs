@@ -1,9 +1,7 @@
 use cgmath::num_traits::ToPrimitive;
-use web_sys::console;
 
 use crate::game_state::{Entity, GameState, Position};
 use crate::input::Input;
-use crate::{camera, game_state};
 
 pub struct GameSystem {}
 
@@ -17,12 +15,8 @@ pub const CAMERA_TOP_LIMIT: f32 = 350.0;
 pub const ITEM_PICKUP_RANGE: f32 = 1.5;
 
 impl GameSystem {
-    pub fn new() -> Self {
-        Self {}
-    }
 
     pub fn update(game_state: &mut GameState, input: &mut Input) {
-        // let entities = &mut game_state.entities;
         Self::handle_item_pickup(game_state, input);
         Self::handle_item_placement(game_state, input);
         Self::handle_inventory(game_state, input);
@@ -30,7 +24,8 @@ impl GameSystem {
         Self::update_camera(game_state, input);
     }
 
-    fn handle_item_pickup(game_state: &mut GameState, input: &mut Input) { // mut input just for is
+    fn handle_item_pickup(game_state: &mut GameState, input: &mut Input) {
+        // mut input just for is
         // toggled on. could possibly be changed
         if input.e_pressed.is_toggled_on() {
             let near_item_id = Self::find_near_item_id(game_state);
@@ -52,7 +47,11 @@ impl GameSystem {
         let near_id = game_state
             .get_entities()
             .iter()
-            .min_by_key(|entity| Self::distance_2d(entity.get_position(), player_position).round().to_u32())
+            .min_by_key(|entity| {
+                Self::distance_2d(entity.get_position(), player_position)
+                    .round()
+                    .to_u32()
+            })
             .map(|entity| entity.id); // f32does not have trait ord, for now we just cast.
         return near_id;
     }
@@ -63,18 +62,25 @@ impl GameSystem {
 
     // probably should be a method on player or something
     fn in_item_pickup_range(game_state: &GameState, near_item_id: u32) -> bool {
-        return Self::distance_2d(game_state.player.get_position(), game_state.get_entity(near_item_id).expect("entity should exist").get_position()) < ITEM_PICKUP_RANGE;
+        return Self::distance_2d(
+            game_state.player.get_position(),
+            game_state
+                .get_entity(near_item_id)
+                .expect("entity should exist")
+                .get_position(),
+        ) < ITEM_PICKUP_RANGE;
     }
 
     fn handle_item_placement(game_state: &mut GameState, input: &mut Input) {
         if input.right_mouse_clicked.is_toggled_on() {
             if game_state.inventory_item_count > 0 {
-                let placed_position = Position { 
-                        x: game_state.player.position.x - 1.1,
-                        y: game_state.player.position.y - 1.1,
-                        z: game_state.player.position.z,
+                let placed_position = Position {
+                    x: game_state.player.position.x - 1.1,
+                    y: game_state.player.position.y - 1.1,
+                    z: game_state.player.position.z,
                 };
-                let entity = game_state.new_entity(placed_position);
+                let entity = game_state.new_entity(placed_position, "enemy".to_string());// for now
+                // we assume the placed things are enemies
                 game_state.entities.push(entity);
                 game_state.inventory_item_count = game_state.inventory_item_count - 1;
             }
@@ -82,32 +88,28 @@ impl GameSystem {
     }
 
     fn handle_inventory(game_state: &mut GameState, input: &mut Input) {
-        if (input.i_pressed.is_toggled_on()) {
+        if input.i_pressed.is_toggled_on() {
             game_state.inventory_toggled = !game_state.inventory_toggled;
         }
-
-    //     if (input.g_pressed.is_toggled_on()) {
-    //         game_state.inventory_has_item = !game_state.inventory_has_item;
-    //      }
     }
 
     fn update_camera(game_state: &mut GameState, input: &mut Input) {
-        if (input.up_pressed.is_pressed) {
+        if input.up_pressed.is_pressed {
             game_state.camera_rotation_y_degrees =
                 game_state.camera_rotation_y_degrees + CAMERA_MOVEMENT_SPEED;
         }
 
-        if (input.down_pressed.is_pressed) {
+        if input.down_pressed.is_pressed {
             game_state.camera_rotation_y_degrees =
                 game_state.camera_rotation_y_degrees - CAMERA_MOVEMENT_SPEED;
         }
 
-        if (input.right_pressed.is_pressed) {
+        if input.right_pressed.is_pressed {
             game_state.camera_rotation_x_degrees =
                 game_state.camera_rotation_x_degrees - CAMERA_MOVEMENT_SPEED;
         }
 
-        if (input.left_pressed.is_pressed) {
+        if input.left_pressed.is_pressed {
             game_state.camera_rotation_x_degrees =
                 game_state.camera_rotation_x_degrees + CAMERA_MOVEMENT_SPEED;
         }
@@ -131,42 +133,21 @@ impl GameSystem {
         }
 
         let normalised_scroll_amount: f32 = -input.scrolled_amount * 0.1;
-        // game_state.camera.previous_position = Position {
-        //     x: game_state.camera.position.x.clone(),
-        //     y: game_state.camera.position.y.clone(),
-        //     z: game_state.camera.position.z.clone(),
-        // };
-        //
-        // if (game_state.camera.position.x + normalised_scroll_amount <= MIN_CAMERA_DISTANCE) {
-        //     game_state.camera.position.x = MIN_CAMERA_DISTANCE;
-        //     game_state.camera.position.y = MIN_CAMERA_DISTANCE;
-        //     game_state.camera.position.z = MIN_CAMERA_DISTANCE;
-        // } else if (game_state.camera.position.x + normalised_scroll_amount >= MAX_CAMERA_DISTANCE) {
-        //     game_state.camera.position.x = MAX_CAMERA_DISTANCE;
-        //     game_state.camera.position.y = MAX_CAMERA_DISTANCE;
-        //     game_state.camera.position.z = MAX_CAMERA_DISTANCE;
-        // } else {
-        //     game_state.camera.position.x += normalised_scroll_amount;
-        //     game_state.camera.position.y += normalised_scroll_amount;
-        //     game_state.camera.position.z += normalised_scroll_amount;
-        // }
-        //
 
-        if (game_state.camera_distance + normalised_scroll_amount <= MIN_CAMERA_DISTANCE) {
+        if game_state.camera_distance + normalised_scroll_amount <= MIN_CAMERA_DISTANCE {
             game_state.camera_distance = MIN_CAMERA_DISTANCE;
-        } else if (game_state.camera_distance + normalised_scroll_amount >= MAX_CAMERA_DISTANCE) {
+        } else if game_state.camera_distance + normalised_scroll_amount >= MAX_CAMERA_DISTANCE {
             game_state.camera_distance = MAX_CAMERA_DISTANCE;
         } else {
             game_state.camera_distance += normalised_scroll_amount;
         }
 
-        // game_state.camera.position.x = game_state.player.position.x + self.camera_distance;
         input.scrolled_amount = 0.0;
     }
 
     fn resolve_movement(game_state: &mut GameState, input: &Input) {
         let mut movement_speed: f32 = BASE_SPEED;
-        if (input.left_shift_pressed.is_pressed) {
+        if input.left_shift_pressed.is_pressed {
             movement_speed *= 2.5;
         }
 
@@ -178,7 +159,7 @@ impl GameSystem {
             };
             game_state.player.position.x -= movement_speed;
             game_state.player.position.y -= movement_speed;
-            resolve_collisions(game_state)
+            Self::resolve_collisions(game_state)
         }
 
         if input.s_pressed.is_pressed {
@@ -189,7 +170,7 @@ impl GameSystem {
             };
             game_state.player.position.x += movement_speed;
             game_state.player.position.y += movement_speed;
-            resolve_collisions(game_state)
+            Self::resolve_collisions(game_state)
         }
 
         if input.a_pressed.is_pressed {
@@ -200,7 +181,7 @@ impl GameSystem {
             };
             game_state.player.position.x -= movement_speed;
             game_state.player.position.y += movement_speed;
-            resolve_collisions(game_state)
+            Self::resolve_collisions(game_state)
         }
 
         if input.d_pressed.is_pressed {
@@ -211,37 +192,36 @@ impl GameSystem {
             };
             game_state.player.position.x += movement_speed;
             game_state.player.position.y -= movement_speed;
-            resolve_collisions(game_state)
+            Self::resolve_collisions(game_state)
         }
     }
-}
 
-fn resolve_collisions(game_state: &mut GameState) {
-    for entity in &game_state.entities {
-        if check_collision(&game_state.player, &entity) {
-            // don't match itself
-            game_state.player.position = Position {
-                x: game_state.player.previous_position.x.clone(),
-                y: game_state.player.previous_position.y.clone(),
-                z: game_state.player.previous_position.z.clone(),
-            };
+    fn resolve_collisions(game_state: &mut GameState) {
+        for entity in &game_state.entities {
+            if Self::check_collision(&game_state.player, &entity) {
+                // don't match itself
+                game_state.player.position = Position {
+                    x: game_state.player.previous_position.x.clone(),
+                    y: game_state.player.previous_position.y.clone(),
+                    z: game_state.player.previous_position.z.clone(),
+                };
+            }
         }
     }
-}
 
-fn check_collision(player: &Entity, other_entity: &Entity) -> bool {
-    let is_collision_x = player.position.x + player.hitbox
-        >= other_entity.position.x - other_entity.hitbox
-        && other_entity.position.x + other_entity.hitbox >= player.position.x - player.hitbox;
+    fn check_collision(player: &Entity, other_entity: &Entity) -> bool {
+        let is_collision_x = player.position.x + player.hitbox
+            >= other_entity.position.x - other_entity.hitbox
+            && other_entity.position.x + other_entity.hitbox >= player.position.x - player.hitbox;
 
-    let is_collision_y = player.position.y + player.hitbox
-        >= other_entity.position.y - other_entity.hitbox
-        && other_entity.position.y + other_entity.hitbox >= player.position.y - player.hitbox;
+        let is_collision_y = player.position.y + player.hitbox
+            >= other_entity.position.y - other_entity.hitbox
+            && other_entity.position.y + other_entity.hitbox >= player.position.y - player.hitbox;
 
-    let is_collision_z = player.position.z + player.hitbox
-        >= other_entity.position.z - other_entity.hitbox
-        && other_entity.position.z + other_entity.hitbox >= player.position.z - player.hitbox;
+        let is_collision_z = player.position.z + player.hitbox
+            >= other_entity.position.z - other_entity.hitbox
+            && other_entity.position.z + other_entity.hitbox >= player.position.z - player.hitbox;
 
-    // collision only if on both axes
-    return is_collision_x && is_collision_y && is_collision_z;
+        return is_collision_x && is_collision_y && is_collision_z;
+    }
 }

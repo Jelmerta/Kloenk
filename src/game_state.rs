@@ -19,6 +19,7 @@ pub struct GameState {
 
 pub struct Entity {
     pub id: u32,
+    pub entity_type: String, // Perhaps an enum at some point?
     pub position: Position,
     pub previous_position: Position,
     pub size: Position, // HAcky reuse of position just a [f32; 3]?
@@ -57,6 +58,7 @@ impl GameState {
         let mut entities = Vec::new();
         let player = Entity {
             id: u32::MAX, // hacky, just should not be used. player probably does not need id (yet)
+            entity_type: "character".to_string(),
             position: Position {
                 x: 0.0,
                 y: 0.0,
@@ -76,25 +78,11 @@ impl GameState {
         };
 
         let camera_distance = f32::sqrt(TOTAL_DISTANCE / 3.0);
-        // let camera = Entity {
-        // previous_position: Position { // previous position probably not really used right now
-        // for camera.
-        // x: starting_camera_distance,
-        // y: starting_camera_distance,
-        // z: starting_camera_distance,
-        // },
-        // position: Position {
-        // x: starting_camera_distance,
-        //         y: starting_camera_distance,
-        //         z: starting_camera_distance,
-        //     },
-        //     hitbox: 0.0, // Doesn't make sense for a camera... Not sure if camera really belongs
-        //     // here. Might make hitbox a trait or something like that too
-        // };
 
         let current_entity_id: AtomicU32 = AtomicU32::new(0);
-        let enemy = Entity {
+        let sword = Entity {
             id: current_entity_id.fetch_add(1, Ordering::SeqCst),
+            entity_type: "sword".to_string(), 
             position: Position {
                 x: 1.1,
                 y: 1.1,
@@ -113,10 +101,11 @@ impl GameState {
             hitbox: 0.51,
         };
 
-        entities.push(enemy);
+        entities.push(sword);
 
         let plane = Entity {
             id: u32::MAX - 1,
+            entity_type: "grass".to_string(),
             position: Position {
                 x: 0.0,
                 y: 0.0,
@@ -170,9 +159,10 @@ impl GameState {
         self.entities.iter().find(|entity| entity.id == id)
     }
 
-    pub fn new_entity(&self, placement_position: Position) -> Entity {
+    pub fn new_entity(&self, placement_position: Position, entity_type: String) -> Entity {
         return Entity {
             id: self.current_entity_id.fetch_add(1, Ordering::SeqCst),
+            entity_type,
             position: placement_position,
             previous_position: placement_position,
             size: Position {

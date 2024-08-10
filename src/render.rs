@@ -1,22 +1,27 @@
-use std::{iter, mem, primitive};
+use std::collections::HashMap;
+use std::{iter, mem};
 
 // use anyhow::*;
 use cgmath::{prelude::*, Point3};
-use gltf::iter::Meshes;
-use gltf::mesh::util::indices;
-use gltf::texture as gltf_texture;
-use gltf::Gltf;
+// use gltf::iter::Meshes;
+// use gltf::mesh::util::indices;
+// use gltf::texture as gltf_texture;
+// use gltf::Gltf;
+//
+
+#[cfg(target_arch = "wasm32")]
+#[allow(unused_imports)]
 use wasm_bindgen::prelude::*;
-use web_sys::console;
+
 use wgpu::util::DeviceExt;
 use winit::event::WindowEvent;
 use winit::window::Window;
 
-use crate::camera::{self, Camera};
-use crate::game_state::{self, GameState, Position};
+use crate::camera::Camera;
+use crate::game_state::GameState;
 use crate::model::Vertex;
-use crate::model::{self, TexVertex};
-use crate::texture;
+use crate::model::{self};
+use crate::{texture, resources};
 // use crate::resources::load_binary;
 
 // #[wasm_bindgen(start)]
@@ -37,9 +42,7 @@ struct CameraUniform {
 
 impl CameraUniform {
     fn new() -> Self {
-        use cgmath::SquareMatrix; // ?
         Self {
-            // view_proj: cgmath::Matrix4::identity().into(),
             view_projection: cgmath::Matrix4::identity().into(),
         }
     }
@@ -71,13 +74,11 @@ pub struct State {
     camera_bind_group_ui: wgpu::BindGroup,
     // models: Vec<model::Model>,
     //obj_model: model::Model,
-    vertex_buffer: wgpu::Buffer,
-    index_buffer: wgpu::Buffer,
-    num_indices: u32,
-    depth_texture: texture::Texture,
+    model_map: HashMap<String, model::Model>,
+    depth_texture: texture::DepthTexture,
     instance_buffer: wgpu::Buffer,
+    plane_instance_buffer: wgpu::Buffer,
     inv_instance_buffer: wgpu::Buffer,
-    diffuse_bind_group: wgpu::BindGroup,
 }
 
 struct Instance {
@@ -134,130 +135,7 @@ impl InstanceRaw {
     }
 }
 
-const TRIANGLE: &[model::ModelVertex] = &[
-    model::ModelVertex {
-        position: [0.0, 0.5, 0.0],
-        color: [1.0, 0.0, 0.0],
-    },
-    model::ModelVertex {
-        position: [-0.5, -0.5, 0.0],
-        color: [0.0, 1.0, 0.0],
-    },
-    model::ModelVertex {
-        position: [0.5, -0.5, 0.0],
-        color: [0.0, 0.0, 1.0],
-    },
-];
 
-const PENTAGON: &[model::ModelVertex] = &[
-    model::ModelVertex {
-        position: [-0.0868241, 0.49240386, 0.0],
-        color: [0.5, 0.0, 0.5],
-    }, // A
-    model::ModelVertex {
-        position: [-0.49513406, 0.06958647, 0.0],
-        color: [1.0, 0.0, 0.0],
-    }, // B
-    model::ModelVertex {
-        position: [-0.21918549, -0.44939706, 0.0],
-        color: [0.0, 1.0, 0.0],
-    }, // C
-    model::ModelVertex {
-        position: [0.35966998, -0.3473291, 0.0],
-        color: [0.0, 0.0, 1.0],
-    }, // D
-    model::ModelVertex {
-        position: [0.44147372, 0.2347359, 0.0],
-        color: [0.0, 0.5, 0.5],
-    }, // E
-];
-
-const PENTAGON_INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
-
-// Hm, does using indices lose me the ability to color sides of the vertices differently? Great if you use textures, but otherwise kinda sucks. Would not be able to draw something like a rubiks cube. Onless we can define these in the index buffer instead i guess?
-const CUBE: &[model::ModelVertex] = &[
-    // Top ccw as seen from top
-    model::ModelVertex {
-        position: [0.5, 0.5, 0.5],
-        color: [0.5, 0.0, 0.0],
-    }, // Red
-    model::ModelVertex {
-        position: [0.5, 0.5, -0.5],
-        color: [0.0, 0.5, 0.0],
-    }, // Green
-    model::ModelVertex {
-        position: [-0.5, 0.5, -0.5],
-        color: [0.5, 0.5, 0.0],
-    }, // Yellow
-    model::ModelVertex {
-        position: [-0.5, 0.5, 0.5],
-        color: [0.5, 0.0, 0.5],
-    }, // Purple
-    // Bottom ccw as seen from top
-    model::ModelVertex {
-        position: [0.5, -0.5, 0.5],
-        color: [0.0, 0.0, 0.5],
-    }, // Blue
-    model::ModelVertex {
-        position: [0.5, -0.5, -0.5],
-        color: [0.0, 0.5, 0.5],
-    }, // Cyan
-    model::ModelVertex {
-        position: [-0.5, -0.5, -0.5],
-        color: [0.0, 0.0, 0.0],
-    }, // Black
-    model::ModelVertex {
-        position: [-0.5, -0.5, 0.5],
-        color: [0.5, 0.5, 0.5],
-    }, // White
-];
-
-const CUBE_TEX: &[model::TexVertex] = &[
-    // Top ccw as seen from top
-    model::TexVertex {
-        position: [0.5, 0.5, 0.5],
-        tex_coords: [0.0, 1.0],
-    }, // Red
-    model::TexVertex {
-        position: [0.5, 0.5, -0.5],
-        tex_coords: [1.0, 1.0],
-    }, // Green
-    model::TexVertex {
-        position: [-0.5, 0.5, -0.5],
-        tex_coords: [1.0, 0.0],
-    }, // Yellow
-    model::TexVertex {
-        position: [-0.5, 0.5, 0.5],
-        tex_coords: [0.0, 0.0],
-    }, // Purple
-    // Bottom ccw as seen from top
-    model::TexVertex {
-        position: [0.5, -0.5, 0.5],
-        tex_coords: [0.0, 0.0],
-    }, // Blue
-    model::TexVertex {
-        position: [0.5, -0.5, -0.5],
-        tex_coords: [0.0, 1.0],
-    }, // Cyan
-    model::TexVertex {
-        position: [-0.5, -0.5, -0.5],
-        tex_coords: [1.0, 0.0],
-    }, // Black
-    model::TexVertex {
-        position: [-0.5, -0.5, 0.5],
-        tex_coords: [1.0, 1.0],
-    }, // White
-];
-
-const CUBE_INDICES: &[u16] = &[
-    // Top
-    0, 1, 2, 0, 2, 3, // Bottom
-    4, 7, 6, 4, 6, 5, // Left
-    0, 3, 7, 0, 7, 4, // Right
-    1, 6, 2, 1, 5, 6, // Front
-    0, 4, 5, 0, 5, 1, // Back
-    2, 6, 7, 2, 7, 3,
-];
 
 impl State {
     pub async fn new(window: Window) -> Self {
@@ -298,7 +176,6 @@ impl State {
                         wgpu::Limits::default()
                     },
                 },
-                // Some(&std::path::Path::new("trace")), // Trace path
                 None,
             )
             .await
@@ -326,62 +203,6 @@ impl State {
         surface.configure(&device, &config);
 
         // ----- texture stuff
-        // let diffuse_bytes = include_bytes!("../resources/perocaca.jpg");
-        let diffuse_bytes = include_bytes!("../resources/perocaca.jpg");
-        let diffuse_image = image::load_from_memory(diffuse_bytes).unwrap();
-        let diffuse_rgba = diffuse_image.to_rgba8();
-
-        use image::GenericImageView;
-        let dimensions = diffuse_image.dimensions();
-
-        let texture_size = wgpu::Extent3d {
-            width: dimensions.0,
-            height: dimensions.1,
-            //
-            // width: 256,
-            // height: 256,
-            depth_or_array_layers: 1,
-        };
-        let diffuse_texture = device.create_texture(&wgpu::TextureDescriptor {
-            size: texture_size,
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8UnormSrgb,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-            label: Some("diffuse_texture"),
-            view_formats: &[],
-        });
-        // log::warn!("{:?}", diffuse_rgba);
-
-        queue.write_texture(
-            wgpu::ImageCopyTexture {
-                texture: &diffuse_texture,
-                mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
-            },
-            &diffuse_rgba,
-            wgpu::ImageDataLayout {
-                offset: 0,
-                bytes_per_row: Some(4 * dimensions.0),
-                rows_per_image: Some(dimensions.1),
-            },
-            texture_size,
-        );
-
-        let diffuse_texture_view =
-            diffuse_texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let diffuse_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Nearest,
-            mipmap_filter: wgpu::FilterMode::Nearest,
-            ..Default::default()
-        });
-
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[
@@ -405,21 +226,7 @@ impl State {
                 label: Some("texture_bind_group_layout"),
             });
 
-        let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &texture_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&diffuse_texture_view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&diffuse_sampler),
-                },
-            ],
-            label: Some("diffuse_bind_group"),
-        });
-        // ----- end texture stuff
+               // ----- end texture stuff
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
@@ -489,7 +296,7 @@ impl State {
             },
             // depth_stencil: None,
             depth_stencil: Some(wgpu::DepthStencilState {
-                format: texture::Texture::DEPTH_FORMAT,
+                format: texture::DepthTexture::DEPTH_FORMAT,
                 depth_write_enabled: true,
                 depth_compare: wgpu::CompareFunction::Less,
                 stencil: wgpu::StencilState::default(),
@@ -780,50 +587,23 @@ impl State {
         //     contents: bytemuck::cast_slice(CUBE),
         //     usage: wgpu::BufferUsages::VERTEX,
         // });
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(CUBE_TEX),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
 
-        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(CUBE_INDICES),
-            usage: wgpu::BufferUsages::INDEX,
-        });
-        let num_indices = CUBE_INDICES.len() as u32;
+        let mut model_map: HashMap<String, model::Model> = HashMap::new();
+        
+        let perocaca = resources::load_model("resources/perocaca.jpg", &device, &queue, &texture_bind_group_layout).await.unwrap();
+        model_map.insert("perocaca".to_string(), perocaca);
 
-        let depth_texture = texture::Texture::create_depth_texture(&device, &config);
+        let character = resources::load_model("resources/character.jpg", &device, &queue, &texture_bind_group_layout).await.unwrap();
+        model_map.insert("character".to_string(), character);
+        
+        let sword = resources::load_model("resources/sword.jpg", &device, &queue, &texture_bind_group_layout).await.unwrap();
+        model_map.insert("sword".to_string(), sword);
+    
+        let grass = resources::load_model("resources/grass.jpg", &device, &queue, &texture_bind_group_layout).await.unwrap();
+        model_map.insert("grass".to_string(), grass);
 
-        // let cube_instance_character = Instance {
-        //     position: cgmath::Vector3 { x: 0.0, y: 0.0, z: 0.0 },
-        //     rotation: cgmath::Quaternion::from_axisG_angle(cgmath::Vector3::unit_z(), cgmath::Deg(0.0)),
-        // };
-        //
-        // // let cube_instance_enemy = Instance {
-        // //     position: cgmath::Vector3 { x: 2.0, y: 0.0, z: 2.0 },
-        // //     rotation: cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(90.0)),
-        // // };
-        // // let cube_instance_enemy_2 = Instance {
-        // //     position: cgmath::Vector3 { x: -2.0, y: 0.0, z: 1.5 },
-        // //     rotation: cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(90.0)),
-        // // };
-        // // let cube_instance_enemy_3 = Instance {
-        // //     position: cgmath::Vector3 { x: -1.0, y: -1.0, z: -1.0 },
-        // //     rotation: cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(180.0)),
-        // // };
-        // // let cube_instance_enemy_4 = Instance {
-        // //     position: cgmath::Vector3 { x: 1.0, y: 1.0, z: -1.0 },
-        // //     rotation: cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(45.0)),
-        // // };
-        // let mut instances = Vec::new();
-        // instances.push(cube_instance_character);
-        // // instances.push(cube_instance_enemy);
-        // // instances.push(cube_instance_enemy_2);
-        // // instances.push(cube_instance_enemy_3);
-        // // instances.push(cube_instance_enemy_4);
-        //
-        // let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
+        let depth_texture = texture::DepthTexture::create_depth_texture(&device, &config);
+
         // Tmp assign a buffer. Should be removed.
         let instance_data = Vec::new().iter().map(Instance::to_raw).collect::<Vec<_>>();
         let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -832,6 +612,13 @@ impl State {
             usage: wgpu::BufferUsages::VERTEX,
         });
 
+        let plane_instance_data = Vec::new().iter().map(Instance::to_raw).collect::<Vec<_>>();
+        let plane_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("plane Instance Buffer"),
+            contents: bytemuck::cast_slice(&plane_instance_data),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
+        
         let inv_instance_data = Vec::new().iter().map(Instance::to_raw).collect::<Vec<_>>();
         let inv_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Inventory Instance Buffer"),
@@ -856,14 +643,13 @@ impl State {
             camera_uniform_ui,
             camera_buffer_ui,
             camera_bind_group_ui,
-            vertex_buffer,
-            index_buffer,
-            num_indices,
+            model_map,
             //obj_model: garfield,
             depth_texture,
             instance_buffer,
+            plane_instance_buffer,
             inv_instance_buffer,
-            diffuse_bind_group,
+            // diffuse_bind_group: &texture_map.get("perocaca").unwrap().bind_group,
         }
     }
 
@@ -877,7 +663,7 @@ impl State {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-            self.depth_texture = texture::Texture::create_depth_texture(&self.device, &self.config);
+            self.depth_texture = texture::DepthTexture::create_depth_texture(&self.device, &self.config);
         }
     }
 
@@ -886,17 +672,15 @@ impl State {
         false
     }
 
-    pub fn update(&mut self) {
+    // Perhaps we want to use this instead of changing data in render method
+    // pub fn update(&mut self) {
         // switch (input)
         // self.in
-    }
+    // }
 
     pub fn render(&mut self, game_state: &GameState) -> Result<(), wgpu::SurfaceError> {
         // Update the camera in render with the game state data to build the new view
         // projection
-
-        // Use 45 degrees for isometric view.
-        let angle = std::f32::consts::FRAC_PI_4;
         let rad_x = f32::to_radians(game_state.camera_rotation_x_degrees);
         let rad_y = f32::to_radians(game_state.camera_rotation_y_degrees);
         self.camera.eye = Point3 {
@@ -961,7 +745,7 @@ impl State {
             });
 
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
+            render_pass.set_bind_group(0, &self.model_map.get("perocaca").unwrap().materials[0].bind_group, &[]);
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
 
             // Set buffer data
@@ -1000,20 +784,7 @@ impl State {
 
             
             
-            let plane_position = game_state.plane.get_position();
-            let plane_instance = Instance {
-                position: cgmath::Vector3 {
-                    x: plane_position.get_x(),
-                    y: plane_position.get_z(),
-                    z: plane_position.get_y(),
-                },
-                scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(game_state.plane.size.x, game_state.plane.size.z, game_state.plane.size.y, 1.0)),
-                rotation: cgmath::Quaternion::from_axis_angle(
-                    cgmath::Vector3::unit_z(),
-                    cgmath::Deg(0.0),
-                ),
-            };
-            instances.push(plane_instance);
+          
 
 
 
@@ -1029,10 +800,44 @@ impl State {
 
             // Add buffers to render pass
             // render_pass.set_vertex_buffer(0, garfield..vertex_buffer.slice(..));
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            // render_pass.set_vertex_buffer(0, self.model_map.get("perocaca").unwrap().meshes[0].vertex_buffer.slice(..));
             render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.draw_indexed(0..self.num_indices, 0, 0..instances.len() as _);
+            // render_pass.set_index_buffer(self.model_map.get("perocaca").unwrap().meshes[0].index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            // render_pass.draw_indexed(0..self.model_map.get("perocaca").unwrap().meshes[0].num_elements, 0, 0..instances.len() as _);
+            
+            use model::DrawModel;
+            render_pass.draw_mesh_instanced(&self.model_map.get("perocaca").unwrap().meshes[0], 0..instances.len() as u32);
+            // drop(render_pass);
+           
+            let mut plane_instances = Vec::new();
+            let plane_position = game_state.plane.get_position();
+            let plane_instance = Instance {
+                position: cgmath::Vector3 {
+                    x: plane_position.get_x(),
+                    y: plane_position.get_z(),
+                    z: plane_position.get_y(),
+                },
+                scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(game_state.plane.size.x, game_state.plane.size.z, game_state.plane.size.y, 1.0)),
+                rotation: cgmath::Quaternion::from_axis_angle(
+                    cgmath::Vector3::unit_z(),
+                    cgmath::Deg(0.0),
+                ),
+            };
+            plane_instances.push(plane_instance);
+
+            let plane_instance_data = plane_instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
+            let plane_instance_buffer =
+                self.device
+                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                        label: Some("plane Instance Buffer"),
+                        contents: bytemuck::cast_slice(&plane_instance_data),
+                        usage: wgpu::BufferUsages::VERTEX,
+                    });
+
+            self.plane_instance_buffer = plane_instance_buffer;
+            render_pass.set_bind_group(0, &self.model_map.get("grass").unwrap().materials[0].bind_group, &[]);
+            render_pass.set_vertex_buffer(1, self.plane_instance_buffer.slice(..));
+            render_pass.draw_mesh_instanced(&self.model_map.get("grass").unwrap().meshes[0], 0..plane_instances.len() as u32);
             drop(render_pass);
         }
         // UI
@@ -1053,7 +858,7 @@ impl State {
             });
 
             render_pass_ui.set_pipeline(&self.render_pipeline_ui);
-            render_pass_ui.set_bind_group(0, &self.diffuse_bind_group, &[]);
+            render_pass_ui.set_bind_group(0, &self.model_map.get("perocaca").unwrap().materials[0].bind_group, &[]);
             render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
 
             self.camera_ui.eye = Point3 {
@@ -1076,7 +881,7 @@ impl State {
                 0,
                 bytemuck::cast_slice(&[self.camera_uniform_ui]),
             );
-
+  
             let mut inv_instance_data = Vec::new();
 
             let inventory_instance = Instance {
@@ -1094,7 +899,7 @@ impl State {
             inv_instance_data.push(Instance::to_raw(&inventory_instance));
 
             let mut instances = 1;
-            if (game_state.inventory_item_count > 0) {
+            if game_state.inventory_item_count > 0 {
                 let inventory_item_instance = Instance {
                     position: cgmath::Vector3 {
                         x: game_state.inventory_position.get_x() + 0.5,
@@ -1121,10 +926,10 @@ impl State {
             self.inv_instance_buffer = inv_instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
                                                             //
 
-            render_pass_ui.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass_ui.set_vertex_buffer(0, self.model_map.get("perocaca").unwrap().meshes[0].vertex_buffer.slice(..));
             render_pass_ui.set_vertex_buffer(1, self.inv_instance_buffer.slice(..));
-            render_pass_ui.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass_ui.draw_indexed(0..self.num_indices, 0, 0..instances as _);
+            render_pass_ui.set_index_buffer(self.model_map.get("perocaca").unwrap().meshes[0].index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass_ui.draw_indexed(0..self.model_map.get("perocaca").unwrap().meshes[0].num_elements, 0, 0..instances as _);
             drop(render_pass_ui);
         }
 
