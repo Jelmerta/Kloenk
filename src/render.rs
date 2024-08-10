@@ -22,6 +22,7 @@ use crate::game_state::GameState;
 use crate::model::Vertex;
 use crate::model::{self};
 use crate::{texture, resources};
+use model::DrawModel;
 // use crate::resources::load_binary;
 
 // #[wasm_bindgen(start)]
@@ -77,6 +78,7 @@ pub struct State {
     model_map: HashMap<String, model::Model>,
     depth_texture: texture::DepthTexture,
     instance_buffer: wgpu::Buffer,
+    player_instance_buffer: wgpu::Buffer,
     plane_instance_buffer: wgpu::Buffer,
     inv_instance_buffer: wgpu::Buffer,
 }
@@ -611,6 +613,13 @@ impl State {
             contents: bytemuck::cast_slice(&instance_data),
             usage: wgpu::BufferUsages::VERTEX,
         });
+        
+        let player_instance_data = Vec::new().iter().map(Instance::to_raw).collect::<Vec<_>>();
+        let player_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("player Instance Buffer"),
+            contents: bytemuck::cast_slice(&player_instance_data),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
 
         let plane_instance_data = Vec::new().iter().map(Instance::to_raw).collect::<Vec<_>>();
         let plane_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -647,6 +656,7 @@ impl State {
             //obj_model: garfield,
             depth_texture,
             instance_buffer,
+            player_instance_buffer,
             plane_instance_buffer,
             inv_instance_buffer,
             // diffuse_bind_group: &texture_map.get("perocaca").unwrap().bind_group,
@@ -745,7 +755,6 @@ impl State {
             });
 
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_bind_group(0, &self.model_map.get("perocaca").unwrap().materials[0].bind_group, &[]);
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
 
             // Set buffer data
@@ -767,6 +776,20 @@ impl State {
                 instances.push(instance);
             }
 
+            let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
+            let instance_buffer =
+                self.device
+                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                        label: Some("Instance Buffer"),
+                        contents: bytemuck::cast_slice(&instance_data),
+                        usage: wgpu::BufferUsages::VERTEX,
+                    });
+            self.instance_buffer = instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
+            
+            render_pass.set_bind_group(0, &self.model_map.get("sword").unwrap().materials[0].bind_group, &[]);
+            render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
+            render_pass.draw_mesh_instanced(&self.model_map.get("sword").unwrap().meshes[0], 0..instances.len() as u32);
+            
             let player_position = game_state.player.get_position();
             let player_instance = Instance {
                 position: cgmath::Vector3 {
@@ -780,33 +803,28 @@ impl State {
                     cgmath::Deg(0.0),
                 ),
             };
-            instances.push(player_instance);
+            let mut player_instances = Vec::new();
+            player_instances.push(player_instance);
 
-            
+            let player_instance_data = player_instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
+            let player_instance_buffer =
+                self.device
+                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                        label: Some("player Instance Buffer"),
+                        contents: bytemuck::cast_slice(&player_instance_data),
+                        usage: wgpu::BufferUsages::VERTEX,
+                    });
+            self.player_instance_buffer = player_instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
             
           
 
 
 
-            let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
-            let instance_buffer =
-                self.device
-                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("Instance Buffer"),
-                        contents: bytemuck::cast_slice(&instance_data),
-                        usage: wgpu::BufferUsages::VERTEX,
-                    });
-            self.instance_buffer = instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
 
-            // Add buffers to render pass
-            // render_pass.set_vertex_buffer(0, garfield..vertex_buffer.slice(..));
-            // render_pass.set_vertex_buffer(0, self.model_map.get("perocaca").unwrap().meshes[0].vertex_buffer.slice(..));
-            render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
-            // render_pass.set_index_buffer(self.model_map.get("perocaca").unwrap().meshes[0].index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            // render_pass.draw_indexed(0..self.model_map.get("perocaca").unwrap().meshes[0].num_elements, 0, 0..instances.len() as _);
-            
-            use model::DrawModel;
-            render_pass.draw_mesh_instanced(&self.model_map.get("perocaca").unwrap().meshes[0], 0..instances.len() as u32);
+
+            render_pass.set_bind_group(0, &self.model_map.get("character").unwrap().materials[0].bind_group, &[]);
+            render_pass.set_vertex_buffer(1, self.player_instance_buffer.slice(..));
+            render_pass.draw_mesh_instanced(&self.model_map.get("character").unwrap().meshes[0], 0..1);
             // drop(render_pass);
            
             let mut plane_instances = Vec::new();
