@@ -15,7 +15,6 @@ pub const CAMERA_TOP_LIMIT: f32 = 350.0;
 pub const ITEM_PICKUP_RANGE: f32 = 1.5;
 
 impl GameSystem {
-
     pub fn update(game_state: &mut GameState, input: &mut Input) {
         Self::handle_item_pickup(game_state, input);
         Self::handle_item_placement(game_state, input);
@@ -30,10 +29,10 @@ impl GameSystem {
         if input.e_pressed.is_toggled_on() {
             let near_item_id = Self::find_near_item_id(game_state);
             if let Some(near_item_id_unpacked) = near_item_id {
-                if !Self::in_item_pickup_range(&game_state, near_item_id_unpacked) {
+                if !Self::in_item_pickup_range(&game_state, near_item_id_unpacked.clone()) {
                     return;
                 } else {
-                    game_state.remove_entity_from_world(near_item_id_unpacked);
+                    game_state.remove_entity_from_world(near_item_id_unpacked.clone());
                     game_state.add_item_to_inventory();
                 }
             } else {
@@ -42,17 +41,18 @@ impl GameSystem {
         }
     }
 
-    fn find_near_item_id(game_state: &GameState) -> Option<u32> {
-        let player_position: &Position = game_state.player.get_position();
+    fn find_near_item_id(game_state: &GameState) -> Option<String> {
+        let player_position: &Position = game_state.get_player_const().get_position();
         let near_id = game_state
             .get_entities()
             .iter()
+            .filter(|entity| entity.id != "player" && entity.id != "plane")
             .min_by_key(|entity| {
                 Self::distance_2d(entity.get_position(), player_position)
                     .round()
                     .to_u32()
             })
-            .map(|entity| entity.id); // f32does not have trait ord, for now we just cast.
+            .map(|entity| entity.id.clone()); // f32does not have trait ord, for now we just cast.
         return near_id;
     }
 
@@ -61,9 +61,9 @@ impl GameSystem {
     }
 
     // probably should be a method on player or something
-    fn in_item_pickup_range(game_state: &GameState, near_item_id: u32) -> bool {
+    fn in_item_pickup_range(game_state: &GameState, near_item_id: String) -> bool {
         return Self::distance_2d(
-            game_state.player.get_position(),
+            game_state.get_player_const().get_position(),
             game_state
                 .get_entity(near_item_id)
                 .expect("entity should exist")
@@ -75,12 +75,11 @@ impl GameSystem {
         if input.right_mouse_clicked.is_toggled_on() {
             if game_state.inventory_item_count > 0 {
                 let placed_position = Position {
-                    x: game_state.player.position.x - 1.1,
-                    y: game_state.player.position.y - 1.1,
-                    z: game_state.player.position.z,
+                    x: game_state.get_player().position.x - 1.1,
+                    y: game_state.get_player().position.y - 1.1,
+                    z: game_state.get_player().position.z,
                 };
-                let entity = game_state.new_entity(placed_position, "enemy".to_string());// for now
-                // we assume the placed things are enemies
+                let entity = game_state.new_entity(placed_position);
                 game_state.entities.push(entity);
                 game_state.inventory_item_count = game_state.inventory_item_count - 1;
             }
@@ -152,60 +151,78 @@ impl GameSystem {
         }
 
         if input.w_pressed.is_pressed {
-            game_state.player.previous_position = Position {
-                x: game_state.player.position.x.clone(),
-                y: game_state.player.position.y.clone(),
-                z: game_state.player.position.z.clone(),
+            let player = game_state.get_player();
+            player.previous_position = Position {
+                x: player.position.x.clone(),
+                y: player.position.y.clone(),
+                z: player.position.z.clone(),
             };
-            game_state.player.position.x -= movement_speed;
-            game_state.player.position.y -= movement_speed;
+            player.position.x -= movement_speed;
+            player.position.y -= movement_speed;
             Self::resolve_collisions(game_state)
         }
 
         if input.s_pressed.is_pressed {
-            game_state.player.previous_position = Position {
-                x: game_state.player.position.x.clone(),
-                y: game_state.player.position.y.clone(),
-                z: game_state.player.position.z.clone(),
+            let player = game_state.get_player();
+            player.previous_position = Position {
+               x: player.position.x.clone(),
+               y: player.position.y.clone(),
+               z: player.position.z.clone(),
             };
-            game_state.player.position.x += movement_speed;
-            game_state.player.position.y += movement_speed;
+            
+            player.position.x += movement_speed;
+            player.position.y += movement_speed;
             Self::resolve_collisions(game_state)
         }
 
         if input.a_pressed.is_pressed {
-            game_state.player.previous_position = Position {
-                x: game_state.player.position.x.clone(),
-                y: game_state.player.position.y.clone(),
-                z: game_state.player.position.z.clone(),
+            let player = game_state.get_player();
+            player.previous_position = Position {
+                x: player.position.x.clone(),
+                y: player.position.y.clone(),
+                z: player.position.z.clone(),
             };
-            game_state.player.position.x -= movement_speed;
-            game_state.player.position.y += movement_speed;
+            player.position.x -= movement_speed;
+            player.position.y += movement_speed;
             Self::resolve_collisions(game_state)
         }
 
         if input.d_pressed.is_pressed {
-            game_state.player.previous_position = Position {
-                x: game_state.player.position.x.clone(),
-                y: game_state.player.position.y.clone(),
-                z: game_state.player.position.z.clone(),
+            let player = game_state.get_player();
+            player.previous_position = Position {
+                x: player.position.x.clone(),
+                y: player.position.y.clone(),
+                z: player.position.z.clone(),
             };
-            game_state.player.position.x += movement_speed;
-            game_state.player.position.y -= movement_speed;
+            player.position.x += movement_speed;
+            player.position.y -= movement_speed;
             Self::resolve_collisions(game_state)
         }
     }
 
     fn resolve_collisions(game_state: &mut GameState) {
-        for entity in &game_state.entities {
-            if Self::check_collision(&game_state.player, &entity) {
-                // don't match itself
-                game_state.player.position = Position {
-                    x: game_state.player.previous_position.x.clone(),
-                    y: game_state.player.previous_position.y.clone(),
-                    z: game_state.player.previous_position.z.clone(),
-                };
+        let interactible_entities: Vec<&Entity> = game_state.entities.iter()
+            .filter(|entity| entity.id != "player" && entity.id != "plane")
+            .collect();
+        let player_const = game_state.get_player_const();
+        let mut should_update = false;
+        for entity in interactible_entities {
+            if Self::check_collision(&player_const, &entity) {
+                should_update = true;
             }
+        }
+
+        // vile... game state both borrowed as mut and not mut if updated directly... not sure good
+        // way to write this code.
+        if should_update {
+            let player = game_state.get_player();
+                            player.update_position(
+                // don't match itself
+                Position {
+                    x: player.previous_position.x.clone(),
+                    y: player.previous_position.y.clone(),
+                    z: player.previous_position.z.clone(),
+                });
         }
     }
 

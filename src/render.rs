@@ -1,6 +1,6 @@
+use itertools::Itertools;
 use std::collections::HashMap;
 use std::{iter, mem};
-
 // use anyhow::*;
 use cgmath::{prelude::*, Point3};
 // use gltf::iter::Meshes;
@@ -18,9 +18,9 @@ use winit::event::WindowEvent;
 use winit::window::Window;
 
 use crate::camera::Camera;
-use crate::game_state::GameState;
-use crate::model::Vertex;
+use crate::game_state::{Entity, GameState};
 use crate::model::{self};
+use crate::model::Vertex;
 use crate::{resources, texture};
 use model::DrawModel;
 // use crate::resources::load_binary;
@@ -77,10 +77,8 @@ pub struct State {
     //obj_model: model::Model,
     model_map: HashMap<String, model::Model>,
     depth_texture: texture::DepthTexture,
-    instance_buffer: wgpu::Buffer,
-    player_instance_buffer: wgpu::Buffer,
-    plane_instance_buffer: wgpu::Buffer,
     inv_instance_buffer: wgpu::Buffer,
+    renderable_groups: Vec<RenderableGroup>,
 }
 
 struct Instance {
@@ -135,6 +133,14 @@ impl InstanceRaw {
             ],
         }
     }
+}
+
+struct RenderableGroup {
+        // instances: Vec<InstanceRaw>,
+        buffer: wgpu::Buffer,
+        model_id: String,
+        material_id: String,
+        instance_count: u32,
 }
 
 impl State {
@@ -632,28 +638,6 @@ impl State {
 
         let depth_texture = texture::DepthTexture::create_depth_texture(&device, &config);
 
-        // Tmp assign a buffer. Should be removed.
-        let instance_data = Vec::new().iter().map(Instance::to_raw).collect::<Vec<_>>();
-        let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Instance Buffer"),
-            contents: bytemuck::cast_slice(&instance_data),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
-
-        let player_instance_data = Vec::new().iter().map(Instance::to_raw).collect::<Vec<_>>();
-        let player_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("player Instance Buffer"),
-            contents: bytemuck::cast_slice(&player_instance_data),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
-
-        let plane_instance_data = Vec::new().iter().map(Instance::to_raw).collect::<Vec<_>>();
-        let plane_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("plane Instance Buffer"),
-            contents: bytemuck::cast_slice(&plane_instance_data),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
-
         let inv_instance_data = Vec::new().iter().map(Instance::to_raw).collect::<Vec<_>>();
         let inv_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Inventory Instance Buffer"),
@@ -681,11 +665,8 @@ impl State {
             model_map,
             //obj_model: garfield,
             depth_texture,
-            instance_buffer,
-            player_instance_buffer,
-            plane_instance_buffer,
             inv_instance_buffer,
-            // diffuse_bind_group: &texture_map.get("perocaca").unwrap().bind_group,
+            renderable_groups: Vec::new(),
         }
     }
 
@@ -720,17 +701,16 @@ impl State {
         // projection
         let rad_x = f32::to_radians(game_state.camera_rotation_x_degrees);
         let rad_y = f32::to_radians(game_state.camera_rotation_y_degrees);
+        let focused_entity = game_state.get_entity("player".to_string()).unwrap();
         self.camera.eye = Point3 {
-            x: game_state.player.position.x
-                + game_state.camera_distance * rad_y.sin() * rad_x.cos(),
-            y: game_state.player.position.y + game_state.camera_distance * rad_y.cos(),
-            z: game_state.player.position.z
-                + game_state.camera_distance * rad_y.sin() * rad_x.sin(),
+            x: focused_entity.position.x + game_state.camera_distance * rad_y.sin() * rad_x.cos(),
+            y: focused_entity.position.y + game_state.camera_distance * rad_y.cos(),
+            z: focused_entity.position.z + game_state.camera_distance * rad_y.sin() * rad_x.sin(),
         };
         self.camera.target = Point3 {
-            x: game_state.player.position.x.clone(),
+            x: focused_entity.position.x.clone(),
             y: 0.0, // player does not have an upwards direction yet
-            z: game_state.player.position.y.clone(), // This can be confusing: our 2d world has x
+            z: focused_entity.position.y.clone(), // This can be confusing: our 2d world has x
                     // and y. in 3d the y is seen as vertical
         };
 
@@ -784,129 +764,41 @@ impl State {
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
 
-            // Set buffer data
-            let mut instances = Vec::new();
-            for entity in game_state.get_entities().into_iter() {
-                let position = entity.get_position();
-                let instance = Instance {
-                    position: cgmath::Vector3 {
-                        x: position.get_x(),
-                        y: 0.0,
-                        z: position.get_y(),
-                    },
-                    scale: cgmath::Matrix4::identity(),
-                    rotation: cgmath::Quaternion::from_axis_angle(
-                        cgmath::Vector3::unit_z(),
-                        cgmath::Deg(0.0),
-                    ),
-                };
-                instances.push(instance);
-            }
-
-            let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
-            let instance_buffer =
-                self.device
-                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("Instance Buffer"),
-                        contents: bytemuck::cast_slice(&instance_data),
-                        usage: wgpu::BufferUsages::VERTEX,
-                    });
-            self.instance_buffer = instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
-
-            render_pass.set_bind_group(
-                0,
-                &self.model_map.get("sword").unwrap().materials[0].bind_group,
-                &[],
-            );
-            render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
-            render_pass.draw_mesh_instanced(
-                &self.model_map.get("sword").unwrap().meshes[0],
-                0..instances.len() as u32,
-            );
-
-            let player_position = game_state.player.get_position();
-            let player_instance = Instance {
-                position: cgmath::Vector3 {
-                    x: player_position.get_x(),
-                    y: 0.0,
-                    z: player_position.get_y(),
-                },
-                scale: cgmath::Matrix4::identity(),
-                rotation: cgmath::Quaternion::from_axis_angle(
-                    cgmath::Vector3::unit_z(),
-                    cgmath::Deg(0.0),
-                ),
-            };
-            let mut player_instances = Vec::new();
-            player_instances.push(player_instance);
-
-            let player_instance_data = player_instances
+            let mut renderable_groups: Vec<RenderableGroup> = Vec::new();
+            game_state
+                .entities
                 .iter()
-                .map(Instance::to_raw)
-                .collect::<Vec<_>>();
-            let player_instance_buffer =
-                self.device
-                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("player Instance Buffer"),
-                        contents: bytemuck::cast_slice(&player_instance_data),
-                        usage: wgpu::BufferUsages::VERTEX,
-                    });
-            self.player_instance_buffer = player_instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
+                .group_by(|entity| {
+                    (
+                        entity.graphics_component.model_id.clone(),
+                        entity.graphics_component.material_id.clone(),
+                    )
+                })
+                .into_iter()
+                .for_each(|((model_id, material_id), group)| {
+                    let entity_group: Vec<&Entity> = group.collect();
+                    let instance_group: Vec<Instance> = entity_group
+                        .into_iter()
+                        .map(|entity| Self::to_instance(entity))
+                        .collect();
+                    let buffer = Self::create_instance_buffer(&self.device, &instance_group);
+                    let renderable_group = RenderableGroup {
+                        buffer,
+                        model_id,
+                        material_id,
+                        instance_count: instance_group.len() as u32,
+                    };
+                    renderable_groups.push(renderable_group);
+                });
+            self.renderable_groups = renderable_groups;
 
-            render_pass.set_bind_group(
-                0,
-                &self.model_map.get("character").unwrap().materials[0].bind_group,
-                &[],
-            );
-            render_pass.set_vertex_buffer(1, self.player_instance_buffer.slice(..));
-            render_pass
-                .draw_mesh_instanced(&self.model_map.get("character").unwrap().meshes[0], 0..1);
-            // drop(render_pass);
+            self.renderable_groups.iter()
+                .for_each(|renderable_group| {
+                    render_pass.set_bind_group(0, &self.model_map.get(&renderable_group.model_id).unwrap().materials[0].bind_group, &[]);
+                    render_pass.set_vertex_buffer(1, renderable_group.buffer.slice(..));
+                    render_pass.draw_mesh_instanced(&self.model_map.get(&renderable_group.material_id).unwrap().meshes[0], 0..renderable_group.instance_count);
+                });
 
-            let mut plane_instances = Vec::new();
-            let plane_position = game_state.plane.get_position();
-            let plane_instance = Instance {
-                position: cgmath::Vector3 {
-                    x: plane_position.get_x(),
-                    y: plane_position.get_z(),
-                    z: plane_position.get_y(),
-                },
-                scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                    game_state.plane.size.x,
-                    game_state.plane.size.z,
-                    game_state.plane.size.y,
-                    1.0,
-                )),
-                rotation: cgmath::Quaternion::from_axis_angle(
-                    cgmath::Vector3::unit_z(),
-                    cgmath::Deg(0.0),
-                ),
-            };
-            plane_instances.push(plane_instance);
-
-            let plane_instance_data = plane_instances
-                .iter()
-                .map(Instance::to_raw)
-                .collect::<Vec<_>>();
-            let plane_instance_buffer =
-                self.device
-                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("plane Instance Buffer"),
-                        contents: bytemuck::cast_slice(&plane_instance_data),
-                        usage: wgpu::BufferUsages::VERTEX,
-                    });
-
-            self.plane_instance_buffer = plane_instance_buffer;
-            render_pass.set_bind_group(
-                0,
-                &self.model_map.get("grass").unwrap().materials[0].bind_group,
-                &[],
-            );
-            render_pass.set_vertex_buffer(1, self.plane_instance_buffer.slice(..));
-            render_pass.draw_mesh_instanced(
-                &self.model_map.get("grass").unwrap().meshes[0],
-                0..plane_instances.len() as u32,
-            );
             drop(render_pass);
         }
         // UI
@@ -944,8 +836,7 @@ impl State {
                 x: 0.0,
                 y: 0.0, // player does not have an upwards direction yet
                 z: 0.0, // This can be confusing: our 2d world has x
-                        // and y. in 3d the y is seen as vertical
-            };
+            };// and y. in 3d the y is seen as vertical
 
             self.camera_uniform_ui
                 .update_view_projection(&self.camera_ui);
@@ -997,7 +888,6 @@ impl State {
                         usage: wgpu::BufferUsages::VERTEX,
                     });
             self.inv_instance_buffer = inv_instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
-                                                            //
 
             render_pass_ui.set_vertex_buffer(
                 0,
@@ -1034,5 +924,42 @@ impl State {
         output.present();
 
         Ok(())
+    }
+
+    fn create_instance_buffer(
+        device: &wgpu::Device,
+        instance_group: &Vec<Instance>,
+    ) -> wgpu::Buffer {
+        let raw_instances = instance_group
+            .iter()
+            .map(|instance| Instance::to_raw(instance))
+            .collect::<Vec<_>>();
+        device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Instance Buffer"), // we could name this better
+            contents: bytemuck::cast_slice(&raw_instances),
+            usage: wgpu::BufferUsages::VERTEX,
+        })
+    }
+
+    fn to_instance(entity: &Entity) -> Instance {
+        let position: &crate::game_state::Position = entity.get_position();
+
+        Instance {
+            position: cgmath::Vector3 {
+                x: position.get_x(),
+                y: position.get_z(),
+                z: position.get_y(),
+            },
+            scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
+                entity.size.x,
+                entity.size.z,
+                entity.size.y,
+                1.0,
+            )),
+            rotation: cgmath::Quaternion::from_axis_angle(
+                cgmath::Vector3::unit_z(),
+                cgmath::Deg(0.0),
+            ),
+        }
     }
 }
