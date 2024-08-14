@@ -46,7 +46,7 @@ impl GameSystem {
         let near_id = game_state
             .get_entities()
             .iter()
-            .filter(|entity| entity.id != "player" && entity.id != "plane")
+            .filter(|entity| entity.id != "player" && entity.graphics_component.material_id != "grass") // TODO hacky
             .min_by_key(|entity| {
                 Self::distance_2d(entity.get_position(), player_position)
                     .round()
@@ -202,7 +202,7 @@ impl GameSystem {
 
     fn resolve_collisions(game_state: &mut GameState) {
         let interactible_entities: Vec<&Entity> = game_state.entities.iter()
-            .filter(|entity| entity.id != "player" && entity.id != "plane")
+            .filter(|entity| entity.id != "player" && entity.graphics_component.material_id != "grass")
             .collect();
         let player_const = game_state.get_player_const();
         let mut should_update = false;

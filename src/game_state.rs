@@ -11,7 +11,7 @@ pub struct GameState {
     pub inventory_toggled: bool,
     pub inventory_position: Position, // Could be 2d. values between -1 and 1?
     pub inventory_item_count: u32,    // should be an item list
-                                      //
+    //
     pub entities: Vec<Entity>,
 }
 
@@ -107,44 +107,57 @@ impl GameState {
                 y: 0.0,
                 z: 0.0,
             },
+            hitbox: 0.51,
             size: Position {
                 x: 1.0,
                 y: 1.0,
                 z: 1.0,
             },
-            hitbox: 0.51,
-        };
-
-
-        let plane = Entity {
-            // id: u32::MAX - 1,
-            id: "plane".to_string(),
-            graphics_component: GraphicsComponent {
-                model_id: "grass".to_string(),
-                material_id: "grass".to_string(),
-            },
-            position: Position {
-                x: 0.0,
-                y: 0.0,
-                z: -0.5,
-            },
-            previous_position: Position {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
-            size: Position {
-                x: 25.0,
-                y: 25.0,
-                z: 0.1,
-            },
-            hitbox: 0.0,
         };
 
         let mut entities = Vec::new();
+
+        // maybe we can define a map instead?
+        // also, we might just need 2d if we go for tiles
+        //
+        let map_x_min = -10;
+        let map_x_max = 10;
+        let map_y_min = -10;
+        let map_y_max = 10;
+        for x in map_x_min..map_x_max {
+            for y in map_y_min..map_y_max {
+                let plane = Entity {
+                    id: current_entity_id
+                        .fetch_add(1, Ordering::SeqCst)
+                        .to_string(),
+                    graphics_component: GraphicsComponent {
+                        model_id: "grass".to_string(),
+                        material_id: "grass".to_string(),
+                    },
+                    position: Position {
+                        x: x as f32,
+                        y: y as f32,
+                        z: -0.5,
+                    },
+                    previous_position: Position {
+                        x: 0.0,
+                        y: 0.0,
+                        z: 0.0,
+                    },
+                    size: Position {
+                        x: 25.0,
+                        y: 25.0,
+                        z: 0.1,
+                    },
+                    hitbox: 0.0,
+                };
+
+                entities.push(plane);
+            }
+        }
+
         entities.push(player);
         entities.push(sword);
-        entities.push(plane);
 
         Self {
             camera_distance,
@@ -174,7 +187,7 @@ impl GameState {
     pub fn remove_entity_from_world(&mut self, entity_to_remove: String) {
         self.entities.retain(|entity| entity.id != entity_to_remove);
     }
-    
+
     pub(crate) fn add_item_to_inventory(&mut self) {
         self.inventory_item_count = self.inventory_item_count + 1;
     }
@@ -188,16 +201,25 @@ impl GameState {
     }
 
     pub fn get_player_const(&self) -> &Entity {
-        self.entities.iter().find(|entity| entity.id == "player").unwrap()
+        self.entities
+            .iter()
+            .find(|entity| entity.id == "player")
+            .unwrap()
     }
     pub fn get_player(&mut self) -> &mut Entity {
-        self.entities.iter_mut().find(|entity| entity.id == "player").unwrap()
+        self.entities
+            .iter_mut()
+            .find(|entity| entity.id == "player")
+            .unwrap()
     }
-    
+
     pub fn new_entity(&self, placement_position: Position) -> Entity {
         return Entity {
             // id,
-            id: self.current_entity_id.fetch_add(1, Ordering::SeqCst).to_string(),
+            id: self
+                .current_entity_id
+                .fetch_add(1, Ordering::SeqCst)
+                .to_string(),
             graphics_component: GraphicsComponent {
                 model_id: "sword".to_string(),
                 material_id: "sword".to_string(),
@@ -210,6 +232,6 @@ impl GameState {
                 z: 1.0,
             },
             hitbox: 0.51,
-        }
+        };
     }
 }
