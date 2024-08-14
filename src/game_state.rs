@@ -145,8 +145,8 @@ impl GameState {
                         z: 0.0,
                     },
                     size: Position {
-                        x: 25.0,
-                        y: 25.0,
+                        x: 1.0,
+                        y: 1.0,
                         z: 0.1,
                     },
                     hitbox: 0.0,
