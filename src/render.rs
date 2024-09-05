@@ -18,10 +18,12 @@ use winit::event::WindowEvent;
 use winit::window::Window;
 
 use crate::camera::Camera;
-use crate::game_state::{Entity, GameState};
+use crate::game_state::GameState;
+use crate::gui::UIState;
 use crate::model::{self};
 use crate::model::Vertex;
 use crate::{resources, texture};
+use crate::components::{Entity, Position};
 use model::DrawModel;
 // use crate::resources::load_binary;
 
@@ -696,21 +698,24 @@ impl State {
     // self.in
     // }
 
-    pub fn render(&mut self, game_state: &GameState) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self, game_state: &GameState, _ui_state: &UIState) -> Result<(), wgpu::SurfaceError> {
         // Update the camera in render with the game state data to build the new view
         // projection
-        let rad_x = f32::to_radians(game_state.camera_rotation_x_degrees);
-        let rad_y = f32::to_radians(game_state.camera_rotation_y_degrees);
-        let focused_entity = game_state.get_entity("player".to_string()).unwrap();
+        let player = "player".to_string();
+        let camera = game_state.get_camera(player.clone()).unwrap();
+        let rad_x = f32::to_radians(camera.rotation_x_degrees);
+        let rad_y = f32::to_radians(camera.rotation_y_degrees);
+        // let focused_entity = game_state.get_entity("player".to_string()).unwrap();
+        let player_position = game_state.get_position(player.clone()).unwrap();
         self.camera.eye = Point3 {
-            x: focused_entity.position.x + game_state.camera_distance * rad_y.sin() * rad_x.cos(),
-            y: focused_entity.position.y + game_state.camera_distance * rad_y.cos(),
-            z: focused_entity.position.z + game_state.camera_distance * rad_y.sin() * rad_x.sin(),
+            x: player_position.x + camera.distance * rad_y.sin() * rad_x.cos(),
+            y: player_position.y + camera.distance * rad_y.cos(),
+            z: player_position.z + camera.distance * rad_y.sin() * rad_x.sin(),
         };
         self.camera.target = Point3 {
-            x: focused_entity.position.x.clone(),
+            x: player_position.x.clone(),
             y: 0.0, // player does not have an upwards direction yet
-            z: focused_entity.position.y.clone(), // This can be confusing: our 2d world has x
+            z: player_position.y.clone(), // This can be confusing: our 2d world has x
                     // and y. in 3d the y is seen as vertical
         };
 
@@ -768,10 +773,12 @@ impl State {
             game_state
                 .entities
                 .iter()
+                .filter(|entity| game_state.get_graphics(entity.to_string()).is_some())
                 .group_by(|entity| {
+                    let graphics = game_state.get_graphics(entity.to_string()).unwrap();
                     (
-                        entity.graphics_component.model_id.clone(),
-                        entity.graphics_component.material_id.clone(),
+                        graphics.model_id.clone(),
+                        graphics.material_id.clone(),
                     )
                 })
                 .into_iter()
@@ -779,7 +786,8 @@ impl State {
                     let entity_group: Vec<&Entity> = group.collect();
                     let instance_group: Vec<Instance> = entity_group
                         .into_iter()
-                        .map(|entity| Self::to_instance(entity))
+                        .filter(|entity| game_state.get_position(entity.to_string()).is_some())
+                        .map(|entity| Self::to_instance(game_state.get_position(entity.to_string()).unwrap()))
                         .collect();
                     let buffer = Self::create_instance_buffer(&self.device, &instance_group);
                     let renderable_group = RenderableGroup {
@@ -802,113 +810,113 @@ impl State {
             drop(render_pass);
         }
         // UI
-        if game_state.inventory_toggled {
-            let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass UI"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Load,
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                occlusion_query_set: None,
-                timestamp_writes: None,
-            });
+        // if game_state.inventory_toggled {
+        //     let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        //         label: Some("Render Pass UI"),
+        //         color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+        //             view: &view,
+        //             resolve_target: None,
+        //             ops: wgpu::Operations {
+        //                 load: wgpu::LoadOp::Load,
+        //                 store: wgpu::StoreOp::Store,
+        //             },
+        //         })],
+        //         depth_stencil_attachment: None,
+        //         occlusion_query_set: None,
+        //         timestamp_writes: None,
+        //     });
 
-            render_pass_ui.set_pipeline(&self.render_pipeline_ui);
-            render_pass_ui.set_bind_group(
-                0,
-                &self.model_map.get("sword").unwrap().materials[0].bind_group,
-                &[],
-            );
-            render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
+            // render_pass_ui.set_pipeline(&self.render_pipeline_ui);
+            // render_pass_ui.set_bind_group(
+            //     0,
+            //     &self.model_map.get("sword").unwrap().materials[0].bind_group,
+            //     &[],
+            // );
+            // render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
 
-            self.camera_ui.eye = Point3 {
-                x: 0.0,
-                y: 0.0,
-                z: 100.0,
-            };
+            // self.camera_ui.eye = Point3 {
+            //     x: 0.0,
+            //     y: 0.0,
+            //     z: 100.0,
+            // };
 
-            self.camera_ui.target = Point3 {
-                x: 0.0,
-                y: 0.0, // player does not have an upwards direction yet
-                z: 0.0, // This can be confusing: our 2d world has x
-            };// and y. in 3d the y is seen as vertical
+            // self.camera_ui.target = Point3 {
+            //     x: 0.0,
+            //     y: 0.0, // player does not have an upwards direction yet
+            //     z: 0.0, // This can be confusing: our 2d world has x
+            // };// and y. in 3d the y is seen as vertical
 
-            self.camera_uniform_ui
-                .update_view_projection(&self.camera_ui);
-            self.queue.write_buffer(
-                &self.camera_buffer_ui,
-                0,
-                bytemuck::cast_slice(&[self.camera_uniform_ui]),
-            );
+            // self.camera_uniform_ui
+            //     .update_view_projection(&self.camera_ui);
+            // self.queue.write_buffer(
+            //     &self.camera_buffer_ui,
+            //     0,
+            //     bytemuck::cast_slice(&[self.camera_uniform_ui]),
+            // );
 
-            let mut inv_instance_data = Vec::new();
+            // let mut inv_instance_data = Vec::new();
 
-            let inventory_instance = Instance {
-                position: cgmath::Vector3 {
-                    x: game_state.inventory_position.get_x(),
-                    y: game_state.inventory_position.get_y(),
-                    z: 0.0,
-                },
-                scale: cgmath::Matrix4::identity(),
-                rotation: cgmath::Quaternion::from_axis_angle(
-                    cgmath::Vector3::unit_z(),
-                    cgmath::Deg(0.0),
-                ),
-            };
-            inv_instance_data.push(Instance::to_raw(&inventory_instance));
+            // let inventory_instance = Instance {
+            //     position: cgmath::Vector3 {
+            //         x: game_state.inventory_position.get_x(),
+            //         y: game_state.inventory_position.get_y(),
+            //         z: 0.0,
+            //     },
+            //     scale: cgmath::Matrix4::identity(),
+            //     rotation: cgmath::Quaternion::from_axis_angle(
+            //         cgmath::Vector3::unit_z(),
+            //         cgmath::Deg(0.0),
+            //     ),
+            // };
+            // inv_instance_data.push(Instance::to_raw(&inventory_instance));
 
-            let mut instances = 1;
-            if game_state.inventory_item_count > 0 {
-                let inventory_item_instance = Instance {
-                    position: cgmath::Vector3 {
-                        x: game_state.inventory_position.get_x() + 0.5,
-                        y: game_state.inventory_position.get_y() - 0.5,
-                        z: -60.0,
-                    },
-                    scale: cgmath::Matrix4::identity(),
-                    rotation: cgmath::Quaternion::from_axis_angle(
-                        cgmath::Vector3::unit_z(),
-                        cgmath::Deg(0.0),
-                    ),
-                };
-                inv_instance_data.push(Instance::to_raw(&inventory_item_instance));
-                instances = 2;
-            }
+            // let mut instances = 1;
+            // if game_state.inventory_item_count > 0 {
+            //     let inventory_item_instance = Instance {
+            //         position: cgmath::Vector3 {
+            //             x: game_state.inventory_position.get_x() + 0.5,
+            //             y: game_state.inventory_position.get_y() - 0.5,
+            //             z: -60.0,
+            //         },
+            //         scale: cgmath::Matrix4::identity(),
+            //         rotation: cgmath::Quaternion::from_axis_angle(
+            //             cgmath::Vector3::unit_z(),
+            //             cgmath::Deg(0.0),
+            //         ),
+            //     };
+            //     inv_instance_data.push(Instance::to_raw(&inventory_item_instance));
+            //     instances = 2;
+            // }
 
-            let inv_instance_buffer =
-                self.device
-                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("Inventory Instance Buffer"),
-                        contents: bytemuck::cast_slice(&inv_instance_data),
-                        usage: wgpu::BufferUsages::VERTEX,
-                    });
-            self.inv_instance_buffer = inv_instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
+            // let inv_instance_buffer =
+            //     self.device
+            //         .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            //             label: Some("Inventory Instance Buffer"),
+            //             contents: bytemuck::cast_slice(&inv_instance_data),
+            //             usage: wgpu::BufferUsages::VERTEX,
+            //         });
+            // self.inv_instance_buffer = inv_instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
 
-            render_pass_ui.set_vertex_buffer(
-                0,
-                self.model_map.get("sword").unwrap().meshes[0]
-                    .vertex_buffer
-                    .slice(..),
-            );
-            render_pass_ui.set_vertex_buffer(1, self.inv_instance_buffer.slice(..));
-            render_pass_ui.set_index_buffer(
-                self.model_map.get("sword").unwrap().meshes[0]
-                    .index_buffer
-                    .slice(..),
-                wgpu::IndexFormat::Uint16,
-            );
-            render_pass_ui.draw_indexed(
-                0..self.model_map.get("sword").unwrap().meshes[0].num_elements,
-                0,
-                0..instances as _,
-            );
-            drop(render_pass_ui);
-        }
+        //     render_pass_ui.set_vertex_buffer(
+        //         0,
+        //         self.model_map.get("sword").unwrap().meshes[0]
+        //             .vertex_buffer
+        //             .slice(..),
+        //     );
+        //     render_pass_ui.set_vertex_buffer(1, self.inv_instance_buffer.slice(..));
+        //     render_pass_ui.set_index_buffer(
+        //         self.model_map.get("sword").unwrap().meshes[0]
+        //             .index_buffer
+        //             .slice(..),
+        //         wgpu::IndexFormat::Uint16,
+        //     );
+        //     render_pass_ui.draw_indexed(
+        //         0..self.model_map.get("sword").unwrap().meshes[0].num_elements,
+        //         0,
+        //         0..instances as _,
+        //     );
+        //     drop(render_pass_ui);
+        // }
 
         // if (
         // instances.push(inventory_items_instance);
@@ -941,19 +949,20 @@ impl State {
         })
     }
 
-    fn to_instance(entity: &Entity) -> Instance {
-        let position: &crate::game_state::Position = entity.get_position();
-
+    fn to_instance(position: &Position) -> Instance {
         Instance {
             position: cgmath::Vector3 {
-                x: position.get_x(),
-                y: position.get_z(),
-                z: position.get_y(),
+                x: position.x,
+                y: position.z,
+                z: position.y,
             },
             scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                entity.size.x,
-                entity.size.z,
-                entity.size.y,
+                // entity.size.x,
+                // entity.size.z,
+                // entity.size.y,
+                1.0,
+                1.0,
+                1.0,
                 1.0,
             )),
             rotation: cgmath::Quaternion::from_axis_angle(

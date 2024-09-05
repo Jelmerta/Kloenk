@@ -17,6 +17,8 @@ mod game_system;
 mod camera;
 mod model;
 mod resources;
+mod components;
+mod gui;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
@@ -55,6 +57,7 @@ pub async fn run() {
     let mut state = render::State::new(window).await;
 
     let mut game_state = game_state::GameState::new();
+    let ui_state = gui::UIState::new();
     let mut input_handler = input::Input::new();
 
     event_loop.run(move |event, _, control_flow| {
@@ -106,7 +109,7 @@ pub async fn run() {
             }
             Event::RedrawRequested(window_id) if window_id == state.window().id() => {
                 GameSystem::update(&mut game_state, &mut input_handler);
-                match state.render(&game_state) {
+                match state.render(&game_state, &ui_state) {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
