@@ -4,6 +4,7 @@ use cgmath::num_traits::ToPrimitive;
 
 use crate::components::{CameraTarget, Entity, Hitbox, InStorage, Position, Storable, Storage};
 use crate::game_state::*;
+use crate::gui::UIState;
 use crate::input::Input;
 
 pub struct GameSystem {}
@@ -201,10 +202,10 @@ mod tests {
 }
 
 impl GameSystem {
-    pub fn update(game_state: &mut GameState, input: &mut Input) {
+    pub fn update(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
         ItemPickupSystem::handle_item_pickup(game_state, input);
         Self::handle_item_placement(game_state, input);
-        // Self::handle_inventory(game_state, input);
+        Self::handle_inventory(game_state, ui_state, input);
         Self::resolve_movement(game_state, input);
         Self::update_camera(game_state, input);
     }
@@ -232,11 +233,11 @@ impl GameSystem {
         }
     }
 
-    // fn handle_inventory(game_state: &mut GameState, input: &mut Input) {
-    //     if input.i_pressed.is_toggled_on() {
-    //         game_state.inventory_toggled = !game_state.inventory_toggled;
-    //     }
-    // }
+    fn handle_inventory(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
+        if input.i_pressed.is_toggled_on() {
+            ui_state.inventory_open = !ui_state.inventory_open;
+        }
+    }
 
     fn update_camera(game_state: &mut GameState, input: &mut Input) {
         let player_camera: &mut CameraTarget =

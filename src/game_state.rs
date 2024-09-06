@@ -87,13 +87,6 @@ impl GameState {
         let sword_storable = Storable {};
         storable_components.insert(sword.clone(), sword_storable);
 
-        // let sword_in_player_inventory = InStorage {
-            // storage_entity: player,
-            // position_x: 0,
-            // position_y: 0,
-        // };
-        // in_storage_components.insert(sword.clone(), sword_in_player_inventory);
-
         // Load tiles
         let map_x_min = -10;
         let map_x_max = 10;
@@ -116,31 +109,8 @@ impl GameState {
                     z: -1.0,
                 };
                 position_components.insert(plane.clone(), plane_position);
-
-                //size?
-                //hitbox 0?
             }
         }
-
-        //     Self {
-        //         camera_distance,
-        //         camera_rotation_x_degrees: 225.0,
-        //         camera_rotation_y_degrees: 315.0,
-        //         current_entity_id,
-        //         inventory_toggled: false,
-        //         inventory_position: Position {
-        //             x: 1.33,
-        //             y: -0.9,
-        //             z: 0.0,
-        //         },
-        //         inventory_item_count: 1,
-        //         entities,
-        //         world_object_components: HashMap::new(),
-        //         inventory_components: HashMap::new(),
-        //         inventory_item_components: HashMap::new(),
-        //     }
-        // }
-        //
 
         Self {
             current_entity_id,
@@ -171,19 +141,9 @@ impl GameState {
         return self.position_components.get_mut(&entity);
     }
 
-    // pub fn get_positions(&self) -> Vec<&Entity> {
-    //     // TODO Return pairs of keys and values or not?
-    //     return self.position_components.keys().collect();
-    // }
-
     pub fn remove_position(&mut self, to_remove: Entity) {
         self.position_components.remove(&to_remove);
     }
-
-    // pub fn create_hitbox(&mut self, entity: Entity, distance: f32) {
-    //     let hitbox = Hitbox { hitbox: distance };
-    //     self.hitbox_components.insert(entity, hitbox);
-    // }
 
     pub fn get_hitbox(&self, entity: Entity) -> Option<&Hitbox> {
         return self.hitbox_components.get(&entity);
@@ -214,78 +174,10 @@ impl GameState {
     pub fn remove_in_storage(&mut self, entity: &Entity) {
         self.in_storage_components.remove(entity);
     }
-    // pub fn get_entities(&self) -> &Vec<Entity> {
-    //     // &?
-    //     &self.entities
-    // }
 
-    // pub fn get_world_objects(&self) -> Vec<WorldObjectComponent> {
-    //     return self.world_object_components.values().collect();
-    // }
-
-    // pub fn get_world_object(&self, world_object_entity_id: String) -> &WorldObjectComponent {
-    //     return self.world_object_components.get(&world_object_entity_id).unwrap();
-    // }
-
-    // pub fn get_inventory(&self, inventory_entity_id: String) -> &InventoryComponent {
-    //     return self.inventory_components.get(&inventory_entity_id).unwrap();
-    // }
-    //
-    // pub fn get_inventory_item(&self, inventory_item_entity_id: String) -> &InventoryItemComponent {
-    //     return self.inventory_item_components.get(&inventory_item_entity_id).unwrap();
-    // }
-    // // pub fn remove_entity_from_world(&mut self, entity_to_remove: u32) {
-    // //     self.entities.retain(|entity| entity.id != entity_to_remove);
-    // // }
-
-    // pub fn remove_entity_from_world(&mut self, entity_to_remove: String) {
-    //     self.entities.retain(|entity| entity.id != entity_to_remove);
-    // }
-
-    // pub fn get_entity(&self, id: u32) -> Option<&Entity> {
-    //     self.entities.iter().find(|entity| entity.id == id)
-    // }
-
-    // pub fn get_entity(&self, id: String) -> Option<&Entity> {
-    //     self.entities.iter().find(|entity| entity.id == id)
-    // }
-
-    // pub fn get_player_const(&self) -> &Entity {
-    //     self.entities
-    //         .iter()
-    //         .find(|entity| entity.id == "player")
-    //         .unwrap()
-    // }
-    // pub fn get_player(&mut self) -> &mut Entity {
-    //     self.entities
-    //         .iter_mut()
-    //         .find(|entity| entity.id == "player")
-    //         .unwrap()
-    // }
-
-    // pub fn new_entity(&self, placement_position: Position) -> Entity {
-    //     return Entity {
-    //         // id,
-    //         id: self
-    //             .current_entity_id
-    //             .fetch_add(1, Ordering::SeqCst)
-    //             .to_string(),
-    //         graphics_component: GraphicsComponent {
-    //             model_id: "sword".to_string(),
-    //             material_id: "sword".to_string(),
-    //         },
-    //         position: placement_position,
-    //         previous_position: placement_position,
-    //         size: Position {
-    //             x: 1.0,
-    //             y: 1.0,
-    //             z: 1.0,
-    //         },
-    //         hitbox: 0.51,
-    //     };
-    // }
-
-    //     pub fn get_inventory_item_components(&self) -> Vec<InventoryItemComponent> {
-    //         self.inventory_item_components.values().collect()
-    //     }
+    pub fn get_in_storages(&self, storage_entity: &Entity) -> Vec<&InStorage> {
+        self.in_storage_components.values().into_iter()
+            .filter(|in_storage| in_storage.storage_entity == storage_entity.to_string())
+            .collect()
+    }
 }

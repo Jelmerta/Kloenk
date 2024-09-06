@@ -57,7 +57,7 @@ pub async fn run() {
     let mut state = render::State::new(window).await;
 
     let mut game_state = game_state::GameState::new();
-    let ui_state = gui::UIState::new();
+    let mut ui_state = gui::UIState::new();
     let mut input_handler = input::Input::new();
 
     event_loop.run(move |event, _, control_flow| {
@@ -108,7 +108,7 @@ pub async fn run() {
                 }
             }
             Event::RedrawRequested(window_id) if window_id == state.window().id() => {
-                GameSystem::update(&mut game_state, &mut input_handler);
+                GameSystem::update(&mut game_state, &mut ui_state, &mut input_handler);
                 match state.render(&game_state, &ui_state) {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
