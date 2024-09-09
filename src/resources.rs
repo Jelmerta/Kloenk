@@ -51,12 +51,47 @@ const CUBE_INDICES: &[u16] = &[
     2, 6, 7, 2, 7, 3,
 ];
 
+const SQUARE_TEX: &[model::TexVertex] = &[
+    model::TexVertex {
+        position: [0.0, 0.0, 0.0],
+        tex_coords: [0.0, 0.0],
+    },
+    model::TexVertex {
+        position: [1.0, 0.0, 0.0],
+        tex_coords: [1.0, 0.0],
+    },
+    model::TexVertex {
+        position: [1.0, -1.0, 0.0],
+        tex_coords: [1.0, 1.0],
+    },
+    model::TexVertex {
+        position: [0.0, -1.0, 0.0],
+        tex_coords: [0.0, 1.0],
+    },
+];
+
+const SQUARE_INDICES: &[u16] = &[
+    2, 1, 0,
+    3, 2 ,0,
+];
+
 pub async fn load_model(
     file_name: &str,
     device: &wgpu::Device,
     queue: &wgpu::Queue,
     layout: &wgpu::BindGroupLayout,
+    model_to_load: &str,
 ) -> anyhow::Result<model::Model> {
+    let model: &[model::TexVertex];
+    let indices: &[u16];
+    if model_to_load.eq("CUBE") {
+        model = CUBE_TEX;
+        indices = CUBE_INDICES;
+    } else {
+        model = SQUARE_TEX;
+        indices = SQUARE_INDICES;
+    }
+    
     let diffuse_texture = load_texture(file_name, device, queue).await?;
     let bind_group = build_bind_group(device, layout, &diffuse_texture);
 
@@ -69,16 +104,16 @@ pub async fn load_model(
 
     let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Vertex Buffer"),
-        contents: bytemuck::cast_slice(CUBE_TEX),
+        contents: bytemuck::cast_slice(model),
         usage: wgpu::BufferUsages::VERTEX,
     });
 
     let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Index Buffer"),
-        contents: bytemuck::cast_slice(CUBE_INDICES),
+        contents: bytemuck::cast_slice(indices),
         usage: wgpu::BufferUsages::INDEX,
     });
-    let num_indices = CUBE_INDICES.len() as u32;
+    let num_indices = indices.len() as u32;
 
     let mut meshes = Vec::new();
     meshes.push(model::Mesh {

@@ -54,19 +54,7 @@ impl ItemPickupSystem {
             }
             let empty_spot = StorageManager::find_empty_spot(inventory, &inventory_items).unwrap();
 
-            // WorldManager? Remove object:
-            // 0. Unregister world component?
-            // 0.5 Delete world component?
-            //
-            // InventoryManager? Add item:
-            // 1. Create inventory item component for entity
-            // 2. Register component
-            // 3. Link component to inventory?
-
-            // TODO unregister and register components instead?
             game_state.remove_position(near_pickup.clone());
-            // Maybe use like an InventoryManager or smth? something that deals with
-            // managing component data
             game_state.create_in_storage(player.clone(), near_pickup.clone(), empty_spot);
         }
     }
@@ -88,7 +76,7 @@ impl StorageManager {
         for row in 0..storage.number_of_rows {
             for column in 0..storage.number_of_columns {
                 if !dynamic_storage[row as usize][column as usize] {
-                    return Some((row, column));
+                    return Some((column, row));
                 }
             }
         }
@@ -171,33 +159,8 @@ impl PositionManager {
             .cloned()
     }
 
-    // fn find_near_item(game_state: &GameState) -> Option<String> {
-    //     fn find_near_item(game_state: &GameState) -> Option<&Entity> {
-    //         let player_position: &Position = game_state.get_player_const().get_position();
-    //         game_state
-    //             .get_entities()
-    //             .iter()
-    //             .filter(|entity| entity.id != "player" && entity.graphics_component.material_id != "grass") // TODO hacky
-    //             .min_by_key(|entity| {
-    //                 Self::distance_2d(entity.get_position(), player_position)
-    //                     .round()
-    //                         .to_u32()
-    //             })
-    //             // .map(|entity| entity.id.clone()); // f32does not have trait ord, for now we just cast.
-    //         // return near_id;
-    //     }
-    // }    // probably should be a method on player or something
-
     fn distance_2d(position1: &Position, position2: &Position) -> f32 {
         return ((position2.x - position1.x).powi(2) + (position2.y - position1.y).powi(2)).sqrt();
-    }
-}
-
-#[cfg(tests)]
-mod tests {
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
     }
 }
 
@@ -205,7 +168,7 @@ impl GameSystem {
     pub fn update(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
         ItemPickupSystem::handle_item_pickup(game_state, input);
         Self::handle_item_placement(game_state, input);
-        Self::handle_inventory(game_state, ui_state, input);
+        Self::handle_inventory(ui_state, input);
         Self::resolve_movement(game_state, input);
         Self::update_camera(game_state, input);
     }
@@ -233,7 +196,7 @@ impl GameSystem {
         }
     }
 
-    fn handle_inventory(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
+    fn handle_inventory(ui_state: &mut UIState, input: &mut Input) {
         if input.i_pressed.is_toggled_on() {
             ui_state.inventory_open = !ui_state.inventory_open;
         }
@@ -357,18 +320,14 @@ impl GameSystem {
             }
         }
 
-        // vile... game state both borrowed as mut and not mut if updated directly... not sure good
-        // way to write this code.
         if should_update {
             let player_position = game_state.get_position_mut("player".to_string()).unwrap();
             *player_position =
-                // don't match itself
                 Position {
                     x: previous_position.x.clone(),
                     y: previous_position.y.clone(),
                     z: previous_position.z.clone(),
                 };
-            // TODO still need update? position in map? or retrieve from map mut?
         }
     }
 
