@@ -18,12 +18,12 @@ use winit::event::WindowEvent;
 use winit::window::Window;
 
 use crate::camera::Camera;
+use crate::components::{Entity, Position};
 use crate::game_state::GameState;
 use crate::gui::UIState;
-use crate::model::{self};
 use crate::model::Vertex;
+use crate::model::{self};
 use crate::{resources, texture};
-use crate::components::{Entity, Position};
 use model::DrawModel;
 // use crate::resources::load_binary;
 
@@ -138,11 +138,11 @@ impl InstanceRaw {
 }
 
 struct RenderableGroup {
-        // instances: Vec<InstanceRaw>,
-        buffer: wgpu::Buffer,
-        model_id: String,
-        material_id: String,
-        instance_count: u32,
+    // instances: Vec<InstanceRaw>,
+    buffer: wgpu::Buffer,
+    model_id: String,
+    material_id: String,
+    instance_count: u32,
 }
 
 impl State {
@@ -603,6 +603,7 @@ impl State {
             &device,
             &queue,
             &texture_bind_group_layout,
+            "CUBE"
         )
         .await
         .unwrap();
@@ -613,6 +614,7 @@ impl State {
             &device,
             &queue,
             &texture_bind_group_layout,
+            "CUBE",
         )
         .await
         .unwrap();
@@ -623,16 +625,29 @@ impl State {
             &device,
             &queue,
             &texture_bind_group_layout,
+            "CUBE"
         )
         .await
         .unwrap();
         model_map.insert("sword".to_string(), sword);
 
+        let sword_inventory = resources::load_model(
+            "resources/sword.jpg",
+            &device,
+            &queue,
+            &texture_bind_group_layout,
+            "SQUARE"
+        )
+        .await
+        .unwrap();
+        model_map.insert("sword_inventory".to_string(), sword_inventory);
+        
         let grass = resources::load_model(
             "resources/grass.jpg",
             &device,
             &queue,
             &texture_bind_group_layout,
+            "CUBE"
         )
         .await
         .unwrap();
@@ -698,7 +713,11 @@ impl State {
     // self.in
     // }
 
-    pub fn render(&mut self, game_state: &GameState, ui_state: &UIState) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(
+        &mut self,
+        game_state: &GameState,
+        ui_state: &UIState,
+    ) -> Result<(), wgpu::SurfaceError> {
         // Update the camera in render with the game state data to build the new view
         // projection
         let player = "player".to_string();
@@ -775,10 +794,7 @@ impl State {
                 .filter(|entity| game_state.get_graphics(entity.to_string()).is_some())
                 .group_by(|entity| {
                     let graphics = game_state.get_graphics(entity.to_string()).unwrap();
-                    (
-                        graphics.model_id.clone(),
-                        graphics.material_id.clone(),
-                    )
+                    (graphics.model_id.clone(), graphics.material_id.clone())
                 })
                 .into_iter()
                 .for_each(|((model_id, material_id), group)| {
@@ -786,7 +802,9 @@ impl State {
                     let instance_group: Vec<Instance> = entity_group
                         .into_iter()
                         .filter(|entity| game_state.get_position(entity.to_string()).is_some())
-                        .map(|entity| Self::to_instance(game_state.get_position(entity.to_string()).unwrap()))
+                        .map(|entity| {
+                            Self::to_instance(game_state.get_position(entity.to_string()).unwrap())
+                        })
                         .collect();
                     let buffer = Self::create_instance_buffer(&self.device, &instance_group);
                     let renderable_group = RenderableGroup {
@@ -799,12 +817,27 @@ impl State {
                 });
             self.renderable_groups = renderable_groups;
 
-            self.renderable_groups.iter()
-                .for_each(|renderable_group| {
-                    render_pass.set_bind_group(0, &self.model_map.get(&renderable_group.model_id).unwrap().materials[0].bind_group, &[]);
-                    render_pass.set_vertex_buffer(1, renderable_group.buffer.slice(..));
-                    render_pass.draw_mesh_instanced(&self.model_map.get(&renderable_group.material_id).unwrap().meshes[0], 0..renderable_group.instance_count);
-                });
+            self.renderable_groups.iter().for_each(|renderable_group| {
+                render_pass.set_bind_group(
+                    0,
+                    &self
+                        .model_map
+                        .get(&renderable_group.model_id)
+                        .unwrap()
+                        .materials[0]
+                        .bind_group,
+                    &[],
+                );
+                render_pass.set_vertex_buffer(1, renderable_group.buffer.slice(..));
+                render_pass.draw_mesh_instanced(
+                    &self
+                        .model_map
+                        .get(&renderable_group.material_id)
+                        .unwrap()
+                        .meshes[0],
+                    0..renderable_group.instance_count,
+                );
+            });
 
             drop(render_pass);
         }
@@ -836,14 +869,17 @@ impl State {
             self.camera_ui.eye = Point3 {
                 x: 0.0,
                 y: 0.0,
-                z: 100.0,
+                z: 0.0,
             };
 
             self.camera_ui.target = Point3 {
                 x: 0.0,
                 y: 0.0, // player does not have an upwards direction yet
-                z: 0.0, // This can be confusing: our 2d world has x
-            };// and y. in 3d the y is seen as vertical
+                z: -1.0, // This can be confusing: our 2d world has x
+            }; // and y. in 3d the y is seen as vertical
+
+            self.camera_ui.z_near = -1.0;
+            self.camera_ui.z_far = 1.0;
 
             self.camera_uniform_ui
                 .update_view_projection(&self.camera_ui);
@@ -857,11 +893,11 @@ impl State {
 
             let inventory_instance = Instance {
                 position: cgmath::Vector3 {
-                    x: ui_state.inventory_position_x,
-                    y: ui_state.inventory_position_y,
+                    x: UIState::to_clip_space_x(ui_state.inventory_position_x),
+                    y: UIState::to_clip_space_y(ui_state.inventory_position_y),
                     z: 0.0,
                 },
-                scale: cgmath::Matrix4::identity(),
+                scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(UIState::to_scale_x(ui_state.inventory_width), UIState::to_scale_y(ui_state.inventory_height), 1.0, 1.0)),
                 rotation: cgmath::Quaternion::from_axis_angle(
                     cgmath::Vector3::unit_z(),
                     cgmath::Deg(0.0),
@@ -871,22 +907,28 @@ impl State {
 
             let mut instances = 1;
             let inventory_items = game_state.get_in_storages(&"player".to_string());
-            if inventory_items.len() > 0 {
-                // let inventory = game_state.get_storage("player".to_string()).unwrap();
+
+            let inventory = game_state.get_storage("player".to_string()).unwrap();
+            let item_distance_x = ui_state.inventory_width / inventory.number_of_columns as f32;
+            let item_distance_y = ui_state.inventory_height / inventory.number_of_rows as f32;
+
+            let item_picture_scale_x = ui_state.inventory_width / inventory.number_of_columns as f32;
+            let item_picture_scale_y = ui_state.inventory_height / inventory.number_of_rows as f32;
+            for item in inventory_items {
                 let inventory_item_instance = Instance {
                     position: cgmath::Vector3 {
-                        x: ui_state.inventory_position_x + 0.5,
-                        y: ui_state.inventory_position_y - 0.5,
-                        z: -60.0,
+                        x: UIState::to_clip_space_x(ui_state.inventory_position_x + item.position_x as f32 * item_distance_x),
+                        y: UIState::to_clip_space_y(ui_state.inventory_position_y + item.position_y as f32 * item_distance_y),
+                        z: 0.0,
                     },
-                    scale: cgmath::Matrix4::identity(),
+                    scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(UIState::to_scale_x(item_picture_scale_x), UIState::to_scale_y(item_picture_scale_y), 1.0, 1.0)),
                     rotation: cgmath::Quaternion::from_axis_angle(
                         cgmath::Vector3::unit_z(),
                         cgmath::Deg(0.0),
                     ),
                 };
                 inv_instance_data.push(Instance::to_raw(&inventory_item_instance));
-                instances = 2;
+                instances = instances + 1;
             }
 
             let inv_instance_buffer =
@@ -900,28 +942,24 @@ impl State {
 
             render_pass_ui.set_vertex_buffer(
                 0,
-                self.model_map.get("sword").unwrap().meshes[0]
+                self.model_map.get("sword_inventory").unwrap().meshes[0]
                     .vertex_buffer
                     .slice(..),
             );
             render_pass_ui.set_vertex_buffer(1, self.inv_instance_buffer.slice(..));
             render_pass_ui.set_index_buffer(
-                self.model_map.get("sword").unwrap().meshes[0]
+                self.model_map.get("sword_inventory").unwrap().meshes[0]
                     .index_buffer
                     .slice(..),
                 wgpu::IndexFormat::Uint16,
             );
             render_pass_ui.draw_indexed(
-                0..self.model_map.get("sword").unwrap().meshes[0].num_elements,
+                0..self.model_map.get("sword_inventory").unwrap().meshes[0].num_elements,
                 0,
                 0..instances as _,
             );
             drop(render_pass_ui);
         }
-
-        // if (
-        // instances.push(inventory_items_instance);
-        //
 
         //use model::DrawModel;
         // let garfield = self.models.pop().unwrap();
@@ -961,10 +999,7 @@ impl State {
                 // entity.size.x,
                 // entity.size.z,
                 // entity.size.y,
-                1.0,
-                1.0,
-                1.0,
-                1.0,
+                1.0, 1.0, 1.0, 1.0,
             )),
             rotation: cgmath::Quaternion::from_axis_angle(
                 cgmath::Vector3::unit_z(),

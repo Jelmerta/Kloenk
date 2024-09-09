@@ -1,3 +1,5 @@
+use cgmath::num_traits::ToPrimitive;
+
 use crate::components::*;
 use std::{collections::HashMap, sync::atomic::AtomicU32};
 pub const TOTAL_DISTANCE: f32 = 200000.; // Verify naming, probbaly not total distance
@@ -8,7 +10,8 @@ pub struct GameState {
     // .fetch_add(1, Ordering::SeqCst)
     // .to_string(),
     pub entities: Vec<Entity>,
-    pub graphics_components: HashMap<Entity, Graphics>,
+    pub graphics_3d_components: HashMap<Entity, Graphics3D>,
+    pub graphics_2d_components: HashMap<Entity, Graphics2D>,
     pub position_components: HashMap<Entity, Position>,
     pub hitbox_components: HashMap<Entity, Hitbox>,
     pub camera_target_components: HashMap<Entity, CameraTarget>,
@@ -23,23 +26,24 @@ impl GameState {
         let current_entity_id: AtomicU32 = AtomicU32::new(0);
 
         let mut entities = Vec::new();
-        let mut graphics_components = HashMap::new();
+        let mut graphics_3d_components = HashMap::new();
+        let mut graphics_2d_components = HashMap::new();
         let mut position_components = HashMap::new();
         let mut hitbox_components = HashMap::new();
         let mut camera_target_components = HashMap::new();
         let mut storable_components = HashMap::new();
         let mut storage_components = HashMap::new();
-        let mut in_storage_components = HashMap::new();
+        let in_storage_components = HashMap::new();
 
         // Load player
         let player = "player".to_string();
         entities.push(player.clone());
 
-        let player_graphics = Graphics {
+        let player_graphics = Graphics3D {
             model_id: "character".to_string(),
             material_id: "character".to_string(),
         };
-        graphics_components.insert(player.clone(), player_graphics);
+        graphics_3d_components.insert(player.clone(), player_graphics);
 
         let player_position = Position {
             x: 0.0,
@@ -65,27 +69,35 @@ impl GameState {
         storage_components.insert(player.clone(), player_storage);
 
         // Load sword
-        let sword = "sword".to_string();
-        entities.push(sword.clone());
+        for i in 1..71 {
+            let sword = "sword".to_string() + &i.to_string();
+            entities.push(sword.clone());
 
-        let sword_graphics = Graphics {
-            model_id: "sword".to_string(),
-            material_id: "sword".to_string(),
-        };
-        graphics_components.insert(sword.clone(), sword_graphics);
+            let sword_graphics = Graphics3D {
+                model_id: "sword".to_string(),
+                material_id: "sword".to_string(),
+            };
+            graphics_3d_components.insert(sword.clone(), sword_graphics);
 
-        let sword_position = Position {
-            x: 1.1,
-            y: 1.1,
-            z: 0.0,
-        };
-        position_components.insert(sword.clone(), sword_position);
+            let sword_graphics_inventory = Graphics2D {
+                model_id: "sword_inventory".to_string(),
+                material_id: "sword".to_string(),
+            };
+            graphics_2d_components.insert(sword.clone(), sword_graphics_inventory);
 
-        let sword_hitbox = Hitbox { hitbox: 0.51 };
-        hitbox_components.insert(sword.clone(), sword_hitbox);
+            let sword_position = Position {
+                x: i.to_f32().unwrap() + 0.1,
+                y: i.to_f32().unwrap() + 0.1,
+                z: 0.0,
+            };
+            position_components.insert(sword.clone(), sword_position);
 
-        let sword_storable = Storable {};
-        storable_components.insert(sword.clone(), sword_storable);
+            let sword_hitbox = Hitbox { hitbox: 0.51 };
+            hitbox_components.insert(sword.clone(), sword_hitbox);
+
+            let sword_storable = Storable {};
+            storable_components.insert(sword.clone(), sword_storable);
+        }
 
         // Load tiles
         let map_x_min = -10;
@@ -97,11 +109,11 @@ impl GameState {
                 let plane = format!("plane{}{}", x, y); //todo copy?
                 entities.push(plane.clone());
 
-                let plane_graphics = Graphics {
+                let plane_graphics = Graphics3D {
                     model_id: "grass".to_string(),
                     material_id: "grass".to_string(),
                 };
-                graphics_components.insert(plane.clone(), plane_graphics);
+                graphics_3d_components.insert(plane.clone(), plane_graphics);
 
                 let plane_position = Position {
                     x: x as f32,
@@ -115,7 +127,8 @@ impl GameState {
         Self {
             current_entity_id,
             entities,
-            graphics_components,
+            graphics_3d_components,
+            graphics_2d_components,
             position_components,
             hitbox_components,
             camera_target_components,
@@ -125,8 +138,12 @@ impl GameState {
         }
     }
 
-    pub fn get_graphics(&self, entity: Entity) -> Option<&Graphics> {
-        return self.graphics_components.get(&entity);
+    pub fn get_graphics(&self, entity: Entity) -> Option<&Graphics3D> {
+        return self.graphics_3d_components.get(&entity);
+    }
+
+    pub fn get_graphics_inventory(&self, entity: Entity) -> Option<&Graphics2D> {
+        return self.graphics_2d_components.get(&entity);
     }
 
     pub fn create_position(&mut self, entity: Entity, position: Position) {
@@ -176,7 +193,9 @@ impl GameState {
     }
 
     pub fn get_in_storages(&self, storage_entity: &Entity) -> Vec<&InStorage> {
-        self.in_storage_components.values().into_iter()
+        self.in_storage_components
+            .values()
+            .into_iter()
             .filter(|in_storage| in_storage.storage_entity == storage_entity.to_string())
             .collect()
     }

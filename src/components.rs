@@ -16,7 +16,12 @@
 
 pub type Entity = String;
 
-pub struct Graphics {
+pub struct Graphics3D {
+    pub model_id: String,
+    pub material_id: String,
+}
+
+pub struct Graphics2D {
     pub model_id: String,
     pub material_id: String,
 }

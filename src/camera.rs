@@ -5,8 +5,8 @@ pub struct Camera {
     pub target: Point3<f32>,
     pub eye: Point3<f32>, // Or: position
     up: Vector3<f32>,
-    z_near: f32,
-    z_far: f32,
+    pub z_near: f32,
+    pub z_far: f32,
 }
 
 // This is just used to convert OpenGL's coordinate system to WGPUs (as used in Metal/DX)
