@@ -36,7 +36,11 @@ pub async fn run() {
     #[cfg(target_arch = "wasm32")]
     {
    
-
+     // Winit prevents sizing with CSS, so we have to set
+        // the size manually when on web.
+        use winit::dpi::PhysicalSize;
+        let _ = window.request_inner_size(PhysicalSize::new(800, 600));
+        
         use winit::platform::web::WindowExtWebSys;
         web_sys::window()
             .and_then(|win| win.document())
@@ -50,7 +54,7 @@ pub async fn run() {
         // TODO Sizing after setting canvas otherwise not set?
      // Winit prevents sizing with CSS, so we have to set
         // the size manually when on web.
-        use winit::dpi::PhysicalSize;
+        // use winit::dpi::PhysicalSize;
         let _ = window.request_inner_size(PhysicalSize::new(800, 600));
     }
 
