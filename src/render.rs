@@ -148,11 +148,18 @@ struct RenderableGroup {
 impl<'a> State<'a> {
     pub async fn new(window: &'a Window) -> State<'a> {
         let size = window.inner_size();
+        log::warn!("{},{}", size.width, size.height);
 
-        // The instance is a handle to our GPU
-        // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+            // The instance is a handle to our GPU
             backends: wgpu::Backends::all(),
+            //=> Vulkan + Metal + DX12 + Browser WebGPU
+            // #[cfg(not(target_arch = "wasm32"))]
+            // backends: wgpu::Backends::PRIMARY,
+            // #[cfg(target_arch = "wasm32")]
+            // backends: wgpu::Backends::GL,
+            // backends: wgpu::Backends::SECONDARY,
+            // backends: wgpu::Backends::BROWSER_WEBGPU,
             ..Default::default()
         });
 
@@ -171,12 +178,21 @@ impl<'a> State<'a> {
             .await
             .unwrap();
 
+
+        let limits = adapter.limits();
+        log::warn!("{:?}", limits);
+
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
                     required_features: wgpu::Features::empty(),
-                    required_limits: wgpu::Limits::downlevel_defaults(),
+                    // required_limits: wgpu::Limits::downlevel_defaults(),
+                    // required_limits: if cfg!(target_arch = "wasm32") {
+                    // required_limits: wgpu::Limits::downlevel_webgl2_defaults(),
+                    // } else {
+                    required_limits: wgpu::Limits::default(),
+                    // },
                     memory_hints: Default::default(),
                 },
                 None,
@@ -605,7 +621,7 @@ impl<'a> State<'a> {
             &device,
             &queue,
             &texture_bind_group_layout,
-            "CUBE"
+            "CUBE",
         )
         .await
         .unwrap();
@@ -627,7 +643,7 @@ impl<'a> State<'a> {
             &device,
             &queue,
             &texture_bind_group_layout,
-            "CUBE"
+            "CUBE",
         )
         .await
         .unwrap();
@@ -638,18 +654,18 @@ impl<'a> State<'a> {
             &device,
             &queue,
             &texture_bind_group_layout,
-            "SQUARE"
+            "SQUARE",
         )
         .await
         .unwrap();
         model_map.insert("sword_inventory".to_string(), sword_inventory);
-        
+
         let grass = resources::load_model(
             "resources/grass.jpg",
             &device,
             &queue,
             &texture_bind_group_layout,
-            "CUBE"
+            "CUBE",
         )
         .await
         .unwrap();
@@ -877,7 +893,7 @@ impl<'a> State<'a> {
 
             self.camera_ui.target = Point3 {
                 x: 0.0,
-                y: 0.0, // player does not have an upwards direction yet
+                y: 0.0,  // player does not have an upwards direction yet
                 z: -1.0, // This can be confusing: our 2d world has x
             }; // and y. in 3d the y is seen as vertical
 
@@ -900,7 +916,12 @@ impl<'a> State<'a> {
                     y: UIState::to_clip_space_y(ui_state.inventory_position_y),
                     z: 0.0,
                 },
-                scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(UIState::to_scale_x(ui_state.inventory_width), UIState::to_scale_y(ui_state.inventory_height), 1.0, 1.0)),
+                scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
+                    UIState::to_scale_x(ui_state.inventory_width),
+                    UIState::to_scale_y(ui_state.inventory_height),
+                    1.0,
+                    1.0,
+                )),
                 rotation: cgmath::Quaternion::from_axis_angle(
                     cgmath::Vector3::unit_z(),
                     cgmath::Deg(0.0),
@@ -915,16 +936,28 @@ impl<'a> State<'a> {
             let item_distance_x = ui_state.inventory_width / inventory.number_of_columns as f32;
             let item_distance_y = ui_state.inventory_height / inventory.number_of_rows as f32;
 
-            let item_picture_scale_x = ui_state.inventory_width / inventory.number_of_columns as f32;
+            let item_picture_scale_x =
+                ui_state.inventory_width / inventory.number_of_columns as f32;
             let item_picture_scale_y = ui_state.inventory_height / inventory.number_of_rows as f32;
             for item in inventory_items {
                 let inventory_item_instance = Instance {
                     position: cgmath::Vector3 {
-                        x: UIState::to_clip_space_x(ui_state.inventory_position_x + item.position_x as f32 * item_distance_x),
-                        y: UIState::to_clip_space_y(ui_state.inventory_position_y + item.position_y as f32 * item_distance_y),
+                        x: UIState::to_clip_space_x(
+                            ui_state.inventory_position_x
+                                + item.position_x as f32 * item_distance_x,
+                        ),
+                        y: UIState::to_clip_space_y(
+                            ui_state.inventory_position_y
+                                + item.position_y as f32 * item_distance_y,
+                        ),
                         z: 0.0,
                     },
-                    scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(UIState::to_scale_x(item_picture_scale_x), UIState::to_scale_y(item_picture_scale_y), 1.0, 1.0)),
+                    scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
+                        UIState::to_scale_x(item_picture_scale_x),
+                        UIState::to_scale_y(item_picture_scale_y),
+                        1.0,
+                        1.0,
+                    )),
                     rotation: cgmath::Quaternion::from_axis_angle(
                         cgmath::Vector3::unit_z(),
                         cgmath::Deg(0.0),
