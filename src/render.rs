@@ -55,8 +55,8 @@ impl CameraUniform {
     }
 }
 
-pub struct State {
-    surface: wgpu::Surface,
+pub struct State<'a> {
+    surface: wgpu::Surface<'a>,
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
@@ -64,7 +64,7 @@ pub struct State {
     // The window must be declared after the surface so
     // it gets dropped after it as the surface contains
     // unsafe references to the window's resources.
-    window: Window,
+    window: &'a Window,
     render_pipeline: wgpu::RenderPipeline,
     render_pipeline_ui: wgpu::RenderPipeline,
     camera: Camera,
@@ -145,8 +145,8 @@ struct RenderableGroup {
     instance_count: u32,
 }
 
-impl State {
-    pub async fn new(window: Window) -> Self {
+impl<'a> State<'a> {
+    pub async fn new(window: &'a Window) -> State<'a> {
         let size = window.inner_size();
 
         // The instance is a handle to our GPU
@@ -160,7 +160,7 @@ impl State {
         //
         // The surface needs to live as long as the window that created it.
         // State owns the window so this should be safe.
-        let surface = unsafe { instance.create_surface(&window) }.unwrap();
+        let surface = instance.create_surface(window).unwrap();
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -175,14 +175,9 @@ impl State {
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
-                    features: wgpu::Features::empty(),
-                    // WebGL doesn't support all of wgpu's features, so if
-                    // we're building for the web we'll have to disable some.
-                    limits: if cfg!(target_arch = "wasm32") {
-                        wgpu::Limits::downlevel_webgl2_defaults()
-                    } else {
-                        wgpu::Limits::default()
-                    },
+                    required_features: wgpu::Features::empty(),
+                    required_limits: wgpu::Limits::downlevel_defaults(),
+                    memory_hints: Default::default(),
                 },
                 None,
             )
@@ -207,6 +202,7 @@ impl State {
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
+            desired_maximum_frame_latency: 2,
         };
         surface.configure(&device, &config);
 
@@ -292,6 +288,7 @@ impl State {
                 entry_point: "vs_main",
                 // buffers: &[model::ModelVertex::desc(), InstanceRaw::desc()],
                 buffers: &[model::TexVertex::desc(), InstanceRaw::desc()],
+                compilation_options: Default::default(),
             },
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
@@ -323,8 +320,10 @@ impl State {
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
+                compilation_options: Default::default(),
             }),
             multiview: None,
+            cache: None,
         });
 
         let camera_ui = Camera::new();
@@ -378,6 +377,7 @@ impl State {
                 entry_point: "vs_main",
                 // buffers: &[model::ModelVertex::desc(), InstanceRaw::desc()],
                 buffers: &[model::TexVertex::desc(), InstanceRaw::desc()],
+                compilation_options: Default::default(),
             },
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
@@ -402,8 +402,10 @@ impl State {
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
+                compilation_options: Default::default(),
             }),
             multiview: None,
+            cache: None,
         });
 
         // let vertex_buffer = device.create_buffer_init(
@@ -702,6 +704,7 @@ impl State {
         }
     }
 
+    // TODO Use this for handling input
     #[allow(unused_variables)]
     pub fn input(&mut self, event: &WindowEvent) -> bool {
         false

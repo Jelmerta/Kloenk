@@ -142,6 +142,7 @@ impl GameState {
         return self.graphics_3d_components.get(&entity);
     }
 
+    #[allow(dead_code)]
     pub fn get_graphics_inventory(&self, entity: Entity) -> Option<&Graphics2D> {
         return self.graphics_2d_components.get(&entity);
     }

@@ -1,5 +1,6 @@
-use winit::event::{ElementState, VirtualKeyCode, MouseScrollDelta, MouseButton};
+use winit::event::{ElementState, MouseScrollDelta, MouseButton};
 use winit::dpi::PhysicalPosition;
+use winit::keyboard::KeyCode;
 
 #[derive(Debug, Default)]
 pub struct KeyPress {
@@ -49,57 +50,57 @@ impl Input {
         Default::default()
     }
 
-    pub fn update(&mut self, keycode: &VirtualKeyCode, state: &ElementState) {
+    pub fn update(&mut self, keycode: &KeyCode, state: &ElementState) {
         let is_pressed = *state == ElementState::Pressed;
 
         match keycode {
-            VirtualKeyCode::W => {
+            KeyCode::KeyW => {
                 self.w_pressed.set_press_state(is_pressed);
                 return;
             }
 
-            VirtualKeyCode::S => {
+            KeyCode::KeyS => {
                 self.s_pressed.set_press_state(is_pressed);
                 return;
             }
 
-            VirtualKeyCode::A => {
+            KeyCode::KeyA => {
                 self.a_pressed.set_press_state(is_pressed);
                 return;
             }
 
-            VirtualKeyCode::D => {
+            KeyCode::KeyD => {
                 self.d_pressed.set_press_state(is_pressed);
                 return;
             }
 
-            VirtualKeyCode::I => {
+            KeyCode::KeyI => {
                 self.i_pressed.set_press_state(is_pressed);
                 return;
             }
 
-            VirtualKeyCode::E => {
+            KeyCode::KeyE => {
                 self.e_pressed.set_press_state(is_pressed);
                 return;
             }
 
-            VirtualKeyCode::LShift => {
+            KeyCode::ShiftLeft => {
                 self.left_shift_pressed.set_press_state(is_pressed);
             }
 
-            VirtualKeyCode::Up => {
+            KeyCode::ArrowUp => {
                 self.up_pressed.set_press_state(is_pressed);
             }
 
-            VirtualKeyCode::Down => {
+            KeyCode::ArrowDown => {
                 self.down_pressed.set_press_state(is_pressed);
             }
 
-            VirtualKeyCode::Left => {
+            KeyCode::ArrowLeft => {
                 self.left_pressed.set_press_state(is_pressed);
             }
             
-            VirtualKeyCode::Right => {
+            KeyCode::ArrowRight => {
                 self.right_pressed.set_press_state(is_pressed);
             }
             _ => {}
