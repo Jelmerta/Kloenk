@@ -54,7 +54,7 @@ path = "src/main.rs"
 [profile.release]
 opt-level = "z"
 panic = "abort"
-lto = "true"
+lto = true
 
 # TODO Make sure this is only used when releasing and not during development
 [build]
