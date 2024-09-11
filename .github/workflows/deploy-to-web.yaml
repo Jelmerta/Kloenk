@@ -59,4 +59,4 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          script: docker pull hydrogax/kloenk && docker rm -f kloenk && docker run -d -p 80:80 --name kloenk hydrogax/kloenk
+          script: docker pull hydrogax/kloenk && docker rm -f kloenk && docker run -d -v /etc/ssl:/etc/ssl:ro -p 80:80 --name kloenk hydrogax/kloenk
