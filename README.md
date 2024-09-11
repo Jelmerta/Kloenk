@@ -9,3 +9,11 @@ RUSTFLAGS=--cfg=web_sys_unstable_apis wasm-pack build --target web
 
 Additionally, we can run the project locally by using trunk to serve the application.
 ``trunk serve'' will serve the application at localhost:8080
+
+Notes for host deployment: Make sure firewall allows access on 80/443 for http/https
+sudo ufw allow 80
+sudo ufw allow 443
+
+sudo ufw allow http
+sudo ufw allow https
+
