@@ -52,7 +52,13 @@ path = "src/main.rs"
 #cfg = "web_sys_unstable_apis" #Hm, probably only required for web...
 
 [profile.release]
-opt-level = 's'
+opt-level = "z"
+panic = "abort"
+lto = "true"
+
+# TODO Make sure this is only used when releasing and not during development
+[build]
+release = true
 # [package.metadata.trunk]
 # files = ["resources"]
 
