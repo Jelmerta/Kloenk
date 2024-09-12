@@ -19,7 +19,7 @@ jobs:
           version: 'latest'
 
       - name: Build Project (WASM/JS/HTML)
-        run: trunk build
+        run: trunk build --release
 
       - name: Build local container
         if: ${{ env.ACT }}
