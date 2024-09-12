@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use cgmath::num_traits::ToPrimitive;
 
-use crate::components::{CameraTarget, Entity, Hitbox, InStorage, Position, Storable, Storage};
+use crate::components::{
+    CameraTarget, Entity, Hitbox, InStorage, Position, Storable, Storage,
+};
 use crate::game_state::*;
 use crate::gui::UIState;
 use crate::input::Input;
@@ -194,14 +196,22 @@ impl GameSystem {
             let item_hitbox = game_state.get_hitbox(item_unwrap.to_string()).unwrap();
 
             // TODO inefficient loop over all entities and checking collision
-            let colliding_entities: Vec<Entity> = game_state.entities
-            .iter()
-            .filter(|e| game_state.hitbox_components.contains_key(e.as_str()))
-            .filter(|e| game_state.position_components.contains_key(e.as_str()))
-            .filter(|e| e.to_string() != "player")
-            .filter(|e| Self::check_collision(&game_state.get_position(e.to_string()).unwrap(), &game_state.get_hitbox(e.to_string()).unwrap(), &placed_position, &item_hitbox))
-            .cloned()
-            .collect();
+            let colliding_entities: Vec<Entity> = game_state
+                .entities
+                .iter()
+                .filter(|e| game_state.hitbox_components.contains_key(e.as_str()))
+                .filter(|e| game_state.position_components.contains_key(e.as_str()))
+                .filter(|e| e.to_string() != "player")
+                .filter(|e| {
+                    Self::check_collision(
+                        &game_state.get_position(e.to_string()).unwrap(),
+                        &game_state.get_hitbox(e.to_string()).unwrap(),
+                        &placed_position,
+                        &item_hitbox,
+                    )
+                })
+                .cloned()
+                .collect();
             if !colliding_entities.is_empty() {
                 // Found a colliding object. Not allowed.
                 return;
@@ -275,76 +285,131 @@ impl GameSystem {
 
     fn resolve_movement(game_state: &mut GameState, input: &Input) {
         let mut movement_speed: f32 = BASE_SPEED;
-        let player_position = game_state.get_position("player".to_string()).unwrap();
-        let previous_position = Position {
-            x: player_position.x.clone(),
-            y: player_position.y.clone(),
-            z: player_position.z.clone(),
-        };
         if input.left_shift_pressed.is_pressed {
             movement_speed *= 2.5;
         }
 
         if input.w_pressed.is_pressed {
-            let player_position = game_state.get_position_mut("player".to_string()).unwrap();
-            player_position.x -= movement_speed;
-            player_position.y -= movement_speed;
-            Self::resolve_collisions(game_state, &previous_position)
+            let player_position = game_state.get_position("player".to_string()).unwrap();
+            let desired_position = Position {
+                x: player_position.x.clone() - movement_speed,
+                y: player_position.y.clone() - movement_speed,
+                z: player_position.z.clone(),
+            };
+            if Self::is_walkable(game_state, &desired_position)
+                && !Self::is_colliding(game_state, &desired_position)
+            {
+                let player_position = game_state.get_position_mut("player".to_string()).unwrap();
+                player_position.x -= movement_speed;
+                player_position.y -= movement_speed;
+            }
         }
 
         if input.s_pressed.is_pressed {
             let player_position = game_state.get_position_mut("player".to_string()).unwrap();
-            player_position.x += movement_speed;
-            player_position.y += movement_speed;
-            Self::resolve_collisions(game_state, &previous_position)
+            let desired_position = Position {
+                x: player_position.x.clone() + movement_speed,
+                y: player_position.y.clone() + movement_speed,
+                z: player_position.z.clone(),
+            };
+            if Self::is_walkable(game_state, &desired_position)
+                && !Self::is_colliding(game_state, &desired_position)
+            {
+                let player_position = game_state.get_position_mut("player".to_string()).unwrap();
+                player_position.x += movement_speed;
+                player_position.y += movement_speed;
+            }
         }
 
         if input.a_pressed.is_pressed {
             let player_position = game_state.get_position_mut("player".to_string()).unwrap();
-            player_position.x -= movement_speed;
-            player_position.y += movement_speed;
-            Self::resolve_collisions(game_state, &previous_position)
+            let desired_position = Position {
+                x: player_position.x.clone() - movement_speed,
+                y: player_position.y.clone() + movement_speed,
+                z: player_position.z.clone(),
+            };
+            if Self::is_walkable(game_state, &desired_position)
+                && !Self::is_colliding(game_state, &desired_position)
+            {
+                let player_position = game_state.get_position_mut("player".to_string()).unwrap();
+                player_position.x -= movement_speed;
+                player_position.y += movement_speed;
+            }
         }
 
         if input.d_pressed.is_pressed {
             let player_position = game_state.get_position_mut("player".to_string()).unwrap();
-            player_position.x += movement_speed;
-            player_position.y -= movement_speed;
-            Self::resolve_collisions(game_state, &previous_position)
+            let desired_position = Position {
+                x: player_position.x.clone() + movement_speed,
+                y: player_position.y.clone() - movement_speed,
+                z: player_position.z.clone(),
+            };
+            if Self::is_walkable(game_state, &desired_position)
+                && !Self::is_colliding(game_state, &desired_position)
+            {
+                let player_position = game_state.get_position_mut("player".to_string()).unwrap();
+                player_position.x += movement_speed;
+                player_position.y -= movement_speed;
+            }
         }
     }
 
-    fn resolve_collisions(game_state: &mut GameState, previous_position: &Position) {
+    fn is_walkable(game_state: &GameState, desired_position: &Position) -> bool {
+        game_state
+            .entities
+            .iter()
+            .filter(|e| game_state.walkable_components.contains_key(e.as_str()))
+            .filter(|e| {
+                Self::check_walkable(
+                    desired_position,
+                    &game_state.position_components.get(e.as_str()).unwrap(),
+                )
+            })
+            .next()
+            .is_some()
+    }
+
+    fn is_colliding(game_state: &GameState, desired_position: &Position) -> bool {
         let interactible_entities: Vec<&Entity> = game_state
             .entities
             .iter()
-            .filter(|entity| entity.as_str() != "player" && game_state.get_hitbox(entity.to_string()).is_some() && game_state.get_position(entity.to_string()).is_some())
+            .filter(|entity| {
+                entity.as_str() != "player"
+                    && game_state.get_hitbox(entity.to_string()).is_some()
+                    && game_state.get_position(entity.to_string()).is_some()
+            })
             .collect();
-        let player_position = game_state.get_position("player".to_string()).unwrap();
+
         let player_hitbox = game_state.get_hitbox("player".to_string()).unwrap();
-        let mut should_update = false;
+
         for entity in interactible_entities {
             let entity_position = game_state.get_position(entity.to_string()).unwrap();
             let entity_hitbox = game_state.get_hitbox(entity.to_string()).unwrap();
             if Self::check_collision(
-                player_position,
+                desired_position,
                 player_hitbox,
                 entity_position,
                 entity_hitbox,
             ) {
-                should_update = true;
+                return true;
             }
         }
+        return false;
+    }
 
-        if should_update {
-            let player_position = game_state.get_position_mut("player".to_string()).unwrap();
-            *player_position =
-                Position {
-                    x: previous_position.x.clone(),
-                    y: previous_position.y.clone(),
-                    z: previous_position.z.clone(),
-                };
-        }
+    fn check_walkable(desired_position: &Position, walkable_tile_position: &Position) -> bool {
+        let tile_size = 0.5; // Just hardcoded here for now.
+        let is_walkable_x = desired_position.x
+            >= walkable_tile_position.x - tile_size
+            && walkable_tile_position.x + tile_size
+                >= desired_position.x;
+
+        let is_walkable_y = desired_position.y
+            >= walkable_tile_position.y - tile_size
+            && walkable_tile_position.y + tile_size
+                >= desired_position.y;
+
+        return is_walkable_x && is_walkable_y;
     }
 
     fn check_collision(
