@@ -13,6 +13,7 @@ pub struct GameState {
     pub graphics_3d_components: HashMap<Entity, Graphics3D>,
     pub graphics_2d_components: HashMap<Entity, Graphics2D>,
     pub position_components: HashMap<Entity, Position>,
+    pub walkable_components: HashMap<Entity, Walkable>,
     pub hitbox_components: HashMap<Entity, Hitbox>,
     pub camera_target_components: HashMap<Entity, CameraTarget>,
     pub storable_components: HashMap<Entity, Storable>,
@@ -29,6 +30,7 @@ impl GameState {
         let mut graphics_3d_components = HashMap::new();
         let mut graphics_2d_components = HashMap::new();
         let mut position_components = HashMap::new();
+        let mut walkable_components = HashMap::new();
         let mut hitbox_components = HashMap::new();
         let mut camera_target_components = HashMap::new();
         let mut storable_components = HashMap::new();
@@ -121,6 +123,9 @@ impl GameState {
                     z: -1.0,
                 };
                 position_components.insert(plane.clone(), plane_position);
+
+                let walkable = Walkable {};
+                walkable_components.insert(plane.clone(), walkable);
             }
         }
 
@@ -130,6 +135,7 @@ impl GameState {
             graphics_3d_components,
             graphics_2d_components,
             position_components,
+            walkable_components,
             hitbox_components,
             camera_target_components,
             storable_components,

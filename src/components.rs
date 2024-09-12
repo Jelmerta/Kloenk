@@ -60,6 +60,10 @@ pub struct Hitbox { // or physics or whatever
     pub hitbox: f32,
 }
 
+pub struct Walkable {
+    
+}
+
 // Probably just a singleton... probably does not make much sense for this to be in the ECS?
 pub struct CameraTarget {
     pub distance: f32,
