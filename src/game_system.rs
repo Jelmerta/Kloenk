@@ -191,6 +191,22 @@ impl GameSystem {
                 z: player_position.z,
             };
 
+            let item_hitbox = game_state.get_hitbox(item_unwrap.to_string()).unwrap();
+
+            // TODO inefficient loop over all entities and checking collision
+            let colliding_entities: Vec<Entity> = game_state.entities
+            .iter()
+            .filter(|e| game_state.hitbox_components.contains_key(e.as_str()))
+            .filter(|e| game_state.position_components.contains_key(e.as_str()))
+            .filter(|e| e.to_string() != "player")
+            .filter(|e| Self::check_collision(&game_state.get_position(e.to_string()).unwrap(), &game_state.get_hitbox(e.to_string()).unwrap(), &placed_position, &item_hitbox))
+            .cloned()
+            .collect();
+            if !colliding_entities.is_empty() {
+                // Found a colliding object. Not allowed.
+                return;
+            }
+
             game_state.create_position(item_unwrap.to_string(), placed_position);
             game_state.remove_in_storage(&item_unwrap.to_string());
         }
