@@ -193,6 +193,11 @@ impl GameSystem {
                 z: player_position.z,
             };
 
+            if !Self::is_placeable(game_state, &placed_position) {
+                // If desired position cannot be placed on, we abort.
+                return;
+            }
+
             let item_hitbox = game_state.get_hitbox(item_unwrap.to_string()).unwrap();
 
             // TODO inefficient loop over all entities and checking collision
@@ -220,6 +225,16 @@ impl GameSystem {
             game_state.create_position(item_unwrap.to_string(), placed_position);
             game_state.remove_in_storage(&item_unwrap.to_string());
         }
+    }
+
+    fn is_placeable(game_state: &GameState, desired_position: &Position) -> bool {
+        game_state.entities
+            .iter()
+            .filter(|entity| game_state.surface_components.contains_key(entity.as_str()))
+            .filter(|entity| Self::check_in_dimension(desired_position.x, 0.0, game_state.get_position(entity.to_string()).unwrap().x, 0.5)) // Assume 0.5 as half tile 
+            .filter(|entity| Self::check_in_dimension(desired_position.y, 0.0, game_state.get_position(entity.to_string()).unwrap().y, 0.5)) // Assume 0.5 as half tile 
+            .next()
+            .is_some()
     }
 
     fn handle_inventory(ui_state: &mut UIState, input: &mut Input) {
@@ -300,8 +315,7 @@ impl GameSystem {
                 && !Self::is_colliding(game_state, &desired_position)
             {
                 let player_position = game_state.get_position_mut("player".to_string()).unwrap();
-                player_position.x -= movement_speed;
-                player_position.y -= movement_speed;
+                *player_position = desired_position;
             }
         }
 
@@ -316,8 +330,7 @@ impl GameSystem {
                 && !Self::is_colliding(game_state, &desired_position)
             {
                 let player_position = game_state.get_position_mut("player".to_string()).unwrap();
-                player_position.x += movement_speed;
-                player_position.y += movement_speed;
+                *player_position = desired_position;
             }
         }
 
@@ -332,8 +345,7 @@ impl GameSystem {
                 && !Self::is_colliding(game_state, &desired_position)
             {
                 let player_position = game_state.get_position_mut("player".to_string()).unwrap();
-                player_position.x -= movement_speed;
-                player_position.y += movement_speed;
+                *player_position = desired_position;
             }
         }
 
@@ -348,8 +360,7 @@ impl GameSystem {
                 && !Self::is_colliding(game_state, &desired_position)
             {
                 let player_position = game_state.get_position_mut("player".to_string()).unwrap();
-                player_position.x += movement_speed;
-                player_position.y -= movement_speed;
+                *player_position = desired_position;
             }
         }
     }
@@ -358,7 +369,7 @@ impl GameSystem {
         game_state
             .entities
             .iter()
-            .filter(|e| game_state.walkable_components.contains_key(e.as_str()))
+            .filter(|e| game_state.surface_components.contains_key(e.as_str()))
             .filter(|e| {
                 Self::check_walkable(
                     desired_position,
@@ -418,15 +429,14 @@ impl GameSystem {
         position2: &Position,
         hitbox2: &Hitbox,
     ) -> bool {
-        let is_collision_x = position1.x + hitbox1.hitbox >= position2.x - hitbox2.hitbox
-            && position2.x + hitbox2.hitbox >= position1.x - hitbox1.hitbox;
-
-        let is_collision_y = position1.y + hitbox1.hitbox >= position2.y - hitbox2.hitbox
-            && position2.y + hitbox2.hitbox >= position1.y - hitbox1.hitbox;
-
-        let is_collision_z = position1.z + hitbox1.hitbox >= position2.z - hitbox2.hitbox
-            && position2.z + hitbox2.hitbox >= position1.z - hitbox1.hitbox;
+        let is_collision_x = Self::check_in_dimension(position1.x, hitbox1.hitbox, position2.x, hitbox2.hitbox);
+        let is_collision_y = Self::check_in_dimension(position1.y, hitbox1.hitbox, position2.y, hitbox2.hitbox);
+        let is_collision_z = Self::check_in_dimension(position1.z, hitbox1.hitbox, position2.z, hitbox2.hitbox);
 
         return is_collision_x && is_collision_y && is_collision_z;
+    }
+    
+    fn check_in_dimension(position1: f32, boundary1: f32, position2: f32, boundary2: f32) -> bool {
+        position1 + boundary1 >= position2 - boundary2 && position2 + boundary2 >= position1 - boundary1
     }
 }

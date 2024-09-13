@@ -60,7 +60,7 @@ pub struct Hitbox { // or physics or whatever
     pub hitbox: f32,
 }
 
-pub struct Walkable {
+pub struct Surface {
     
 }
 
