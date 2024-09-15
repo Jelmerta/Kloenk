@@ -25,7 +25,7 @@ pub struct Graphics2D {
 }
 
 pub struct Storable {
-//     pub shape: ItemShape,
+    pub shape: ItemShape,
 }
 
 pub struct Storage {
@@ -33,19 +33,18 @@ pub struct Storage {
     pub number_of_columns: u8,
 }
 
-
 pub struct InStorage {
     pub storage_entity: Entity,
     pub position_x: u8,
     pub position_y: u8,
 }
 
-// #[derive(Clone)]
-// struct ItemShape { // vs StorageShape?
+#[derive(Clone)]
+pub struct ItemShape { // vs StorageShape?
 //     // shape: Vec<Vec<bool>>, // probably a better solution long term
-//     width: u8,
-//     height: u8,
-// }
+    pub width: u8,
+    pub height: u8,
+}
 
 #[derive(Clone, Copy)]
 pub struct Position {
