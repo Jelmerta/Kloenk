@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use cgmath::num_traits::ToPrimitive;
 
 use crate::components::{
-    CameraTarget, Entity, Hitbox, Position, Storable, Storage,
+    CameraTarget, Entity, Hitbox, Position, Storable, Storage, ItemShape,
 };
 use crate::game_state::{*};
 use crate::gui::UIState;
@@ -50,11 +50,11 @@ impl ItemPickupSystem {
 
             let inventory = game_state.get_storage(player.clone()).unwrap();
             let inventory_items = StorageManager::get_in_storage(game_state, &player);
-            if !StorageManager::has_space(game_state, inventory, &inventory_items) {
+            if !StorageManager::has_space(game_state, inventory, &inventory_items, &near_pickup) {
                 // "There is no space left in your inventory to pick up this item."
                 return;
             }
-            let empty_spot = StorageManager::find_empty_spot(game_state, inventory, &inventory_items).unwrap();
+            let empty_spot = StorageManager::find_empty_spot(game_state, inventory, &inventory_items, &near_pickup).unwrap();
 
             game_state.remove_position(near_pickup.clone());
             game_state.create_in_storage(player.clone(), near_pickup.clone(), empty_spot);
@@ -69,20 +69,40 @@ impl ItemPickupSystem {
 struct StorageManager {}
 
 impl StorageManager {
-    pub fn has_space(game_state: &GameState, storage: &Storage, in_storage_entities: &Vec<&Entity>) -> bool {
-        return Self::find_empty_spot(game_state, storage, in_storage_entities).is_some();
+    pub fn has_space(game_state: &GameState, storage: &Storage, in_storage_entities: &Vec<&Entity>, near_pickup: &Entity) -> bool {
+        return Self::find_empty_spot(game_state, storage, in_storage_entities, near_pickup).is_some();
     }
 
-    pub fn find_empty_spot(game_state: &GameState, storage: &Storage, in_storage_entities: &Vec<&Entity>) -> Option<(u8, u8)> {
+    pub fn find_empty_spot(game_state: &GameState, storage: &Storage, in_storage_entities: &Vec<&Entity>, near_pickup: &Entity) -> Option<(u8, u8)> {
         let dynamic_storage = Self::generate_dynamic_storage_space(game_state, storage, in_storage_entities);
+        let item_shape = &game_state.storable_components.get(near_pickup).unwrap().shape;
         for row in 0..storage.number_of_rows {
             for column in 0..storage.number_of_columns {
-                if !dynamic_storage[row as usize][column as usize] {
+                if Self::check_empty_spot(&dynamic_storage, row, column, item_shape.clone()) {
                     return Some((column, row));
                 }
             }
         }
         return None;
+    }
+    
+    fn check_empty_spot(dynamic_storage: &Vec<Vec<bool>>, row: u8, column: u8, shape: ItemShape) -> bool {
+        //todo move padded more general, otherwise for each inv spot we calc
+        let mut padded_storage = vec![vec![false; 12]; 12];
+        for x in 0..dynamic_storage.len() {
+            for y in 0..dynamic_storage.len() {
+                padded_storage[y][x] = dynamic_storage[y][x];
+            }
+        }
+
+        for x in column..column + shape.width {
+            for y in row..row + shape.height {
+                if padded_storage[y as usize][x as usize] == true {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     fn generate_dynamic_storage_space(
