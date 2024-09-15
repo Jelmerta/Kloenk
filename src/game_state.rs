@@ -43,7 +43,6 @@ impl GameState {
 
         let player_graphics = Graphics3D {
             model_id: "character".to_string(),
-            material_id: "character".to_string(),
         };
         graphics_3d_components.insert(player.clone(), player_graphics);
 
@@ -70,6 +69,32 @@ impl GameState {
         };
         storage_components.insert(player.clone(), player_storage);
 
+        // Load shield
+        let shield = "shield".to_string();
+        entities.push(shield.clone());
+        let shield_graphics = Graphics3D {
+            model_id: "shield".to_string(),
+        };
+        graphics_3d_components.insert(shield.clone(), shield_graphics);
+
+        let shield_graphics_inventory = Graphics2D {
+            model_id: "shield_inventory".to_string(),
+        };
+        graphics_2d_components.insert(shield.clone(), shield_graphics_inventory);
+
+        let shield_position = Position {
+            x: -2.0,
+            y: -2.0,
+            z: 0.0,
+        };
+        position_components.insert(shield.clone(), shield_position);
+
+        let shield_hitbox = Hitbox { hitbox: 0.51 };
+        hitbox_components.insert(shield.clone(), shield_hitbox);
+
+        let shield_storable = Storable {};
+        storable_components.insert(shield.clone(), shield_storable);
+
         // Load sword
         for i in 1..71 {
             let sword = "sword".to_string() + &i.to_string();
@@ -77,13 +102,11 @@ impl GameState {
 
             let sword_graphics = Graphics3D {
                 model_id: "sword".to_string(),
-                material_id: "sword".to_string(),
             };
             graphics_3d_components.insert(sword.clone(), sword_graphics);
 
             let sword_graphics_inventory = Graphics2D {
                 model_id: "sword_inventory".to_string(),
-                material_id: "sword".to_string(),
             };
             graphics_2d_components.insert(sword.clone(), sword_graphics_inventory);
 
@@ -113,7 +136,6 @@ impl GameState {
 
                 let plane_graphics = Graphics3D {
                     model_id: "grass".to_string(),
-                    material_id: "grass".to_string(),
                 };
                 graphics_3d_components.insert(plane.clone(), plane_graphics);
 
@@ -199,11 +221,10 @@ impl GameState {
         self.in_storage_components.remove(entity);
     }
 
-    pub fn get_in_storages(&self, storage_entity: &Entity) -> Vec<&InStorage> {
+    pub fn get_in_storages(&self, storage_entity: &Entity) -> HashMap<&Entity, &InStorage> {
         self.in_storage_components
-            .values()
-            .into_iter()
-            .filter(|in_storage| in_storage.storage_entity == storage_entity.to_string())
+            .iter()
+            .filter(|(_, in_storage)| in_storage.storage_entity == storage_entity.to_string())
             .collect()
     }
 }
