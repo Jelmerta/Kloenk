@@ -92,7 +92,12 @@ impl GameState {
         let shield_hitbox = Hitbox { hitbox: 0.51 };
         hitbox_components.insert(shield.clone(), shield_hitbox);
 
-        let shield_storable = Storable {};
+        let shield_storable = Storable {
+            shape: ItemShape {
+                width: 1,
+                height: 2,
+            }
+        };
         storable_components.insert(shield.clone(), shield_storable);
 
         // Load sword
@@ -120,7 +125,13 @@ impl GameState {
             let sword_hitbox = Hitbox { hitbox: 0.51 };
             hitbox_components.insert(sword.clone(), sword_hitbox);
 
-            let sword_storable = Storable {};
+            let sword_storable = Storable {
+                shape: ItemShape {
+                width: 1,
+                height: 1,
+            },
+
+            };
             storable_components.insert(sword.clone(), sword_storable);
         }
 

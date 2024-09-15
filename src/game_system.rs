@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use cgmath::num_traits::ToPrimitive;
 
 use crate::components::{
-    CameraTarget, Entity, Hitbox, InStorage, Position, Storable, Storage,
+    CameraTarget, Entity, Hitbox, Position, Storable, Storage,
 };
-use crate::game_state::*;
+use crate::game_state::{*};
 use crate::gui::UIState;
 use crate::input::Input;
 
@@ -50,11 +50,11 @@ impl ItemPickupSystem {
 
             let inventory = game_state.get_storage(player.clone()).unwrap();
             let inventory_items = StorageManager::get_in_storage(game_state, &player);
-            if !StorageManager::has_space(inventory, &inventory_items) {
+            if !StorageManager::has_space(game_state, inventory, &inventory_items) {
                 // "There is no space left in your inventory to pick up this item."
                 return;
             }
-            let empty_spot = StorageManager::find_empty_spot(inventory, &inventory_items).unwrap();
+            let empty_spot = StorageManager::find_empty_spot(game_state, inventory, &inventory_items).unwrap();
 
             game_state.remove_position(near_pickup.clone());
             game_state.create_in_storage(player.clone(), near_pickup.clone(), empty_spot);
@@ -69,12 +69,12 @@ impl ItemPickupSystem {
 struct StorageManager {}
 
 impl StorageManager {
-    pub fn has_space(storage: &Storage, in_storages: &Vec<&InStorage>) -> bool {
-        return Self::find_empty_spot(storage, in_storages).is_some();
+    pub fn has_space(game_state: &GameState, storage: &Storage, in_storage_entities: &Vec<&Entity>) -> bool {
+        return Self::find_empty_spot(game_state, storage, in_storage_entities).is_some();
     }
 
-    pub fn find_empty_spot(storage: &Storage, in_storages: &Vec<&InStorage>) -> Option<(u8, u8)> {
-        let dynamic_storage = Self::generate_dynamic_storage_space(storage, in_storages);
+    pub fn find_empty_spot(game_state: &GameState, storage: &Storage, in_storage_entities: &Vec<&Entity>) -> Option<(u8, u8)> {
+        let dynamic_storage = Self::generate_dynamic_storage_space(game_state, storage, in_storage_entities);
         for row in 0..storage.number_of_rows {
             for column in 0..storage.number_of_columns {
                 if !dynamic_storage[row as usize][column as usize] {
@@ -86,24 +86,31 @@ impl StorageManager {
     }
 
     fn generate_dynamic_storage_space(
+        game_state: &GameState,
         storage: &Storage,
-        in_storages: &Vec<&InStorage>,
+        in_storage_entities: &Vec<&Entity>,
     ) -> Vec<Vec<bool>> {
         let mut storage_spots =
             vec![vec![false; storage.number_of_rows.into()]; storage.number_of_columns.into()];
 
-        for in_storage in in_storages {
-            storage_spots[in_storage.position_y as usize][in_storage.position_x as usize] = true
+        for in_storage_entity in in_storage_entities {
+            let in_storage = game_state.in_storage_components.get(&in_storage_entity.to_string()).unwrap();
+            let storable = game_state.storable_components.get(&in_storage_entity.to_string()).unwrap();
+            for x in in_storage.position_x..in_storage.position_x + storable.shape.width {
+                for y in in_storage.position_y..in_storage.position_y + storable.shape.height {
+                    storage_spots[y as usize][x as usize] = true
+                }
+            }
         }
         storage_spots
     }
 
-    pub fn get_in_storage<'a>(game_state: &'a GameState, entity: &Entity) -> Vec<&'a InStorage> {
+    pub fn get_in_storage<'a>(game_state: &'a GameState, entity: &Entity) -> Vec<&'a Entity> {
         game_state
             .entities
             .iter()
-            .filter_map(|e| game_state.in_storage_components.get(&e.to_string()))
-            .filter(|in_storage| in_storage.storage_entity == entity.to_string())
+            .filter(|e| game_state.in_storage_components.contains_key(&e.to_string()))
+            .filter(|e| game_state.in_storage_components.get(&e.to_string()).unwrap().storage_entity == entity.to_string())
             .collect()
     }
 

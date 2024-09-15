@@ -1,7 +1,7 @@
 use itertools::Itertools;
-use wgpu::RenderPass;
 use std::collections::HashMap;
 use std::{iter, mem};
+use wgpu::RenderPass;
 // use anyhow::*;
 use cgmath::{prelude::*, Point3};
 // use gltf::iter::Meshes;
@@ -1028,14 +1028,18 @@ impl<'a> State<'a> {
                 let instance_group: Vec<Instance> = group
                     .into_iter()
                     .map(|(entity, in_storage)| {
+                        // TODO I think this should depend on the image:
+                        // The image size should fore xample already be 1x2
+                        // instead of sizing based on shape
+                        let item_shape = &game_state.storable_components.get(entity.as_str()).unwrap().shape;
                         entity_group.push(entity);
                         Self::create_inventory_item_instance(
                             ui_state,
                             in_storage,
                             item_distance_x,
                             item_distance_y,
-                            item_picture_scale_x,
-                            item_picture_scale_y,
+                            item_picture_scale_x * item_shape.width as f32,
+                            item_picture_scale_y * item_shape.height as f32,
                         )
                     })
                     .collect();
@@ -1077,19 +1081,19 @@ impl<'a> State<'a> {
 
     fn render_ui(&'a self, render_pass: &mut RenderPass<'a>, render_group: &RenderGroup) {
         render_pass.set_bind_group(
-                    0,
-                    &self
-                        .model_map
-                        .get(&render_group.model_id)
-                        .unwrap()
-                        .materials[0]
-                        .bind_group,
-                    &[],
-                );
-                render_pass.set_vertex_buffer(1, render_group.buffer.slice(..));
-                render_pass.draw_mesh_instanced(
-                    &self.model_map.get(&render_group.model_id).unwrap().meshes[0],
-                    0..render_group.instance_count,
-                );
+            0,
+            &self
+                .model_map
+                .get(&render_group.model_id)
+                .unwrap()
+                .materials[0]
+                .bind_group,
+            &[],
+        );
+        render_pass.set_vertex_buffer(1, render_group.buffer.slice(..));
+        render_pass.draw_mesh_instanced(
+            &self.model_map.get(&render_group.model_id).unwrap().meshes[0],
+            0..render_group.instance_count,
+        );
     }
 }
