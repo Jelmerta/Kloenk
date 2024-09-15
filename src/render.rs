@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use wgpu::RenderPass;
 use std::collections::HashMap;
 use std::{iter, mem};
 // use anyhow::*;
@@ -18,7 +19,7 @@ use winit::event::WindowEvent;
 use winit::window::Window;
 
 use crate::camera::Camera;
-use crate::components::{Entity, Position};
+use crate::components::{Entity, InStorage, Position};
 use crate::game_state::GameState;
 use crate::gui::UIState;
 use crate::model::Vertex;
@@ -61,9 +62,6 @@ pub struct State<'a> {
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
-    // The window must be declared after the surface so
-    // it gets dropped after it as the surface contains
-    // unsafe references to the window's resources.
     window: &'a Window,
     render_pipeline: wgpu::RenderPipeline,
     render_pipeline_ui: wgpu::RenderPipeline,
@@ -79,8 +77,7 @@ pub struct State<'a> {
     //obj_model: model::Model,
     model_map: HashMap<String, model::Model>,
     depth_texture: texture::DepthTexture,
-    inv_instance_buffer: wgpu::Buffer,
-    renderable_groups: Vec<RenderableGroup>,
+    render_groups: Vec<RenderGroup>,
 }
 
 struct Instance {
@@ -137,18 +134,15 @@ impl InstanceRaw {
     }
 }
 
-struct RenderableGroup {
-    // instances: Vec<InstanceRaw>,
+struct RenderGroup {
     buffer: wgpu::Buffer,
     model_id: String,
-    material_id: String,
     instance_count: u32,
 }
 
 impl<'a> State<'a> {
     pub async fn new(window: &'a Window) -> State<'a> {
         let size = window.inner_size();
-        log::warn!("{},{}", size.width, size.height);
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             // The instance is a handle to our GPU
@@ -615,8 +609,8 @@ impl<'a> State<'a> {
 
         let mut model_map: HashMap<String, model::Model> = HashMap::new();
 
-        let perocaca = resources::load_model(
-            "resources/perocaca.jpg",
+        let shield = resources::load_model(
+            "resources/shield.jpg",
             &device,
             &queue,
             &texture_bind_group_layout,
@@ -624,7 +618,18 @@ impl<'a> State<'a> {
         )
         .await
         .unwrap();
-        model_map.insert("perocaca".to_string(), perocaca);
+        model_map.insert("shield".to_string(), shield);
+
+        let shield_inventory = resources::load_model(
+            "resources/shield.jpg",
+            &device,
+            &queue,
+            &texture_bind_group_layout,
+            "SQUARE",
+        )
+        .await
+        .unwrap();
+        model_map.insert("shield_inventory".to_string(), shield_inventory);
 
         let character = resources::load_model(
             "resources/character.jpg",
@@ -672,13 +677,6 @@ impl<'a> State<'a> {
 
         let depth_texture = texture::DepthTexture::create_depth_texture(&device, &config);
 
-        let inv_instance_data = Vec::new().iter().map(Instance::to_raw).collect::<Vec<_>>();
-        let inv_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Inventory Instance Buffer"),
-            contents: bytemuck::cast_slice(&inv_instance_data),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
-
         Self {
             window,
             surface,
@@ -699,8 +697,7 @@ impl<'a> State<'a> {
             model_map,
             //obj_model: garfield,
             depth_texture,
-            inv_instance_buffer,
-            renderable_groups: Vec::new(),
+            render_groups: Vec::new(),
         }
     }
 
@@ -762,6 +759,8 @@ impl<'a> State<'a> {
             bytemuck::cast_slice(&[self.camera_uniform]),
         );
 
+        self.create_render_groups(game_state);
+
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
@@ -805,62 +804,30 @@ impl<'a> State<'a> {
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
 
-            let mut renderable_groups: Vec<RenderableGroup> = Vec::new();
-            game_state
-                .entities
-                .iter()
-                .filter(|entity| game_state.get_graphics(entity.to_string()).is_some())
-                .group_by(|entity| {
-                    let graphics = game_state.get_graphics(entity.to_string()).unwrap();
-                    (graphics.model_id.clone(), graphics.material_id.clone())
-                })
-                .into_iter()
-                .for_each(|((model_id, material_id), group)| {
-                    let entity_group: Vec<&Entity> = group.collect();
-                    let instance_group: Vec<Instance> = entity_group
-                        .into_iter()
-                        .filter(|entity| game_state.get_position(entity.to_string()).is_some())
-                        .map(|entity| {
-                            Self::to_instance(game_state.get_position(entity.to_string()).unwrap())
-                        })
-                        .collect();
-                    let buffer = Self::create_instance_buffer(&self.device, &instance_group);
-                    let renderable_group = RenderableGroup {
-                        buffer,
-                        model_id,
-                        material_id,
-                        instance_count: instance_group.len() as u32,
-                    };
-                    renderable_groups.push(renderable_group);
-                });
-            self.renderable_groups = renderable_groups;
-
-            self.renderable_groups.iter().for_each(|renderable_group| {
+            self.render_groups.iter().for_each(|render_group| {
                 render_pass.set_bind_group(
                     0,
                     &self
                         .model_map
-                        .get(&renderable_group.model_id)
+                        .get(&render_group.model_id)
                         .unwrap()
                         .materials[0]
                         .bind_group,
                     &[],
                 );
-                render_pass.set_vertex_buffer(1, renderable_group.buffer.slice(..));
+                render_pass.set_vertex_buffer(1, render_group.buffer.slice(..));
                 render_pass.draw_mesh_instanced(
-                    &self
-                        .model_map
-                        .get(&renderable_group.material_id)
-                        .unwrap()
-                        .meshes[0],
-                    0..renderable_group.instance_count,
+                    &self.model_map.get(&render_group.model_id).unwrap().meshes[0],
+                    0..render_group.instance_count,
                 );
             });
 
             drop(render_pass);
         }
+
         // UI
         if ui_state.inventory_open {
+            self.set_camera_data_ui();
             let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass UI"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -877,122 +844,23 @@ impl<'a> State<'a> {
             });
 
             render_pass_ui.set_pipeline(&self.render_pipeline_ui);
-            render_pass_ui.set_bind_group(
-                0,
-                &self.model_map.get("sword").unwrap().materials[0].bind_group,
-                &[],
-            );
             render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
 
-            self.camera_ui.eye = Point3 {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
+            let inventory_instance = Self::create_inventory_instance(ui_state);
+            let inventory_render_group = RenderGroup {
+                buffer: Self::create_instance_buffer(&self.device, &vec![inventory_instance]),
+                model_id: "sword_inventory".to_string(),
+                instance_count: 1,
             };
+            self.render_ui(&mut render_pass_ui, &inventory_render_group);
 
-            self.camera_ui.target = Point3 {
-                x: 0.0,
-                y: 0.0,  // player does not have an upwards direction yet
-                z: -1.0, // This can be confusing: our 2d world has x
-            }; // and y. in 3d the y is seen as vertical
-
-            self.camera_ui.z_near = -1.0;
-            self.camera_ui.z_far = 1.0;
-
-            self.camera_uniform_ui
-                .update_view_projection(&self.camera_ui);
-            self.queue.write_buffer(
-                &self.camera_buffer_ui,
-                0,
-                bytemuck::cast_slice(&[self.camera_uniform_ui]),
-            );
-
-            let mut inv_instance_data = Vec::new();
-
-            let inventory_instance = Instance {
-                position: cgmath::Vector3 {
-                    x: UIState::to_clip_space_x(ui_state.inventory_position_x),
-                    y: UIState::to_clip_space_y(ui_state.inventory_position_y),
-                    z: 0.0,
-                },
-                scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                    UIState::to_scale_x(ui_state.inventory_width),
-                    UIState::to_scale_y(ui_state.inventory_height),
-                    1.0,
-                    1.0,
-                )),
-                rotation: cgmath::Quaternion::from_axis_angle(
-                    cgmath::Vector3::unit_z(),
-                    cgmath::Deg(0.0),
-                ),
-            };
-            inv_instance_data.push(Instance::to_raw(&inventory_instance));
-
-            let mut instances = 1;
             let inventory_items = game_state.get_in_storages(&"player".to_string());
+            //
+            let render_groups = self.create_render_groups_ui(game_state, ui_state, inventory_items);
+            render_groups.iter().for_each(|render_group| {
+                self.render_ui(&mut render_pass_ui, render_group);
+            });
 
-            let inventory = game_state.get_storage("player".to_string()).unwrap();
-            let item_distance_x = ui_state.inventory_width / inventory.number_of_columns as f32;
-            let item_distance_y = ui_state.inventory_height / inventory.number_of_rows as f32;
-
-            let item_picture_scale_x =
-                ui_state.inventory_width / inventory.number_of_columns as f32;
-            let item_picture_scale_y = ui_state.inventory_height / inventory.number_of_rows as f32;
-            for item in inventory_items {
-                let inventory_item_instance = Instance {
-                    position: cgmath::Vector3 {
-                        x: UIState::to_clip_space_x(
-                            ui_state.inventory_position_x
-                                + item.position_x as f32 * item_distance_x,
-                        ),
-                        y: UIState::to_clip_space_y(
-                            ui_state.inventory_position_y
-                                + item.position_y as f32 * item_distance_y,
-                        ),
-                        z: 0.0,
-                    },
-                    scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                        UIState::to_scale_x(item_picture_scale_x),
-                        UIState::to_scale_y(item_picture_scale_y),
-                        1.0,
-                        1.0,
-                    )),
-                    rotation: cgmath::Quaternion::from_axis_angle(
-                        cgmath::Vector3::unit_z(),
-                        cgmath::Deg(0.0),
-                    ),
-                };
-                inv_instance_data.push(Instance::to_raw(&inventory_item_instance));
-                instances = instances + 1;
-            }
-
-            let inv_instance_buffer =
-                self.device
-                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("Inventory Instance Buffer"),
-                        contents: bytemuck::cast_slice(&inv_instance_data),
-                        usage: wgpu::BufferUsages::VERTEX,
-                    });
-            self.inv_instance_buffer = inv_instance_buffer; // This gets around a borrow check error... Not sure what the best way to do this is...
-
-            render_pass_ui.set_vertex_buffer(
-                0,
-                self.model_map.get("sword_inventory").unwrap().meshes[0]
-                    .vertex_buffer
-                    .slice(..),
-            );
-            render_pass_ui.set_vertex_buffer(1, self.inv_instance_buffer.slice(..));
-            render_pass_ui.set_index_buffer(
-                self.model_map.get("sword_inventory").unwrap().meshes[0]
-                    .index_buffer
-                    .slice(..),
-                wgpu::IndexFormat::Uint16,
-            );
-            render_pass_ui.draw_indexed(
-                0..self.model_map.get("sword_inventory").unwrap().meshes[0].num_elements,
-                0,
-                0..instances as _,
-            );
             drop(render_pass_ui);
         }
 
@@ -1041,5 +909,187 @@ impl<'a> State<'a> {
                 cgmath::Deg(0.0),
             ),
         }
+    }
+
+    fn create_inventory_instance(ui_state: &UIState) -> Instance {
+        Instance {
+            position: cgmath::Vector3 {
+                x: UIState::to_clip_space_x(ui_state.inventory_position_x),
+                y: UIState::to_clip_space_y(ui_state.inventory_position_y),
+                z: 0.0,
+            },
+            scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
+                UIState::to_scale_x(ui_state.inventory_width),
+                UIState::to_scale_y(ui_state.inventory_height),
+                1.0,
+                1.0,
+            )),
+            rotation: cgmath::Quaternion::from_axis_angle(
+                cgmath::Vector3::unit_z(),
+                cgmath::Deg(0.0),
+            ),
+        }
+    }
+
+    fn create_inventory_item_instance(
+        ui_state: &UIState,
+        item: &InStorage,
+        item_distance_x: f32,
+        item_distance_y: f32,
+        item_picture_scale_x: f32,
+        item_picture_scale_y: f32,
+    ) -> Instance {
+        Instance {
+            position: cgmath::Vector3 {
+                x: UIState::to_clip_space_x(
+                    ui_state.inventory_position_x + item.position_x as f32 * item_distance_x,
+                ),
+                y: UIState::to_clip_space_y(
+                    ui_state.inventory_position_y + item.position_y as f32 * item_distance_y,
+                ),
+                z: 0.0,
+            },
+            scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
+                UIState::to_scale_x(item_picture_scale_x),
+                UIState::to_scale_y(item_picture_scale_y),
+                1.0,
+                1.0,
+            )),
+            rotation: cgmath::Quaternion::from_axis_angle(
+                cgmath::Vector3::unit_z(),
+                cgmath::Deg(0.0),
+            ),
+        }
+    }
+
+    fn create_render_groups(&mut self, game_state: &GameState) {
+        let mut render_groups: Vec<RenderGroup> = Vec::new();
+        game_state
+            .entities
+            .iter()
+            .filter(|entity| {
+                game_state
+                    .graphics_3d_components
+                    .contains_key(entity.as_str())
+            })
+            .group_by(|entity| {
+                game_state
+                    .get_graphics(entity.to_string())
+                    .unwrap()
+                    .model_id
+                    .clone()
+            })
+            .into_iter()
+            .for_each(|(model_id, group)| {
+                let entity_group: Vec<&Entity> = group.collect();
+                let instance_group: Vec<Instance> = entity_group
+                    .into_iter()
+                    .filter(|entity| game_state.get_position(entity.to_string()).is_some())
+                    .map(|entity| {
+                        Self::to_instance(game_state.get_position(entity.to_string()).unwrap())
+                    })
+                    .collect();
+                let buffer = Self::create_instance_buffer(&self.device, &instance_group);
+                let render_group = RenderGroup {
+                    buffer,
+                    model_id,
+                    instance_count: instance_group.len() as u32,
+                };
+                render_groups.push(render_group);
+            });
+        self.render_groups = render_groups; // TODO reusing render_groups here, not too nice...
+    }
+
+    fn create_render_groups_ui(
+        &self,
+        game_state: &GameState,
+        ui_state: &UIState,
+        inventory_items: HashMap<&Entity, &InStorage>,
+    ) -> Vec<RenderGroup> {
+        let inventory = game_state.get_storage("player".to_string()).unwrap();
+        let item_distance_x = ui_state.inventory_width / inventory.number_of_columns as f32;
+        let item_distance_y = ui_state.inventory_height / inventory.number_of_rows as f32;
+        let item_picture_scale_x = ui_state.inventory_width / inventory.number_of_columns as f32;
+        let item_picture_scale_y = ui_state.inventory_height / inventory.number_of_rows as f32;
+
+        let mut render_groups = Vec::new();
+        inventory_items
+            .iter()
+            .group_by(|(entity, _)| {
+                game_state
+                    .get_graphics_inventory(entity.to_string())
+                    .unwrap()
+                    .model_id
+                    .clone()
+            })
+            .into_iter()
+            .for_each(|(model_id, group)| {
+                let mut entity_group: Vec<&Entity> = Vec::new();
+                let instance_group: Vec<Instance> = group
+                    .into_iter()
+                    .map(|(entity, in_storage)| {
+                        entity_group.push(entity);
+                        Self::create_inventory_item_instance(
+                            ui_state,
+                            in_storage,
+                            item_distance_x,
+                            item_distance_y,
+                            item_picture_scale_x,
+                            item_picture_scale_y,
+                        )
+                    })
+                    .collect();
+                let buffer = Self::create_instance_buffer(&self.device, &instance_group);
+                let render_group = RenderGroup {
+                    buffer,
+                    model_id,
+                    instance_count: instance_group.len() as u32,
+                };
+                render_groups.push(render_group);
+            });
+        render_groups
+    }
+
+    fn set_camera_data_ui(&mut self) {
+        self.camera_ui.eye = Point3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        };
+
+        self.camera_ui.target = Point3 {
+            x: 0.0,
+            y: 0.0,  // player does not have an upwards direction yet
+            z: -1.0, // This can be confusing: our 2d world has x
+        }; // and y. in 3d the y is seen as vertical
+
+        self.camera_ui.z_near = -1.0;
+        self.camera_ui.z_far = 1.0;
+
+        self.camera_uniform_ui
+            .update_view_projection(&self.camera_ui);
+        self.queue.write_buffer(
+            &self.camera_buffer_ui,
+            0,
+            bytemuck::cast_slice(&[self.camera_uniform_ui]),
+        );
+    }
+
+    fn render_ui(&'a self, render_pass: &mut RenderPass<'a>, render_group: &RenderGroup) {
+        render_pass.set_bind_group(
+                    0,
+                    &self
+                        .model_map
+                        .get(&render_group.model_id)
+                        .unwrap()
+                        .materials[0]
+                        .bind_group,
+                    &[],
+                );
+                render_pass.set_vertex_buffer(1, render_group.buffer.slice(..));
+                render_pass.draw_mesh_instanced(
+                    &self.model_map.get(&render_group.model_id).unwrap().meshes[0],
+                    0..render_group.instance_count,
+                );
     }
 }
