@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::{iter, mem};
 use wgpu::RenderPass;
 // use anyhow::*;
-use cgmath::{prelude::*, Point3};
+use cgmath::{prelude::*, Point3, Vector3};
 // use gltf::iter::Meshes;
 // use gltf::mesh::util::indices;
 // use gltf::texture as gltf_texture;
@@ -78,6 +78,7 @@ pub struct State<'a> {
     model_map: HashMap<String, model::Model>,
     depth_texture: texture::DepthTexture,
     render_groups: Vec<RenderGroup>,
+    counter: u32,
 }
 
 struct Instance {
@@ -698,6 +699,7 @@ impl<'a> State<'a> {
             //obj_model: garfield,
             depth_texture,
             render_groups: Vec::new(),
+            counter: 0,
         }
     }
 
@@ -735,15 +737,17 @@ impl<'a> State<'a> {
     ) -> Result<(), wgpu::SurfaceError> {
         // Update the camera in render with the game state data to build the new view
         // projection
+        self.counter = self.counter + 1;
         let player = "player".to_string();
         let camera = game_state.get_camera(player.clone()).unwrap();
         let rad_x = f32::to_radians(camera.rotation_x_degrees);
         let rad_y = f32::to_radians(camera.rotation_y_degrees);
+
         let player_position = game_state.get_position(player.clone()).unwrap();
         self.camera.eye = Point3 {
             x: player_position.x + camera.distance * rad_y.sin() * rad_x.cos(),
-            y: player_position.y + camera.distance * rad_y.cos(),
-            z: player_position.z + camera.distance * rad_y.sin() * rad_x.sin(),
+            y: player_position.z + camera.distance * rad_y.cos(),
+            z: player_position.y + camera.distance * rad_y.sin() * rad_x.sin(),
         };
         self.camera.target = Point3 {
             x: player_position.x.clone(),
@@ -751,6 +755,23 @@ impl<'a> State<'a> {
             z: player_position.y.clone(), // This can be confusing: our 2d world has x
                     // and y. in 3d the y is seen as vertical
         };
+        let view_direction = (self.camera.target - self.camera.eye).normalize();
+        let right = Vector3::unit_y().cross(view_direction).normalize();
+        self.camera.up = view_direction.cross(right).normalize();
+
+        if self.counter % 100 == 0 {
+            log::warn!("");
+            log::warn!("rads: {},{}", rad_x, rad_y);
+            log::warn!(
+                "player: {},{},{}",
+                player_position.x,
+                player_position.y,
+                player_position.z
+            );
+            log::warn!("camera eye: {:?}", self.camera.eye);
+            log::warn!("camera target: {:?}", self.camera.target);
+            log::warn!("camera up: {:?}", self.camera.up);
+        }
 
         self.camera_uniform.update_view_projection(&self.camera);
         self.queue.write_buffer(
@@ -1031,7 +1052,11 @@ impl<'a> State<'a> {
                         // TODO I think this should depend on the image:
                         // The image size should fore xample already be 1x2
                         // instead of sizing based on shape
-                        let item_shape = &game_state.storable_components.get(entity.as_str()).unwrap().shape;
+                        let item_shape = &game_state
+                            .storable_components
+                            .get(entity.as_str())
+                            .unwrap()
+                            .shape;
                         entity_group.push(entity);
                         Self::create_inventory_item_instance(
                             ui_state,
