@@ -76,9 +76,16 @@ impl StorageManager {
     pub fn find_empty_spot(game_state: &GameState, storage: &Storage, in_storage_entities: &Vec<&Entity>, near_pickup: &Entity) -> Option<(u8, u8)> {
         let dynamic_storage = Self::generate_dynamic_storage_space(game_state, storage, in_storage_entities);
         let item_shape = &game_state.storable_components.get(near_pickup).unwrap().shape;
+        let mut padded_storage = vec![vec![true; 12]; 12];
+        for x in 0..dynamic_storage.len() {
+            for y in 0..dynamic_storage.len() {
+                padded_storage[y][x] = dynamic_storage[y][x];
+            }
+        }
+
         for row in 0..storage.number_of_rows {
             for column in 0..storage.number_of_columns {
-                if Self::check_empty_spot(&dynamic_storage, row, column, item_shape.clone()) {
+                if Self::check_empty_spot(&padded_storage, row, column, item_shape.clone()) {
                     return Some((column, row));
                 }
             }
@@ -86,15 +93,7 @@ impl StorageManager {
         return None;
     }
     
-    fn check_empty_spot(dynamic_storage: &Vec<Vec<bool>>, row: u8, column: u8, shape: ItemShape) -> bool {
-        //todo move padded more general, otherwise for each inv spot we calc
-        let mut padded_storage = vec![vec![false; 12]; 12];
-        for x in 0..dynamic_storage.len() {
-            for y in 0..dynamic_storage.len() {
-                padded_storage[y][x] = dynamic_storage[y][x];
-            }
-        }
-
+    fn check_empty_spot(padded_storage: &Vec<Vec<bool>>, row: u8, column: u8, shape: ItemShape) -> bool {
         for x in column..column + shape.width {
             for y in row..row + shape.height {
                 if padded_storage[y as usize][x as usize] == true {

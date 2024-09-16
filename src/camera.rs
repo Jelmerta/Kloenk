@@ -4,7 +4,7 @@ use cgmath::*;
 pub struct Camera {
     pub target: Point3<f32>,
     pub eye: Point3<f32>, // Or: position
-    up: Vector3<f32>,
+    pub up: Vector3<f32>,
     pub z_near: f32,
     pub z_far: f32,
 }
