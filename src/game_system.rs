@@ -226,7 +226,6 @@ impl GameSystem {
 
             let item_hitbox = game_state.get_hitbox(item_unwrap.to_string()).unwrap();
 
-            // TODO inefficient loop over all entities and checking collision
             let colliding_entities: Vec<Entity> = game_state
                 .entities
                 .iter()

@@ -15,7 +15,6 @@ use cgmath::{prelude::*, Point3, Vector3};
 use wasm_bindgen::prelude::*;
 
 use wgpu::util::DeviceExt;
-use winit::event::WindowEvent;
 use winit::window::Window;
 
 use crate::camera::Camera;
@@ -26,7 +25,6 @@ use crate::model::Vertex;
 use crate::model::{self};
 use crate::{resources, texture};
 use model::DrawModel;
-// use crate::resources::load_binary;
 
 // #[wasm_bindgen(start)]
 // pub fn run() -> Result<(), JsValue> {
@@ -36,9 +34,7 @@ use model::DrawModel;
 //     Ok(())
 // }
 
-// We need this for Rust to store our data correctly for the shaders
 #[repr(C)]
-// This is so we can store this in a buffer
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 struct CameraUniform {
     view_projection: [[f32; 4]; 4],
@@ -78,7 +74,6 @@ pub struct State<'a> {
     model_map: HashMap<String, model::Model>,
     depth_texture: texture::DepthTexture,
     render_groups: Vec<RenderGroup>,
-    counter: u32,
 }
 
 struct Instance {
@@ -146,22 +141,10 @@ impl<'a> State<'a> {
         let size = window.inner_size();
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            // The instance is a handle to our GPU
             backends: wgpu::Backends::all(),
-            //=> Vulkan + Metal + DX12 + Browser WebGPU
-            // #[cfg(not(target_arch = "wasm32"))]
-            // backends: wgpu::Backends::PRIMARY,
-            // #[cfg(target_arch = "wasm32")]
-            // backends: wgpu::Backends::GL,
-            // backends: wgpu::Backends::SECONDARY,
-            // backends: wgpu::Backends::BROWSER_WEBGPU,
             ..Default::default()
         });
 
-        // # Safety
-        //
-        // The surface needs to live as long as the window that created it.
-        // State owns the window so this should be safe.
         let surface = instance.create_surface(window).unwrap();
 
         let adapter = instance
@@ -173,20 +156,12 @@ impl<'a> State<'a> {
             .await
             .unwrap();
 
-        let limits = adapter.limits();
-        log::warn!("{:?}", limits);
-
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
                     required_features: wgpu::Features::empty(),
-                    // required_limits: wgpu::Limits::downlevel_defaults(),
-                    // required_limits: if cfg!(target_arch = "wasm32") {
-                    // required_limits: wgpu::Limits::downlevel_webgl2_defaults(),
-                    // } else {
                     required_limits: wgpu::Limits::default(),
-                    // },
                     memory_hints: Default::default(),
                 },
                 None,
@@ -255,7 +230,7 @@ impl<'a> State<'a> {
         let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer"),
             contents: bytemuck::cast_slice(&[camera_uniform]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, // what is COPY_DST?
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
         let camera_bind_group_layout =
@@ -265,7 +240,6 @@ impl<'a> State<'a> {
                     binding: 0,
                     visibility: wgpu::ShaderStages::VERTEX,
                     ty: wgpu::BindingType::Buffer {
-                        // Binding type, horrible naming
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
                         min_binding_size: None,
@@ -296,7 +270,6 @@ impl<'a> State<'a> {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                // buffers: &[model::ModelVertex::desc(), InstanceRaw::desc()],
                 buffers: &[model::TexVertex::desc(), InstanceRaw::desc()],
                 compilation_options: Default::default(),
             },
@@ -309,7 +282,6 @@ impl<'a> State<'a> {
                 polygon_mode: wgpu::PolygonMode::Fill,
                 conservative: false,
             },
-            // depth_stencil: None,
             depth_stencil: Some(wgpu::DepthStencilState {
                 format: texture::DepthTexture::DEPTH_FORMAT,
                 depth_write_enabled: true,
@@ -344,7 +316,7 @@ impl<'a> State<'a> {
         let camera_buffer_ui = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer UI"),
             contents: bytemuck::cast_slice(&[camera_uniform_ui]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, // what is COPY_DST?
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
         let camera_bind_group_layout_ui =
@@ -354,7 +326,6 @@ impl<'a> State<'a> {
                     binding: 0,
                     visibility: wgpu::ShaderStages::VERTEX,
                     ty: wgpu::BindingType::Buffer {
-                        // Binding type, horrible naming
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
                         min_binding_size: None,
@@ -385,7 +356,6 @@ impl<'a> State<'a> {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                // buffers: &[model::ModelVertex::desc(), InstanceRaw::desc()],
                 buffers: &[model::TexVertex::desc(), InstanceRaw::desc()],
                 compilation_options: Default::default(),
             },
@@ -602,12 +572,6 @@ impl<'a> State<'a> {
         // };
         // // models.push(garfield);
 
-        // let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        //     label: Some("Vertex Buffer"),
-        //     contents: bytemuck::cast_slice(CUBE),
-        //     usage: wgpu::BufferUsages::VERTEX,
-        // });
-
         let mut model_map: HashMap<String, model::Model> = HashMap::new();
 
         let shield = resources::load_model(
@@ -676,6 +640,17 @@ impl<'a> State<'a> {
         .unwrap();
         model_map.insert("grass".to_string(), grass);
 
+        let tree = resources::load_model(
+            "resources/tree.png",
+            &device,
+            &queue,
+            &texture_bind_group_layout,
+            "CUBE",
+        )
+        .await
+        .unwrap();
+        model_map.insert("tree".to_string(), tree);
+
         let depth_texture = texture::DepthTexture::create_depth_texture(&device, &config);
 
         Self {
@@ -699,7 +674,6 @@ impl<'a> State<'a> {
             //obj_model: garfield,
             depth_texture,
             render_groups: Vec::new(),
-            counter: 0,
         }
     }
 
@@ -718,26 +692,11 @@ impl<'a> State<'a> {
         }
     }
 
-    // TODO Use this for handling input
-    #[allow(unused_variables)]
-    pub fn input(&mut self, event: &WindowEvent) -> bool {
-        false
-    }
-
-    // Perhaps we want to use this instead of changing data in render method
-    // pub fn update(&mut self) {
-    // switch (input)
-    // self.in
-    // }
-
     pub fn render(
         &mut self,
         game_state: &GameState,
         ui_state: &UIState,
     ) -> Result<(), wgpu::SurfaceError> {
-        // Update the camera in render with the game state data to build the new view
-        // projection
-        self.counter = self.counter + 1;
         let player = "player".to_string();
         let camera = game_state.get_camera(player.clone()).unwrap();
         let rad_x = f32::to_radians(camera.rotation_x_degrees);
@@ -751,27 +710,13 @@ impl<'a> State<'a> {
         };
         self.camera.target = Point3 {
             x: player_position.x.clone(),
-            y: 0.0, // player does not have an upwards direction yet
+            y: 0.0,
             z: player_position.y.clone(), // This can be confusing: our 2d world has x
                     // and y. in 3d the y is seen as vertical
         };
         let view_direction = (self.camera.target - self.camera.eye).normalize();
         let right = Vector3::unit_y().cross(view_direction).normalize();
         self.camera.up = view_direction.cross(right).normalize();
-
-        if self.counter % 100 == 0 {
-            log::warn!("");
-            log::warn!("rads: {},{}", rad_x, rad_y);
-            log::warn!(
-                "player: {},{},{}",
-                player_position.x,
-                player_position.y,
-                player_position.z
-            );
-            log::warn!("camera eye: {:?}", self.camera.eye);
-            log::warn!("camera target: {:?}", self.camera.target);
-            log::warn!("camera up: {:?}", self.camera.up);
-        }
 
         self.camera_uniform.update_view_projection(&self.camera);
         self.queue.write_buffer(
@@ -809,7 +754,6 @@ impl<'a> State<'a> {
                         store: wgpu::StoreOp::Store,
                     },
                 })],
-                // depth_stencil_attachment: None,
                 depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                     view: &self.depth_texture.view,
                     depth_ops: Some(wgpu::Operations {
@@ -876,7 +820,6 @@ impl<'a> State<'a> {
             self.render_ui(&mut render_pass_ui, &inventory_render_group);
 
             let inventory_items = game_state.get_in_storages(&"player".to_string());
-            //
             let render_groups = self.create_render_groups_ui(game_state, ui_state, inventory_items);
             render_groups.iter().for_each(|render_group| {
                 self.render_ui(&mut render_pass_ui, render_group);
@@ -906,7 +849,7 @@ impl<'a> State<'a> {
             .map(|instance| Instance::to_raw(instance))
             .collect::<Vec<_>>();
         device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Instance Buffer"), // we could name this better
+            label: Some("Instance Buffer"),
             contents: bytemuck::cast_slice(&raw_instances),
             usage: wgpu::BufferUsages::VERTEX,
         })
@@ -920,9 +863,6 @@ impl<'a> State<'a> {
                 z: position.y,
             },
             scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                // entity.size.x,
-                // entity.size.z,
-                // entity.size.y,
                 1.0, 1.0, 1.0, 1.0,
             )),
             rotation: cgmath::Quaternion::from_axis_angle(
@@ -1018,7 +958,7 @@ impl<'a> State<'a> {
                 };
                 render_groups.push(render_group);
             });
-        self.render_groups = render_groups; // TODO reusing render_groups here, not too nice...
+        self.render_groups = render_groups;
     }
 
     fn create_render_groups_ui(
@@ -1088,9 +1028,9 @@ impl<'a> State<'a> {
 
         self.camera_ui.target = Point3 {
             x: 0.0,
-            y: 0.0,  // player does not have an upwards direction yet
-            z: -1.0, // This can be confusing: our 2d world has x
-        }; // and y. in 3d the y is seen as vertical
+            y: 0.0,
+            z: -1.0,
+        };
 
         self.camera_ui.z_near = -1.0;
         self.camera_ui.z_far = 1.0;
