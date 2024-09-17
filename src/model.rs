@@ -1,11 +1,3 @@
-// Model without textures but with color. Like OSRS
-// #[repr(C)] // Not sure what this effectively does here
-// #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)] // Read up more about bytemuck, to cast our VERTICES as a &[u8]
-// struct Vertex {
-//     position: [f32; 3],
-//     color: [f32; 3],
-// }
-//
 use std::ops::Range;
 
 use crate::texture;
@@ -21,8 +13,8 @@ pub struct ModelVertex {
     pub color: [f32;3],
 }
 
-#[repr(C)] // Not sure what this effectively does here
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)] // Read up more about bytemuck, to cast our VERTICES as a &[u8]
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)] 
 pub struct TexVertex {
     pub position: [f32; 3],
     pub tex_coords: [f32; 2],

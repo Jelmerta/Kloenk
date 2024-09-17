@@ -162,6 +162,25 @@ impl GameState {
             }
         }
 
+        // Load tree
+        let tree = "tree".to_string();
+        entities.push(tree.clone());
+
+        let tree_graphics = Graphics3D {
+            model_id: "tree".to_string(),
+        };
+        graphics_3d_components.insert(tree.clone(), tree_graphics);
+
+        let tree_position = Position {
+            x: 2.0,
+            y: -3.0,
+            z: 0.0,
+        };
+        position_components.insert(tree.clone(), tree_position);
+            
+        let tree_hitbox = Hitbox { hitbox: 0.51 };
+        hitbox_components.insert(tree.clone(), tree_hitbox);
+
         Self {
             current_entity_id,
             entities,
