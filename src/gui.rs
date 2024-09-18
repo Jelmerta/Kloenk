@@ -19,6 +19,10 @@ impl UIState {
             inventory_position_y: 0.6,
             inventory_width: 0.35,
             inventory_height: 0.35,
+
+            // TODO We can probably store items here on a signal when inv changes. That
+            // way we do not need to calculate inventory every frame when inventory is
+            // shown
         }
     }
 

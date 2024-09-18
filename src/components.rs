@@ -1,19 +1,3 @@
-// List of components? component is attribute/eigenschap, not a concept not is-a, but has-a
-// interactable
-// position
-// renderable? graphicscomponent?
-// pickupable+droppable vs item?... shouldn't define behaviour but pickupable is more fine-grained
-// and an attribute of the entity?
-
-// what even is entity? A concept in the game, not attribute of something. is-a not has-a
-// player
-// npc
-// monster
-// spells?
-// hmm quests?
-// probably not inventory?
-
-
 pub type Entity = String;
 
 pub struct Graphics3D {
@@ -40,8 +24,7 @@ pub struct InStorage {
 }
 
 #[derive(Clone)]
-pub struct ItemShape { // vs StorageShape?
-//     // shape: Vec<Vec<bool>>, // probably a better solution long term
+pub struct ItemShape {
     pub width: u8,
     pub height: u8,
 }
@@ -53,7 +36,7 @@ pub struct Position {
     pub z: f32,
 }
 
-pub struct Hitbox { // or physics or whatever
+pub struct Hitbox {
     pub hitbox: f32,
 }
 
@@ -61,10 +44,42 @@ pub struct Surface {
     
 }
 
-// Probably just a singleton... probably does not make much sense for this to be in the ECS?
 pub struct CameraTarget {
     pub distance: f32,
-    pub rotation_x_degrees: f32, // as seen on a sphere, to figure out the position of the camera. it is not
-    // the direction the camera is pointed at
+    pub rotation_x_degrees: f32, // Spherical coordinates
     pub rotation_y_degrees: f32,
 }
+
+// //Health?
+// pub struct Resource {
+//     amount_of_items: u8,
+//     gathering_chance: f32,
+//     received_item: ItemDefinition,
+// }
+// // Droptable?
+//
+// // Should only be defined once for every type of item, no need to copy
+// // Basically a blueprint to construct items with its components
+// pub struct ItemDefinition {
+//     name: String,
+//     model_2d: String,
+//     model_3d: String,
+//     hitbox: f32,
+// }
+//
+// pub struct Action {
+//     pub action_type: ActionType,
+//     target: Entity,
+// }
+//
+// pub enum ActionType {
+//     Woodcutting,
+// }
+//
+//
+//
+// // the possible position states are separate component types. Some possible position states:
+//     // MapLocation - where it is on the map.
+//     // Carried - indicating the entity carrying it.
+//     // Equipped - indicating who is using it.
+//     // InContainer - inside a treasure chest.

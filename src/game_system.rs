@@ -2,10 +2,8 @@ use std::collections::HashMap;
 
 use cgmath::num_traits::ToPrimitive;
 
-use crate::components::{
-    CameraTarget, Entity, Hitbox, Position, Storable, Storage, ItemShape,
-};
-use crate::game_state::{*};
+use crate::components::{CameraTarget, Entity, Hitbox, ItemShape, Position, Storable, Storage};
+use crate::game_state::*;
 use crate::gui::UIState;
 use crate::input::Input;
 
@@ -21,176 +19,6 @@ pub const CAMERA_TOP_LIMIT: f32 = 350.0;
 pub const ITEM_PICKUP_RANGE: f32 = 1.5;
 
 pub struct ItemPickupSystem {}
-
-impl ItemPickupSystem {
-    fn handle_item_pickup(game_state: &mut GameState, input: &mut Input) {
-        // mut input just for is
-        // toggled on. could possibly be changed
-        if input.e_pressed.is_toggled_on() {
-            let player = "player".to_string();
-            let near_pickup = PositionManager::find_nearest_pickup(
-                &game_state.position_components,
-                &game_state.storable_components,
-                &game_state.entities,
-                player.clone(),
-            );
-            if near_pickup.is_none() {
-                // "No item around in the world to pick up."
-                return;
-            }
-            let near_pickup = near_pickup.unwrap();
-
-            if !Self::in_range(
-                game_state.get_position(player.clone()).unwrap(),
-                game_state.get_position(near_pickup.clone()).unwrap(),
-            ) {
-                // "No item around in the world to pick up."
-                return;
-            }
-
-            let inventory = game_state.get_storage(player.clone()).unwrap();
-            let inventory_items = StorageManager::get_in_storage(game_state, &player);
-            if !StorageManager::has_space(game_state, inventory, &inventory_items, &near_pickup) {
-                // "There is no space left in your inventory to pick up this item."
-                return;
-            }
-            let empty_spot = StorageManager::find_empty_spot(game_state, inventory, &inventory_items, &near_pickup).unwrap();
-
-            game_state.remove_position(near_pickup.clone());
-            game_state.create_in_storage(player.clone(), near_pickup.clone(), empty_spot);
-        }
-    }
-
-    fn in_range(position1: &Position, position2: &Position) -> bool {
-        return PositionManager::distance_2d(position1, position2) < ITEM_PICKUP_RANGE;
-    }
-}
-
-struct StorageManager {}
-
-impl StorageManager {
-    pub fn has_space(game_state: &GameState, storage: &Storage, in_storage_entities: &Vec<&Entity>, near_pickup: &Entity) -> bool {
-        return Self::find_empty_spot(game_state, storage, in_storage_entities, near_pickup).is_some();
-    }
-
-    pub fn find_empty_spot(game_state: &GameState, storage: &Storage, in_storage_entities: &Vec<&Entity>, near_pickup: &Entity) -> Option<(u8, u8)> {
-        let dynamic_storage = Self::generate_dynamic_storage_space(game_state, storage, in_storage_entities);
-        let item_shape = &game_state.storable_components.get(near_pickup).unwrap().shape;
-        let mut padded_storage = vec![vec![true; 12]; 12];
-        for x in 0..dynamic_storage.len() {
-            for y in 0..dynamic_storage.len() {
-                padded_storage[y][x] = dynamic_storage[y][x];
-            }
-        }
-
-        for row in 0..storage.number_of_rows {
-            for column in 0..storage.number_of_columns {
-                if Self::check_empty_spot(&padded_storage, row, column, item_shape.clone()) {
-                    return Some((column, row));
-                }
-            }
-        }
-        return None;
-    }
-    
-    fn check_empty_spot(padded_storage: &Vec<Vec<bool>>, row: u8, column: u8, shape: ItemShape) -> bool {
-        for x in column..column + shape.width {
-            for y in row..row + shape.height {
-                if padded_storage[y as usize][x as usize] == true {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    fn generate_dynamic_storage_space(
-        game_state: &GameState,
-        storage: &Storage,
-        in_storage_entities: &Vec<&Entity>,
-    ) -> Vec<Vec<bool>> {
-        let mut storage_spots =
-            vec![vec![false; storage.number_of_rows.into()]; storage.number_of_columns.into()];
-
-        for in_storage_entity in in_storage_entities {
-            let in_storage = game_state.in_storage_components.get(&in_storage_entity.to_string()).unwrap();
-            let storable = game_state.storable_components.get(&in_storage_entity.to_string()).unwrap();
-            for x in in_storage.position_x..in_storage.position_x + storable.shape.width {
-                for y in in_storage.position_y..in_storage.position_y + storable.shape.height {
-                    storage_spots[y as usize][x as usize] = true
-                }
-            }
-        }
-        storage_spots
-    }
-
-    pub fn get_in_storage<'a>(game_state: &'a GameState, entity: &Entity) -> Vec<&'a Entity> {
-        game_state
-            .entities
-            .iter()
-            .filter(|e| game_state.in_storage_components.contains_key(&e.to_string()))
-            .filter(|e| game_state.in_storage_components.get(&e.to_string()).unwrap().storage_entity == entity.to_string())
-            .collect()
-    }
-
-    pub fn get_in_storage_entities<'a>(
-        game_state: &'a GameState,
-        entity: &Entity,
-    ) -> Vec<&'a Entity> {
-        game_state
-            .entities
-            .iter()
-            .filter(|e| {
-                game_state
-                    .in_storage_components
-                    .get(&e.to_string())
-                    .is_some()
-            })
-            .filter(|e| {
-                game_state
-                    .in_storage_components
-                    .get(&e.to_string())
-                    .unwrap()
-                    .storage_entity
-                    == entity.to_string()
-            })
-            .collect()
-    }
-
-    pub fn find_in_storage(game_state: &GameState, entity: Entity) -> Option<&Entity> {
-        let storage_entities = StorageManager::get_in_storage_entities(game_state, &entity);
-        storage_entities.first().copied()
-    }
-}
-
-struct PositionManager {}
-
-impl PositionManager {
-    pub fn find_nearest_pickup(
-        positions: &HashMap<Entity, Position>,
-        storables: &HashMap<Entity, Storable>,
-        entities: &Vec<Entity>,
-        entity: Entity,
-    ) -> Option<Entity> {
-        entities
-            .iter()
-            .filter(|e| storables.contains_key(e.as_str()))
-            .filter(|e| positions.contains_key(e.as_str()))
-            .min_by_key(|e| {
-                Self::distance_2d(
-                    positions.get(&entity).unwrap(),
-                    positions.get(e.as_str()).unwrap(),
-                )
-                .round()
-                .to_u32()
-            })
-            .cloned()
-    }
-
-    fn distance_2d(position1: &Position, position2: &Position) -> f32 {
-        return ((position2.x - position1.x).powi(2) + (position2.y - position1.y).powi(2)).sqrt();
-    }
-}
 
 impl GameSystem {
     pub fn update(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
@@ -253,11 +81,26 @@ impl GameSystem {
     }
 
     fn is_placeable(game_state: &GameState, desired_position: &Position) -> bool {
-        game_state.entities
+        game_state
+            .entities
             .iter()
             .filter(|entity| game_state.surface_components.contains_key(entity.as_str()))
-            .filter(|entity| Self::check_in_dimension(desired_position.x, 0.0, game_state.get_position(entity.to_string()).unwrap().x, 0.5)) // Assume 0.5 as half tile 
-            .filter(|entity| Self::check_in_dimension(desired_position.y, 0.0, game_state.get_position(entity.to_string()).unwrap().y, 0.5)) // Assume 0.5 as half tile 
+            .filter(|entity| {
+                Self::check_in_dimension(
+                    desired_position.x,
+                    0.0,
+                    game_state.get_position(entity.to_string()).unwrap().x,
+                    0.5,
+                )
+            }) // Assume 0.5 as half tile
+            .filter(|entity| {
+                Self::check_in_dimension(
+                    desired_position.y,
+                    0.0,
+                    game_state.get_position(entity.to_string()).unwrap().y,
+                    0.5,
+                )
+            }) // Assume 0.5 as half tile
             .next()
             .is_some()
     }
@@ -435,15 +278,11 @@ impl GameSystem {
 
     fn check_walkable(desired_position: &Position, walkable_tile_position: &Position) -> bool {
         let tile_size = 0.5; // Just hardcoded here for now.
-        let is_walkable_x = desired_position.x
-            >= walkable_tile_position.x - tile_size
-            && walkable_tile_position.x + tile_size
-                >= desired_position.x;
+        let is_walkable_x = desired_position.x >= walkable_tile_position.x - tile_size
+            && walkable_tile_position.x + tile_size >= desired_position.x;
 
-        let is_walkable_y = desired_position.y
-            >= walkable_tile_position.y - tile_size
-            && walkable_tile_position.y + tile_size
-                >= desired_position.y;
+        let is_walkable_y = desired_position.y >= walkable_tile_position.y - tile_size
+            && walkable_tile_position.y + tile_size >= desired_position.y;
 
         return is_walkable_x && is_walkable_y;
     }
@@ -454,14 +293,231 @@ impl GameSystem {
         position2: &Position,
         hitbox2: &Hitbox,
     ) -> bool {
-        let is_collision_x = Self::check_in_dimension(position1.x, hitbox1.hitbox, position2.x, hitbox2.hitbox);
-        let is_collision_y = Self::check_in_dimension(position1.y, hitbox1.hitbox, position2.y, hitbox2.hitbox);
-        let is_collision_z = Self::check_in_dimension(position1.z, hitbox1.hitbox, position2.z, hitbox2.hitbox);
+        let is_collision_x =
+            Self::check_in_dimension(position1.x, hitbox1.hitbox, position2.x, hitbox2.hitbox);
+        let is_collision_y =
+            Self::check_in_dimension(position1.y, hitbox1.hitbox, position2.y, hitbox2.hitbox);
+        let is_collision_z =
+            Self::check_in_dimension(position1.z, hitbox1.hitbox, position2.z, hitbox2.hitbox);
 
         return is_collision_x && is_collision_y && is_collision_z;
     }
-    
+
     fn check_in_dimension(position1: f32, boundary1: f32, position2: f32, boundary2: f32) -> bool {
-        position1 + boundary1 >= position2 - boundary2 && position2 + boundary2 >= position1 - boundary1
+        position1 + boundary1 >= position2 - boundary2
+            && position2 + boundary2 >= position1 - boundary1
+    }
+}
+impl ItemPickupSystem {
+    fn handle_item_pickup(game_state: &mut GameState, input: &mut Input) {
+        // mut input just for is
+        // toggled on. could possibly be changed
+        if input.e_pressed.is_toggled_on() {
+            let player = "player".to_string();
+            let near_pickup = PositionManager::find_nearest_pickup(
+                &game_state.position_components,
+                &game_state.storable_components,
+                &game_state.entities,
+                player.clone(),
+            );
+            if near_pickup.is_none() {
+                // "No item around in the world to pick up."
+                return;
+            }
+            let near_pickup = near_pickup.unwrap();
+
+            if !Self::in_range(
+                game_state.get_position(player.clone()).unwrap(),
+                game_state.get_position(near_pickup.clone()).unwrap(),
+            ) {
+                // "No item around in the world to pick up."
+                return;
+            }
+
+            let inventory = game_state.get_storage(player.clone()).unwrap();
+            let inventory_items = StorageManager::get_in_storage(game_state, &player);
+            if !StorageManager::has_space(game_state, inventory, &inventory_items, &near_pickup) {
+                // "There is no space left in your inventory to pick up this item."
+                return;
+            }
+            let empty_spot = StorageManager::find_empty_spot(
+                game_state,
+                inventory,
+                &inventory_items,
+                &near_pickup,
+            )
+            .unwrap();
+
+            game_state.remove_position(near_pickup.clone());
+            game_state.create_in_storage(player.clone(), near_pickup.clone(), empty_spot);
+        }
+    }
+
+    fn in_range(position1: &Position, position2: &Position) -> bool {
+        return PositionManager::distance_2d(position1, position2) < ITEM_PICKUP_RANGE;
+    }
+}
+
+struct StorageManager {}
+
+impl StorageManager {
+    pub fn has_space(
+        game_state: &GameState,
+        storage: &Storage,
+        in_storage_entities: &Vec<&Entity>,
+        near_pickup: &Entity,
+    ) -> bool {
+        return Self::find_empty_spot(game_state, storage, in_storage_entities, near_pickup)
+            .is_some();
+    }
+
+    pub fn find_empty_spot(
+        game_state: &GameState,
+        storage: &Storage,
+        in_storage_entities: &Vec<&Entity>,
+        near_pickup: &Entity,
+    ) -> Option<(u8, u8)> {
+        let dynamic_storage =
+            Self::generate_dynamic_storage_space(game_state, storage, in_storage_entities);
+        let item_shape = &game_state
+            .storable_components
+            .get(near_pickup)
+            .unwrap()
+            .shape;
+        let mut padded_storage = vec![vec![true; 12]; 12];
+        for x in 0..dynamic_storage.len() {
+            for y in 0..dynamic_storage.len() {
+                padded_storage[y][x] = dynamic_storage[y][x];
+            }
+        }
+
+        for row in 0..storage.number_of_rows {
+            for column in 0..storage.number_of_columns {
+                if Self::check_empty_spot(&padded_storage, row, column, item_shape.clone()) {
+                    return Some((column, row));
+                }
+            }
+        }
+        return None;
+    }
+
+    fn check_empty_spot(
+        padded_storage: &Vec<Vec<bool>>,
+        row: u8,
+        column: u8,
+        shape: ItemShape,
+    ) -> bool {
+        for x in column..column + shape.width {
+            for y in row..row + shape.height {
+                if padded_storage[y as usize][x as usize] == true {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    fn generate_dynamic_storage_space(
+        game_state: &GameState,
+        storage: &Storage,
+        in_storage_entities: &Vec<&Entity>,
+    ) -> Vec<Vec<bool>> {
+        let mut storage_spots =
+            vec![vec![false; storage.number_of_rows.into()]; storage.number_of_columns.into()];
+
+        for in_storage_entity in in_storage_entities {
+            let in_storage = game_state
+                .in_storage_components
+                .get(&in_storage_entity.to_string())
+                .unwrap();
+            let storable = game_state
+                .storable_components
+                .get(&in_storage_entity.to_string())
+                .unwrap();
+            for x in in_storage.position_x..in_storage.position_x + storable.shape.width {
+                for y in in_storage.position_y..in_storage.position_y + storable.shape.height {
+                    storage_spots[y as usize][x as usize] = true
+                }
+            }
+        }
+        storage_spots
+    }
+
+    pub fn get_in_storage<'a>(game_state: &'a GameState, entity: &Entity) -> Vec<&'a Entity> {
+        game_state
+            .entities
+            .iter()
+            .filter(|e| {
+                game_state
+                    .in_storage_components
+                    .contains_key(&e.to_string())
+            })
+            .filter(|e| {
+                game_state
+                    .in_storage_components
+                    .get(&e.to_string())
+                    .unwrap()
+                    .storage_entity
+                    == entity.to_string()
+            })
+            .collect()
+    }
+
+    pub fn get_in_storage_entities<'a>(
+        game_state: &'a GameState,
+        entity: &Entity,
+    ) -> Vec<&'a Entity> {
+        game_state
+            .entities
+            .iter()
+            .filter(|e| {
+                game_state
+                    .in_storage_components
+                    .get(&e.to_string())
+                    .is_some()
+            })
+            .filter(|e| {
+                game_state
+                    .in_storage_components
+                    .get(&e.to_string())
+                    .unwrap()
+                    .storage_entity
+                    == entity.to_string()
+            })
+            .collect()
+    }
+
+    pub fn find_in_storage(game_state: &GameState, entity: Entity) -> Option<&Entity> {
+        let storage_entities = StorageManager::get_in_storage_entities(game_state, &entity);
+        storage_entities.first().copied()
+    }
+}
+
+struct PositionManager {}
+
+impl PositionManager {
+    pub fn find_nearest_pickup(
+        positions: &HashMap<Entity, Position>,
+        storables: &HashMap<Entity, Storable>,
+        entities: &Vec<Entity>,
+        entity: Entity,
+    ) -> Option<Entity> {
+        entities
+            .iter()
+            .filter(|e| storables.contains_key(e.as_str()))
+            .filter(|e| positions.contains_key(e.as_str()))
+            .min_by_key(|e| {
+                Self::distance_2d(
+                    positions.get(&entity).unwrap(),
+                    positions.get(e.as_str()).unwrap(),
+                )
+                .round()
+                .to_u32()
+            })
+            .cloned()
+    }
+
+    fn distance_2d(position1: &Position, position2: &Position) -> f32 {
+        return ((position2.x - position1.x).powi(2) + (position2.y - position1.y).powi(2)).sqrt();
     }
 }
