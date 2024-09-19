@@ -15,6 +15,7 @@ mod model;
 mod render;
 mod resources;
 mod texture;
+// mod text_renderer;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
@@ -35,6 +36,9 @@ pub async fn run() {
 
     #[cfg(target_arch = "wasm32")]
     {
+        use winit::dpi::PhysicalSize;
+        let _ = window.request_inner_size(PhysicalSize::new(800, 600));
+
         use winit::platform::web::WindowExtWebSys;
         web_sys::window()
             .and_then(|win| win.document())
@@ -45,10 +49,7 @@ pub async fn run() {
                 Some(())
             })
             .expect("Couldn't append canvas to document body.");
-        // Winit prevents sizing with CSS, so we have to set
-        // the size manually when on web.
-        // use winit::dpi::PhysicalSize;
-        use winit::dpi::PhysicalSize;
+        // Not sure why, but width/height not yet set... Do it again.
         let _ = window.request_inner_size(PhysicalSize::new(800, 600));
     }
 
@@ -58,70 +59,74 @@ pub async fn run() {
     let mut ui_state = gui::UIState::new();
     let mut input_handler = input::Input::new();
 
+    let mut surface_configured = false;
     event_loop
-        .run(move |event, control_flow| {
-            match event {
-                Event::WindowEvent {
-                    ref event,
-                    window_id,
-                } if window_id == state.window().id() => {
-                    match event {
-                        #[cfg(not(target_arch = "wasm32"))]
-                        WindowEvent::CloseRequested
-                        | WindowEvent::KeyboardInput {
-                            event:
-                                KeyEvent {
-                                    physical_key:
-                                        PhysicalKey::Code(winit::keyboard::KeyCode::Escape),
-                                    state: ElementState::Pressed,
-                                    ..
-                                },
+        .run(move |event, control_flow| match event {
+            Event::WindowEvent {
+                ref event,
+                window_id,
+            } if window_id == state.window().id() => match event {
+                #[cfg(not(target_arch = "wasm32"))]
+                WindowEvent::CloseRequested
+                | WindowEvent::KeyboardInput {
+                    event:
+                        KeyEvent {
+                            physical_key: PhysicalKey::Code(winit::keyboard::KeyCode::Escape),
+                            state: ElementState::Pressed,
                             ..
-                        } => control_flow.exit(),
-                        WindowEvent::KeyboardInput {
-                            event:
-                                KeyEvent {
-                                    physical_key: PhysicalKey::Code(key),
-                                    state,
-                                    ..
-                                },
+                        },
+                    ..
+                } => control_flow.exit(),
+                WindowEvent::KeyboardInput {
+                    event:
+                        KeyEvent {
+                            physical_key: PhysicalKey::Code(key),
+                            state,
                             ..
-                        } => {
-                            input_handler.update(key, state);
-                        }
-                        WindowEvent::MouseInput { state, button, .. } => {
-                            input_handler.process_mouse_button(button, state);
-                        }
-                        WindowEvent::MouseWheel { delta, .. } => {
-                            input_handler.process_scroll(delta);
-                            true;
-                        }
-                        WindowEvent::Resized(physical_size) => {
-                            state.resize(*physical_size);
-                        }
-                        WindowEvent::RedrawRequested => {
-                            state.window().request_redraw();
-                            GameSystem::update(&mut game_state, &mut ui_state, &mut input_handler);
-                            match state.render(&game_state, &ui_state) {
-                                Ok(_) => {}
-                                Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                                    state.resize(state.size)
-                                }
-                                Err(wgpu::SurfaceError::OutOfMemory) => {
-                                    control_flow.exit();
-                                }
+                        },
+                    ..
+                } => {
+                    input_handler.update(key, state);
+                }
+                WindowEvent::MouseInput { state, button, .. } => {
+                    input_handler.process_mouse_button(button, state);
+                }
+                WindowEvent::MouseWheel { delta, .. } => {
+                    input_handler.process_scroll(delta);
+                    true;
+                }
+                WindowEvent::Resized(physical_size) => {
+                    surface_configured = true;
+                    state.resize(*physical_size);
+                }
+                WindowEvent::RedrawRequested => {
+                    state.window().request_redraw();
 
-                                Err(wgpu::SurfaceError::Timeout) => {
-                                    log::warn!("Surface timeout")
-                                }
-                            }
+                    // Make sure the window/surface is configured such that config
+                        // contains right information such as width and height
+                        // before rendering
+                    if !surface_configured {
+                        return;
+                    }
+                    GameSystem::update(&mut game_state, &mut ui_state, &mut input_handler);
+                    match state.render(&game_state, &ui_state) {
+                        Ok(_) => {}
+                        Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                            state.resize(state.size)
+                        }
+                        Err(wgpu::SurfaceError::OutOfMemory) => {
+                            control_flow.exit();
                         }
 
-                        _ => {}
+                        Err(wgpu::SurfaceError::Timeout) => {
+                            log::warn!("Surface timeout")
+                        }
                     }
                 }
+
                 _ => {}
-            }
+            },
+            _ => {}
         })
         .unwrap();
 }

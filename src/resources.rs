@@ -97,8 +97,8 @@ pub async fn load_model(
 
     let mut materials = Vec::new();
     materials.push(model::Material {
-        name: file_name.to_string(),
-        diffuse_texture,
+        // name: file_name.to_string(),
+        // diffuse_texture,
         bind_group,
     });
 
@@ -117,7 +117,7 @@ pub async fn load_model(
 
     let mut meshes = Vec::new();
     meshes.push(model::Mesh {
-        name: file_name.to_string(),
+        // name: file_name.to_string(),
         vertex_buffer,
         index_buffer,
         num_elements: num_indices,

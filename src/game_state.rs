@@ -1,11 +1,12 @@
 use cgmath::num_traits::ToPrimitive;
 
 use crate::components::*;
-use std::{collections::HashMap, sync::atomic::AtomicU32};
+// use std::{collections::HashMap, sync::atomic::AtomicU32};
+use std::collections::HashMap;
 pub const TOTAL_DISTANCE: f32 = 200000.; // Verify naming, probbaly not total distance
 
 pub struct GameState {
-    pub current_entity_id: AtomicU32,
+    // pub current_entity_id: AtomicU32,
     // id: current_entity_id
     // .fetch_add(1, Ordering::SeqCst)
     // .to_string(),
@@ -24,7 +25,7 @@ pub struct GameState {
 impl GameState {
     pub fn new() -> Self {
         // Initialise
-        let current_entity_id: AtomicU32 = AtomicU32::new(0);
+        // let current_entity_id: AtomicU32 = AtomicU32::new(0);
 
         let mut entities = Vec::new();
         let mut graphics_3d_components = HashMap::new();
@@ -182,7 +183,7 @@ impl GameState {
         hitbox_components.insert(tree.clone(), tree_hitbox);
 
         Self {
-            current_entity_id,
+            // current_entity_id,
             entities,
             graphics_3d_components,
             graphics_2d_components,
