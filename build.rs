@@ -13,7 +13,7 @@ fn main() -> Result<()> {
     copy_options.overwrite = true;
     let mut paths_to_copy = Vec::new();
     paths_to_copy.push("resources/");
-    copy_items(&paths_to_copy, out_dir, &copy_options)?;
+    copy_items(&paths_to_copy, out_dir, &copy_options).map_err(|e| anyhow!("Failed to copy items: {:?}", e))?;
 
     Ok(())
 }

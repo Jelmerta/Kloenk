@@ -23,6 +23,7 @@ use crate::game_state::GameState;
 use crate::gui::UIState;
 use crate::model::Vertex;
 use crate::model::{self};
+// use crate::text_renderer::TextWriter;
 use crate::{resources, texture};
 use model::DrawModel;
 
@@ -74,6 +75,7 @@ pub struct State<'a> {
     model_map: HashMap<String, model::Model>,
     depth_texture: texture::DepthTexture,
     render_groups: Vec<RenderGroup>,
+    // text_renderer: TextWriter,
 }
 
 struct Instance {
@@ -182,8 +184,8 @@ impl<'a> State<'a> {
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            width: size.width,
-            height: size.height,
+            width: size.width.max(1),
+            height: size.height.max(1),
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
@@ -651,8 +653,9 @@ impl<'a> State<'a> {
         .unwrap();
         model_map.insert("tree".to_string(), tree);
 
-        let depth_texture = texture::DepthTexture::create_depth_texture(&device, &config);
-
+        let depth_texture =
+            texture::DepthTexture::create_depth_texture(&device, &config, "depth_texture");
+        // let text_writer = TextWriter::new(&device, &queue, &surface, &adapter);
         Self {
             window,
             surface,
@@ -674,6 +677,7 @@ impl<'a> State<'a> {
             //obj_model: garfield,
             depth_texture,
             render_groups: Vec::new(),
+            // text_renderer: text_writer,
         }
     }
 
@@ -687,8 +691,11 @@ impl<'a> State<'a> {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-            self.depth_texture =
-                texture::DepthTexture::create_depth_texture(&self.device, &self.config);
+            self.depth_texture = texture::DepthTexture::create_depth_texture(
+                &self.device,
+                &self.config,
+                "depth_texture",
+            );
         }
     }
 
@@ -712,7 +719,7 @@ impl<'a> State<'a> {
             x: player_position.x.clone(),
             y: 0.0,
             z: player_position.y.clone(), // This can be confusing: our 2d world has x
-                    // and y. in 3d the y is seen as vertical
+                                          // and y. in 3d the y is seen as vertical
         };
         let view_direction = (self.camera.target - self.camera.eye).normalize();
         let right = Vector3::unit_y().cross(view_direction).normalize();
@@ -828,6 +835,8 @@ impl<'a> State<'a> {
             drop(render_pass_ui);
         }
 
+        // self.text_renderer.write(&self.device, &self.queue, &self.surface);
+
         //use model::DrawModel;
         // let garfield = self.models.pop().unwrap();
         // let mesh = &garfield.meshes[0];
@@ -862,9 +871,7 @@ impl<'a> State<'a> {
                 y: position.z,
                 z: position.y,
             },
-            scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                1.0, 1.0, 1.0, 1.0,
-            )),
+            scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(1.0, 1.0, 1.0, 1.0)),
             rotation: cgmath::Quaternion::from_axis_angle(
                 cgmath::Vector3::unit_z(),
                 cgmath::Deg(0.0),
@@ -928,6 +935,7 @@ impl<'a> State<'a> {
         game_state
             .entities
             .iter()
+            .filter(|entity| game_state.get_position(entity.to_string()).is_some())
             .filter(|entity| {
                 game_state
                     .graphics_3d_components
@@ -945,7 +953,6 @@ impl<'a> State<'a> {
                 let entity_group: Vec<&Entity> = group.collect();
                 let instance_group: Vec<Instance> = entity_group
                     .into_iter()
-                    .filter(|entity| game_state.get_position(entity.to_string()).is_some())
                     .map(|entity| {
                         Self::to_instance(game_state.get_position(entity.to_string()).unwrap())
                     })
