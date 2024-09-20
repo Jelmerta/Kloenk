@@ -23,6 +23,7 @@ use crate::game_state::GameState;
 use crate::gui::UIState;
 use crate::model::Vertex;
 use crate::model::{self};
+use crate::text_renderer::TextWriter;
 // use crate::text_renderer::TextWriter;
 use crate::{resources, texture};
 use model::DrawModel;
@@ -75,7 +76,7 @@ pub struct State<'a> {
     model_map: HashMap<String, model::Model>,
     depth_texture: texture::DepthTexture,
     render_groups: Vec<RenderGroup>,
-    // text_renderer: TextWriter,
+    text_renderer: TextWriter,
 }
 
 struct Instance {
@@ -655,7 +656,7 @@ impl<'a> State<'a> {
 
         let depth_texture =
             texture::DepthTexture::create_depth_texture(&device, &config, "depth_texture");
-        // let text_writer = TextWriter::new(&device, &queue, &surface, &adapter);
+        let text_writer = TextWriter::new(&device, &queue, &surface, &adapter);
         Self {
             window,
             surface,
@@ -677,7 +678,7 @@ impl<'a> State<'a> {
             //obj_model: garfield,
             depth_texture,
             render_groups: Vec::new(),
-            // text_renderer: text_writer,
+            text_renderer: text_writer,
         }
     }
 
@@ -835,7 +836,7 @@ impl<'a> State<'a> {
             drop(render_pass_ui);
         }
 
-        // self.text_renderer.write(&self.device, &self.queue, &self.surface);
+        self.text_renderer.write(&self.device, &self.queue, &self.surface);
 
         //use model::DrawModel;
         // let garfield = self.models.pop().unwrap();

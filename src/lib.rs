@@ -15,7 +15,7 @@ mod model;
 mod render;
 mod resources;
 mod texture;
-// mod text_renderer;
+mod text_renderer;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
