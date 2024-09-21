@@ -842,7 +842,7 @@ impl<'a> State<'a> {
             drop(render_pass_ui);
         }
 
-        // self.text_renderer.write(&self.device, &self.queue, &self.surface);
+        self.text_renderer.write(&self.device, &self.queue, &mut encoder, &view);
 
         //use model::DrawModel;
         // let garfield = self.models.pop().unwrap();
