@@ -1,12 +1,9 @@
 use std::env;
-use glyphon::cosmic_text::fontdb;
-use glyphon::fontdb::Source;
 use glyphon::{
     Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Shaping, SwashCache,
     TextArea, TextAtlas, TextBounds, TextRenderer, Viewport, Resolution,
 };
 use wgpu::{Device, Queue, Surface, Adapter};
-use std::sync::Arc;
 use anyhow::anyhow;
 
 pub struct TextWriter {
@@ -99,12 +96,6 @@ impl TextWriter {
             )
             .unwrap();
 
-       // let frame = surface.get_current_texture().unwrap();
-       // let view = frame
-   //         .texture
-    //        .create_view(&wgpu::TextureViewDescriptor::default());
-  //      let mut encoder =
-   //         device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
         {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: None,
@@ -120,7 +111,6 @@ impl TextWriter {
                 timestamp_writes: None,
                 occlusion_query_set: None,
             });
-            // pass.set_pipeline(pipeline)
 
             self.text_renderer
                 .render(&self.atlas, &self.viewport, &mut pass)
