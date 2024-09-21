@@ -1,3 +1,4 @@
+use std::env;
 use glyphon::cosmic_text::fontdb;
 use glyphon::fontdb::Source;
 use glyphon::{
@@ -6,6 +7,7 @@ use glyphon::{
 };
 use wgpu::{Device, Queue, Surface, Adapter};
 use std::sync::Arc;
+use anyhow::anyhow;
 
 pub struct TextWriter {
     text_renderer: TextRenderer,
@@ -18,35 +20,22 @@ pub struct TextWriter {
 
 impl TextWriter {
     pub fn new(device: &Device, queue: &Queue, surface: &Surface, adapter: &Adapter) -> Self {
-        let mut font_db = fontdb::Database::new();
-    let font_data = include_bytes!("../resources/Lohengrinn.ttf");
-        font_db.load_font_data(font_data.to_vec());
-        let fonts = vec![Source::Binary(Arc::new(font_data.to_vec()))];
-        let mut font_system = FontSystem::new_with_fonts(fonts);
-        // TODO HOW DO WE not use default system
-        // HOW DO WE USE CUSTOM TTF
-        // font_system.db_mut().set_serif_family("Times New Roman");
-        font_system.db_mut().set_sans_serif_family("Lohengrinn");
-        // font_system.db_mut().set_cursive_family("Comic Sans MS");
-        // font_system.db_mut().set_monospace_family("Courier New");
-        // font_system.db_mut().set_fantasy_family("Impact");
-        // font_system
-            // .db_mut()
-            // .load_font_file("../resources/Lohengrinn.ttf")
-            // .map_err(|e| anyhow!("Failed to copy items: {:?}", e))
-            // .unwrap();
-        // let swapchain_format = wgpu::TextureFormat::Bgra8UnormSrgb; // TODO different swapchain
-        // let swapchain_format = wgpu::TextureFormat::Bgra8UnormSrgb; // TODO different swapchain
-                             
+        let mut font_system = FontSystem::new();
+
+        let out_dir = env::var("OUT_DIR").unwrap();
+         font_system
+             .db_mut()
+            .load_font_file(format!("{}/resources/PlaywriteNL-Regular.ttf", out_dir))
+             .map_err(|e| anyhow!("Failed to copy items: {:?}", e))
+            .unwrap();
+
         let caps = surface.get_capabilities(&adapter);
-        let surface_format = caps
+        let surface_format = caps // I see tutorial using wgpu::TextureFormat::Bgra8UnormSrgb
             .formats
             .iter()
             .copied()
             .find(|f| f.is_srgb())
             .unwrap_or(caps.formats[0]);                                       // format potentially on surface
-        // device.swap
-        // wgpu::Swap
         let swash_cache = SwashCache::new();
         let cache = Cache::new(&device);
         let viewport = Viewport::new(&device, &cache);
@@ -55,17 +44,15 @@ impl TextWriter {
             TextRenderer::new(&mut atlas, &device, wgpu::MultisampleState::default(), None);
         let mut text_buffer = Buffer::new(&mut font_system, Metrics::new(30.0, 42.0));
 
-        let physical_width = (800 as f64 * 1.0) as f32;
-        let physical_height = (600 as f64 * 1.0) as f32;
-
-        // text_buffer.
+        let physical_width = (800.0 * 1.0) as f32;
+        let physical_height = (600.0 * 1.0) as f32;
 
         text_buffer.set_size(
             &mut font_system,
             Some(physical_width),
             Some(physical_height),
         );
-        text_buffer.set_text(&mut font_system, "Holy shit David! Hoi! 👋\n 😬😬😬😬😬😬😬😬😬😬😬😬😬😬\nHet werkt :)", Attrs::new().family(Family::SansSerif), Shaping::Advanced);
+        text_buffer.set_text(&mut font_system, "Kijk hoe fancy deze tekst :O!\nZo gaaf!!日本語も大丈夫そう。。。", Attrs::new().family(Family::Name("Playwrite NL")), Shaping::Advanced);
         text_buffer.shape_until_scroll(&mut font_system, false);
 
         TextWriter {
