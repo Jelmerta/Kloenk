@@ -65,7 +65,7 @@ impl TextWriter {
             Some(physical_width),
             Some(physical_height),
         );
-        text_buffer.set_text(&mut font_system, "Hello world! 👋\nThis is rendered with 🦅 glyphon 🦁\nThe text below should be partially clipped.\na b c d e f g h i j k l m n o p q r s t u v w x y z", Attrs::new().family(Family::SansSerif), Shaping::Advanced);
+        text_buffer.set_text(&mut font_system, "Holy shit David! Hoi! 👋\n 😬😬😬😬😬😬😬😬😬😬😬😬😬😬\nHet werkt :)", Attrs::new().family(Family::SansSerif), Shaping::Advanced);
         text_buffer.shape_until_scroll(&mut font_system, false);
 
         TextWriter {
@@ -78,7 +78,7 @@ impl TextWriter {
         }
     }
 
-    pub fn write(&mut self, device: &Device, queue: &Queue, surface: &Surface) {
+    pub fn write(&mut self, device: &Device, queue: &Queue, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView) {
             self.viewport.update(
                     &queue,
                     Resolution {
@@ -105,19 +105,19 @@ impl TextWriter {
                         right: 800,
                         bottom: 600,
                     },
-                    default_color: Color::rgb(255, 255, 255),
+                    default_color: Color::rgb(255, 255, 0),
                     custom_glyphs: &[],
                 }],
                 &mut self.swash_cache,
             )
             .unwrap();
 
-        let frame = surface.get_current_texture().unwrap();
-        let view = frame
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-        let mut encoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+       // let frame = surface.get_current_texture().unwrap();
+       // let view = frame
+   //         .texture
+    //        .create_view(&wgpu::TextureViewDescriptor::default());
+  //      let mut encoder =
+   //         device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
         {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: None,
@@ -125,7 +125,7 @@ impl TextWriter {
                     view: &view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        load: wgpu::LoadOp::Load,
                         store: wgpu::StoreOp::Store,
                     },
                 })],
