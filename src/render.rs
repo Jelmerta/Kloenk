@@ -574,11 +574,17 @@ impl<'a> State<'a> {
         //     materials: materials,
         // };
         // // models.push(garfield);
+    let mut non_wasm_path_prefix = "".to_string(); 
+    #[cfg(not(target_arch = "wasm32"))] {
+        non_wasm_path_prefix = format!("{}/", env::var("OUT_DIR").unwrap()).to_string();
+    }
 
+    use std::env;
         let mut model_map: HashMap<String, model::Model> = HashMap::new();
-
+        log::warn!("lol{:?}", env::var("OUT_DIR"));
+        println!("lol{:?}", env::var("OUT_DIR"));
         let shield = resources::load_model(
-            "resources/shield.jpg",
+            format!("{}resources/shield.jpg", non_wasm_path_prefix).as_str(),
             &device,
             &queue,
             &texture_bind_group_layout,
@@ -589,7 +595,7 @@ impl<'a> State<'a> {
         model_map.insert("shield".to_string(), shield);
 
         let shield_inventory = resources::load_model(
-            "resources/shield.jpg",
+            format!("{}resources/shield.jpg", non_wasm_path_prefix).as_str(),
             &device,
             &queue,
             &texture_bind_group_layout,
@@ -600,7 +606,7 @@ impl<'a> State<'a> {
         model_map.insert("shield_inventory".to_string(), shield_inventory);
 
         let character = resources::load_model(
-            "resources/character.jpg",
+            format!("{}resources/character.jpg", non_wasm_path_prefix).as_str(),
             &device,
             &queue,
             &texture_bind_group_layout,
@@ -611,7 +617,7 @@ impl<'a> State<'a> {
         model_map.insert("character".to_string(), character);
 
         let sword = resources::load_model(
-            "resources/sword.jpg",
+            format!("{}resources/sword.jpg", non_wasm_path_prefix).as_str(),
             &device,
             &queue,
             &texture_bind_group_layout,
@@ -622,7 +628,7 @@ impl<'a> State<'a> {
         model_map.insert("sword".to_string(), sword);
 
         let sword_inventory = resources::load_model(
-            "resources/sword.jpg",
+            format!("{}resources/sword.jpg", non_wasm_path_prefix).as_str(),
             &device,
             &queue,
             &texture_bind_group_layout,
@@ -633,7 +639,7 @@ impl<'a> State<'a> {
         model_map.insert("sword_inventory".to_string(), sword_inventory);
 
         let grass = resources::load_model(
-            "resources/grass.jpg",
+            format!("{}resources/grass.jpg", non_wasm_path_prefix).as_str(),
             &device,
             &queue,
             &texture_bind_group_layout,
@@ -644,7 +650,7 @@ impl<'a> State<'a> {
         model_map.insert("grass".to_string(), grass);
 
         let tree = resources::load_model(
-            "resources/tree.png",
+            format!("{}resources/tree.png", non_wasm_path_prefix).as_str(),
             &device,
             &queue,
             &texture_bind_group_layout,
@@ -836,7 +842,7 @@ impl<'a> State<'a> {
             drop(render_pass_ui);
         }
 
-        self.text_renderer.write(&self.device, &self.queue, &self.surface);
+        // self.text_renderer.write(&self.device, &self.queue, &self.surface);
 
         //use model::DrawModel;
         // let garfield = self.models.pop().unwrap();

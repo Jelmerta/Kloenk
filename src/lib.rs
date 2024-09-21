@@ -4,7 +4,10 @@ use wasm_bindgen::prelude::*;
 use winit::{event::*, event_loop::EventLoop, keyboard::PhysicalKey};
 
 use crate::game_system::GameSystem;
-
+// use anyhow::*;
+use fs_extra::copy_items;
+use fs_extra::dir::CopyOptions;
+use std::env;
 mod camera;
 mod components;
 mod game_state;
@@ -14,8 +17,8 @@ mod input;
 mod model;
 mod render;
 mod resources;
-mod texture;
 mod text_renderer;
+mod texture;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
@@ -26,6 +29,19 @@ pub async fn run() {
         } else {
             env_logger::init();
         }
+    }
+
+    // No good generic solution yet for this. Folder should be copied during build process  
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let out_dir = env::var("OUT_DIR").unwrap();
+        log::warn!("lol{:?}", env::var("OUT_DIR"));
+        println!("lol{:?}", env::var("OUT_DIR"));
+        let mut copy_options = CopyOptions::new();
+        copy_options.overwrite = true;
+        let mut paths_to_copy = Vec::new();
+        paths_to_copy.push("resources/");
+        copy_items(&paths_to_copy, out_dir, &copy_options).unwrap();
     }
 
     let event_loop = EventLoop::new().unwrap();
@@ -103,8 +119,8 @@ pub async fn run() {
                     state.window().request_redraw();
 
                     // Make sure the window/surface is configured such that config
-                        // contains right information such as width and height
-                        // before rendering
+                    // contains right information such as width and height
+                    // before rendering
                     if !surface_configured {
                         return;
                     }
