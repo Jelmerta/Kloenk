@@ -149,7 +149,7 @@ impl RenderState {
             ..Default::default()
         });
 
-        let surface = instance.create_surface(window.clone()).unwrap(); // TODO cloning here...?
+        let surface = instance.create_surface(window.clone()).unwrap();
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
