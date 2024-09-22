@@ -20,10 +20,10 @@ impl TextWriter {
         let mut font_system = FontSystem::new();
 
 
-        let mut out_dir = env::var("OUT_DIR").unwrap();
+        let mut out_dir = "".to_string();
         #[cfg(not(target_arch = "wasm32"))]
         {
-            out_dir = format!("{}/", out_dir);
+            out_dir = format!("{}/", env::var("OUT_DIR").unwrap());
         }
          font_system
              .db_mut()
