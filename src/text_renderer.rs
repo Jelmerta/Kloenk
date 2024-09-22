@@ -4,7 +4,6 @@ use glyphon::{
     TextArea, TextAtlas, TextBounds, TextRenderer, Viewport, Resolution,
 };
 use wgpu::{Device, Queue, Surface, Adapter};
-use anyhow::anyhow;
 use crate::gui::UIState;
 
 pub struct TextWriter {
