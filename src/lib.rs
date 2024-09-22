@@ -1,6 +1,3 @@
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
-
 use winit::{event::*, keyboard::PhysicalKey};
 
 use crate::game_system::GameSystem;

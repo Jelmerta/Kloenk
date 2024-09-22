@@ -11,9 +11,9 @@ use cgmath::{prelude::*, Point3, Vector3};
 // use gltf::Gltf;
 //
 
-#[cfg(target_arch = "wasm32")]
-#[allow(unused_imports)]
-use wasm_bindgen::prelude::*;
+// #[cfg(target_arch = "wasm32")]
+// #[allow(unused_imports)]
+// use wasm_bindgen::prelude::*;
 
 use wgpu::util::DeviceExt;
 use winit::window::Window;

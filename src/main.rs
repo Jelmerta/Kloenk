@@ -3,6 +3,8 @@ use fs_extra::copy_items;
 use fs_extra::dir::CopyOptions;
 use winit::event_loop::EventLoop;
 use kloenk::Application;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 fn main() {
