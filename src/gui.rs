@@ -4,16 +4,18 @@ pub struct UIState {
     pub inventory_position_y: f32,
     pub inventory_width: f32,
     pub inventory_height: f32,
+
+    pub text: String,
+    pub text_position_x: f32,
+    pub text_position_y: f32,
+    pub text_width: f32,
+    pub text_height: f32,
 }
 
 impl UIState {
     pub fn new() -> Self {
         UIState {
             inventory_open: false,
-            // inventory_position_x: -800.0/600.0, // TODO these values dont makeMuch sense to me
-            // inventory_position_y: 1.0,
-            // inventory_width: 2.0*800.0/600.0,
-            // inventory_height: 2.0,
             
             inventory_position_x: 0.6,
             inventory_position_y: 0.6,
@@ -23,6 +25,12 @@ impl UIState {
             // TODO We can probably store items here on a signal when inv changes. That
             // way we do not need to calculate inventory every frame when inventory is
             // shown
+
+            text: "".to_string(),
+            text_position_x: 0.05,
+            text_position_y: 0.6,
+            text_width: 0.6,
+            text_height: 0.4,
         }
     }
 
