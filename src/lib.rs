@@ -35,8 +35,6 @@ pub async fn run() {
     #[cfg(not(target_arch = "wasm32"))]
     {
         let out_dir = env::var("OUT_DIR").unwrap();
-        log::warn!("lol{:?}", env::var("OUT_DIR"));
-        println!("lol{:?}", env::var("OUT_DIR"));
         let mut copy_options = CopyOptions::new();
         copy_options.overwrite = true;
         let mut paths_to_copy = Vec::new();
