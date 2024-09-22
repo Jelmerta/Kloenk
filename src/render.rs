@@ -1,6 +1,7 @@
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::iter;
+use std::sync::Arc;
 use wgpu::RenderPass;
 // use anyhow::*;
 use cgmath::{prelude::*, Point3, Vector3};
@@ -54,13 +55,13 @@ impl CameraUniform {
     }
 }
 
-pub struct State<'a> {
-    surface: wgpu::Surface<'a>,
+pub struct RenderState {
+    surface: wgpu::Surface<'static>,
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
-    window: &'a Window,
+    window: Arc<Window>,
     render_pipeline: wgpu::RenderPipeline,
     render_pipeline_ui: wgpu::RenderPipeline,
     camera: Camera,
@@ -139,8 +140,8 @@ struct RenderGroup {
     instance_count: u32,
 }
 
-impl<'a> State<'a> {
-    pub async fn new(window: &'a Window) -> State<'a> {
+impl RenderState {
+    pub async fn new(window: Arc<Window>) -> RenderState {
         let size = window.inner_size();
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
@@ -148,7 +149,7 @@ impl<'a> State<'a> {
             ..Default::default()
         });
 
-        let surface = instance.create_surface(window).unwrap();
+        let surface = instance.create_surface(window.clone()).unwrap(); // TODO cloning here...?
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -657,7 +658,6 @@ impl<'a> State<'a> {
             texture::DepthTexture::create_depth_texture(&device, &config, "depth_texture");
         let text_writer = TextWriter::new(&device, &queue, &surface, &adapter).await;
         Self {
-            window,
             surface,
             device,
             queue,
@@ -678,6 +678,7 @@ impl<'a> State<'a> {
             depth_texture,
             render_groups: Vec::new(),
             text_renderer: text_writer,
+            window,
         }
     }
 
@@ -1051,7 +1052,7 @@ impl<'a> State<'a> {
         );
     }
 
-    fn render_ui(&'a self, render_pass: &mut RenderPass<'a>, render_group: &RenderGroup) {
+    fn render_ui<'a>(&'a self, render_pass: &mut RenderPass<'a>, render_group: &RenderGroup) {
         render_pass.set_bind_group(
             0,
             &self
