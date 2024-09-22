@@ -1,4 +1,3 @@
-use std::env;
 use glyphon::{
     Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Shaping, SwashCache,
     TextArea, TextAtlas, TextBounds, TextRenderer, Viewport, Resolution,
