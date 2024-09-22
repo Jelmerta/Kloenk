@@ -19,10 +19,15 @@ impl TextWriter {
     pub fn new(device: &Device, queue: &Queue, surface: &Surface, adapter: &Adapter) -> Self {
         let mut font_system = FontSystem::new();
 
-        let out_dir = env::var("OUT_DIR").unwrap();
+
+        let mut out_dir = env::var("OUT_DIR").unwrap();
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            out_dir = format!("{}/", out_dir);
+        }
          font_system
              .db_mut()
-            .load_font_file(format!("{}/resources/PlaywriteNL-Regular.ttf", out_dir))
+            .load_font_file(format!("{}resources/PlaywriteNL-Regular.ttf", out_dir))
              .map_err(|e| anyhow!("Failed to copy items: {:?}", e))
             .unwrap();
 
@@ -81,7 +86,7 @@ impl TextWriter {
                 [TextArea {
                     buffer: &self.text_buffer,
                     left: 10.0,
-                    top: 10.0,
+                    top: 400.0,
                     scale: 1.0,
                     bounds: TextBounds {
                         left: 0,
