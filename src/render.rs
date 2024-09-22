@@ -581,8 +581,6 @@ impl<'a> State<'a> {
 
     use std::env;
         let mut model_map: HashMap<String, model::Model> = HashMap::new();
-        log::warn!("lol{:?}", env::var("OUT_DIR"));
-        println!("lol{:?}", env::var("OUT_DIR"));
         let shield = resources::load_model(
             format!("{}resources/shield.jpg", non_wasm_path_prefix).as_str(),
             &device,

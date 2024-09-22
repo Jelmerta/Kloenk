@@ -20,16 +20,18 @@ impl TextWriter {
         let mut font_system = FontSystem::new();
 
 
-        let mut out_dir = "".to_string();
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            out_dir = format!("{}/", env::var("OUT_DIR").unwrap());
-        }
+        let font_data = if cfg!(target_arch = "wasm32") {
+            include_bytes!("../resources/PlaywriteNL-Regular.ttf").to_vec()
+        } else {
+            std::fs::read(format!("{}/resources/PlaywriteNL-Regular.ttf", env::var("OUT_DIR").unwrap())).unwrap()
+        };
+
          font_system
              .db_mut()
-            .load_font_file(format!("{}resources/PlaywriteNL-Regular.ttf", out_dir))
-             .map_err(|e| anyhow!("Failed to copy items: {:?}", e))
-            .unwrap();
+             .load_font_data(font_data.to_vec());
+            //.load_font_file(format!("{}resources/PlaywriteNL-Regular.ttf", out_dir))
+            // .map_err(|e| anyhow!("Failed to copy items: {:?}", e))
+            //.unwrap();
 
         let caps = surface.get_capabilities(&adapter);
         let surface_format = caps // I see tutorial using wgpu::TextureFormat::Bgra8UnormSrgb
@@ -37,7 +39,7 @@ impl TextWriter {
             .iter()
             .copied()
             .find(|f| f.is_srgb())
-            .unwrap_or(caps.formats[0]);                                       // format potentially on surface
+            .unwrap_or(caps.formats[0]);
         let swash_cache = SwashCache::new();
         let cache = Cache::new(&device);
         let viewport = Viewport::new(&device, &cache);
