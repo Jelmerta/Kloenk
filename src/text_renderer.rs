@@ -19,7 +19,6 @@ impl TextWriter {
     pub fn new(device: &Device, queue: &Queue, surface: &Surface, adapter: &Adapter) -> Self {
         let mut font_system = FontSystem::new();
 
-
         let font_data = if cfg!(target_arch = "wasm32") {
             include_bytes!("../resources/PlaywriteNL-Regular.ttf").to_vec()
         } else {
@@ -29,9 +28,6 @@ impl TextWriter {
          font_system
              .db_mut()
              .load_font_data(font_data.to_vec());
-            //.load_font_file(format!("{}resources/PlaywriteNL-Regular.ttf", out_dir))
-            // .map_err(|e| anyhow!("Failed to copy items: {:?}", e))
-            //.unwrap();
 
         let caps = surface.get_capabilities(&adapter);
         let surface_format = caps // I see tutorial using wgpu::TextureFormat::Bgra8UnormSrgb
