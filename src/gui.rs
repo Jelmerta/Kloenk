@@ -35,20 +35,20 @@ impl UIState {
     }
 
     // Maps 0 (left of screen) to -800/600 (pixel values) and 1 to 800/600 
-    pub fn to_clip_space_x(value: f32) -> f32 {// Would it be better to use NDC?
+    pub fn convert_clip_space_x(value: f32) -> f32 {// Would it be better to use NDC?
         -800.0/600.0 + 2.0 * (800.0/600.0) * value
     }
 
-    pub fn to_scale_x(value: f32) -> f32 {
+    pub fn convert_scale_x(value: f32) -> f32 {
         value * 2.0 * (800.0 / 600.0) 
     }
 
     // Maps 0 (top of screen) to 1 and 1 to -1
-    pub fn to_clip_space_y(value: f32) -> f32 {
+    pub fn convert_clip_space_y(value: f32) -> f32 {
         1.0 - 2.0 * value
     }
 
-    pub fn to_scale_y(value: f32) -> f32 {
+    pub fn convert_scale_y(value: f32) -> f32 {
         value * 2.0
     }
 }

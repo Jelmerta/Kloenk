@@ -3,7 +3,7 @@ use cgmath::num_traits::ToPrimitive;
 use crate::components::*;
 // use std::{collections::HashMap, sync::atomic::AtomicU32};
 use std::collections::HashMap;
-pub const TOTAL_DISTANCE: f32 = 200000.; // Verify naming, probbaly not total distance
+pub const TOTAL_DISTANCE: f32 = 200000.; // Verify naming, probably not total distance
 
 pub struct GameState {
     // pub current_entity_id: AtomicU32,
@@ -198,12 +198,12 @@ impl GameState {
     }
 
     pub fn get_graphics(&self, entity: Entity) -> Option<&Graphics3D> {
-        return self.graphics_3d_components.get(&entity);
+        self.graphics_3d_components.get(&entity)
     }
 
     #[allow(dead_code)]
     pub fn get_graphics_inventory(&self, entity: Entity) -> Option<&Graphics2D> {
-        return self.graphics_2d_components.get(&entity);
+        self.graphics_2d_components.get(&entity)
     }
 
     pub fn create_position(&mut self, entity: Entity, position: Position) {
@@ -211,11 +211,11 @@ impl GameState {
     }
 
     pub fn get_position(&self, entity: Entity) -> Option<&Position> {
-        return self.position_components.get(&entity);
+        self.position_components.get(&entity)
     }
 
     pub fn get_position_mut(&mut self, entity: Entity) -> Option<&mut Position> {
-        return self.position_components.get_mut(&entity);
+        self.position_components.get_mut(&entity)
     }
 
     pub fn remove_position(&mut self, to_remove: Entity) {
@@ -223,19 +223,19 @@ impl GameState {
     }
 
     pub fn get_hitbox(&self, entity: Entity) -> Option<&Hitbox> {
-        return self.hitbox_components.get(&entity);
+        self.hitbox_components.get(&entity)
     }
 
     pub fn get_camera(&self, entity: Entity) -> Option<&CameraTarget> {
-        return self.camera_target_components.get(&entity);
+        self.camera_target_components.get(&entity)
     }
 
     pub fn get_camera_mut(&mut self, entity: Entity) -> Option<&mut CameraTarget> {
-        return self.camera_target_components.get_mut(&entity);
+        self.camera_target_components.get_mut(&entity)
     }
 
     pub fn get_storage(&self, entity: Entity) -> Option<&Storage> {
-        return self.storage_components.get(&entity);
+        self.storage_components.get(&entity)
     }
 
     pub fn create_in_storage(&mut self, storage_entity: Entity, to_store: Entity, spot: (u8, u8)) {

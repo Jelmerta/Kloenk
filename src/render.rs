@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use std::collections::HashMap;
-use std::{iter, mem};
+use std::iter;
 use wgpu::RenderPass;
 // use anyhow::*;
 use cgmath::{prelude::*, Point3, Vector3};
@@ -80,7 +80,7 @@ pub struct State<'a> {
 }
 
 struct Instance {
-    position: cgmath::Vector3<f32>,
+    position: Vector3<f32>,
     scale: cgmath::Matrix4<f32>,
     rotation: cgmath::Quaternion<f32>,
 }
@@ -105,7 +105,7 @@ struct InstanceRaw {
 impl InstanceRaw {
     fn desc() -> wgpu::VertexBufferLayout<'static> {
         wgpu::VertexBufferLayout {
-            array_stride: mem::size_of::<InstanceRaw>() as wgpu::BufferAddress,
+            array_stride: size_of::<InstanceRaw>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Instance,
             attributes: &[
                 wgpu::VertexAttribute {
@@ -115,17 +115,17 @@ impl InstanceRaw {
                 },
                 wgpu::VertexAttribute {
                     format: wgpu::VertexFormat::Float32x4,
-                    offset: mem::size_of::<[f32; 4]>() as wgpu::BufferAddress,
+                    offset: size_of::<[f32; 4]>() as wgpu::BufferAddress,
                     shader_location: 6,
                 },
                 wgpu::VertexAttribute {
                     format: wgpu::VertexFormat::Float32x4,
-                    offset: mem::size_of::<[f32; 8]>() as wgpu::BufferAddress,
+                    offset: size_of::<[f32; 8]>() as wgpu::BufferAddress,
                     shader_location: 7,
                 },
                 wgpu::VertexAttribute {
                     format: wgpu::VertexFormat::Float32x4,
-                    offset: mem::size_of::<[f32; 12]>() as wgpu::BufferAddress,
+                    offset: size_of::<[f32; 12]>() as wgpu::BufferAddress,
                     shader_location: 8,
                 },
             ],
@@ -575,7 +575,6 @@ impl<'a> State<'a> {
         // };
         // // models.push(garfield);
 
-    use std::env;
         let mut model_map: HashMap<String, model::Model> = HashMap::new();
         let shield = resources::load_model(
             "shield.jpg",
@@ -865,16 +864,16 @@ impl<'a> State<'a> {
         })
     }
 
-    fn to_instance(position: &Position) -> Instance {
+    fn convert_instance(position: &Position) -> Instance {
         Instance {
-            position: cgmath::Vector3 {
+            position: Vector3 {
                 x: position.x,
                 y: position.z,
                 z: position.y,
             },
             scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(1.0, 1.0, 1.0, 1.0)),
             rotation: cgmath::Quaternion::from_axis_angle(
-                cgmath::Vector3::unit_z(),
+                Vector3::unit_z(),
                 cgmath::Deg(0.0),
             ),
         }
@@ -882,19 +881,19 @@ impl<'a> State<'a> {
 
     fn create_inventory_instance(ui_state: &UIState) -> Instance {
         Instance {
-            position: cgmath::Vector3 {
-                x: UIState::to_clip_space_x(ui_state.inventory_position_x),
-                y: UIState::to_clip_space_y(ui_state.inventory_position_y),
+            position: Vector3 {
+                x: UIState::convert_clip_space_x(ui_state.inventory_position_x),
+                y: UIState::convert_clip_space_y(ui_state.inventory_position_y),
                 z: 0.0,
             },
             scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                UIState::to_scale_x(ui_state.inventory_width),
-                UIState::to_scale_y(ui_state.inventory_height),
+                UIState::convert_scale_x(ui_state.inventory_width),
+                UIState::convert_scale_y(ui_state.inventory_height),
                 1.0,
                 1.0,
             )),
             rotation: cgmath::Quaternion::from_axis_angle(
-                cgmath::Vector3::unit_z(),
+                Vector3::unit_z(),
                 cgmath::Deg(0.0),
             ),
         }
@@ -909,23 +908,23 @@ impl<'a> State<'a> {
         item_picture_scale_y: f32,
     ) -> Instance {
         Instance {
-            position: cgmath::Vector3 {
-                x: UIState::to_clip_space_x(
+            position: Vector3 {
+                x: UIState::convert_clip_space_x(
                     ui_state.inventory_position_x + item.position_x as f32 * item_distance_x,
                 ),
-                y: UIState::to_clip_space_y(
+                y: UIState::convert_clip_space_y(
                     ui_state.inventory_position_y + item.position_y as f32 * item_distance_y,
                 ),
                 z: 0.0,
             },
             scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                UIState::to_scale_x(item_picture_scale_x),
-                UIState::to_scale_y(item_picture_scale_y),
+                UIState::convert_scale_x(item_picture_scale_x),
+                UIState::convert_scale_y(item_picture_scale_y),
                 1.0,
                 1.0,
             )),
             rotation: cgmath::Quaternion::from_axis_angle(
-                cgmath::Vector3::unit_z(),
+                Vector3::unit_z(),
                 cgmath::Deg(0.0),
             ),
         }
@@ -942,7 +941,7 @@ impl<'a> State<'a> {
                     .graphics_3d_components
                     .contains_key(entity.as_str())
             })
-            .group_by(|entity| {
+            .chunk_by(|entity| { // "group_by"
                 game_state
                     .get_graphics(entity.to_string())
                     .unwrap()
@@ -955,7 +954,7 @@ impl<'a> State<'a> {
                 let instance_group: Vec<Instance> = entity_group
                     .into_iter()
                     .map(|entity| {
-                        Self::to_instance(game_state.get_position(entity.to_string()).unwrap())
+                        Self::convert_instance(game_state.get_position(entity.to_string()).unwrap())
                     })
                     .collect();
                 let buffer = Self::create_instance_buffer(&self.device, &instance_group);
@@ -984,7 +983,7 @@ impl<'a> State<'a> {
         let mut render_groups = Vec::new();
         inventory_items
             .iter()
-            .group_by(|(entity, _)| {
+            .chunk_by(|(entity, _)| { // "group_by"
                 game_state
                     .get_graphics_inventory(entity.to_string())
                     .unwrap()
