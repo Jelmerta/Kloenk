@@ -5,6 +5,7 @@ use glyphon::{
 };
 use wgpu::{Device, Queue, Surface, Adapter};
 use crate::gui::UIState;
+use crate::resources;
 
 pub struct TextWriter {
     text_renderer: TextRenderer,
@@ -16,14 +17,10 @@ pub struct TextWriter {
 }
 
 impl TextWriter {
-    pub fn new(device: &Device, queue: &Queue, surface: &Surface, adapter: &Adapter) -> Self {
+    pub async fn new(device: &Device, queue: &Queue, surface: &Surface<'_>, adapter: &Adapter) -> Self {
         let mut font_system = FontSystem::new();
 
-        let font_data = if cfg!(target_arch = "wasm32") {
-            include_bytes!("../resources/PlaywriteNL-Regular.ttf").to_vec()
-        } else {
-            std::fs::read(format!("{}/resources/PlaywriteNL-Regular.ttf", env::var("OUT_DIR").unwrap())).unwrap()
-        };
+        let font_data = resources::load_binary("PlaywriteNL-Regular.ttf").await.unwrap();
 
         font_system
             .db_mut()
