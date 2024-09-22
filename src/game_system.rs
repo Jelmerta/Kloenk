@@ -22,23 +22,21 @@ pub struct ItemPickupSystem {}
 
 impl GameSystem {
     pub fn update(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
-        ItemPickupSystem::handle_item_pickup(game_state, input);
-        Self::handle_item_placement(game_state, input);
+        ItemPickupSystem::handle_item_pickup(game_state, ui_state, input);
+        Self::handle_item_placement(game_state, ui_state, input);
         Self::handle_inventory(ui_state, input);
         Self::resolve_movement(game_state, input);
         Self::update_camera(game_state, input);
     }
 
-    fn handle_item_placement(game_state: &mut GameState, input: &mut Input) {
+    fn handle_item_placement(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
         if input.right_mouse_clicked.is_toggled_on() {
-            // Find item to place
             let item = StorageManager::find_in_storage(game_state, "player".to_string());
             if item.is_none() {
-                // "No items in inventory"
+                ui_state.text = "No items in inventory to place.".to_string();
                 return;
             }
             let item_unwrap = item.unwrap().clone();
-            // in_storage_entity = in_storage_entity.unwrap().clone();
 
             let player_position = game_state.get_position("player".to_string()).unwrap();
             let placed_position = Position {
@@ -47,8 +45,8 @@ impl GameSystem {
                 z: player_position.z,
             };
 
-            if !Self::is_placeable(game_state, &placed_position) {
-                // If desired position cannot be placed on, we abort.
+            if !Self::is_placeable_area(game_state, &placed_position) {
+                ui_state.text = "Cannot place outside placeable area.".to_string();
                 return;
             }
 
@@ -71,16 +69,17 @@ impl GameSystem {
                 .cloned()
                 .collect();
             if !colliding_entities.is_empty() {
-                // Found a colliding object. Not allowed.
+                ui_state.text = "Found a colliding object.\nNot allowed to place there.".to_string();
                 return;
             }
 
+            ui_state.text = "You drop the item.".to_string();
             game_state.create_position(item_unwrap.to_string(), placed_position);
             game_state.remove_in_storage(&item_unwrap.to_string());
         }
     }
 
-    fn is_placeable(game_state: &GameState, desired_position: &Position) -> bool {
+    fn is_placeable_area(game_state: &GameState, desired_position: &Position) -> bool {
         game_state
             .entities
             .iter()
@@ -249,7 +248,7 @@ impl GameSystem {
     }
 
     fn is_colliding(game_state: &GameState, desired_position: &Position) -> bool {
-        let interactible_entities: Vec<&Entity> = game_state
+        let interactable_entities: Vec<&Entity> = game_state
             .entities
             .iter()
             .filter(|entity| {
@@ -261,7 +260,7 @@ impl GameSystem {
 
         let player_hitbox = game_state.get_hitbox("player".to_string()).unwrap();
 
-        for entity in interactible_entities {
+        for entity in interactable_entities {
             let entity_position = game_state.get_position(entity.to_string()).unwrap();
             let entity_hitbox = game_state.get_hitbox(entity.to_string()).unwrap();
             if Self::check_collision(
@@ -273,7 +272,7 @@ impl GameSystem {
                 return true;
             }
         }
-        return false;
+        false
     }
 
     fn check_walkable(desired_position: &Position, walkable_tile_position: &Position) -> bool {
@@ -300,7 +299,7 @@ impl GameSystem {
         let is_collision_z =
             Self::check_in_dimension(position1.z, hitbox1.hitbox, position2.z, hitbox2.hitbox);
 
-        return is_collision_x && is_collision_y && is_collision_z;
+        is_collision_x && is_collision_y && is_collision_z
     }
 
     fn check_in_dimension(position1: f32, boundary1: f32, position2: f32, boundary2: f32) -> bool {
@@ -309,7 +308,7 @@ impl GameSystem {
     }
 }
 impl ItemPickupSystem {
-    fn handle_item_pickup(game_state: &mut GameState, input: &mut Input) {
+    fn handle_item_pickup(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
         // mut input just for is
         // toggled on. could possibly be changed
         if input.e_pressed.is_toggled_on() {
@@ -321,7 +320,7 @@ impl ItemPickupSystem {
                 player.clone(),
             );
             if near_pickup.is_none() {
-                // "No item around in the world to pick up."
+                ui_state.text = "No item found around you to pick up.".to_string();
                 return;
             }
             let near_pickup = near_pickup.unwrap();
@@ -330,14 +329,14 @@ impl ItemPickupSystem {
                 game_state.get_position(player.clone()).unwrap(),
                 game_state.get_position(near_pickup.clone()).unwrap(),
             ) {
-                // "No item around in the world to pick up."
+                ui_state.text = "No item found around you to pick up.".to_string();
                 return;
             }
 
             let inventory = game_state.get_storage(player.clone()).unwrap();
             let inventory_items = StorageManager::get_in_storage(game_state, &player);
             if !StorageManager::has_space(game_state, inventory, &inventory_items, &near_pickup) {
-                // "There is no space left in your inventory to pick up this item."
+                ui_state.text = "There is no space left in your\ninventory to pick up this item.".to_string();
                 return;
             }
             let empty_spot = StorageManager::find_empty_spot(
@@ -348,13 +347,14 @@ impl ItemPickupSystem {
             )
             .unwrap();
 
+            ui_state.text = "You pick up the item!".to_string();
             game_state.remove_position(near_pickup.clone());
             game_state.create_in_storage(player.clone(), near_pickup.clone(), empty_spot);
         }
     }
 
     fn in_range(position1: &Position, position2: &Position) -> bool {
-        return PositionManager::distance_2d(position1, position2) < ITEM_PICKUP_RANGE;
+        PositionManager::distance_2d(position1, position2) < ITEM_PICKUP_RANGE
     }
 }
 
@@ -367,8 +367,8 @@ impl StorageManager {
         in_storage_entities: &Vec<&Entity>,
         near_pickup: &Entity,
     ) -> bool {
-        return Self::find_empty_spot(game_state, storage, in_storage_entities, near_pickup)
-            .is_some();
+        Self::find_empty_spot(game_state, storage, in_storage_entities, near_pickup)
+            .is_some()
     }
 
     pub fn find_empty_spot(
@@ -398,7 +398,7 @@ impl StorageManager {
                 }
             }
         }
-        return None;
+        None
     }
 
     fn check_empty_spot(
@@ -414,7 +414,7 @@ impl StorageManager {
                 }
             }
         }
-        return true;
+        true
     }
 
     fn generate_dynamic_storage_space(
@@ -518,6 +518,6 @@ impl PositionManager {
     }
 
     fn distance_2d(position1: &Position, position2: &Position) -> f32 {
-        return ((position2.x - position1.x).powi(2) + (position2.y - position1.y).powi(2)).sqrt();
+        ((position2.x - position1.x).powi(2) + (position2.y - position1.y).powi(2)).sqrt()
     }
 }

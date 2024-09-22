@@ -5,6 +5,7 @@ use glyphon::{
 };
 use wgpu::{Device, Queue, Surface, Adapter};
 use anyhow::anyhow;
+use crate::gui::UIState;
 
 pub struct TextWriter {
     text_renderer: TextRenderer,
@@ -25,9 +26,9 @@ impl TextWriter {
             std::fs::read(format!("{}/resources/PlaywriteNL-Regular.ttf", env::var("OUT_DIR").unwrap())).unwrap()
         };
 
-         font_system
-             .db_mut()
-             .load_font_data(font_data.to_vec());
+        font_system
+            .db_mut()
+            .load_font_data(font_data.to_vec());
 
         let caps = surface.get_capabilities(&adapter);
         let surface_format = caps // I see tutorial using wgpu::TextureFormat::Bgra8UnormSrgb
@@ -42,7 +43,7 @@ impl TextWriter {
         let mut atlas = TextAtlas::new(&device, &queue, &cache, surface_format);
         let text_renderer =
             TextRenderer::new(&mut atlas, &device, wgpu::MultisampleState::default(), None);
-        let mut text_buffer = Buffer::new(&mut font_system, Metrics::new(30.0, 42.0));
+        let mut text_buffer = Buffer::new(&mut font_system, Metrics::new(14.0, 20.0));
 
         let physical_width = (800.0 * 1.0) as f32;
         let physical_height = (600.0 * 1.0) as f32;
@@ -52,7 +53,6 @@ impl TextWriter {
             Some(physical_width),
             Some(physical_height),
         );
-        text_buffer.set_text(&mut font_system, "Kijk hoe fancy deze tekst :O!\nZo gaaf!!日本語も大丈夫そう。。。", Attrs::new().family(Family::Name("Playwrite NL")), Shaping::Advanced);
         text_buffer.shape_until_scroll(&mut font_system, false);
 
         TextWriter {
@@ -65,14 +65,16 @@ impl TextWriter {
         }
     }
 
-    pub fn write(&mut self, device: &Device, queue: &Queue, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView) {
-            self.viewport.update(
-                    &queue,
-                    Resolution {
-                        width: 800,
-                        height: 600,
-                    },
-                );
+    pub fn write(&mut self, device: &Device, queue: &Queue, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView, ui_state: &UIState) {
+        self.text_buffer.set_text(&mut self.font_system, ui_state.text.as_str(), Attrs::new().family(Family::Name("Playwrite NL")), Shaping::Advanced);
+
+        self.viewport.update(
+            &queue,
+            Resolution {
+                width: 800,
+                height: 600,
+            },
+        );
 
         self.text_renderer
             .prepare(
@@ -83,14 +85,14 @@ impl TextWriter {
                 &self.viewport,
                 [TextArea {
                     buffer: &self.text_buffer,
-                    left: 10.0,
-                    top: 400.0,
+                    left: 800.0 * ui_state.text_position_x,
+                    top: 600.0 * ui_state.text_position_y,
                     scale: 1.0,
                     bounds: TextBounds {
-                        left: 0,
-                        top: 0,
-                        right: 800,
-                        bottom: 600,
+                        left: (800.0 * ui_state.text_position_x) as i32 - 10, // Adding 10 for some padding so text is fully shown
+                        top: (600.0 * ui_state.text_position_y) as i32 - 10,
+                        right: (800.0 * ui_state.text_position_x + 800.0 * ui_state.text_width) as i32,
+                        bottom: (600.0 * ui_state.text_position_y + 600.0 * ui_state.text_height) as i32,
                     },
                     default_color: Color::rgb(255, 255, 0),
                     custom_glyphs: &[],
