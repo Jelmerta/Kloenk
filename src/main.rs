@@ -7,11 +7,11 @@ use kloenk::Application;
 use wasm_bindgen::prelude::*;
 
 fn main() {
-    run();
+    pollster::block_on(run());
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
-fn run () {
+async fn run () {
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
