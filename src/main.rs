@@ -1,17 +1,21 @@
-use std::env;
-use fs_extra::copy_items;
-use fs_extra::dir::CopyOptions;
 use winit::event_loop::EventLoop;
 use kloenk::Application;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+#[cfg(not(target_arch = "wasm32"))]
+use std::env;
+#[cfg(not(target_arch = "wasm32"))]
+use fs_extra::copy_items;
+#[cfg(not(target_arch = "wasm32"))]
+use fs_extra::dir::CopyOptions;
+
 
 fn main() {
-    pollster::block_on(run());
+    run();
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
-async fn run () {
+fn run () {
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
