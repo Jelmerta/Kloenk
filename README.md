@@ -18,3 +18,11 @@ sudo ufw allow 443
 sudo ufw allow http
 sudo ufw allow https
 
+
+Useful rust tools to improve project:
+cargo tree to see dependency graph
+cargo audit to scan CVEs
+cargo +nightly udeps --all-targets to find unused/duplicate dependencies
+cargo clippy for linting tips, small code improvements
+cargo outdated or cargo outdated --depth 1 to find new versions of dependencies
+cargo bloat --release -n 100 optionally with --crates to figure out functions and dependencies that contribute most to binary size
