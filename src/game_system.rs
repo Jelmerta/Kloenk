@@ -29,7 +29,11 @@ impl GameSystem {
         Self::update_camera(game_state, input);
     }
 
-    fn handle_item_placement(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
+    fn handle_item_placement(
+        game_state: &mut GameState,
+        ui_state: &mut UIState,
+        input: &mut Input,
+    ) {
         if input.right_mouse_clicked.is_toggled_on() {
             let item = StorageManager::find_in_storage(game_state, "player".to_string());
             if item.is_none() {
@@ -69,7 +73,8 @@ impl GameSystem {
                 .cloned()
                 .collect();
             if !colliding_entities.is_empty() {
-                ui_state.text = "Found a colliding object.\nNot allowed to place there.".to_string();
+                ui_state.text =
+                    "Found a colliding object.\nNot allowed to place there.".to_string();
                 return;
             }
 
@@ -138,7 +143,9 @@ impl GameSystem {
             player_camera.rotation_x_degrees -= 360.0;
         }
 
-        player_camera.rotation_y_degrees = player_camera.rotation_y_degrees.clamp(CAMERA_BOTTOM_LIMIT, CAMERA_TOP_LIMIT);
+        player_camera.rotation_y_degrees = player_camera
+            .rotation_y_degrees
+            .clamp(CAMERA_BOTTOM_LIMIT, CAMERA_TOP_LIMIT);
 
         let normalised_scroll_amount: f32 = -input.scrolled_amount * 0.1;
 
@@ -322,7 +329,8 @@ impl ItemPickupSystem {
             let inventory = game_state.get_storage(player.clone()).unwrap();
             let inventory_items = StorageManager::get_in_storage(game_state, &player);
             if !StorageManager::has_space(game_state, inventory, &inventory_items, &near_pickup) {
-                ui_state.text = "There is no space left in your\ninventory to pick up this item.".to_string();
+                ui_state.text =
+                    "There is no space left in your\ninventory to pick up this item.".to_string();
                 return;
             }
             let empty_spot = StorageManager::find_empty_spot(
@@ -331,7 +339,7 @@ impl ItemPickupSystem {
                 &inventory_items,
                 &near_pickup,
             )
-                .unwrap();
+            .unwrap();
 
             ui_state.text = "You pick up the item!".to_string();
             game_state.remove_position(near_pickup.clone());
@@ -353,8 +361,7 @@ impl StorageManager {
         in_storage_entities: &Vec<&Entity>,
         near_pickup: &Entity,
     ) -> bool {
-        Self::find_empty_spot(game_state, storage, in_storage_entities, near_pickup)
-            .is_some()
+        Self::find_empty_spot(game_state, storage, in_storage_entities, near_pickup).is_some()
     }
 
     pub fn find_empty_spot(
@@ -496,8 +503,8 @@ impl PositionManager {
                     positions.get(&entity).unwrap(),
                     positions.get(e.as_str()).unwrap(),
                 )
-                    .round()
-                    .to_u32()
+                .round()
+                .to_u32()
             })
             .cloned()
     }

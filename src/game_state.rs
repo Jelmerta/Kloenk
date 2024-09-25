@@ -97,7 +97,7 @@ impl GameState {
             shape: ItemShape {
                 width: 1,
                 height: 2,
-            }
+            },
         };
         storable_components.insert(shield.clone(), shield_storable);
 
@@ -131,7 +131,6 @@ impl GameState {
                     width: 1,
                     height: 1,
                 },
-
             };
             storable_components.insert(sword.clone(), sword_storable);
         }

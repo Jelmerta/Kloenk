@@ -1,5 +1,5 @@
-use winit::event::{ElementState, MouseScrollDelta, MouseButton};
 use winit::dpi::PhysicalPosition;
+use winit::event::{ElementState, MouseButton, MouseScrollDelta};
 use winit::keyboard::KeyCode;
 
 #[derive(Debug, Default)]
@@ -115,9 +115,11 @@ impl Input {
 
     pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
         self.scrolled_amount = match delta {
-            MouseScrollDelta::PixelDelta(PhysicalPosition { // Used by WASM
-                                             y: scroll, ..
-                                         }) => *scroll as f32,
+            MouseScrollDelta::PixelDelta(PhysicalPosition {
+                // Used by WASM
+                y: scroll,
+                ..
+            }) => *scroll as f32,
             MouseScrollDelta::LineDelta(_, scroll) => *scroll * 100.0, // Used by standalone client
         };
     }

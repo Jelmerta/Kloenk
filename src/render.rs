@@ -91,7 +91,7 @@ impl Instance {
             model: (cgmath::Matrix4::from_translation(self.position)
                 * self.scale
                 * cgmath::Matrix4::from(self.rotation))
-                .into(),
+            .into(),
         }
     }
 }
@@ -584,8 +584,8 @@ impl Renderer {
             &texture_bind_group_layout,
             "CUBE",
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         model_map.insert("shield".to_string(), shield);
 
         let shield_inventory = resources::load_model(
@@ -595,8 +595,8 @@ impl Renderer {
             &texture_bind_group_layout,
             "SQUARE",
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         model_map.insert("shield_inventory".to_string(), shield_inventory);
 
         let character = resources::load_model(
@@ -606,8 +606,8 @@ impl Renderer {
             &texture_bind_group_layout,
             "CUBE",
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         model_map.insert("character".to_string(), character);
 
         let sword = resources::load_model(
@@ -617,8 +617,8 @@ impl Renderer {
             &texture_bind_group_layout,
             "CUBE",
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         model_map.insert("sword".to_string(), sword);
 
         let sword_inventory = resources::load_model(
@@ -628,8 +628,8 @@ impl Renderer {
             &texture_bind_group_layout,
             "SQUARE",
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         model_map.insert("sword_inventory".to_string(), sword_inventory);
 
         let grass = resources::load_model(
@@ -639,8 +639,8 @@ impl Renderer {
             &texture_bind_group_layout,
             "CUBE",
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         model_map.insert("grass".to_string(), grass);
 
         let tree = resources::load_model(
@@ -650,8 +650,8 @@ impl Renderer {
             &texture_bind_group_layout,
             "CUBE",
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         model_map.insert("tree".to_string(), tree);
 
         let depth_texture =
@@ -715,7 +715,7 @@ impl Renderer {
             x: player_position.x,
             y: 0.0,
             z: player_position.y, // This can be confusing: our 2d world has x
-            // and y. in 3d the y is seen as vertical
+                                  // and y. in 3d the y is seen as vertical
         };
         let view_direction = (self.camera.target - self.camera.eye).normalize();
         let right = Vector3::unit_y().cross(view_direction).normalize();
@@ -831,7 +831,8 @@ impl Renderer {
             drop(render_pass_ui);
         }
 
-        self.text_renderer.write(&self.device, &self.queue, &mut encoder, &view, ui_state);
+        self.text_renderer
+            .write(&self.device, &self.queue, &mut encoder, &view, ui_state);
 
         //use model::DrawModel;
         // let garfield = self.models.pop().unwrap();
@@ -845,10 +846,7 @@ impl Renderer {
         Ok(())
     }
 
-    fn create_instance_buffer(
-        device: &wgpu::Device,
-        instance_group: &[Instance],
-    ) -> wgpu::Buffer {
+    fn create_instance_buffer(device: &wgpu::Device, instance_group: &[Instance]) -> wgpu::Buffer {
         let raw_instances = instance_group
             .iter()
             .map(Instance::to_raw)
@@ -868,10 +866,7 @@ impl Renderer {
                 z: position.y,
             },
             scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(1.0, 1.0, 1.0, 1.0)),
-            rotation: cgmath::Quaternion::from_axis_angle(
-                Vector3::unit_z(),
-                cgmath::Deg(0.0),
-            ),
+            rotation: cgmath::Quaternion::from_axis_angle(Vector3::unit_z(), cgmath::Deg(0.0)),
         }
     }
 
@@ -888,10 +883,7 @@ impl Renderer {
                 1.0,
                 1.0,
             )),
-            rotation: cgmath::Quaternion::from_axis_angle(
-                Vector3::unit_z(),
-                cgmath::Deg(0.0),
-            ),
+            rotation: cgmath::Quaternion::from_axis_angle(Vector3::unit_z(), cgmath::Deg(0.0)),
         }
     }
 
@@ -919,10 +911,7 @@ impl Renderer {
                 1.0,
                 1.0,
             )),
-            rotation: cgmath::Quaternion::from_axis_angle(
-                Vector3::unit_z(),
-                cgmath::Deg(0.0),
-            ),
+            rotation: cgmath::Quaternion::from_axis_angle(Vector3::unit_z(), cgmath::Deg(0.0)),
         }
     }
 
@@ -937,7 +926,8 @@ impl Renderer {
                     .graphics_3d_components
                     .contains_key(entity.as_str())
             })
-            .chunk_by(|entity| { // "group_by"
+            .chunk_by(|entity| {
+                // "group_by"
                 game_state
                     .get_graphics(entity.to_string())
                     .unwrap()
@@ -979,7 +969,8 @@ impl Renderer {
         let mut render_groups = Vec::new();
         inventory_items
             .iter()
-            .chunk_by(|(entity, _)| { // "group_by"
+            .chunk_by(|(entity, _)| {
+                // "group_by"
                 game_state
                     .get_graphics_inventory(entity.to_string())
                     .unwrap()
