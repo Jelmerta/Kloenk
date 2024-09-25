@@ -25,7 +25,7 @@ impl TextWriter {
             .db_mut()
             .load_font_data(font_data.to_vec());
 
-        let caps = surface.get_capabilities(&adapter);
+        let caps = surface.get_capabilities(adapter);
         let surface_format = caps // I see tutorial using wgpu::TextureFormat::Bgra8UnormSrgb
             .formats
             .iter()
@@ -33,11 +33,11 @@ impl TextWriter {
             .find(|f| f.is_srgb())
             .unwrap_or(caps.formats[0]);
         let swash_cache = SwashCache::new();
-        let cache = Cache::new(&device);
-        let viewport = Viewport::new(&device, &cache);
-        let mut atlas = TextAtlas::new(&device, &queue, &cache, surface_format);
+        let cache = Cache::new(device);
+        let viewport = Viewport::new(device, &cache);
+        let mut atlas = TextAtlas::new(device, queue, &cache, surface_format);
         let text_renderer =
-            TextRenderer::new(&mut atlas, &device, wgpu::MultisampleState::default(), None);
+            TextRenderer::new(&mut atlas, device, wgpu::MultisampleState::default(), None);
         let mut text_buffer = Buffer::new(&mut font_system, Metrics::new(14.0, 20.0));
 
         let physical_width = (800.0 * 1.0) as f32;
@@ -64,7 +64,7 @@ impl TextWriter {
         self.text_buffer.set_text(&mut self.font_system, ui_state.text.as_str(), Attrs::new().family(Family::Name("Playwrite NL")), Shaping::Advanced);
 
         self.viewport.update(
-            &queue,
+            queue,
             Resolution {
                 width: 800,
                 height: 600,
@@ -100,7 +100,7 @@ impl TextWriter {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: None,
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
+                    view,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Load,

@@ -95,12 +95,10 @@ pub async fn load_model(
     let diffuse_texture = load_texture(file_name, device, queue).await?;
     let bind_group = build_bind_group(device, layout, &diffuse_texture);
 
-    let mut materials = Vec::new();
-    materials.push(model::Material {
+    let materials = vec![model::Material{bind_group}];
+        // Also add this to material
         // name: file_name.to_string(),
         // diffuse_texture,
-        bind_group,
-    });
 
     let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Vertex Buffer"),
@@ -115,14 +113,13 @@ pub async fn load_model(
     });
     let num_indices = indices.len() as u32;
 
-    let mut meshes = Vec::new();
-    meshes.push(model::Mesh {
+    let meshes = vec![model::Mesh {
         // name: file_name.to_string(),
         vertex_buffer,
         index_buffer,
         num_elements: num_indices,
-    });
-
+    }];
+    
     Ok(model::Model { meshes, materials })
 }
 
@@ -141,7 +138,7 @@ fn build_bind_group(
     diffuse_texture: &texture::Texture,
 ) -> wgpu::BindGroup {
     let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        layout: &texture_bind_group_layout,
+        layout: texture_bind_group_layout,
         entries: &[
             wgpu::BindGroupEntry {
                 binding: 0,
@@ -155,7 +152,7 @@ fn build_bind_group(
         label: Some("diffuse_bind_group"),
     });
 
-    return diffuse_bind_group;
+    diffuse_bind_group
 }
 
 #[cfg(target_arch = "wasm32")]

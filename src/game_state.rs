@@ -255,7 +255,7 @@ impl GameState {
     pub fn get_in_storages(&self, storage_entity: &Entity) -> HashMap<&Entity, &InStorage> {
         self.in_storage_components
             .iter()
-            .filter(|(_, in_storage)| in_storage.storage_entity == storage_entity.to_string())
+            .filter(|(_, in_storage)| in_storage.storage_entity == *storage_entity)
             .collect()
     }
 }

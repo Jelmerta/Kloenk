@@ -56,32 +56,26 @@ impl Input {
         match keycode {
             KeyCode::KeyW => {
                 self.w_pressed.set_press_state(is_pressed);
-                return;
             }
 
             KeyCode::KeyS => {
                 self.s_pressed.set_press_state(is_pressed);
-                return;
             }
 
             KeyCode::KeyA => {
                 self.a_pressed.set_press_state(is_pressed);
-                return;
             }
 
             KeyCode::KeyD => {
                 self.d_pressed.set_press_state(is_pressed);
-                return;
             }
 
             KeyCode::KeyI => {
                 self.i_pressed.set_press_state(is_pressed);
-                return;
             }
 
             KeyCode::KeyE => {
                 self.e_pressed.set_press_state(is_pressed);
-                return;
             }
 
             KeyCode::ShiftLeft => {
@@ -113,7 +107,6 @@ impl Input {
         match button {
             MouseButton::Right => {
                 self.right_mouse_clicked.set_press_state(is_pressed);
-                return;
             }
 
             _ => {}
