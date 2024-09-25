@@ -331,7 +331,7 @@ impl ItemPickupSystem {
                 &inventory_items,
                 &near_pickup,
             )
-            .unwrap();
+                .unwrap();
 
             ui_state.text = "You pick up the item!".to_string();
             game_state.remove_position(near_pickup.clone());
@@ -496,8 +496,8 @@ impl PositionManager {
                     positions.get(&entity).unwrap(),
                     positions.get(e.as_str()).unwrap(),
                 )
-                .round()
-                .to_u32()
+                    .round()
+                    .to_u32()
             })
             .cloned()
     }

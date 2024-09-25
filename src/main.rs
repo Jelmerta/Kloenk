@@ -53,7 +53,7 @@ pub fn run() {
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-    let mut application: Application = Application::new(&event_loop);
+        let mut application: Application = Application::new(&event_loop);
         event_loop.run_app(&mut application).unwrap();
     }
 }

@@ -33,7 +33,7 @@ impl Camera {
     {
         let view = Matrix4::look_at_rh(self.eye, self.target, self.up);
 
-        let isometric_projection = ortho(-800.0/600.0, 800.0/600.0, -1., 1., self.z_near, self.z_far);
+        let isometric_projection = ortho(-800.0 / 600.0, 800.0 / 600.0, -1., 1., self.z_near, self.z_far);
         OPENGL_TO_WGPU_MATRIX * isometric_projection * view
     }
 }
