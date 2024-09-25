@@ -57,13 +57,13 @@ impl GameSystem {
                 .iter()
                 .filter(|e| game_state.hitbox_components.contains_key(e.as_str()))
                 .filter(|e| game_state.position_components.contains_key(e.as_str()))
-                .filter(|e| e.to_string() != "player")
+                .filter(|e| *e != "player")
                 .filter(|e| {
                     Self::check_collision(
-                        &game_state.get_position(e.to_string()).unwrap(),
-                        &game_state.get_hitbox(e.to_string()).unwrap(),
+                        game_state.get_position(e.to_string()).unwrap(),
+                        game_state.get_hitbox(e.to_string()).unwrap(),
                         &placed_position,
-                        &item_hitbox,
+                        item_hitbox,
                     )
                 })
                 .cloned()
@@ -92,7 +92,7 @@ impl GameSystem {
                     0.5,
                 )
             }) // Assume 0.5 as half tile
-            .filter(|entity| {
+            .any(|entity| {
                 Self::check_in_dimension(
                     desired_position.y,
                     0.0,
@@ -100,8 +100,6 @@ impl GameSystem {
                     0.5,
                 )
             }) // Assume 0.5 as half tile
-            .next()
-            .is_some()
     }
 
     fn handle_inventory(ui_state: &mut UIState, input: &mut Input) {
@@ -115,23 +113,19 @@ impl GameSystem {
             game_state.get_camera_mut("player".to_string()).unwrap();
 
         if input.up_pressed.is_pressed {
-            player_camera.rotation_y_degrees =
-                player_camera.rotation_y_degrees + CAMERA_MOVEMENT_SPEED;
+            player_camera.rotation_y_degrees += CAMERA_MOVEMENT_SPEED;
         }
 
         if input.down_pressed.is_pressed {
-            player_camera.rotation_y_degrees =
-                player_camera.rotation_y_degrees - CAMERA_MOVEMENT_SPEED;
+            player_camera.rotation_y_degrees -= CAMERA_MOVEMENT_SPEED;
         }
 
         if input.right_pressed.is_pressed {
-            player_camera.rotation_x_degrees =
-                player_camera.rotation_x_degrees - CAMERA_MOVEMENT_SPEED;
+            player_camera.rotation_x_degrees -= CAMERA_MOVEMENT_SPEED;
         }
 
         if input.left_pressed.is_pressed {
-            player_camera.rotation_x_degrees =
-                player_camera.rotation_x_degrees + CAMERA_MOVEMENT_SPEED;
+            player_camera.rotation_x_degrees += CAMERA_MOVEMENT_SPEED;
         }
 
         // We do this to keep the degrees in range of 0 to 359.99.. which modulo would not do...
@@ -144,13 +138,7 @@ impl GameSystem {
             player_camera.rotation_x_degrees -= 360.0;
         }
 
-        if player_camera.rotation_y_degrees < CAMERA_BOTTOM_LIMIT {
-            player_camera.rotation_y_degrees = CAMERA_BOTTOM_LIMIT;
-        }
-
-        if player_camera.rotation_y_degrees >= CAMERA_TOP_LIMIT {
-            player_camera.rotation_y_degrees = CAMERA_TOP_LIMIT;
-        }
+        player_camera.rotation_y_degrees = player_camera.rotation_y_degrees.clamp(CAMERA_BOTTOM_LIMIT, CAMERA_TOP_LIMIT);
 
         let normalised_scroll_amount: f32 = -input.scrolled_amount * 0.1;
 
@@ -174,9 +162,9 @@ impl GameSystem {
         if input.w_pressed.is_pressed {
             let player_position = game_state.get_position("player".to_string()).unwrap();
             let desired_position = Position {
-                x: player_position.x.clone() - movement_speed,
-                y: player_position.y.clone() - movement_speed,
-                z: player_position.z.clone(),
+                x: player_position.x - movement_speed,
+                y: player_position.y - movement_speed,
+                z: player_position.z,
             };
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(game_state, &desired_position)
@@ -189,9 +177,9 @@ impl GameSystem {
         if input.s_pressed.is_pressed {
             let player_position = game_state.get_position_mut("player".to_string()).unwrap();
             let desired_position = Position {
-                x: player_position.x.clone() + movement_speed,
-                y: player_position.y.clone() + movement_speed,
-                z: player_position.z.clone(),
+                x: player_position.x + movement_speed,
+                y: player_position.y + movement_speed,
+                z: player_position.z,
             };
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(game_state, &desired_position)
@@ -204,9 +192,9 @@ impl GameSystem {
         if input.a_pressed.is_pressed {
             let player_position = game_state.get_position_mut("player".to_string()).unwrap();
             let desired_position = Position {
-                x: player_position.x.clone() - movement_speed,
-                y: player_position.y.clone() + movement_speed,
-                z: player_position.z.clone(),
+                x: player_position.x - movement_speed,
+                y: player_position.y + movement_speed,
+                z: player_position.z,
             };
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(game_state, &desired_position)
@@ -219,9 +207,9 @@ impl GameSystem {
         if input.d_pressed.is_pressed {
             let player_position = game_state.get_position_mut("player".to_string()).unwrap();
             let desired_position = Position {
-                x: player_position.x.clone() + movement_speed,
-                y: player_position.y.clone() - movement_speed,
-                z: player_position.z.clone(),
+                x: player_position.x + movement_speed,
+                y: player_position.y - movement_speed,
+                z: player_position.z,
             };
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(game_state, &desired_position)
@@ -237,14 +225,12 @@ impl GameSystem {
             .entities
             .iter()
             .filter(|e| game_state.surface_components.contains_key(e.as_str()))
-            .filter(|e| {
+            .any(|e| {
                 Self::check_walkable(
                     desired_position,
-                    &game_state.position_components.get(e.as_str()).unwrap(),
+                    game_state.position_components.get(e.as_str()).unwrap(),
                 )
             })
-            .next()
-            .is_some()
     }
 
     fn is_colliding(game_state: &GameState, desired_position: &Position) -> bool {
@@ -283,7 +269,7 @@ impl GameSystem {
         let is_walkable_y = desired_position.y >= walkable_tile_position.y - tile_size
             && walkable_tile_position.y + tile_size >= desired_position.y;
 
-        return is_walkable_x && is_walkable_y;
+        is_walkable_x && is_walkable_y
     }
 
     fn check_collision(
@@ -402,14 +388,14 @@ impl StorageManager {
     }
 
     fn check_empty_spot(
-        padded_storage: &Vec<Vec<bool>>,
+        padded_storage: &[Vec<bool>],
         row: u8,
         column: u8,
         shape: ItemShape,
     ) -> bool {
         for x in column..column + shape.width {
             for y in row..row + shape.height {
-                if padded_storage[y as usize][x as usize] == true {
+                if padded_storage[y as usize][x as usize] {
                     return false;
                 }
             }
@@ -458,7 +444,7 @@ impl StorageManager {
                     .get(&e.to_string())
                     .unwrap()
                     .storage_entity
-                    == entity.to_string()
+                    == *entity
             })
             .collect()
     }
@@ -473,8 +459,7 @@ impl StorageManager {
             .filter(|e| {
                 game_state
                     .in_storage_components
-                    .get(&e.to_string())
-                    .is_some()
+                    .contains_key(&e.to_string())
             })
             .filter(|e| {
                 game_state
@@ -482,7 +467,7 @@ impl StorageManager {
                     .get(&e.to_string())
                     .unwrap()
                     .storage_entity
-                    == entity.to_string()
+                    == *entity
             })
             .collect()
     }
@@ -499,7 +484,7 @@ impl PositionManager {
     pub fn find_nearest_pickup(
         positions: &HashMap<Entity, Position>,
         storables: &HashMap<Entity, Storable>,
-        entities: &Vec<Entity>,
+        entities: &[Entity],
         entity: Entity,
     ) -> Option<Entity> {
         entities

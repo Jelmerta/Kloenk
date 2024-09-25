@@ -186,7 +186,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             }
             WindowEvent::MouseWheel { delta, .. } => {
                 game.input_handler.process_scroll(&delta);
-                true;
             }
             WindowEvent::Resized(physical_size) => {
                 game.renderer.resize(physical_size);

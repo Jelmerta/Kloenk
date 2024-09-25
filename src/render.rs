@@ -712,9 +712,9 @@ impl Renderer {
             z: player_position.y + camera.distance * rad_y.sin() * rad_x.sin(),
         };
         self.camera.target = Point3 {
-            x: player_position.x.clone(),
+            x: player_position.x,
             y: 0.0,
-            z: player_position.y.clone(), // This can be confusing: our 2d world has x
+            z: player_position.y, // This can be confusing: our 2d world has x
                                           // and y. in 3d the y is seen as vertical
         };
         let view_direction = (self.camera.target - self.camera.eye).normalize();
@@ -816,7 +816,7 @@ impl Renderer {
 
             let inventory_instance = Self::create_inventory_instance(ui_state);
             let inventory_render_group = RenderGroup {
-                buffer: Self::create_instance_buffer(&self.device, &vec![inventory_instance]),
+                buffer: Self::create_instance_buffer(&self.device, &[inventory_instance]),
                 model_id: "sword_inventory".to_string(),
                 instance_count: 1,
             };
@@ -831,7 +831,7 @@ impl Renderer {
             drop(render_pass_ui);
         }
 
-        self.text_renderer.write(&self.device, &self.queue, &mut encoder, &view, &ui_state);
+        self.text_renderer.write(&self.device, &self.queue, &mut encoder, &view, ui_state);
 
         //use model::DrawModel;
         // let garfield = self.models.pop().unwrap();
@@ -847,11 +847,11 @@ impl Renderer {
 
     fn create_instance_buffer(
         device: &wgpu::Device,
-        instance_group: &Vec<Instance>,
+        instance_group: &[Instance],
     ) -> wgpu::Buffer {
         let raw_instances = instance_group
             .iter()
-            .map(|instance| Instance::to_raw(instance))
+            .map(Instance::to_raw)
             .collect::<Vec<_>>();
         device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Instance Buffer"),
