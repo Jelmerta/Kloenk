@@ -128,9 +128,9 @@ impl GameState {
 
             let sword_storable = Storable {
                 shape: ItemShape {
-                width: 1,
-                height: 1,
-            },
+                    width: 1,
+                    height: 1,
+                },
 
             };
             storable_components.insert(sword.clone(), sword_storable);
@@ -178,7 +178,7 @@ impl GameState {
             z: 0.0,
         };
         position_components.insert(tree.clone(), tree_position);
-            
+
         let tree_hitbox = Hitbox { hitbox: 0.51 };
         hitbox_components.insert(tree.clone(), tree_hitbox);
 

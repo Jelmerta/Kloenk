@@ -40,9 +40,7 @@ pub struct Hitbox {
     pub hitbox: f32,
 }
 
-pub struct Surface {
-    
-}
+pub struct Surface {}
 
 pub struct CameraTarget {
     pub distance: f32,

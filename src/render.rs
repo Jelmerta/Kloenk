@@ -91,7 +91,7 @@ impl Instance {
             model: (cgmath::Matrix4::from_translation(self.position)
                 * self.scale
                 * cgmath::Matrix4::from(self.rotation))
-            .into(),
+                .into(),
         }
     }
 }
@@ -584,8 +584,8 @@ impl Renderer {
             &texture_bind_group_layout,
             "CUBE",
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         model_map.insert("shield".to_string(), shield);
 
         let shield_inventory = resources::load_model(
@@ -595,8 +595,8 @@ impl Renderer {
             &texture_bind_group_layout,
             "SQUARE",
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         model_map.insert("shield_inventory".to_string(), shield_inventory);
 
         let character = resources::load_model(
@@ -606,8 +606,8 @@ impl Renderer {
             &texture_bind_group_layout,
             "CUBE",
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         model_map.insert("character".to_string(), character);
 
         let sword = resources::load_model(
@@ -617,8 +617,8 @@ impl Renderer {
             &texture_bind_group_layout,
             "CUBE",
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         model_map.insert("sword".to_string(), sword);
 
         let sword_inventory = resources::load_model(
@@ -628,8 +628,8 @@ impl Renderer {
             &texture_bind_group_layout,
             "SQUARE",
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         model_map.insert("sword_inventory".to_string(), sword_inventory);
 
         let grass = resources::load_model(
@@ -639,8 +639,8 @@ impl Renderer {
             &texture_bind_group_layout,
             "CUBE",
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         model_map.insert("grass".to_string(), grass);
 
         let tree = resources::load_model(
@@ -650,8 +650,8 @@ impl Renderer {
             &texture_bind_group_layout,
             "CUBE",
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         model_map.insert("tree".to_string(), tree);
 
         let depth_texture =
@@ -715,7 +715,7 @@ impl Renderer {
             x: player_position.x,
             y: 0.0,
             z: player_position.y, // This can be confusing: our 2d world has x
-                                          // and y. in 3d the y is seen as vertical
+            // and y. in 3d the y is seen as vertical
         };
         let view_direction = (self.camera.target - self.camera.eye).normalize();
         let right = Vector3::unit_y().cross(view_direction).normalize();

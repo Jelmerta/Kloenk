@@ -14,22 +14,21 @@ pub struct DepthTexture {
 }
 
 impl Texture {
-
     pub fn from_bytes(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         bytes: &[u8],
-        label: &str
+        label: &str,
     ) -> Result<Self> {
         let diffuse_image = image::load_from_memory(bytes)?;
         Self::from_image(device, queue, &diffuse_image, Some(label))
     }
 
-    pub fn from_image( 
+    pub fn from_image(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         diffuse_image: &image::DynamicImage,
-        label: Option<&str>
+        label: Option<&str>,
     ) -> Result<Self> {
         let diffuse_rgba = diffuse_image.to_rgba8();
 
@@ -79,10 +78,10 @@ impl Texture {
             ..Default::default()
         });
 
-        Ok(Self {view, sampler})
+        Ok(Self { view, sampler })
         // Ok(Self {texture, view, sampler})
     }
- }
+}
 
 impl DepthTexture {
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
@@ -123,6 +122,6 @@ impl DepthTexture {
         // );
 
         // Self { texture, view, sampler }
-        Self {view}
+        Self { view }
     }
 }

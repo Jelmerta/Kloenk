@@ -72,7 +72,7 @@ const SQUARE_TEX: &[model::TexVertex] = &[
 
 const SQUARE_INDICES: &[u16] = &[
     2, 1, 0,
-    3, 2 ,0,
+    3, 2, 0,
 ];
 
 pub async fn load_model(
@@ -91,14 +91,14 @@ pub async fn load_model(
         model = SQUARE_TEX;
         indices = SQUARE_INDICES;
     }
-    
+
     let diffuse_texture = load_texture(file_name, device, queue).await?;
     let bind_group = build_bind_group(device, layout, &diffuse_texture);
 
-    let materials = vec![model::Material{bind_group}];
-        // Also add this to material
-        // name: file_name.to_string(),
-        // diffuse_texture,
+    let materials = vec![model::Material { bind_group }];
+    // Also add this to material
+    // name: file_name.to_string(),
+    // diffuse_texture,
 
     let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Vertex Buffer"),
@@ -119,7 +119,7 @@ pub async fn load_model(
         index_buffer,
         num_elements: num_indices,
     }];
-    
+
     Ok(model::Model { meshes, materials })
 }
 
@@ -160,7 +160,7 @@ fn format_url(file_name: &str) -> reqwest::Url {
     let window = web_sys::window().unwrap();
     let location = window.location();
     let origin = location.origin().unwrap();
-    let base = reqwest::Url::parse(&format!("{}/", origin,)).unwrap();
+    let base = reqwest::Url::parse(&format!("{}/", origin, )).unwrap();
     base.join("resources/").unwrap().join(file_name).unwrap()
 }
 

@@ -39,7 +39,7 @@ pub struct Input {
     pub right_pressed: KeyPress,
 
     pub left_shift_pressed: KeyPress,
-    
+
     pub right_mouse_clicked: KeyPress,
 
     pub scrolled_amount: f32,
@@ -93,7 +93,7 @@ impl Input {
             KeyCode::ArrowLeft => {
                 self.left_pressed.set_press_state(is_pressed);
             }
-            
+
             KeyCode::ArrowRight => {
                 self.right_pressed.set_press_state(is_pressed);
             }
@@ -101,9 +101,9 @@ impl Input {
         }
     }
 
-    pub fn process_mouse_button(&mut self, button: &MouseButton, state: &ElementState) { 
+    pub fn process_mouse_button(&mut self, button: &MouseButton, state: &ElementState) {
         let is_pressed = *state == ElementState::Pressed;
-       
+
         match button {
             MouseButton::Right => {
                 self.right_mouse_clicked.set_press_state(is_pressed);
@@ -115,11 +115,10 @@ impl Input {
 
     pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
         self.scrolled_amount = match delta {
-            MouseScrollDelta::PixelDelta(PhysicalPosition {
-                y: scroll, ..
-            }) => *scroll as f32,
-            _ => panic!("LineDelta not implemented"),
-            // MouseScrollDelta::LineDelta(_, scroll) => *scroll,
+            MouseScrollDelta::PixelDelta(PhysicalPosition { // Used by WASM
+                                             y: scroll, ..
+                                         }) => *scroll as f32,
+            MouseScrollDelta::LineDelta(_, scroll) => *scroll * 100.0, // Used by standalone client
         };
     }
 }

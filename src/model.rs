@@ -7,14 +7,20 @@ pub trait Vertex {
 }
 
 #[repr(C)] // Not sure what this effectively does here
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)] // Read up more about bytemuck, to cast our VERTICES as a &[u8]
+#[derive(
+    Copy,
+    Clone,
+    Debug,
+    bytemuck::Pod,
+    bytemuck::Zeroable
+)] // Read up more about bytemuck, to cast our VERTICES as a &[u8]
 pub struct ModelVertex {
     pub position: [f32; 3],
-    pub color: [f32;3],
+    pub color: [f32; 3],
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)] 
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct TexVertex {
     pub position: [f32; 3],
     pub tex_coords: [f32; 2],
@@ -94,11 +100,11 @@ pub trait DrawModel<'a> {
     );
 
     // fn draw_model(&mut self, model: &'a Model);
-//     fn draw_model_instanced(
-//         &mut self,
-//         model: &'a Model,
-//         instances: Range<u32>,
-//     );
+    //     fn draw_model_instanced(
+    //         &mut self,
+    //         model: &'a Model,
+    //         instances: Range<u32>,
+    //     );
 }
 
 impl<'a, 'b> DrawModel<'b> for wgpu::RenderPass<'a>
@@ -123,13 +129,13 @@ where
     //     self.draw_model_instanced(model, 0..1);
     // }
 
-//     fn draw_model_instanced(
-//             &mut self,
-//             model: &'b Model,
-//             instances: Range<u32>,
-//     ) {
-//         for mesh in &model.meshes {
-//             self.draw_mesh_instanced(mesh, instances.clone());
-//         }
-//     }
+    //     fn draw_model_instanced(
+    //             &mut self,
+    //             model: &'b Model,
+    //             instances: Range<u32>,
+    //     ) {
+    //         for mesh in &model.meshes {
+    //             self.draw_mesh_instanced(mesh, instances.clone());
+    //         }
+    //     }
 }

@@ -163,20 +163,20 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             WindowEvent::CloseRequested
             | WindowEvent::KeyboardInput {
                 event:
-                    KeyEvent {
-                        physical_key: PhysicalKey::Code(winit::keyboard::KeyCode::Escape),
-                        state: ElementState::Pressed,
-                        ..
-                    },
+                KeyEvent {
+                    physical_key: PhysicalKey::Code(winit::keyboard::KeyCode::Escape),
+                    state: ElementState::Pressed,
+                    ..
+                },
                 ..
             } => event_loop.exit(),
             WindowEvent::KeyboardInput {
                 event:
-                    KeyEvent {
-                        physical_key: PhysicalKey::Code(key),
-                        state,
-                        ..
-                    },
+                KeyEvent {
+                    physical_key: PhysicalKey::Code(key),
+                    state,
+                    ..
+                },
                 ..
             } => {
                 game.input_handler.update(&key, &state);
