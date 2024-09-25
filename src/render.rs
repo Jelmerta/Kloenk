@@ -55,13 +55,12 @@ impl CameraUniform {
     }
 }
 
-pub struct RenderState {
+pub struct Renderer {
     surface: wgpu::Surface<'static>,
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
-    window: Arc<Window>,
     render_pipeline: wgpu::RenderPipeline,
     render_pipeline_ui: wgpu::RenderPipeline,
     camera: Camera,
@@ -140,8 +139,8 @@ struct RenderGroup {
     instance_count: u32,
 }
 
-impl RenderState {
-    pub async fn new(window: Arc<Window>) -> RenderState {
+impl Renderer {
+    pub async fn new(window: Arc<Window>) -> Renderer {
         let size = window.inner_size();
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
@@ -149,7 +148,7 @@ impl RenderState {
             ..Default::default()
         });
 
-        let surface = instance.create_surface(window.clone()).unwrap();
+        let surface = instance.create_surface(window).unwrap();
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -186,8 +185,9 @@ impl RenderState {
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            width: size.width.max(1),
-            height: size.height.max(1),
+            width: size.width.max(800), // TODO size was not set and therefore
+            // hardcoded here
+            height: size.height.max(600),
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
@@ -678,12 +678,7 @@ impl RenderState {
             depth_texture,
             render_groups: Vec::new(),
             text_renderer: text_writer,
-            window,
         }
-    }
-
-    pub fn window(&self) -> &Window {
-        &self.window
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {

@@ -1,15 +1,20 @@
+use winit::application::ApplicationHandler;
+use winit::event_loop::{EventLoop, EventLoopProxy};
 use winit::{event::*, keyboard::PhysicalKey};
 
 use crate::game_system::GameSystem;
 // use anyhow::*;
+use crate::game_state::GameState;
+use crate::gui::UIState;
+use crate::input::Input;
+use crate::render::Renderer;
 use std::sync::Arc;
 use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowId};
-use crate::game_state::GameState;
-use crate::gui::UIState;
-use crate::input::Input;
-use crate::render::RenderState;
+
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen_futures::spawn_local;
 
 mod camera;
 mod components;
@@ -23,18 +28,49 @@ mod resources;
 mod text_renderer;
 mod texture;
 
-pub struct Application {
-    pub render_state: Option<RenderState>,
-    pub game_state: Option<GameState>,
-    pub ui_state: Option<UIState>,
-    pub input_handler: Option<Input>,
-    pub surface_configured: bool,
+pub struct Game {
+    pub renderer: Renderer,
+    pub game_state: GameState,
+    pub ui_state: UIState,
+    pub input_handler: Input,
+    pub window: Arc<Window>,
 }
 
-impl winit::application::ApplicationHandler for Application {
+impl Game {
+    pub fn window(&self) -> &Window {
+        self.window.as_ref()
+    }
+}
+
+pub struct StateInitializationEvent(Game);
+
+pub struct Application {
+    application_state: ApplicationState,
+    event_loop_proxy: EventLoopProxy<StateInitializationEvent>,
+}
+
+impl Application {
+    pub fn new(event_loop: &EventLoop<StateInitializationEvent>) -> Application {
+        Application {
+            application_state: ApplicationState::Uninitialized,
+            event_loop_proxy: event_loop.create_proxy(),
+        }
+    }
+}
+pub enum ApplicationState {
+    Uninitialized,
+    Initializing,
+    Initialized(Game),
+}
+
+impl ApplicationHandler<StateInitializationEvent> for Application {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        if self.render_state.is_some() { // Assumes other application state is empty as well
-            return;
+        match self.application_state {
+            ApplicationState::Initialized(_) => return,
+            ApplicationState::Initializing => return,
+            ApplicationState::Uninitialized => {
+                self.application_state = ApplicationState::Initializing
+            } // Continue
         }
 
         let window_attributes = Window::default_attributes()
@@ -61,27 +97,64 @@ impl winit::application::ApplicationHandler for Application {
             let _ = window.request_inner_size(PhysicalSize::new(800, 600));
         }
 
-        self.render_state = Some(pollster::block_on(RenderState::new(window)));
-        self.game_state = Some(GameState::new());
-        self.ui_state = Some(UIState::new());
-        self.input_handler = Some(Input::new());
-        self.surface_configured = false;
+        let renderer_future = Renderer::new(window.clone());
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            let event_loop_proxy = self.event_loop_proxy.clone();
+            spawn_local(async move {
+                let renderer = renderer_future.await;
+
+                let game = Game {
+                    renderer,
+                    game_state: GameState::new(),
+                    ui_state: UIState::new(),
+                    input_handler: Input::new(),
+                    window,
+                };
+
+                event_loop_proxy
+                    .send_event(StateInitializationEvent(game))
+                    .unwrap_or_else(|_| {
+                        panic!("Failed to send initialization event");
+                    });
+            });
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let renderer = pollster::block_on(renderer_future);
+            let game = Game {
+                renderer,
+                game_state: GameState::new(),
+                ui_state: UIState::new(),
+                input_handler: Input::new(),
+                window,
+            };
+
+            self.event_loop_proxy
+                .send_event(StateInitializationEvent(game))
+                .unwrap_or_else(|_| {
+                    panic!("Failed to send initialization event");
+                });
+        }
     }
 
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, _window_id: WindowId, event: WindowEvent) {
-        let Some(render_state) = &mut self.render_state else {
-            return;
-        };
+    fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: StateInitializationEvent) {
+        log::info!("Received initialization event");
 
-        let Some(game_state) = &mut self.game_state else {
-            return;
-        };
+        let game = event.0;
+        game.window.request_redraw();
+        self.application_state = ApplicationState::Initialized(game);
+    }
 
-        let Some(ui_state) = &mut self.ui_state else {
-            return;
-        };
-
-        let Some(input_handler) = &mut self.input_handler else {
+    fn window_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        _window_id: WindowId,
+        event: WindowEvent,
+    ) {
+        let ApplicationState::Initialized(ref mut game) = self.application_state else {
             return;
         };
 
@@ -90,49 +163,46 @@ impl winit::application::ApplicationHandler for Application {
             WindowEvent::CloseRequested
             | WindowEvent::KeyboardInput {
                 event:
-                KeyEvent {
-                    physical_key: PhysicalKey::Code(winit::keyboard::KeyCode::Escape),
-                    state: ElementState::Pressed,
-                    ..
-                },
+                    KeyEvent {
+                        physical_key: PhysicalKey::Code(winit::keyboard::KeyCode::Escape),
+                        state: ElementState::Pressed,
+                        ..
+                    },
                 ..
             } => event_loop.exit(),
             WindowEvent::KeyboardInput {
                 event:
-                KeyEvent {
-                    physical_key: PhysicalKey::Code(key),
-                    state,
-                    ..
-                },
+                    KeyEvent {
+                        physical_key: PhysicalKey::Code(key),
+                        state,
+                        ..
+                    },
                 ..
             } => {
-                input_handler.update(&key, &state);
+                game.input_handler.update(&key, &state);
             }
             WindowEvent::MouseInput { state, button, .. } => {
-                input_handler.process_mouse_button(&button, &state);
+                game.input_handler.process_mouse_button(&button, &state);
             }
             WindowEvent::MouseWheel { delta, .. } => {
-                input_handler.process_scroll(&delta);
+                game.input_handler.process_scroll(&delta);
                 true;
             }
             WindowEvent::Resized(physical_size) => {
-                self.surface_configured = true;
-                render_state.resize(physical_size);
+                game.renderer.resize(physical_size);
             }
             WindowEvent::RedrawRequested => {
-                render_state.window().request_redraw();
+                game.window().request_redraw();
 
-                // Make sure the window/surface is configured such that config
-                // contains right information such as width and height
-                // before rendering
-                if !self.surface_configured {
-                    return;
-                }
-                GameSystem::update(game_state, ui_state, input_handler);
-                match render_state.render(&game_state, &ui_state) {
+                GameSystem::update(
+                    &mut game.game_state,
+                    &mut game.ui_state,
+                    &mut game.input_handler,
+                );
+                match game.renderer.render(&game.game_state, &game.ui_state) {
                     Ok(_) => {}
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        render_state.resize(render_state.size)
+                        game.renderer.resize(game.renderer.size)
                     }
                     Err(wgpu::SurfaceError::OutOfMemory) => {
                         event_loop.exit();

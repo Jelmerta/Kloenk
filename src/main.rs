@@ -1,21 +1,26 @@
-use winit::event_loop::EventLoop;
-use kloenk::Application;
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
-#[cfg(not(target_arch = "wasm32"))]
-use std::env;
 #[cfg(not(target_arch = "wasm32"))]
 use fs_extra::copy_items;
 #[cfg(not(target_arch = "wasm32"))]
 use fs_extra::dir::CopyOptions;
-
+use kloenk::{Application, StateInitializationEvent};
+#[cfg(not(target_arch = "wasm32"))]
+use std::env;
+use winit::event_loop::EventLoop;
 
 fn main() {
     run();
 }
 
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
-fn run () {
+#[cfg(target_arch = "wasm32")]
+mod wasm {
+    use wasm_bindgen::prelude::*;
+    #[wasm_bindgen(start)]
+    pub fn run_wasm() {
+        crate::run();
+    }
+}
+
+pub fn run() {
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
@@ -36,8 +41,20 @@ fn run () {
         copy_items(&paths_to_copy, out_dir, &copy_options).unwrap();
     }
 
-    let event_loop = EventLoop::new().unwrap();
-    event_loop
-        .run_app(&mut Application { render_state: None, game_state: None, ui_state: None, input_handler: None, surface_configured: false })
+    let event_loop = EventLoop::<StateInitializationEvent>::with_user_event()
+        .build()
         .unwrap();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        let application: Application = Application::new(&event_loop);
+        use winit::platform::web::EventLoopExtWebSys;
+        event_loop.spawn_app(application);
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+    let mut application: Application = Application::new(&event_loop);
+        event_loop.run_app(&mut application).unwrap();
+    }
 }
