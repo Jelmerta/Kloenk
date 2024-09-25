@@ -1,10 +1,10 @@
-use glyphon::{
-    Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Shaping, SwashCache,
-    TextArea, TextAtlas, TextBounds, TextRenderer, Viewport, Resolution,
-};
-use wgpu::{Device, Queue, Surface, Adapter};
 use crate::gui::UIState;
 use crate::resources;
+use glyphon::{
+    Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping, SwashCache,
+    TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
+};
+use wgpu::{Adapter, Device, Queue, Surface};
 
 pub struct TextWriter {
     text_renderer: TextRenderer,
@@ -16,14 +16,19 @@ pub struct TextWriter {
 }
 
 impl TextWriter {
-    pub async fn new(device: &Device, queue: &Queue, surface: &Surface<'_>, adapter: &Adapter) -> Self {
+    pub async fn new(
+        device: &Device,
+        queue: &Queue,
+        surface: &Surface<'_>,
+        adapter: &Adapter,
+    ) -> Self {
         let mut font_system = FontSystem::new();
 
-        let font_data = resources::load_binary("PlaywriteNL-Regular.ttf").await.unwrap();
+        let font_data = resources::load_binary("PlaywriteNL-Regular.ttf")
+            .await
+            .unwrap();
 
-        font_system
-            .db_mut()
-            .load_font_data(font_data.to_vec());
+        font_system.db_mut().load_font_data(font_data.to_vec());
 
         let caps = surface.get_capabilities(adapter);
         let surface_format = caps // I see tutorial using wgpu::TextureFormat::Bgra8UnormSrgb
@@ -60,8 +65,20 @@ impl TextWriter {
         }
     }
 
-    pub fn write(&mut self, device: &Device, queue: &Queue, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView, ui_state: &UIState) {
-        self.text_buffer.set_text(&mut self.font_system, ui_state.text.as_str(), Attrs::new().family(Family::Name("Playwrite NL")), Shaping::Advanced);
+    pub fn write(
+        &mut self,
+        device: &Device,
+        queue: &Queue,
+        encoder: &mut wgpu::CommandEncoder,
+        view: &wgpu::TextureView,
+        ui_state: &UIState,
+    ) {
+        self.text_buffer.set_text(
+            &mut self.font_system,
+            ui_state.text.as_str(),
+            Attrs::new().family(Family::Name("Playwrite NL")),
+            Shaping::Advanced,
+        );
 
         self.viewport.update(
             queue,
@@ -86,8 +103,10 @@ impl TextWriter {
                     bounds: TextBounds {
                         left: (800.0 * ui_state.text_position_x) as i32 - 10, // Adding 10 for some padding so text is fully shown
                         top: (600.0 * ui_state.text_position_y) as i32 - 10,
-                        right: (800.0 * ui_state.text_position_x + 800.0 * ui_state.text_width) as i32,
-                        bottom: (600.0 * ui_state.text_position_y + 600.0 * ui_state.text_height) as i32,
+                        right: (800.0 * ui_state.text_position_x + 800.0 * ui_state.text_width)
+                            as i32,
+                        bottom: (600.0 * ui_state.text_position_y + 600.0 * ui_state.text_height)
+                            as i32,
                     },
                     default_color: Color::rgb(255, 255, 0),
                     custom_glyphs: &[],

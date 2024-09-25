@@ -70,10 +70,7 @@ const SQUARE_TEX: &[model::TexVertex] = &[
     },
 ];
 
-const SQUARE_INDICES: &[u16] = &[
-    2, 1, 0,
-    3, 2, 0,
-];
+const SQUARE_INDICES: &[u16] = &[2, 1, 0, 3, 2, 0];
 
 pub async fn load_model(
     file_name: &str,
@@ -160,7 +157,7 @@ fn format_url(file_name: &str) -> reqwest::Url {
     let window = web_sys::window().unwrap();
     let location = window.location();
     let origin = location.origin().unwrap();
-    let base = reqwest::Url::parse(&format!("{}/", origin, )).unwrap();
+    let base = reqwest::Url::parse(&format!("{}/", origin,)).unwrap();
     base.join("resources/").unwrap().join(file_name).unwrap()
 }
 

@@ -25,7 +25,6 @@ impl UIState {
             // TODO We can probably store items here on a signal when inv changes. That
             // way we do not need to calculate inventory every frame when inventory is
             // shown
-
             text: "".to_string(),
             text_position_x: 0.05,
             text_position_y: 0.6,
@@ -34,8 +33,9 @@ impl UIState {
         }
     }
 
-    // Maps 0 (left of screen) to -800/600 (pixel values) and 1 to 800/600 
-    pub fn convert_clip_space_x(value: f32) -> f32 { // Would it be better to use NDC?
+    // Maps 0 (left of screen) to -800/600 (pixel values) and 1 to 800/600
+    pub fn convert_clip_space_x(value: f32) -> f32 {
+        // Would it be better to use NDC?
         -800.0 / 600.0 + 2.0 * (800.0 / 600.0) * value
     }
 
