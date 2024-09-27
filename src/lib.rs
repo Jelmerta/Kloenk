@@ -15,6 +15,7 @@ use winit::window::{Window, WindowId};
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
+use web_sys::HtmlCanvasElement;
 
 mod camera;
 mod components;
@@ -88,9 +89,10 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 .and_then(|win| win.document())
                 .and_then(|doc| {
                     let dst = doc.get_element_by_id("kloenk-wasm")?;
-                    let canvas = web_sys::Element::from(window.canvas()?);
-                    canvas.set_attribute("tabindex", "0");
+                    let canvas: HtmlCanvasElement = web_sys::HtmlCanvasElement::from(window.canvas()?);
+                    canvas.set_attribute("tabindex", "0").expect("failed to set tabindex");
                     dst.append_child(&canvas).ok()?;
+                    canvas.focus().expect("Unable to focus on canvas");
                     Some(())
                 })
                 .expect("Couldn't append canvas to document body.");
