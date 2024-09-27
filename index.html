@@ -13,6 +13,11 @@
             });
         }
         prevent_default_context_menu();
+
+        window.onload = function () {
+            const canvas = document.getElementById("kloenk-wasm");
+            canvas.focus();
+        };
     </script>
 </body>
 </html>
