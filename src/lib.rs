@@ -89,6 +89,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 .and_then(|doc| {
                     let dst = doc.get_element_by_id("kloenk-wasm")?;
                     let canvas = web_sys::Element::from(window.canvas()?);
+                    canvas.setAttribute("tabindex", "0");
                     dst.append_child(&canvas).ok()?;
                     Some(())
                 })
