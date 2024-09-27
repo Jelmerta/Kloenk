@@ -18,9 +18,6 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Install Nginx extras which allows server hiding
-        run: sudo apt install nginx-extras
-
       - name: Build Project (WASM/JS/HTML)
         run: trunk build --release
 
@@ -48,6 +45,9 @@ jobs:
     if: ${{ !github.event.act }}
     runs-on: ubuntu-latest
     steps:
+      - name: Install Nginx extras which allows server hiding
+        run: sudo apt install nginx-extras
+
       - name: Checkout project
         uses: actions/checkout@v2
 
