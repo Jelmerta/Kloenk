@@ -48,6 +48,7 @@ web-sys = { version = "0.3.70", features = [
     "Window",
     "Element",
     "Location",
+    "HtmlCanvasElement"
 ] }
 reqwest = { version = "0.12.7" }
 getrandom = { version = "0.2", features = ["js"] }
