@@ -1,4 +1,4 @@
-# Add dependencies to dynamically generate nonces in nginx conf
+# Add dependencies to dynamically generate nonces in nginx conf (we could manually add dependencies to latest nginx version, openresty could be behind latest)
 FROM openresty/openresty:alpine
 
 # Note: We may leave the older WASM/JS files this way... Probably gonna need to clean this up
