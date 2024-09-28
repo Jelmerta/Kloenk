@@ -16,18 +16,6 @@ use winit::window::{Window, WindowId};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
 
-// mod camera;
-// mod components;
-// mod game_state;
-// mod game_system;
-// mod gui;
-// mod input;
-// mod model;
-// mod render;
-// mod resources;
-// mod text_renderer;
-// mod texture;
-
 pub struct Game {
     pub renderer: Renderer,
     pub game_state: GameState,
