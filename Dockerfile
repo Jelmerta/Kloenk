@@ -12,7 +12,7 @@ RUN ls -R /usr/share/nginx/html/resources/web/
 RUN pwd
 
 COPY dist /usr/share/nginx/html
-COPY dist/resources/web/nginx.conf /etc/nginx/conf.d/default.conf
-COPY dist/resources/web/common_headers.conf /etc/nginx/conf.d/common_headers.conf
+COPY ./dist/resources/web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY ./dist/resources/web/common_headers.conf /etc/nginx/conf.d/common_headers.conf
 
 RUN ls -R /etc/nginx/conf.d/
