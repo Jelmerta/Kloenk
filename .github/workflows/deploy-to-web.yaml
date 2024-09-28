@@ -21,10 +21,6 @@ jobs:
       - name: Build Project (WASM/JS/HTML)
         run: trunk build --release
 
-      - name: Verify dist directory
-        run: |
-          ls -R dist/resources/web
-
       - name: Set up Docker Buildx to help out with building docker image (
         uses: docker/setup-buildx-action@v3
 
@@ -50,7 +46,7 @@ jobs:
           push: 'true'
           tags: hydrogax/kloenk:latest
           build-args: |
-            CACHEBUST=${{ github.run_id }}
+            NO_CACHE=true
 
   deploy:
     needs: build
