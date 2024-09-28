@@ -12,7 +12,6 @@ jobs:
 
       - name: cargo test
         uses: actions-rust-lang/setup-rust-toolchain@v1
-        run: rustup target add wasm32-unknown-unknown
 
       - name: Add target
         run: rustup target add wasm32-unknown-unknown
