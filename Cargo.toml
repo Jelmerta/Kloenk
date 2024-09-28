@@ -17,7 +17,7 @@ pollster = "0.3.0"
 bytemuck = { version = "1.18", features = ["derive"] }
 cgmath = "0.18"
 # gltf = "1.4.1"
-anyhow = "1.0.89"
+anyhow = "1.0.88"
 itertools = "0.13.0"
 glyphon = "0.6.0"
 # glob = "0.3.1"
