@@ -53,7 +53,7 @@ jobs:
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-      - name: Retrieve new container and run on server using remote ssh commands (not too proud of this, contains contents of retrieve_and_run_container.sh, could instead put this sh script on the server on droplet creation, perhaps including floating IP?)
+      - name: Retrieve new container and run on server using remote ssh commands
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
