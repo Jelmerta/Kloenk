@@ -26,3 +26,8 @@ cargo +nightly udeps --all-targets to find unused/duplicate dependencies
 cargo clippy for linting tips, small code improvements
 cargo outdated or cargo outdated --depth 1 to find new versions of dependencies
 cargo bloat --release -n 100 optionally with --crates to figure out functions and dependencies that contribute most to binary size
+
+Setting up the server: 
+- Add docker user: ``sudo useradd --create-home --user-group --shel /bin/bash --groups docker deploy``
+- Lock the user: ``sudo usermod --lock deploy``
+To enter the server: ``ssh root@$ip_adress``
