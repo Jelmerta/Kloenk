@@ -10,6 +10,10 @@ jobs:
       - name: Checkout project
         uses: actions/checkout@v4.2.0
 
+      - name: cargo test
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        run: rustup target add wasm32-unknown-unknown
+
       - name: Add target
         run: rustup target add wasm32-unknown-unknown
 
