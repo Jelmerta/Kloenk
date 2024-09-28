@@ -12,9 +12,8 @@ jobs:
 
       - name: Install rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
-
-      - name: Add target
-        run: rustup target add wasm32-unknown-unknown
+        with:
+            target: wasm32-unknown-unknown
 
       - name: Download compiler
         uses: jetli/trunk-action@v0.5.0
