@@ -23,6 +23,7 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          save-always: true
 
       - name: Add target
         run: rustup target add wasm32-unknown-unknown
