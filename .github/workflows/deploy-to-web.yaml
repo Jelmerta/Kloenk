@@ -45,8 +45,6 @@ jobs:
         with:
           push: 'true'
           tags: hydrogax/kloenk:latest
-          build-args: |
-            --no-cache
 
   deploy:
     needs: build
