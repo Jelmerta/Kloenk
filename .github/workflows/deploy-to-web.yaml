@@ -10,7 +10,7 @@ jobs:
       - name: Checkout project
         uses: actions/checkout@v4.2.0
 
-      - name: cargo test
+      - name: Install rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
       - name: Add target
@@ -24,8 +24,8 @@ jobs:
       - name: Build Project (WASM/JS/HTML)
         run: trunk build --release
 
-#      - name: Set up Docker Buildx to help out with building docker image (
-#        uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx to help out with building docker image (
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
         if: ${{ !env.ACT }}
