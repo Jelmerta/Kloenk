@@ -9,36 +9,36 @@ const CUBE_TEX: &[model::TexVertex] = &[
     model::TexVertex {
         position: [0.5, 0.5, 0.5],
         tex_coords: [0.0, 1.0],
-    }, // Red
+    },
     model::TexVertex {
         position: [0.5, 0.5, -0.5],
         tex_coords: [1.0, 1.0],
-    }, // Green
+    },
     model::TexVertex {
         position: [-0.5, 0.5, -0.5],
         tex_coords: [1.0, 0.0],
-    }, // Yellow
+    },
     model::TexVertex {
         position: [-0.5, 0.5, 0.5],
         tex_coords: [0.0, 0.0],
-    }, // Purple
+    },
     // Bottom ccw as seen from top
     model::TexVertex {
         position: [0.5, -0.5, 0.5],
         tex_coords: [0.0, 0.0],
-    }, // Blue
+    },
     model::TexVertex {
         position: [0.5, -0.5, -0.5],
         tex_coords: [0.0, 1.0],
-    }, // Cyan
+    },
     model::TexVertex {
         position: [-0.5, -0.5, -0.5],
         tex_coords: [1.0, 0.0],
-    }, // Black
+    },
     model::TexVertex {
         position: [-0.5, -0.5, 0.5],
         tex_coords: [1.0, 1.0],
-    }, // White
+    },
 ];
 
 const CUBE_INDICES: &[u16] = &[
