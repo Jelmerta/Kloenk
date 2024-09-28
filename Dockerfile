@@ -4,8 +4,8 @@ FROM openresty/openresty:alpine
 RUN pwd
 RUN ls
 # Note: We may leave the older WASM/JS files this way... Probably gonna need to clean this up
-RUN ls -R /dist
-RUN ls -R /dist/resources/web
+# RUN ls -R /dist
+#RUN ls -R /dist/resources/web
 
 COPY dist /usr/share/nginx/html
 COPY ./dist/resources/web/nginx.conf /etc/nginx/conf.d/default.conf
