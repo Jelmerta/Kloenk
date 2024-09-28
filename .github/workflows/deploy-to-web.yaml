@@ -35,6 +35,7 @@ jobs:
         if: ${{ env.ACT }}
         uses: docker/build-push-action@v6
         with:
+          context: .
           push: false
           tags: hydrogax/kloenk:newest
 
