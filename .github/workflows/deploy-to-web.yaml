@@ -10,25 +10,19 @@ jobs:
       - name: Checkout project
         uses: actions/checkout@v4.2.0
 
-      - name: pwd
-        run: pwd
-
-      - name: ls
-        run: ls
-
-#      - name: Cache Cargo
-#        uses: actions/cache@v4
-#        with:
-#          path: |
-#            ~/.cargo/bin/
-#            ~/.cargo/registry/index/
-#            ~/.cargo/registry/cache/
-#            ~/.cargo/git/db/
-#            target/
-#          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
       - name: Install rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Add target
         run: rustup target add wasm32-unknown-unknown
@@ -40,12 +34,6 @@ jobs:
 
       - name: Build Project (WASM/JS/HTML)
         run: trunk build --release
-
-      - name: hash
-        run: shasum -a 256 Cargo.lock
-
-      - name: ls2
-        run: ls
 
       - name: Set up Docker Buildx to help out with building docker image (
         uses: docker/setup-buildx-action@v3
