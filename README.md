@@ -20,14 +20,20 @@ sudo ufw allow https
 
 
 Useful rust tools to improve project:
-cargo tree to see dependency graph
-cargo audit to scan CVEs
-cargo +nightly udeps --all-targets to find unused/duplicate dependencies
-cargo clippy for linting tips, small code improvements
-cargo outdated or cargo outdated --depth 1 to find new versions of dependencies
-cargo bloat --release -n 100 optionally with --crates to figure out functions and dependencies that contribute most to binary size
+- ``cargo tree`` to see dependency graph 
+- ``cargo audit`` to scan CVEs 
+- ``cargo +nightly udeps --all-targets`` to find unused/duplicate dependencies 
+- ``cargo clippy`` for linting tips, small code improvements 
+- ``cargo outdated`` or ``cargo outdated --depth 1`` to find new versions of dependencies 
+- ``cargo bloat --release -n 100`` optionally with ``--crates`` to figure out functions and dependencies that contribute most to binary size
+
 
 Setting up the server: 
-- Add docker user: ``sudo useradd --create-home --user-group --shel /bin/bash --groups docker deploy``
-- Lock the user: ``sudo usermod --lock deploy``
-To enter the server: ``ssh root@$ip_adress``
+- To enter the server: ``ssh root@$ip_adress``
+- Initialize using ``initialize_server.sh``
+
+Now we can deploy
+
+- Checking docker containers: ``docker ps -a``
+- Logs: ``docker logs $container_name``
+- Enter container: ``docker exec -it $container_name /bin/sh``
