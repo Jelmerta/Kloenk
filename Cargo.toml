@@ -7,8 +7,8 @@ repository = "https://github.com/Jelmerta/Kloenk/"
 description = "Custom Rust engine targeting WASM with WebGpu (with the dream of creating a multiplayer online game)"
 license = "GPL-3.0-or-later"
 
-[lib]
-crate-type = ["cdylib", "rlib"]
+#[lib]
+#crate-type = ["cdylib"]
 
 [dependencies]
 cfg-if = "1.0.0"

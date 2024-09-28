@@ -2,11 +2,22 @@
 use fs_extra::copy_items;
 #[cfg(not(target_arch = "wasm32"))]
 use fs_extra::dir::CopyOptions;
-use kloenk::{Application, StateInitializationEvent};
 #[cfg(not(target_arch = "wasm32"))]
 use std::env;
 use winit::event_loop::EventLoop;
-
+use crate::application::{Application, StateInitializationEvent};
+mod application;
+mod camera;
+mod components;
+mod game_state;
+mod game_system;
+mod gui;
+mod input;
+mod model;
+mod render;
+mod resources;
+mod text_renderer;
+mod texture;
 fn main() {
     run();
 }
