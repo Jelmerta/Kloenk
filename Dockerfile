@@ -7,7 +7,7 @@ RUN ls
 # RUN ls -R /dist
 #RUN ls -R /dist/resources/web
 
-COPY dist /usr/share/nginx/html
+ADD dist /usr/share/nginx/html
 COPY ./dist/resources/web/nginx.conf /etc/nginx/conf.d/default.conf
 COPY ./dist/resources/web/common_headers.conf /etc/nginx/conf.d/common_headers.conf
 
