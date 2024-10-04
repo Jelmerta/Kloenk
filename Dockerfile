@@ -22,7 +22,7 @@ RUN cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-
 
 # Check dependencies
 COPY Cargo.toml Cargo.lock ./
-RUN cargo audit \
+RUN cargo audit
 # && cargo fetch --locked surely this is already done in chef
 
 # Build just the dependencies
