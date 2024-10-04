@@ -8,9 +8,13 @@ RUN rustup target add wasm32-unknown-unknown \
 WORKDIR /app
 
 FROM rust AS planner
-COPY src src
 COPY Cargo.toml Cargo.lock ./
-RUN cargo chef prepare --recipe-path recipe.json
+COPY src src
+RUN cargo audit \
+&& cargo fmt --all -- --check \
+&& cargo chef prepare --recipe-path recipe.json \
+&& rm -rf /usr/local/cargo/advisory-db*
+# ^ We remove the db containing audit advice as otherwise a big cache layer is introduced.
 
 FROM rust AS builder
 COPY --from=planner /app/recipe.json recipe.json
@@ -22,7 +26,6 @@ RUN cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-
 
 # Check dependencies
 COPY Cargo.toml Cargo.lock ./
-RUN cargo audit
 # && cargo fetch --locked surely this is already done in chef
 
 # Build just the dependencies
@@ -30,7 +33,6 @@ RUN cargo audit
 
 # Verify source & build binaries
 COPY src src
-RUN cargo fmt --all -- --check \
 # && cargo clippy --release --all-targets --all-features --frozen -- -Dwarnings \
 && cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk_bin \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk_bin.wasm --target web --out-dir bg_output --out-name kloenk \
