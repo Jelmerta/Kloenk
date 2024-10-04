@@ -42,7 +42,7 @@ const CUBE_TEX: &[model::TexVertex] = &[
 ];
 
 const CUBE_INDICES: &[u16] = &[
-    0, 1, 2, 0, 2, 3,
+    0, 1, 2, 0, 2, 3, // Bottom
     4, 7, 6, 4, 6, 5, // Left
     0, 3, 7, 0, 7, 4, // Right
     1, 6, 2, 1, 5, 6, // Front
