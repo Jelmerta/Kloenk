@@ -1,18 +1,23 @@
 FROM rust:1.81
 
-WORKDIR /usr/src/app
+# Add empty project such that dependencies can be built without requiring src code
+RUN cargo new --bin app
+WORKDIR /app
 
 # Setup # only if web , for we docker layers we might wanna split up as late as possible? though adding this target has no real downsides anyway
 RUN rustup target add wasm32-unknown-unknown \
 	&& rustup component add clippy rustfmt \
 	&& cargo install cargo-audit wasm-bindgen-cli wasm-opt --locked
 
-# Build dependencies
+# Check dependencies
 COPY Cargo.toml Cargo.lock ./
 RUN cargo fetch \
-&& cargo audit
+&& cargo audit 
 
-# Verify source & build
+# Build just the dependencies
+RUN cargo build --release || true 
+
+# Verify source & build binaries
 COPY src src
 RUN cargo fmt --all -- --check \
 && cargo clippy --all-targets --all-features -- -Dwarnings \
