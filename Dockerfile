@@ -34,7 +34,7 @@ COPY Cargo.toml Cargo.lock ./
 # Verify source & build binaries
 COPY src src
 # && cargo clippy --release --all-targets --all-features --frozen -- -Dwarnings \
-&& cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk_bin \
+RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk_bin \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk_bin.wasm --target web --out-dir bg_output --out-name kloenk \
 && wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz --dce --strip-debug --strip-producers --inlining --coalesce-locals --simplify-locals \
 && mkdir output \
