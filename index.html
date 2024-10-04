@@ -1,12 +1,19 @@
 <html lang="en">
 <head>
     <title>Kloenk</title>
-    <link data-bin="kloenk_bin" data-trunk rel="rust"/>
     <link rel="icon" href="/resources/favicon.ico" type="image/x-icon">
-    <link data-trunk rel="copy-dir" href="resources" /> <!-- copies resources folder such that it is served and accessible for wasm application -->
+    <script>
+        import init, * as bndings from '/kloenk.js';
+        const wasm = await init('/kloenk.wasm');
+        window.wasmBindings = bindings;
+    </script>
+    <link rel="modulepreload" href="/kloenk.js">
+    <link rel="preload" href="/kloenk.wasm" as="fetch" type="application/wasm">
 </head>
+
+
 <body id="kloenk-wasm">
-    <script type="module">
+    <script>
         export function prevent_default_context_menu() {
             window.addEventListener('contextmenu', (e) => {
                 e.preventDefault();

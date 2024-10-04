@@ -77,7 +77,9 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 .and_then(|doc| {
                     let dst = doc.get_element_by_id("kloenk-wasm")?;
                     let canvas = web_sys::HtmlCanvasElement::from(window.canvas()?);
-                    canvas.set_attribute("tabindex", "0").expect("failed to set tabindex");
+                    canvas
+                        .set_attribute("tabindex", "0")
+                        .expect("failed to set tabindex");
                     dst.append_child(&canvas).ok()?;
                     canvas.focus().expect("Unable to focus on canvas");
                     Some(())
