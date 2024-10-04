@@ -1,4 +1,4 @@
-FROM rust:1.81-slim-bookworm AS rust
+FROM rust:1.81 AS rust
 
 # Add empty project such that dependencies can be built without requiring src code
 # RUN cargo new --bin app
