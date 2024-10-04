@@ -20,6 +20,7 @@ sudo ufw allow https
 
 
 Useful rust tools to improve project:
+- ``cargo fmt`` to format the project
 - ``cargo tree`` to see dependency graph 
 - ``cargo audit`` to scan CVEs 
 - ``cargo +nightly udeps --all-targets`` to find unused/duplicate dependencies 

@@ -1,3 +1,4 @@
+use crate::application::{Application, StateInitializationEvent};
 #[cfg(not(target_arch = "wasm32"))]
 use fs_extra::copy_items;
 #[cfg(not(target_arch = "wasm32"))]
@@ -5,7 +6,6 @@ use fs_extra::dir::CopyOptions;
 #[cfg(not(target_arch = "wasm32"))]
 use std::env;
 use winit::event_loop::EventLoop;
-use crate::application::{Application, StateInitializationEvent};
 mod application;
 mod camera;
 mod components;

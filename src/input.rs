@@ -104,6 +104,7 @@ impl Input {
     pub fn process_mouse_button(&mut self, button: &MouseButton, state: &ElementState) {
         let is_pressed = *state == ElementState::Pressed;
 
+        #[allow(clippy::single_match)]
         match button {
             MouseButton::Right => {
                 self.right_mouse_clicked.set_press_state(is_pressed);

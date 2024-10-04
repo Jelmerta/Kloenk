@@ -42,7 +42,6 @@ const CUBE_TEX: &[model::TexVertex] = &[
 ];
 
 const CUBE_INDICES: &[u16] = &[
-    // Top
     0, 1, 2, 0, 2, 3, // Bottom
     4, 7, 6, 4, 6, 5, // Left
     0, 3, 7, 0, 7, 4, // Right
@@ -171,7 +170,7 @@ pub async fn load_binary(file_name: &str) -> anyhow::Result<Vec<u8>> {
                 .await?
                 .to_vec();
         } else {
-            let path = std::path::Path::new(env!("OUT_DIR"))
+            let path = std::path::Path::new(std::env::var("OUT_DIR").unwrap().as_str())
                 .join("resources")
                 .join(file_name);
             let data = std::fs::read(path)?;
