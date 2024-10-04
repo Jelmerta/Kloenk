@@ -13,9 +13,9 @@ FROM rust AS planner
 # We remove the db containing audit advice as otherwise a big cache layer is introduced.
 COPY . .
 RUN cargo audit \
-&& rm -rf /usr/local/cargo/advisory-db*
+&& rm -rf /usr/local/cargo/advisory-db* \
 && cargo fmt --all -- --check \
-&& cargo chef prepare --recipe-path recipe.json \
+&& cargo chef prepare --recipe-path recipe.json
 
 FROM rust AS builder
 COPY --from=planner /app/recipe.json recipe.json
