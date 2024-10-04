@@ -36,7 +36,7 @@ RUN cargo fmt --all -- --check \
 # FROM alpine:3.20
 FROM openresty/openresty:alpine
 COPY ./index.html /usr/share/nginx/html/index.html
-COPY --from=0 /usr/src/app/output /usr/share/nginx/html
+COPY --from=0 /app/output /usr/share/nginx/html
 COPY ./resources /usr/share/nginx/html/resources
 COPY ./resources/web/nginx.conf /etc/nginx/conf.d/default.conf
 COPY ./resources/web/common_headers.conf /etc/nginx/conf.d/common_headers.conf
