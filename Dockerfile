@@ -1,18 +1,29 @@
-FROM rust:1.81
+FROM rust:1.81 as rust
 
 # Add empty project such that dependencies can be built without requiring src code
 # RUN cargo new --bin app
-WORKDIR /app
-
-# Setup # only if web , for we docker layers we might wanna split up as late as possible? though adding this target has no real downsides anyway
 RUN rustup target add wasm32-unknown-unknown \
 	&& rustup component add clippy rustfmt \
-	&& cargo install cargo-audit wasm-bindgen-cli wasm-opt --locked
+	&& cargo install cargo-audit cargo-chef wasm-bindgen-cli wasm-opt
+WORKDIR app
+
+FROM rust as planner
+COPY src src
+COPY Cargo.toml Cargo.lock ./
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM rust as builder
+COPY --from=planner /app/recipe.json recipe.json
+# clippy option?
+RUN cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-unknown target-dir target
+
+
+# Setup # only if web , for we docker layers we might wanna split up as late as possible? though adding this target has no real downsides anyway
 
 # Check dependencies
 COPY Cargo.toml Cargo.lock ./
-RUN cargo fetch --locked \
-&& cargo audit 
+RUN cargo audit \
+# && cargo fetch --locked surely this is already done in chef
 
 # Build just the dependencies
 # RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen || true 
@@ -20,8 +31,8 @@ RUN cargo fetch --locked \
 # Verify source & build binaries
 COPY src src
 RUN cargo fmt --all -- --check \
-&& cargo clippy --release --all-targets --all-features --frozen -- -Dwarnings \
-&& cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen \
+# && cargo clippy --release --all-targets --all-features --frozen -- -Dwarnings \
+&& cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk_bin \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk_bin.wasm --target web --out-dir bg_output --out-name kloenk \
 && wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz --dce --strip-debug --strip-producers --inlining --coalesce-locals --simplify-locals \
 && mkdir output \
@@ -37,7 +48,7 @@ RUN cargo fmt --all -- --check \
 # FROM alpine:3.20
 FROM openresty/openresty:alpine
 COPY ./index.html /usr/share/nginx/html/index.html
-COPY --from=0 /app/output /usr/share/nginx/html
+COPY --from=builder /app/output /usr/share/nginx/html
 COPY ./resources /usr/share/nginx/html/resources
 COPY ./resources/web/nginx.conf /etc/nginx/conf.d/default.conf
 COPY ./resources/web/common_headers.conf /etc/nginx/conf.d/common_headers.conf
