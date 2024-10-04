@@ -8,8 +8,9 @@ RUN rustup target add wasm32-unknown-unknown \
 WORKDIR /app
 
 FROM rust AS planner
-COPY Cargo.toml Cargo.lock ./
-COPY src src
+# COPY Cargo.toml Cargo.lock ./
+# COPY src src
+COPY . .
 RUN cargo audit \
 && cargo fmt --all -- --check \
 && cargo chef prepare --recipe-path recipe.json \
@@ -25,14 +26,15 @@ RUN cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-
 # Setup # only if web , for we docker layers we might wanna split up as late as possible? though adding this target has no real downsides anyway
 
 # Check dependencies
-COPY Cargo.toml Cargo.lock ./
+# COPY Cargo.toml Cargo.lock ./
 # && cargo fetch --locked surely this is already done in chef
 
 # Build just the dependencies
 # RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen || true 
 
 # Verify source & build binaries
-COPY src src
+# COPY src src
+COPY . .
 # && cargo clippy --release --all-targets --all-features --frozen -- -Dwarnings \
 RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk_bin \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk_bin.wasm --target web --out-dir bg_output --out-name kloenk \
