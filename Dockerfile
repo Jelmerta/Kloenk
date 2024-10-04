@@ -33,6 +33,7 @@ RUN cargo fmt --all -- --check \
 
 # ENTRYPOINT ["/bin/bash", "-l", "-c"]
 
+# Deploy
 # FROM alpine:3.20
 FROM openresty/openresty:alpine
 COPY ./index.html /usr/share/nginx/html/index.html
