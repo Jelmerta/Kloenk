@@ -1,7 +1,6 @@
 FROM rust:1.81
 
 # Add empty project such that dependencies can be built without requiring src code
-RUN cargo new --bin app
 WORKDIR /app
 
 # Setup # only if web , for we docker layers we might wanna split up as late as possible? though adding this target has no real downsides anyway
@@ -13,9 +12,6 @@ RUN rustup target add wasm32-unknown-unknown \
 COPY Cargo.toml Cargo.lock ./
 RUN cargo fetch --locked \
 && cargo audit 
-
-# Build just the dependencies
-RUN cargo build --target wasm32-unknown-unknown --release --locked --target-dir target --frozen || true 
 
 # Verify source & build binaries
 COPY src src
