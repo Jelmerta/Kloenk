@@ -10,12 +10,12 @@ WORKDIR /app
 FROM rust AS planner
 # COPY Cargo.toml Cargo.lock ./
 # COPY src src
+# We remove the db containing audit advice as otherwise a big cache layer is introduced.
 COPY . .
 RUN cargo audit \
+&& rm -rf /usr/local/cargo/advisory-db*
 && cargo fmt --all -- --check \
 && cargo chef prepare --recipe-path recipe.json \
-&& rm -rf /usr/local/cargo/advisory-db*
-# ^ We remove the db containing audit advice as otherwise a big cache layer is introduced.
 
 FROM rust AS builder
 COPY --from=planner /app/recipe.json recipe.json
