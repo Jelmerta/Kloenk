@@ -1,18 +1,18 @@
-FROM rust:1.81 as rust
+FROM rust:1.81 AS rust
 
 # Add empty project such that dependencies can be built without requiring src code
 # RUN cargo new --bin app
 RUN rustup target add wasm32-unknown-unknown \
 	&& rustup component add clippy rustfmt \
 	&& cargo install cargo-audit cargo-chef wasm-bindgen-cli wasm-opt
-WORKDIR app
+WORKDIR /app
 
-FROM rust as planner
+FROM rust AS planner
 COPY src src
 COPY Cargo.toml Cargo.lock ./
 RUN cargo chef prepare --recipe-path recipe.json
 
-FROM rust as builder
+FROM rust AS builder
 COPY --from=planner /app/recipe.json recipe.json
 # clippy option?
 RUN cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-unknown --target-dir target
