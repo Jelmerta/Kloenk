@@ -15,13 +15,13 @@ RUN cargo fetch --locked \
 && cargo audit 
 
 # Build just the dependencies
-RUN cargo build --target wasm32-unknown-unknown --release --locked --target-dir target --frozen || true 
+RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen || true 
 
 # Verify source & build binaries
 COPY src src
 RUN cargo fmt --all -- --check \
-&& cargo clippy --all-targets --all-features --frozen -- -Dwarnings \
-&& cargo build --target wasm32-unknown-unknown --release --locked --target-dir target --frozen \
+&& cargo clippy --release --all-targets --all-features --frozen -- -Dwarnings \
+&& cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk_bin.wasm --target web --out-dir bg_output --out-name kloenk \
 && wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz --dce --strip-debug --strip-producers --inlining --coalesce-locals --simplify-locals \
 && mkdir output \
