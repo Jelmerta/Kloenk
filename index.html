@@ -2,7 +2,7 @@
 <head>
     <title>Kloenk</title>
     <link rel="icon" href="/resources/favicon.ico" type="image/x-icon">
-    <script>
+    <script type="module">
         import init, * as bndings from '/kloenk.js';
         const wasm = await init('/kloenk.wasm');
         window.wasmBindings = bindings;
@@ -13,7 +13,7 @@
 
 
 <body id="kloenk-wasm">
-    <script>
+    <script type="module">
         export function prevent_default_context_menu() {
             window.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
