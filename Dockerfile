@@ -15,7 +15,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 FROM rust as builder
 COPY --from=planner /app/recipe.json recipe.json
 # clippy option?
-RUN cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-unknown target-dir target
+RUN cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-unknown --target-dir target
 
 
 # Setup # only if web , for we docker layers we might wanna split up as late as possible? though adding this target has no real downsides anyway
