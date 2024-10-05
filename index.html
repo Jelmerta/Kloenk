@@ -2,13 +2,13 @@
 <head>
     <title>Kloenk</title>
     <link rel="icon" href="/resources/favicon.ico" type="image/x-icon">
-    <script type="module">
+    <script type="module" crossorigin="anonymous">
         import init, * as bindings from '/kloenk.js';
         const wasm = await init('/kloenk.wasm');
         window.wasmBindings = bindings;
     </script>
     <link rel="modulepreload" href="/kloenk.js">
-    <link rel="preload" href="/kloenk.wasm" as="fetch" type="application/wasm">
+    <link rel="preload" href="/kloenk.wasm" as="fetch" type="application/wasm" crossorigin="anonymous">
 </head>
 
 
