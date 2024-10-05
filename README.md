@@ -40,6 +40,8 @@ Other things to consider:
 - Switching to nightly compiler:
     - ``rustup target add wasm32-unknown-unknown --toolchain nightly``
     - ``cargo +nightly build -Z build-std=std,panic_abort --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk_bin``
+- Look at Bevy's optimizations:
+    - https://github.com/bevyengine/bevy/blob/main/.cargo/config_fast_builds.toml
 
 Setting up the server: 
 - To enter the server: ``ssh root@$ip_adress``
