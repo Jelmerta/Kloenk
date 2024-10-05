@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
 jobs:
   build:
-    runs-on: ubicloud
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout project
         uses: actions/checkout@v4.2.0
