@@ -12,6 +12,9 @@ FROM rust AS planner
 # COPY src src
 # We remove the db containing audit advice as otherwise a big cache layer is introduced.
 # src folder invalidates all next cache layers. We do not gain speed to remove resulting folders such as audits advisory db or clippy's target folder
+# Clippy is being very annoying by running a different rust command and not producing the resulting binary, otherwise we would use this for building as well, related: https://github.com/rust-lang/cargo/issues/8716
+COPY Cargo.toml Cargo.lock ./
+RUN cargo fetch --target wasm32-unknown-unknown
 COPY . .
 RUN cargo audit \
 # && rm -rf /usr/local/cargo/advisory-db* \
