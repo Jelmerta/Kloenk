@@ -11,10 +11,13 @@ FROM rust AS planner
 # COPY Cargo.toml Cargo.lock ./
 # COPY src src
 # We remove the db containing audit advice as otherwise a big cache layer is introduced.
+# src folder invalidates all next cache layers. We do not gain speed to remove resulting folders such as audits advisory db or clippy's target folder
 COPY . .
 RUN cargo audit \
-&& rm -rf /usr/local/cargo/advisory-db* \
+# && rm -rf /usr/local/cargo/advisory-db* \
 && cargo fmt --all -- --check \
+&& cargo clippy --target wasm32-unknown-unknown --release --target-dir target --frozen -- -Dwarnings \
+# && rm -rf target \
 && cargo chef prepare --recipe-path recipe.json
 
 FROM rust AS builder
@@ -35,7 +38,6 @@ RUN cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-
 # Verify source & build binaries
 # COPY src src
 COPY . .
-# && cargo clippy --release --all-targets --all-features --frozen -- -Dwarnings \
 RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk_bin \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk_bin.wasm --target web --out-dir bg_output --out-name kloenk \
 && wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz --dce --strip-debug --strip-producers --inlining --coalesce-locals --simplify-locals \
