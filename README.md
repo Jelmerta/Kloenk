@@ -33,6 +33,9 @@ Useful rust tools to improve project:
 - ``cargo clippy`` for linting tips, small code improvements 
 - ``cargo outdated`` or ``cargo outdated --depth 1`` to find new versions of dependencies. Alternatively, cargo-machete can be used. 
 - ``cargo bloat --release -n 100`` optionally with ``--crates`` to figure out functions and dependencies that contribute most to binary size
+Other things to consider:
+- Switching to other linker may be faster (mold is optimized for linux, lld is an option)
+- Switching to Cranelift for local development, less optimized but produces working executable binaries
 
 
 Setting up the server: 
