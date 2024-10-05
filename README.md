@@ -35,8 +35,11 @@ Useful rust tools to improve project:
 - ``cargo bloat --release -n 100`` optionally with ``--crates`` to figure out functions and dependencies that contribute most to binary size
 Other things to consider:
 - Switching to other linker may be faster (mold is optimized for linux, lld is an option)
+    - ``cargo +nightly rustc --bin kloenk_bin -- -Z time-passes`` to figure out time taken for linker
 - Switching to Cranelift for local development, less optimized but produces working executable binaries
-
+- Switching to nightly compiler:
+    - ``rustup target add wasm32-unknown-unknown --toolchain nightly``
+    - ``cargo +nightly build -Z build-std=std,panic_abort --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk_bin``
 
 Setting up the server: 
 - To enter the server: ``ssh root@$ip_adress``
