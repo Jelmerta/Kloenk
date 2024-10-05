@@ -27,9 +27,8 @@ RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --
 && cp ./bg_output/kloenk.js output/kloenk.js \
 && cp ./bg_output/kloenk.wasm output/kloenk.wasm
 
-#FROM openresty/openresty:alpine
 #nginx:alpine does not include required nginx sub_filter dependencies
-FROM nginx:1.27
+FROM openresty/openresty:alpine
 COPY ./index.html /usr/share/nginx/html/index.html
 COPY --from=builder /app/output /usr/share/nginx/html
 COPY ./resources /usr/share/nginx/html/resources
