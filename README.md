@@ -6,10 +6,13 @@ Application is available online at https://hatsu.tech
 
 Currently build for web using:
 <!-- https://github.com/gfx-rs/wgpu/wiki/Running-on-the-Web-with-WebGPU-and-WebGL -->
-RUSTFLAGS=--cfg=web_sys_unstable_apis wasm-pack build --target web
-Locally we use trunk to serve the application on the web page: https://trunkrs.dev/
-``trunk serve'' will serve the application at localhost:8080
-We run ``cargo run'' to run the application as a standalone client.
+<!-- RUSTFLAGS=--cfg=web_sys_unstable_apis wasm-pack build --target web -->
+<!-- Locally we use trunk to serve the application on the web page: https://trunkrs.dev/ -->
+<!-- ``trunk serve'' will serve the application at localhost:8080 -->
+<!-- We run ``cargo run'' to run the application as a standalone client. -->
+``https://www.rust-lang.org/tools/install``
+``rustup update``
+For local development, we want to use bacon with clippy instead of building every time. Clippy does not easily allow building of wasm though...
 
 Notes for host deployment: Make sure firewall allows access on 80/443 for http/https
 sudo ufw allow 80
@@ -20,12 +23,15 @@ sudo ufw allow https
 
 
 Useful rust tools to improve project:
+- ``cargo build --timings`` produces a report showing crate compile times
+- ``cargo update`` to update latest compatible semantic version
 - ``cargo fmt`` to format the project
-- ``cargo tree`` to see dependency graph 
+- ``cargo tree`` to see dependency graph. ``cargo tree --duplicate`` can be used to find dependencies with multiple versions. 
+- ``cargo features prune`` to show only the features used by our project. Other features can be disabled
 - ``cargo audit`` to scan CVEs 
 - ``cargo +nightly udeps --all-targets`` to find unused/duplicate dependencies 
 - ``cargo clippy`` for linting tips, small code improvements 
-- ``cargo outdated`` or ``cargo outdated --depth 1`` to find new versions of dependencies 
+- ``cargo outdated`` or ``cargo outdated --depth 1`` to find new versions of dependencies. Alternatively, cargo-machete can be used. 
 - ``cargo bloat --release -n 100`` optionally with ``--crates`` to figure out functions and dependencies that contribute most to binary size
 
 
