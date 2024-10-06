@@ -12,13 +12,13 @@ FROM rust AS planner
 COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
-FROM rust as checker
+FROM rust AS checker
 RUN cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -Dwarnings
 
-FROM rust as auditor
+FROM rust AS auditor
 RUN cargo audit
 
-FROM rust as formatchecker
+FROM rust AS formatchecker
 RUN cargo fmt --all -- --check
 
 FROM rust AS builder
