@@ -10,10 +10,16 @@ FROM rust AS planner
 # Clippy is being very annoying by running a different rust command and not producing the resulting binary, otherwise we would use this for building as well, related: https://github.com/rust-lang/cargo/issues/8716
 # Consider running clippy only on desktop client target
 COPY . .
-RUN cargo audit \
-&& cargo fmt --all -- --check \
-&& cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -Dwarnings \
-&& cargo chef prepare --recipe-path recipe.json
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM rust as checker
+RUN cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -Dwarnings
+
+FROM rust as auditor
+RUN cargo audit
+
+FROM rust as formatchecker
+RUN cargo fmt --all -- --check
 
 FROM rust AS builder
 COPY --from=planner /app/recipe.json recipe.json

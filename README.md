@@ -52,3 +52,22 @@ Now we can deploy
 - Checking docker containers: ``docker ps -a``
 - Logs: ``docker logs $container_name``
 - Enter container: ``docker exec -it $container_name /bin/sh``
+
+
+Local development(windows+standalone client):
+cargo run --target x86_64-pc-windows-msvc
+
+Local development(windows+web):
+Once:
+Run nginx
+cp .\resources\web\nginx.conf C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\conf
+cp .\resources\web\common_headers.conf C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\conf
+cp -r .\resources\ C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html\
+cp .\index.html C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html
+
+Every change:
+cargo build --target wasm32-unknown-unknown --target-dir target --frozen --bin kloenk_bin
+wasm-bindgen target/wasm32-unknown-unknown/debug/kloenk_bin.wasm --target web --out-dir bg_output --out-name kloenk
+mv -Force .\bg_output\kloenk_bg.wasm .\bg_output\kloenk.wasm
+cp ./bg_output/kloenk.wasm C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html\
+cp ./bg_output/kloenk.js C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html\
