@@ -10,10 +10,19 @@ FROM rust AS planner
 # Clippy is being very annoying by running a different rust command and not producing the resulting binary, otherwise we would use this for building as well, related: https://github.com/rust-lang/cargo/issues/8716
 # Consider running clippy only on desktop client target
 COPY . .
-RUN cargo audit \
-&& cargo fmt --all -- --check \
-&& cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -Dwarnings \
-&& cargo chef prepare --recipe-path recipe.json
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM rust AS checker
+COPY . .
+RUN cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -Dwarnings
+
+FROM rust AS auditor
+COPY . .
+RUN cargo audit
+
+FROM rust AS formatchecker
+COPY . .
+RUN cargo fmt --all -- --check
 
 FROM rust AS builder
 COPY --from=planner /app/recipe.json recipe.json
@@ -27,7 +36,13 @@ RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --
 && cp ./bg_output/kloenk.js output/kloenk.js \
 && cp ./bg_output/kloenk.wasm output/kloenk.wasm
 
+#nginx:alpine does not include required nginx sub_filter dependencies
 FROM openresty/openresty:alpine
+# Force stages to be run
+COPY --from=checker /etc/hostname /dev/null
+COPY --from=auditor /etc/hostname /dev/null
+COPY --from=formatchecker /etc/hostname /dev/null
+
 COPY ./index.html /usr/share/nginx/html/index.html
 COPY --from=builder /app/output /usr/share/nginx/html
 COPY ./resources /usr/share/nginx/html/resources
