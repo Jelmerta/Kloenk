@@ -85,7 +85,7 @@ impl GameState {
 
         let shield_position = Position {
             x: -2.7,
-            y: -2.6,
+            y: -2.7,
             z: 0.0,
         };
         position_components.insert(shield.clone(), shield_position);
