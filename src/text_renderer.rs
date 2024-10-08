@@ -26,6 +26,7 @@ impl TextWriter {
             .await
             .unwrap();
 
+        //??
         let mut fontdb = fontdb::Database::new();
         fontdb.load_font_data(font_data);
         let mut font_system = FontSystem::new_with_locale_and_db("en-US".to_string(), fontdb);
