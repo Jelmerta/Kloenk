@@ -21,7 +21,7 @@ cgmath = "0.18"
 anyhow = { version = "1.0", default-features = false }
 itertools = { version = "0.13", default-features = false, features = ["use_alloc"] }
 glyphon = "0.6"
-image = { version = "0.25", default-features = false, features = ["png", "jpeg"]}
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 # glob = "0.3.1"
 
 [build-dependencies]
