@@ -59,6 +59,9 @@ Now we can deploy
 - Logs: ``docker logs $container_name``
 - Enter container: ``docker exec -it $container_name /bin/sh``
 
+Local development(linux+standalone client):
+cargo watch -x 'run'
+
 Local development(windows+standalone client):
 cargo run --target x86_64-pc-windows-msvc
 (cargo watch -x 'run --target x86_64-pc-windows-msvc')
