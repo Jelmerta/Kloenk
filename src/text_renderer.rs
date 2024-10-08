@@ -1,8 +1,8 @@
 use crate::gui::UIState;
 use crate::resources;
 use glyphon::{
-    Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping, SwashCache,
-    TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
+    fontdb, Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping,
+    SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
 };
 use wgpu::{Adapter, Device, Queue, Surface};
 
@@ -22,13 +22,14 @@ impl TextWriter {
         surface: &Surface<'_>,
         adapter: &Adapter,
     ) -> Self {
-        let mut font_system = FontSystem::new();
-
         let font_data = resources::load_binary("PlaywriteNL-Regular.ttf")
             .await
             .unwrap();
 
-        font_system.db_mut().load_font_data(font_data.to_vec());
+        //??
+        let mut fontdb = fontdb::Database::new();
+        fontdb.load_font_data(font_data);
+        let mut font_system = FontSystem::new_with_locale_and_db("en-US".to_string(), fontdb);
 
         let caps = surface.get_capabilities(adapter);
         let surface_format = caps // I see tutorial using wgpu::TextureFormat::Bgra8UnormSrgb
