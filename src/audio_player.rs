@@ -1,24 +1,19 @@
 use crate::resources::load_binary;
-use log::{debug, info, log, warn};
 use std::collections::HashMap;
 use std::io::Cursor;
 
 pub struct AudioPlayer {
-    sink: rodio::Sink,
     sounds: HashMap<String, Sound>,
 }
 
 impl AudioPlayer {
     pub async fn new() -> Self {
-        let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
-        let sink = rodio::Sink::try_new(&handle).unwrap();
-
         let mut audio_player = AudioPlayer {
-            sink,
             sounds: HashMap::new(),
         };
 
         // Probably split this up such that audio player does not have data
+        // or maybe run on separate thread
         audio_player.load_sounds().await;
 
         audio_player
@@ -26,16 +21,14 @@ impl AudioPlayer {
 
     async fn load_sounds(&mut self) {
         let bonk_sound = Sound {
-            bytes: load_binary("bonk.mp3").await.unwrap(),
+            // bytes: load_binary("bonk.mp3").await.unwrap(),
         };
 
         self.sounds.insert("bonk".to_string(), bonk_sound);
     }
 
-    pub fn play_audio(&self, sound: &str) {
-        info!("Playing audio: {}", sound);
-        info!("{:?}", self.sounds.values().into_iter().collect::<Vec<_>>());
-        info!("{:?}", self.sounds.get(sound).unwrap().bytes);
+    //, sound: &str
+    pub fn play_audio(&self) {
         std::thread::spawn(move || {
             let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
             let sink = rodio::Sink::try_new(&handle).unwrap();
@@ -49,7 +42,6 @@ impl AudioPlayer {
     }
 }
 
-#[derive(Debug)]
 struct Sound {
-    bytes: Vec<u8>,
+    // bytes: Vec<u8>,
 }
