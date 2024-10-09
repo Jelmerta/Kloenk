@@ -147,7 +147,7 @@ impl GameSystem {
             .rotation_y_degrees
             .clamp(CAMERA_BOTTOM_LIMIT, CAMERA_TOP_LIMIT);
 
-        let normalised_scroll_amount: f32 = -input.scrolled_amount as f32 * 0.1;
+        let normalised_scroll_amount: f32 = -input.scrolled_amount * 0.1;
 
         if player_camera.distance + normalised_scroll_amount <= MIN_CAMERA_DISTANCE {
             player_camera.distance = MIN_CAMERA_DISTANCE;
