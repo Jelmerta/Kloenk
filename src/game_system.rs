@@ -42,7 +42,7 @@ impl GameSystem {
             }
             let item_unwrap = item.unwrap().clone();
 
-            let player_position = game_state.get_position("player".to_string()).unwrap();
+            let player_position = game_state.get_position(&"player".to_string()).unwrap();
             let placed_position = Position {
                 x: player_position.x - 1.1,
                 y: player_position.y - 1.1,
@@ -54,7 +54,7 @@ impl GameSystem {
                 return;
             }
 
-            let item_hitbox = game_state.get_hitbox(item_unwrap.to_string()).unwrap();
+            let item_hitbox = game_state.get_hitbox(&item_unwrap.to_string()).unwrap();
 
             let colliding_entities: Vec<Entity> = game_state
                 .entities
@@ -64,8 +64,8 @@ impl GameSystem {
                 .filter(|e| *e != "player")
                 .filter(|e| {
                     Self::check_collision(
-                        game_state.get_position((*e).to_string()).unwrap(),
-                        game_state.get_hitbox((*e).to_string()).unwrap(),
+                        game_state.get_position(&(*e).to_string()).unwrap(),
+                        game_state.get_hitbox(&(*e).to_string()).unwrap(),
                         &placed_position,
                         item_hitbox,
                     )
@@ -93,7 +93,7 @@ impl GameSystem {
                 Self::check_in_dimension(
                     desired_position.x,
                     0.0,
-                    game_state.get_position((*entity).to_string()).unwrap().x,
+                    game_state.get_position(&(*entity).to_string()).unwrap().x,
                     0.5,
                 )
             }) // Assume 0.5 as half tile
@@ -101,7 +101,7 @@ impl GameSystem {
                 Self::check_in_dimension(
                     desired_position.y,
                     0.0,
-                    game_state.get_position(entity.to_string()).unwrap().y,
+                    game_state.get_position(&entity.to_string()).unwrap().y,
                     0.5,
                 )
             }) // Assume 0.5 as half tile
@@ -167,7 +167,7 @@ impl GameSystem {
         }
 
         if input.w_pressed.is_pressed {
-            let player_position = game_state.get_position("player".to_string()).unwrap();
+            let player_position = game_state.get_position(&"player".to_string()).unwrap();
             let desired_position = Position {
                 x: player_position.x - movement_speed,
                 y: player_position.y - movement_speed,
@@ -176,13 +176,13 @@ impl GameSystem {
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(game_state, &desired_position)
             {
-                let player_position = game_state.get_position_mut("player".to_string()).unwrap();
+                let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
             }
         }
 
         if input.s_pressed.is_pressed {
-            let player_position = game_state.get_position_mut("player".to_string()).unwrap();
+            let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
             let desired_position = Position {
                 x: player_position.x + movement_speed,
                 y: player_position.y + movement_speed,
@@ -191,13 +191,13 @@ impl GameSystem {
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(game_state, &desired_position)
             {
-                let player_position = game_state.get_position_mut("player".to_string()).unwrap();
+                let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
             }
         }
 
         if input.a_pressed.is_pressed {
-            let player_position = game_state.get_position_mut("player".to_string()).unwrap();
+            let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
             let desired_position = Position {
                 x: player_position.x - movement_speed,
                 y: player_position.y + movement_speed,
@@ -206,13 +206,13 @@ impl GameSystem {
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(game_state, &desired_position)
             {
-                let player_position = game_state.get_position_mut("player".to_string()).unwrap();
+                let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
             }
         }
 
         if input.d_pressed.is_pressed {
-            let player_position = game_state.get_position_mut("player".to_string()).unwrap();
+            let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
             let desired_position = Position {
                 x: player_position.x + movement_speed,
                 y: player_position.y - movement_speed,
@@ -221,7 +221,7 @@ impl GameSystem {
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(game_state, &desired_position)
             {
-                let player_position = game_state.get_position_mut("player".to_string()).unwrap();
+                let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
             }
         }
@@ -246,16 +246,16 @@ impl GameSystem {
             .iter()
             .filter(|entity| {
                 entity.as_str() != "player"
-                    && game_state.get_hitbox((*entity).to_string()).is_some()
-                    && game_state.get_position((*entity).to_string()).is_some()
+                    && game_state.get_hitbox(&(*entity).to_string()).is_some()
+                    && game_state.get_position(&(*entity).to_string()).is_some()
             })
             .collect();
 
-        let player_hitbox = game_state.get_hitbox("player".to_string()).unwrap();
+        let player_hitbox = game_state.get_hitbox(&"player".to_string()).unwrap();
 
         for entity in interactable_entities {
-            let entity_position = game_state.get_position(entity.to_string()).unwrap();
-            let entity_hitbox = game_state.get_hitbox(entity.to_string()).unwrap();
+            let entity_position = game_state.get_position(&entity.to_string()).unwrap();
+            let entity_hitbox = game_state.get_hitbox(&entity.to_string()).unwrap();
             if Self::check_collision(
                 desired_position,
                 player_hitbox,
@@ -319,8 +319,8 @@ impl ItemPickupSystem {
             let near_pickup = near_pickup.unwrap();
 
             if !Self::in_range(
-                game_state.get_position(player.clone()).unwrap(),
-                game_state.get_position(near_pickup.clone()).unwrap(),
+                game_state.get_position(&player.clone()).unwrap(),
+                game_state.get_position(&near_pickup.clone()).unwrap(),
             ) {
                 ui_state.text = "No item found around you to pick up.".to_string();
                 return;
@@ -342,7 +342,7 @@ impl ItemPickupSystem {
             .unwrap();
 
             ui_state.text = "You pick up the item!".to_string();
-            game_state.remove_position(near_pickup.clone());
+            game_state.remove_position(&near_pickup.clone());
             game_state.create_in_storage(player.clone(), near_pickup.clone(), empty_spot);
         }
     }

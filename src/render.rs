@@ -1,10 +1,10 @@
+// use anyhow::*;
+use cgmath::{prelude::*, Point3, Vector3};
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::iter;
 use std::sync::Arc;
 use wgpu::RenderPass;
-// use anyhow::*;
-use cgmath::{prelude::*, Point3, Vector3};
 // use gltf::iter::Meshes;
 // use gltf::mesh::util::indices;
 // use gltf::texture as gltf_texture;
@@ -705,7 +705,7 @@ impl Renderer {
         let rad_x = f32::to_radians(camera.rotation_x_degrees);
         let rad_y = f32::to_radians(camera.rotation_y_degrees);
 
-        let player_position = game_state.get_position(player.clone()).unwrap();
+        let player_position = game_state.get_position(&player.clone()).unwrap();
         self.camera.eye = Point3 {
             x: player_position.x + camera.distance * rad_y.sin() * rad_x.cos(),
             y: player_position.z + camera.distance * rad_y.cos(),
@@ -920,7 +920,7 @@ impl Renderer {
         game_state
             .entities
             .iter()
-            .filter(|entity| game_state.get_position((*entity).to_string()).is_some())
+            .filter(|entity| game_state.get_position(&(*entity).to_string()).is_some())
             .filter(|entity| {
                 game_state
                     .graphics_3d_components
@@ -929,7 +929,7 @@ impl Renderer {
             .chunk_by(|entity| {
                 // "group_by"
                 game_state
-                    .get_graphics((*entity).to_string())
+                    .get_graphics(&(*entity).to_string())
                     .unwrap()
                     .model_id
                     .clone()
@@ -940,7 +940,9 @@ impl Renderer {
                 let instance_group: Vec<Instance> = entity_group
                     .into_iter()
                     .map(|entity| {
-                        Self::convert_instance(game_state.get_position(entity.to_string()).unwrap())
+                        Self::convert_instance(
+                            game_state.get_position(&entity.to_string()).unwrap(),
+                        )
                     })
                     .collect();
                 let buffer = Self::create_instance_buffer(&self.device, &instance_group);
@@ -963,7 +965,8 @@ impl Renderer {
         let inventory = game_state.get_storage("player".to_string()).unwrap();
         let item_distance_x = ui_state.inventory_width / f32::from(inventory.number_of_columns);
         let item_distance_y = ui_state.inventory_height / f32::from(inventory.number_of_rows);
-        let item_picture_scale_x = ui_state.inventory_width / f32::from(inventory.number_of_columns);
+        let item_picture_scale_x =
+            ui_state.inventory_width / f32::from(inventory.number_of_columns);
         let item_picture_scale_y = ui_state.inventory_height / f32::from(inventory.number_of_rows);
 
         let mut render_groups = Vec::new();
@@ -972,7 +975,7 @@ impl Renderer {
             .chunk_by(|(entity, _)| {
                 // "group_by"
                 game_state
-                    .get_graphics_inventory((**entity).to_string())
+                    .get_graphics_inventory(entity)
                     .unwrap()
                     .model_id
                     .clone()
