@@ -25,7 +25,7 @@ impl UIState {
             // TODO We can probably store items here on a signal when inv changes. That
             // way we do not need to calculate inventory every frame when inventory is
             // shown
-            text: "".to_string(),
+            text: String::new(),
             text_position_x: 0.05,
             text_position_y: 0.6,
             text_width: 0.6,

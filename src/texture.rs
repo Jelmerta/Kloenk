@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::{Ok, Result};
 use image::GenericImageView;
 
 pub struct Texture {

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use cgmath::num_traits::ToPrimitive;
 
 use crate::components::{CameraTarget, Entity, Hitbox, ItemShape, Position, Storable, Storage};
-use crate::game_state::*;
+use crate::game_state::GameState;
 use crate::gui::UIState;
 use crate::input::Input;
 
@@ -64,8 +64,8 @@ impl GameSystem {
                 .filter(|e| *e != "player")
                 .filter(|e| {
                     Self::check_collision(
-                        game_state.get_position(e.to_string()).unwrap(),
-                        game_state.get_hitbox(e.to_string()).unwrap(),
+                        game_state.get_position((*e).to_string()).unwrap(),
+                        game_state.get_hitbox((*e).to_string()).unwrap(),
                         &placed_position,
                         item_hitbox,
                     )
@@ -93,7 +93,7 @@ impl GameSystem {
                 Self::check_in_dimension(
                     desired_position.x,
                     0.0,
-                    game_state.get_position(entity.to_string()).unwrap().x,
+                    game_state.get_position((*entity).to_string()).unwrap().x,
                     0.5,
                 )
             }) // Assume 0.5 as half tile
@@ -246,8 +246,8 @@ impl GameSystem {
             .iter()
             .filter(|entity| {
                 entity.as_str() != "player"
-                    && game_state.get_hitbox(entity.to_string()).is_some()
-                    && game_state.get_position(entity.to_string()).is_some()
+                    && game_state.get_hitbox((*entity).to_string()).is_some()
+                    && game_state.get_position((*entity).to_string()).is_some()
             })
             .collect();
 
@@ -421,15 +421,15 @@ impl StorageManager {
         for in_storage_entity in in_storage_entities {
             let in_storage = game_state
                 .in_storage_components
-                .get(&in_storage_entity.to_string())
+                .get(&(*in_storage_entity).to_string())
                 .unwrap();
             let storable = game_state
                 .storable_components
-                .get(&in_storage_entity.to_string())
+                .get(&(*in_storage_entity).to_string())
                 .unwrap();
             for x in in_storage.position_x..in_storage.position_x + storable.shape.width {
                 for y in in_storage.position_y..in_storage.position_y + storable.shape.height {
-                    storage_spots[y as usize][x as usize] = true
+                    storage_spots[y as usize][x as usize] = true;
                 }
             }
         }
@@ -443,12 +443,12 @@ impl StorageManager {
             .filter(|e| {
                 game_state
                     .in_storage_components
-                    .contains_key(&e.to_string())
+                    .contains_key(&(*e).to_string())
             })
             .filter(|e| {
                 game_state
                     .in_storage_components
-                    .get(&e.to_string())
+                    .get(&(*e).to_string())
                     .unwrap()
                     .storage_entity
                     == *entity
@@ -466,12 +466,12 @@ impl StorageManager {
             .filter(|e| {
                 game_state
                     .in_storage_components
-                    .contains_key(&e.to_string())
+                    .contains_key(&(*e).to_string())
             })
             .filter(|e| {
                 game_state
                     .in_storage_components
-                    .get(&e.to_string())
+                    .get(&(*e).to_string())
                     .unwrap()
                     .storage_entity
                     == *entity

@@ -180,7 +180,7 @@ impl Renderer {
             .formats
             .iter()
             .copied()
-            .find(|f| f.is_srgb())
+            .find(wgpu::TextureFormat::is_srgb)
             .unwrap_or(surface_caps.formats[0]);
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -824,9 +824,9 @@ impl Renderer {
 
             let inventory_items = game_state.get_in_storages(&"player".to_string());
             let render_groups = self.create_render_groups_ui(game_state, ui_state, inventory_items);
-            render_groups.iter().for_each(|render_group| {
+            for render_group in &render_groups {
                 self.render_ui(&mut render_pass_ui, render_group);
-            });
+            }
 
             drop(render_pass_ui);
         }
@@ -898,10 +898,10 @@ impl Renderer {
         Instance {
             position: Vector3 {
                 x: UIState::convert_clip_space_x(
-                    ui_state.inventory_position_x + item.position_x as f32 * item_distance_x,
+                    ui_state.inventory_position_x + f32::from(item.position_x) * item_distance_x,
                 ),
                 y: UIState::convert_clip_space_y(
-                    ui_state.inventory_position_y + item.position_y as f32 * item_distance_y,
+                    ui_state.inventory_position_y + f32::from(item.position_y) * item_distance_y,
                 ),
                 z: 0.0,
             },
@@ -920,7 +920,7 @@ impl Renderer {
         game_state
             .entities
             .iter()
-            .filter(|entity| game_state.get_position(entity.to_string()).is_some())
+            .filter(|entity| game_state.get_position((*entity).to_string()).is_some())
             .filter(|entity| {
                 game_state
                     .graphics_3d_components
@@ -929,7 +929,7 @@ impl Renderer {
             .chunk_by(|entity| {
                 // "group_by"
                 game_state
-                    .get_graphics(entity.to_string())
+                    .get_graphics((*entity).to_string())
                     .unwrap()
                     .model_id
                     .clone()
@@ -961,10 +961,10 @@ impl Renderer {
         inventory_items: HashMap<&Entity, &InStorage>,
     ) -> Vec<RenderGroup> {
         let inventory = game_state.get_storage("player".to_string()).unwrap();
-        let item_distance_x = ui_state.inventory_width / inventory.number_of_columns as f32;
-        let item_distance_y = ui_state.inventory_height / inventory.number_of_rows as f32;
-        let item_picture_scale_x = ui_state.inventory_width / inventory.number_of_columns as f32;
-        let item_picture_scale_y = ui_state.inventory_height / inventory.number_of_rows as f32;
+        let item_distance_x = ui_state.inventory_width / f32::from(inventory.number_of_columns);
+        let item_distance_y = ui_state.inventory_height / f32::from(inventory.number_of_rows);
+        let item_picture_scale_x = ui_state.inventory_width / f32::from(inventory.number_of_columns);
+        let item_picture_scale_y = ui_state.inventory_height / f32::from(inventory.number_of_rows);
 
         let mut render_groups = Vec::new();
         inventory_items
@@ -972,7 +972,7 @@ impl Renderer {
             .chunk_by(|(entity, _)| {
                 // "group_by"
                 game_state
-                    .get_graphics_inventory(entity.to_string())
+                    .get_graphics_inventory((**entity).to_string())
                     .unwrap()
                     .model_id
                     .clone()
@@ -997,8 +997,8 @@ impl Renderer {
                             in_storage,
                             item_distance_x,
                             item_distance_y,
-                            item_picture_scale_x * item_shape.width as f32,
-                            item_picture_scale_y * item_shape.height as f32,
+                            item_picture_scale_x * f32::from(item_shape.width),
+                            item_picture_scale_y * f32::from(item_shape.height),
                         )
                     })
                     .collect();

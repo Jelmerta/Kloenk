@@ -1,6 +1,6 @@
 use winit::application::ApplicationHandler;
 use winit::event_loop::{EventLoop, EventLoopProxy};
-use winit::{event::*, keyboard::PhysicalKey};
+use winit::{event::{ElementState, KeyEvent, WindowEvent}, keyboard::PhysicalKey};
 
 use crate::game_system::GameSystem;
 // use anyhow::*;
@@ -57,7 +57,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             ApplicationState::Initialized(_) => return,
             ApplicationState::Initializing => return,
             ApplicationState::Uninitialized => {
-                self.application_state = ApplicationState::Initializing
+                self.application_state = ApplicationState::Initializing;
             } // Continue
         }
 
@@ -191,16 +191,16 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     &mut game.input_handler,
                 );
                 match game.renderer.render(&game.game_state, &game.ui_state) {
-                    Ok(_) => {}
+                    Ok(()) => {}
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        game.renderer.resize(game.renderer.size)
+                        game.renderer.resize(game.renderer.size);
                     }
                     Err(wgpu::SurfaceError::OutOfMemory) => {
                         event_loop.exit();
                     }
 
                     Err(wgpu::SurfaceError::Timeout) => {
-                        log::warn!("Surface timeout")
+                        log::warn!("Surface timeout");
                     }
                 }
             }
