@@ -897,7 +897,8 @@ impl Renderer {
             self.draw_ui(&mut render_pass_ui, &inventory_render_group);
 
             let inventory_items = game_state.get_in_storages(&"player".to_string());
-            let render_groups = self.create_render_groups_ui(game_state, ui_state, inventory_items);
+            let render_groups =
+                self.create_render_groups_ui(game_state, ui_state, &inventory_items);
             for render_group in &render_groups {
                 self.draw_ui(&mut render_pass_ui, render_group);
             }
