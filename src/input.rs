@@ -120,8 +120,8 @@ impl Input {
                 // Used by WASM
                 y: scroll,
                 ..
-            }) => *scroll as f64,
-            MouseScrollDelta::LineDelta(_, scroll) => *scroll * 100.0, // Used by standalone client
+            }) => *scroll,
+            MouseScrollDelta::LineDelta(_, scroll) => *scroll as f64 * 100.0, // Used by standalone client
         };
     }
 }
