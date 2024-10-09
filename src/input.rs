@@ -114,6 +114,7 @@ impl Input {
         }
     }
 
+    #[allow(clippy::cast_possible_truncation)]
     pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
         self.scrolled_amount = match delta {
             MouseScrollDelta::PixelDelta(PhysicalPosition {
