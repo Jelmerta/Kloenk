@@ -107,7 +107,7 @@ pub async fn load_model(
         contents: bytemuck::cast_slice(indices),
         usage: wgpu::BufferUsages::INDEX,
     });
-    let num_indices = indices.len() as u64;
+    let num_indices = indices.len() as u32;
 
     let meshes = vec![model::Mesh {
         // name: file_name.to_string(),
