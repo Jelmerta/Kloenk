@@ -8,7 +8,7 @@ pub trait Vertex {
 
 #[repr(C)] // Not sure what this effectively does here
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)] // Read up more about bytemuck, to cast our VERTICES as a &[u8]
-pub struct ModelVertex {
+pub struct ColoredVertex {
     pub position: [f32; 3],
     pub color: [f32; 3],
 }
@@ -20,10 +20,10 @@ pub struct TexVertex {
     pub tex_coords: [f32; 2],
 }
 
-impl Vertex for ModelVertex {
+impl Vertex for ColoredVertex {
     fn desc() -> wgpu::VertexBufferLayout<'static> {
         wgpu::VertexBufferLayout {
-            array_stride: size_of::<ModelVertex>() as wgpu::BufferAddress,
+            array_stride: size_of::<ColoredVertex>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
             attributes: &[
                 wgpu::VertexAttribute {

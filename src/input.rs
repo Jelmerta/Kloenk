@@ -42,16 +42,16 @@ pub struct Input {
 
     pub right_mouse_clicked: KeyPress,
 
-    pub scrolled_amount: f32,
+    pub scrolled_amount: f64,
 }
 
 impl Input {
     pub fn new() -> Self {
-        Default::default()
+        Input::default()
     }
 
-    pub fn update(&mut self, keycode: &KeyCode, state: &ElementState) {
-        let is_pressed = *state == ElementState::Pressed;
+    pub fn update(&mut self, keycode: KeyCode, state: ElementState) {
+        let is_pressed = state == ElementState::Pressed;
 
         match keycode {
             KeyCode::KeyW => {
@@ -101,8 +101,8 @@ impl Input {
         }
     }
 
-    pub fn process_mouse_button(&mut self, button: &MouseButton, state: &ElementState) {
-        let is_pressed = *state == ElementState::Pressed;
+    pub fn process_mouse_button(&mut self, button: MouseButton, state: ElementState) {
+        let is_pressed = state == ElementState::Pressed;
 
         #[allow(clippy::single_match)]
         match button {
@@ -120,7 +120,7 @@ impl Input {
                 // Used by WASM
                 y: scroll,
                 ..
-            }) => *scroll as f32,
+            }) => *scroll as f64,
             MouseScrollDelta::LineDelta(_, scroll) => *scroll * 100.0, // Used by standalone client
         };
     }

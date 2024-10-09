@@ -479,8 +479,8 @@ impl StorageManager {
             .collect()
     }
 
-    pub fn find_in_storage(game_state: &GameState, entity: Entity) -> Option<&Entity> {
-        let storage_entities = StorageManager::get_in_storage_entities(game_state, &entity);
+    pub fn find_in_storage(game_state: &GameState, entity: &Entity) -> Option<&Entity> {
+        let storage_entities = StorageManager::get_in_storage_entities(game_state, entity);
         storage_entities.first().copied()
     }
 }
@@ -492,7 +492,7 @@ impl PositionManager {
         positions: &HashMap<Entity, Position>,
         storables: &HashMap<Entity, Storable>,
         entities: &[Entity],
-        entity: Entity,
+        entity: &Entity,
     ) -> Option<Entity> {
         entities
             .iter()
@@ -500,7 +500,7 @@ impl PositionManager {
             .filter(|e| positions.contains_key(e.as_str()))
             .min_by_key(|e| {
                 Self::distance_2d(
-                    positions.get(&entity).unwrap(),
+                    positions.get(entity).unwrap(),
                     positions.get(e.as_str()).unwrap(),
                 )
                 .round()
