@@ -198,31 +198,7 @@ impl Renderer {
         };
         surface.configure(&device, &config);
 
-        // ----- texture stuff
-        let texture_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            multisampled: false,
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                ],
-                label: Some("texture_bind_group_layout"),
-            });
-
-        // ----- end texture stuff
+        let texture_bind_group_layout = Self::setup_texture_layout(&device);
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
@@ -453,6 +429,32 @@ impl Renderer {
         }
     }
 
+    fn setup_texture_layout(device: &Device) -> BindGroupLayout {
+        let texture_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+                label: Some("texture_bind_group_layout"),
+            });
+        texture_bind_group_layout
+    }
+
     fn setup_pipeline(
         device: &Device,
         config: &SurfaceConfiguration,
@@ -497,7 +499,7 @@ impl Renderer {
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[&texture_bind_group_layout, &camera_bind_group_layout],
+                bind_group_layouts: &[texture_bind_group_layout, &camera_bind_group_layout],
                 push_constant_ranges: &[],
             });
 
@@ -505,7 +507,7 @@ impl Renderer {
             label: Some("Render Pipeline"),
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
-                module: &shader,
+                module: shader,
                 entry_point: "vs_main",
                 buffers: &[model::TexVertex::desc(), InstanceRaw::desc()],
                 compilation_options: Default::default(),
@@ -532,7 +534,7 @@ impl Renderer {
                 alpha_to_coverage_enabled: false,
             },
             fragment: Some(wgpu::FragmentState {
-                module: &shader,
+                module: shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
@@ -597,7 +599,7 @@ impl Renderer {
         let render_pipeline_layout_ui =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout UI"),
-                bind_group_layouts: &[&texture_bind_group_layout, &camera_bind_group_layout_ui],
+                bind_group_layouts: &[texture_bind_group_layout, &camera_bind_group_layout_ui],
                 push_constant_ranges: &[],
             });
 
@@ -605,7 +607,7 @@ impl Renderer {
             label: Some("Render Pipeline UI"),
             layout: Some(&render_pipeline_layout_ui),
             vertex: wgpu::VertexState {
-                module: &shader,
+                module: shader,
                 entry_point: "vs_main",
                 buffers: &[model::TexVertex::desc(), InstanceRaw::desc()],
                 compilation_options: Default::default(),
@@ -626,7 +628,7 @@ impl Renderer {
                 alpha_to_coverage_enabled: false,
             },
             fragment: Some(wgpu::FragmentState {
-                module: &shader,
+                module: shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
@@ -655,9 +657,9 @@ impl Renderer {
         let mut model_map: HashMap<String, model::Model> = HashMap::new();
         let shield = resources::load_model(
             "shield.jpg",
-            &device,
-            &queue,
-            &texture_bind_group_layout,
+            device,
+            queue,
+            texture_bind_group_layout,
             "CUBE",
         )
         .await
@@ -666,9 +668,9 @@ impl Renderer {
 
         let shield_inventory = resources::load_model(
             "shield.jpg",
-            &device,
-            &queue,
-            &texture_bind_group_layout,
+            device,
+            queue,
+            texture_bind_group_layout,
             "SQUARE",
         )
         .await
@@ -677,9 +679,9 @@ impl Renderer {
 
         let character = resources::load_model(
             "character.jpg",
-            &device,
-            &queue,
-            &texture_bind_group_layout,
+            device,
+            queue,
+            texture_bind_group_layout,
             "CUBE",
         )
         .await
@@ -688,9 +690,9 @@ impl Renderer {
 
         let sword = resources::load_model(
             "sword.jpg",
-            &device,
-            &queue,
-            &texture_bind_group_layout,
+            device,
+            queue,
+            texture_bind_group_layout,
             "CUBE",
         )
         .await
@@ -699,9 +701,9 @@ impl Renderer {
 
         let sword_inventory = resources::load_model(
             "sword.jpg",
-            &device,
-            &queue,
-            &texture_bind_group_layout,
+            device,
+            queue,
+            texture_bind_group_layout,
             "SQUARE",
         )
         .await
@@ -710,24 +712,19 @@ impl Renderer {
 
         let grass = resources::load_model(
             "grass.jpg",
-            &device,
-            &queue,
-            &texture_bind_group_layout,
+            device,
+            queue,
+            texture_bind_group_layout,
             "CUBE",
         )
         .await
         .unwrap();
         model_map.insert("grass".to_string(), grass);
 
-        let tree = resources::load_model(
-            "tree.png",
-            &device,
-            &queue,
-            &texture_bind_group_layout,
-            "CUBE",
-        )
-        .await
-        .unwrap();
+        let tree =
+            resources::load_model("tree.png", device, queue, texture_bind_group_layout, "CUBE")
+                .await
+                .unwrap();
         model_map.insert("tree".to_string(), tree);
         model_map
     }
