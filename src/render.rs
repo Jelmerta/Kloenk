@@ -27,7 +27,7 @@ use crate::model::{self};
 use crate::text_renderer::TextWriter;
 // use crate::text_renderer::TextWriter;
 use crate::{resources, texture};
-use model::DrawModel;
+use model::draw;
 
 // #[wasm_bindgen(start)]
 // pub fn run() -> Result<(), JsValue> {
@@ -76,7 +76,7 @@ pub struct Renderer {
     model_map: HashMap<String, model::Model>,
     depth_texture: texture::DepthTexture,
     render_groups: Vec<RenderGroup>,
-    text_renderer: TextWriter,
+    text_writer: TextWriter,
 }
 
 struct Instance {
@@ -677,7 +677,7 @@ impl Renderer {
             //obj_model: garfield,
             depth_texture,
             render_groups: Vec::new(),
-            text_renderer: text_writer,
+            text_writer: text_writer,
         }
     }
 
@@ -831,7 +831,7 @@ impl Renderer {
             drop(render_pass_ui);
         }
 
-        self.text_renderer
+        self.text_writer
             .write(&self.device, &self.queue, &mut encoder, &view, ui_state);
 
         //use model::DrawModel;
