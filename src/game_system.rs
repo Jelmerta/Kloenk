@@ -271,7 +271,8 @@ impl GameSystem {
                 entity_position,
                 entity_hitbox,
             ) {
-                audio_player.play_audio("bonk");
+                // audio_player.play_audio("bonk");
+                audio_player.play_audio();
                 return true;
             }
         }

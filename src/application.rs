@@ -22,7 +22,6 @@ use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowId};
 
-use crate::audio_player;
 use crate::audio_player::AudioPlayer;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
@@ -106,7 +105,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             let event_loop_proxy = self.event_loop_proxy.clone();
             spawn_local(async move {
                 let renderer = renderer_future.await;
-                let audio_player: AudioPlayer::new();
+                let audio_player: AudioPlayer = AudioPlayer::new().await;
 
                 let game = Engine {
                     renderer,
