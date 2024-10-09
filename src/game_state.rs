@@ -41,70 +41,123 @@ impl GameState {
         let mut storage_components = HashMap::new();
         let in_storage_components = HashMap::new();
 
-        // Load player
-        let player = "player".to_string();
-        entities.push(player.clone());
+        Self::load_player(
+            &mut entities,
+            &mut graphics_3d_components,
+            &mut position_components,
+            &mut hitbox_components,
+            &mut camera_target_components,
+            &mut storage_components,
+        );
+        Self::load_shield(
+            &mut entities,
+            &mut graphics_3d_components,
+            &mut graphics_2d_components,
+            &mut position_components,
+            &mut hitbox_components,
+            &mut storable_components,
+        );
+        Self::load_swords(
+            &mut entities,
+            &mut graphics_3d_components,
+            &mut graphics_2d_components,
+            &mut position_components,
+            &mut hitbox_components,
+            &mut storable_components,
+        );
+        Self::load_tiles(
+            &mut entities,
+            &mut graphics_3d_components,
+            &mut position_components,
+            &mut surface_components,
+        );
+        Self::load_tree(
+            &mut entities,
+            &mut graphics_3d_components,
+            &mut position_components,
+            &mut hitbox_components,
+        );
 
-        let player_graphics = Graphics3D {
-            model_id: "character".to_string(),
+        Self {
+            // current_entity_id,
+            entities,
+            graphics_3d_components,
+            graphics_2d_components,
+            position_components,
+            surface_components,
+            hitbox_components,
+            camera_target_components,
+            storable_components,
+            storage_components,
+            in_storage_components,
+        }
+    }
+
+    fn load_tree(
+        entities: &mut Vec<String>,
+        graphics_3d_components: &mut HashMap<String, Graphics3D>,
+        position_components: &mut HashMap<String, Position>,
+        hitbox_components: &mut HashMap<String, Hitbox>,
+    ) {
+        let tree = "tree".to_string();
+        entities.push(tree.clone());
+
+        let tree_graphics = Graphics3D {
+            model_id: "tree".to_string(),
         };
-        graphics_3d_components.insert(player.clone(), player_graphics);
+        graphics_3d_components.insert(tree.clone(), tree_graphics);
 
-        let player_position = Position {
-            x: 0.0,
-            y: 0.0,
+        let tree_position = Position {
+            x: 2.0,
+            y: -3.0,
             z: 0.0,
         };
-        position_components.insert(player.clone(), player_position);
+        position_components.insert(tree.clone(), tree_position);
 
-        let player_hitbox = Hitbox { hitbox: 0.5 };
-        hitbox_components.insert(player.clone(), player_hitbox);
+        let tree_hitbox = Hitbox { hitbox: 0.51 };
+        hitbox_components.insert(tree.clone(), tree_hitbox);
+    }
 
-        let camera_target = CameraTarget {
-            distance: f32::sqrt(TOTAL_DISTANCE / 3.0),
-            rotation_x_degrees: 225.0,
-            rotation_y_degrees: 315.0,
-        };
-        camera_target_components.insert(player.clone(), camera_target);
+    fn load_tiles(
+        entities: &mut Vec<String>,
+        graphics_3d_components: &mut HashMap<String, Graphics3D>,
+        position_components: &mut HashMap<String, Position>,
+        surface_components: &mut HashSet<String>,
+    ) {
+        let plane_longitude_minimum = -10;
+        let plane_longitude_maximum = 10;
+        let plane_latitude_minimum = -10;
+        let plane_latitude_maximum = 10;
+        for x in plane_longitude_minimum..plane_longitude_maximum {
+            for y in plane_latitude_minimum..plane_latitude_maximum {
+                let plane = format!("plane{x}{y}"); //todo copy?
+                entities.push(plane.clone());
 
-        let player_storage = Storage {
-            number_of_rows: 8,
-            number_of_columns: 8,
-        };
-        storage_components.insert(player.clone(), player_storage);
+                let plane_graphics = Graphics3D {
+                    model_id: "grass".to_string(),
+                };
+                graphics_3d_components.insert(plane.clone(), plane_graphics);
 
-        // Load shield
-        let shield = "shield".to_string();
-        entities.push(shield.clone());
-        let shield_graphics = Graphics3D {
-            model_id: "shield".to_string(),
-        };
-        graphics_3d_components.insert(shield.clone(), shield_graphics);
+                let plane_position = Position {
+                    x: x as f32,
+                    y: y as f32,
+                    z: -1.0,
+                };
+                position_components.insert(plane.clone(), plane_position);
 
-        let shield_graphics_inventory = Graphics2D {
-            model_id: "shield_inventory".to_string(),
-        };
-        graphics_2d_components.insert(shield.clone(), shield_graphics_inventory);
+                surface_components.insert(plane.clone());
+            }
+        }
+    }
 
-        let shield_position = Position {
-            x: -2.7,
-            y: -2.7,
-            z: 0.0,
-        };
-        position_components.insert(shield.clone(), shield_position);
-
-        let shield_hitbox = Hitbox { hitbox: 0.51 };
-        hitbox_components.insert(shield.clone(), shield_hitbox);
-
-        let shield_storable = Storable {
-            shape: ItemShape {
-                width: 1,
-                height: 2,
-            },
-        };
-        storable_components.insert(shield.clone(), shield_storable);
-
-        // Load sword
+    fn load_swords(
+        entities: &mut Vec<String>,
+        graphics_3d_components: &mut HashMap<String, Graphics3D>,
+        graphics_2d_components: &mut HashMap<String, Graphics2D>,
+        position_components: &mut HashMap<String, Position>,
+        hitbox_components: &mut HashMap<String, Hitbox>,
+        storable_components: &mut HashMap<String, Storable>,
+    ) {
         for i in 1..71 {
             let sword = "sword".to_string() + &i.to_string();
             entities.push(sword.clone());
@@ -137,65 +190,85 @@ impl GameState {
             };
             storable_components.insert(sword.clone(), sword_storable);
         }
+    }
 
-        // Load tiles
-        let plane_longitude_minimum = -10;
-        let plane_longitude_maximum = 10;
-        let plane_latitude_minimum = -10;
-        let plane_latitude_maximum = 10;
-        for x in plane_longitude_minimum..plane_longitude_maximum {
-            for y in plane_latitude_minimum..plane_latitude_maximum {
-                let plane = format!("plane{x}{y}"); //todo copy?
-                entities.push(plane.clone());
-
-                let plane_graphics = Graphics3D {
-                    model_id: "grass".to_string(),
-                };
-                graphics_3d_components.insert(plane.clone(), plane_graphics);
-
-                let plane_position = Position {
-                    x: x as f32,
-                    y: y as f32,
-                    z: -1.0,
-                };
-                position_components.insert(plane.clone(), plane_position);
-
-                surface_components.insert(plane.clone());
-            }
-        }
-
-        // Load tree
-        let tree = "tree".to_string();
-        entities.push(tree.clone());
-
-        let tree_graphics = Graphics3D {
-            model_id: "tree".to_string(),
+    fn load_shield(
+        entities: &mut Vec<String>,
+        graphics_3d_components: &mut HashMap<String, Graphics3D>,
+        graphics_2d_components: &mut HashMap<String, Graphics2D>,
+        position_components: &mut HashMap<String, Position>,
+        hitbox_components: &mut HashMap<String, Hitbox>,
+        storable_components: &mut HashMap<String, Storable>,
+    ) {
+        let shield = "shield".to_string();
+        entities.push(shield.clone());
+        let shield_graphics = Graphics3D {
+            model_id: "shield".to_string(),
         };
-        graphics_3d_components.insert(tree.clone(), tree_graphics);
+        graphics_3d_components.insert(shield.clone(), shield_graphics);
 
-        let tree_position = Position {
-            x: 2.0,
-            y: -3.0,
+        let shield_graphics_inventory = Graphics2D {
+            model_id: "shield_inventory".to_string(),
+        };
+        graphics_2d_components.insert(shield.clone(), shield_graphics_inventory);
+
+        let shield_position = Position {
+            x: -2.7,
+            y: -2.7,
             z: 0.0,
         };
-        position_components.insert(tree.clone(), tree_position);
+        position_components.insert(shield.clone(), shield_position);
 
-        let tree_hitbox = Hitbox { hitbox: 0.51 };
-        hitbox_components.insert(tree.clone(), tree_hitbox);
+        let shield_hitbox = Hitbox { hitbox: 0.51 };
+        hitbox_components.insert(shield.clone(), shield_hitbox);
 
-        Self {
-            // current_entity_id,
-            entities,
-            graphics_3d_components,
-            graphics_2d_components,
-            position_components,
-            surface_components,
-            hitbox_components,
-            camera_target_components,
-            storable_components,
-            storage_components,
-            in_storage_components,
-        }
+        let shield_storable = Storable {
+            shape: ItemShape {
+                width: 1,
+                height: 2,
+            },
+        };
+        storable_components.insert(shield.clone(), shield_storable);
+    }
+
+    fn load_player(
+        entities: &mut Vec<String>,
+        graphics_3d_components: &mut HashMap<String, Graphics3D>,
+        position_components: &mut HashMap<String, Position>,
+        hitbox_components: &mut HashMap<String, Hitbox>,
+        camera_target_components: &mut HashMap<String, CameraTarget>,
+        storage_components: &mut HashMap<String, Storage>,
+    ) {
+        let player = "player".to_string();
+        entities.push(player.clone());
+
+        let player_graphics = Graphics3D {
+            model_id: "character".to_string(),
+        };
+        graphics_3d_components.insert(player.clone(), player_graphics);
+
+        let player_position = Position {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        };
+        position_components.insert(player.clone(), player_position);
+
+        let player_hitbox = Hitbox { hitbox: 0.5 };
+        hitbox_components.insert(player.clone(), player_hitbox);
+
+        let camera_target = CameraTarget {
+            distance: f32::sqrt(TOTAL_DISTANCE / 3.0),
+            rotation_x_degrees: 225.0,
+            rotation_y_degrees: 315.0,
+        };
+        camera_target_components.insert(player.clone(), camera_target);
+
+        let player_storage = Storage {
+            number_of_rows: 8,
+            number_of_columns: 8,
+        };
+        storage_components.insert(player.clone(), player_storage);
     }
 
     pub fn get_graphics(&self, entity: Entity) -> Option<&Graphics3D> {
