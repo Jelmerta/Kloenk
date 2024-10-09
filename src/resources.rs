@@ -161,15 +161,16 @@ fn format_url(file_name: &str) -> reqwest::Url {
     base.join("resources/").unwrap().join(file_name).unwrap()
 }
 
-pub async fn load_binary(file_name: &str) -> anyhow::Result<Vec<u8>> {
+pub fn load_binary(file_name: &str) -> anyhow::Result<Vec<u8>> {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             let url = format_url(file_name);
-            let data = reqwest::get(url)
+            let data = async { reqwest::get(url)
                 .await?
                 .bytes()
                 .await?
                 .to_vec();
+                }
         } else {
             let path = std::path::Path::new(std::env::var("OUT_DIR").unwrap().as_str())
                 .join("resources")
