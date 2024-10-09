@@ -250,6 +250,7 @@ impl GameSystem {
         desired_position: &Position,
         audio_player: &AudioPlayer,
     ) -> bool {
+        log::warn!("{:?}", audio_player.tmp);
         let interactable_entities: Vec<&Entity> = game_state
             .entities
             .iter()
@@ -272,7 +273,9 @@ impl GameSystem {
                 entity_hitbox,
             ) {
                 // audio_player.play_audio("bonk");
-                audio_player.play_audio();
+                // audio_player.play_audio();
+                AudioPlayer::play_audio();
+
                 return true;
             }
         }
