@@ -173,10 +173,10 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     },
                 ..
             } => {
-                game.input_handler.update(&key, &state);
+                game.input_handler.update(key, state);
             }
             WindowEvent::MouseInput { state, button, .. } => {
-                game.input_handler.process_mouse_button(&button, &state);
+                game.input_handler.process_mouse_button(button, state);
             }
             WindowEvent::MouseWheel { delta, .. } => {
                 game.input_handler.process_scroll(&delta);

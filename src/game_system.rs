@@ -35,7 +35,7 @@ impl GameSystem {
         input: &mut Input,
     ) {
         if input.right_mouse_clicked.is_toggled_on() {
-            let item = StorageManager::find_in_storage(game_state, "player".to_string());
+            let item = StorageManager::find_in_storage(game_state, &"player".to_string());
             if item.is_none() {
                 ui_state.text = "No items in inventory to place.".to_string();
                 return;
@@ -147,7 +147,7 @@ impl GameSystem {
             .rotation_y_degrees
             .clamp(CAMERA_BOTTOM_LIMIT, CAMERA_TOP_LIMIT);
 
-        let normalised_scroll_amount: f32 = -input.scrolled_amount * 0.1;
+        let normalised_scroll_amount: f32 = -input.scrolled_amount as f32 * 0.1;
 
         if player_camera.distance + normalised_scroll_amount <= MIN_CAMERA_DISTANCE {
             player_camera.distance = MIN_CAMERA_DISTANCE;
@@ -310,7 +310,7 @@ impl ItemPickupSystem {
                 &game_state.position_components,
                 &game_state.storable_components,
                 &game_state.entities,
-                player.clone(),
+                &player,
             );
             if near_pickup.is_none() {
                 ui_state.text = "No item found around you to pick up.".to_string();
@@ -479,7 +479,7 @@ impl StorageManager {
             .collect()
     }
 
-    pub fn find_in_storage(game_state: &GameState, entity: &Entity) -> Option<&Entity> {
+    pub fn find_in_storage<'a>(game_state: &'a GameState, entity: &Entity) -> Option<&'a Entity> {
         let storage_entities = StorageManager::get_in_storage_entities(game_state, entity);
         storage_entities.first().copied()
     }
