@@ -14,8 +14,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 
 FROM rust AS checker
 COPY . .
-RUN cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -Dwarnings
-
+RUN cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -W clippy::pedantic -W clippy::all -Dwarnings
 FROM rust AS auditor
 COPY . .
 RUN cargo audit
