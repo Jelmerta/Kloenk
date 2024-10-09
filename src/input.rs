@@ -121,7 +121,7 @@ impl Input {
                 y: scroll,
                 ..
             }) => *scroll,
-            MouseScrollDelta::LineDelta(_, scroll) => *scroll as f64 * 100.0, // Used by standalone client
+            MouseScrollDelta::LineDelta(_, scroll) => f64::from(*scroll) * 100.0, // Used by standalone client
         };
     }
 }
