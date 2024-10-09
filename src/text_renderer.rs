@@ -35,7 +35,7 @@ impl TextWriter {
             .formats
             .iter()
             .copied()
-            .find(|f| f.is_srgb())
+            .find(wgpu::TextureFormat::is_srgb)
             .unwrap_or(caps.formats[0]);
         let swash_cache = SwashCache::new();
         let cache = Cache::new(device);

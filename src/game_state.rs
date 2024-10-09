@@ -1,9 +1,9 @@
 use cgmath::num_traits::ToPrimitive;
 
-use crate::components::*;
+use crate::components::{CameraTarget, Entity, Graphics2D, Graphics3D, Hitbox, InStorage, ItemShape, Position, Storable, Storage, Surface};
 // use std::{collections::HashMap, sync::atomic::AtomicU32};
 use std::collections::HashMap;
-pub const TOTAL_DISTANCE: f32 = 200000.; // Verify naming, probably not total distance
+pub const TOTAL_DISTANCE: f32 = 200_000.; // Verify naming, probably not total distance
 
 pub struct GameState {
     // pub current_entity_id: AtomicU32,
@@ -142,7 +142,7 @@ impl GameState {
         let map_y_max = 10;
         for x in map_x_min..map_x_max {
             for y in map_y_min..map_y_max {
-                let plane = format!("plane{}{}", x, y); //todo copy?
+                let plane = format!("plane{x}{y}"); //todo copy?
                 entities.push(plane.clone());
 
                 let plane_graphics = Graphics3D {
