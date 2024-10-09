@@ -5,6 +5,9 @@ use fs_extra::copy_items;
 use fs_extra::dir::CopyOptions;
 #[cfg(not(target_arch = "wasm32"))]
 use std::env;
+#[cfg(target_arch = "wasm32")]
+use winit::platform::web::EventLoopExtWebSys;
+
 use winit::event_loop::EventLoop;
 mod application;
 mod camera;
@@ -26,7 +29,7 @@ fn main() {
 mod wasm {
     use wasm_bindgen::prelude::*;
     #[wasm_bindgen(start)]
-    pub fn run_wasm() {
+    pub fn run() {
         crate::run();
     }
 }
@@ -59,7 +62,6 @@ pub fn run() {
     #[cfg(target_arch = "wasm32")]
     {
         let application: Application = Application::new(&event_loop);
-        use winit::platform::web::EventLoopExtWebSys;
         event_loop.spawn_app(application);
     }
 
