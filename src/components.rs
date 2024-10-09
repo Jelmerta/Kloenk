@@ -40,7 +40,8 @@ pub struct Hitbox {
     pub hitbox: f32,
 }
 
-pub struct Surface {}
+// Does not contain any data (yet?)
+// pub struct Surface {}
 
 pub struct CameraTarget {
     pub distance: f32,
