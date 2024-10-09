@@ -139,8 +139,8 @@ impl GameState {
                 graphics_3d_components.insert(plane.clone(), plane_graphics);
 
                 let plane_position = Position {
-                    x: x as f32,
-                    y: y as f32,
+                    x: f64::from(x),
+                    y: f64::from(y),
                     z: -1.0,
                 };
                 position_components.insert(plane.clone(), plane_position);
