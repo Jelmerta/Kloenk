@@ -71,6 +71,7 @@ const SQUARE_TEX: &[model::TexVertex] = &[
 
 const SQUARE_INDICES: &[u16] = &[2, 1, 0, 3, 2, 0];
 
+#[allow(clippy::cast_possible_truncation)]
 pub async fn load_model(
     file_name: &str,
     device: &wgpu::Device,
