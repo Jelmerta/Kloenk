@@ -976,6 +976,7 @@ impl Renderer {
         }
     }
 
+    #[allow(clippy::cast_possible_truncation)]
     fn create_render_groups(&mut self, game_state: &GameState) {
         let mut render_groups: Vec<RenderGroup> = Vec::new();
         game_state
