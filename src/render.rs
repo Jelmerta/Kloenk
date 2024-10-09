@@ -1010,7 +1010,7 @@ impl Renderer {
                 let render_group = RenderGroup {
                     buffer,
                     model_id,
-                    instance_count: instance_group.len() as u64,
+                    instance_count: instance_group.len() as u32,
                 };
                 render_groups.push(render_group);
             });
@@ -1070,7 +1070,7 @@ impl Renderer {
                 let render_group = RenderGroup {
                     buffer,
                     model_id,
-                    instance_count: instance_group.len() as u64,
+                    instance_count: instance_group.len() as u32,
                 };
                 render_groups.push(render_group);
             });
