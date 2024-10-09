@@ -5,6 +5,9 @@ use winit::{
     keyboard::PhysicalKey,
 };
 
+#[cfg(not(target_arch = "wasm32"))]
+use winit::event::ElementState;
+
 #[cfg(target_arch = "wasm32")]
 use winit::platform::web::WindowExtWebSys;
 
