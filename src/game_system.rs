@@ -88,7 +88,7 @@ impl GameSystem {
         game_state
             .entities
             .iter()
-            .filter(|entity| game_state.surface_components.contains_key(entity.as_str()))
+            .filter(|entity| game_state.surface_components.contains(entity.as_str()))
             .filter(|entity| {
                 Self::check_in_dimension(
                     desired_position.x,
