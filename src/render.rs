@@ -5,8 +5,9 @@ use std::collections::HashMap;
 use std::iter;
 use std::sync::Arc;
 use wgpu::{
-    BindGroup, BindGroupLayout, Buffer, Device, Queue, RenderPass, RenderPipeline, ShaderModule,
-    SurfaceConfiguration,
+    BindGroup, BindGroupLayout, Buffer, CommandEncoder, Device, MemoryHints,
+    PipelineCompilationOptions, Queue, RenderPass, RenderPipeline, ShaderModule,
+    SurfaceConfiguration, TextureView,
 };
 // use gltf::iter::Meshes;
 // use gltf::mesh::util::indices;
@@ -168,7 +169,7 @@ impl Renderer {
                     label: None,
                     required_features: wgpu::Features::empty(),
                     required_limits: wgpu::Limits::default(),
-                    memory_hints: Default::default(),
+                    memory_hints: MemoryHints::default(),
                 },
                 None,
             )
@@ -430,28 +431,27 @@ impl Renderer {
     }
 
     fn setup_texture_layout(device: &Device) -> BindGroupLayout {
-        
         device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            multisampled: false,
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        },
-                        count: None,
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        multisampled: false,
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
                     },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                ],
-                label: Some("texture_bind_group_layout"),
-            })
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                    count: None,
+                },
+            ],
+            label: Some("texture_bind_group_layout"),
+        })
     }
 
     fn setup_pipeline(
@@ -509,7 +509,7 @@ impl Renderer {
                 module: shader,
                 entry_point: "vs_main",
                 buffers: &[model::TexVertex::desc(), InstanceRaw::desc()],
-                compilation_options: Default::default(),
+                compilation_options: PipelineCompilationOptions::default(),
             },
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
@@ -540,7 +540,7 @@ impl Renderer {
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
-                compilation_options: Default::default(),
+                compilation_options: PipelineCompilationOptions::default(),
             }),
             multiview: None,
             cache: None,
@@ -609,7 +609,7 @@ impl Renderer {
                 module: shader,
                 entry_point: "vs_main",
                 buffers: &[model::TexVertex::desc(), InstanceRaw::desc()],
-                compilation_options: Default::default(),
+                compilation_options: PipelineCompilationOptions::default(),
             },
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
@@ -634,7 +634,7 @@ impl Renderer {
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
-                compilation_options: Default::default(),
+                compilation_options: PipelineCompilationOptions::default(),
             }),
             multiview: None,
             cache: None,
@@ -788,6 +788,26 @@ impl Renderer {
                 label: Some("Render Encoder"),
             });
 
+        self.render_world(&view, &mut encoder);
+
+        self.render_ui(game_state, ui_state, &view, &mut encoder);
+
+        self.text_writer
+            .write(&self.device, &self.queue, &mut encoder, &view, ui_state);
+
+        //use model::DrawModel;
+        // let garfield = self.models.pop().unwrap();
+        // let mesh = &garfield.meshes[0];
+        // render_pass.draw_mesh_instanced(&garfield.meshes[0].clone(), 0..instances.len() as u32);
+        //render_pass.draw_model_instanced(&self.obj_model, 0..instances.len() as u32);
+
+        self.queue.submit(iter::once(encoder.finish()));
+        output.present();
+
+        Ok(())
+    }
+
+    fn render_world(&mut self, view: &TextureView, encoder: &mut CommandEncoder) {
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
@@ -839,8 +859,15 @@ impl Renderer {
 
             drop(render_pass);
         }
+    }
 
-        // UI
+    fn render_ui(
+        &mut self,
+        game_state: &GameState,
+        ui_state: &UIState,
+        view: &TextureView,
+        encoder: &mut CommandEncoder,
+    ) {
         if ui_state.inventory_open {
             self.set_camera_data_ui();
             let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -877,20 +904,6 @@ impl Renderer {
 
             drop(render_pass_ui);
         }
-
-        self.text_writer
-            .write(&self.device, &self.queue, &mut encoder, &view, ui_state);
-
-        //use model::DrawModel;
-        // let garfield = self.models.pop().unwrap();
-        // let mesh = &garfield.meshes[0];
-        // render_pass.draw_mesh_instanced(&garfield.meshes[0].clone(), 0..instances.len() as u32);
-        //render_pass.draw_model_instanced(&self.obj_model, 0..instances.len() as u32);
-
-        self.queue.submit(iter::once(encoder.finish()));
-        output.present();
-
-        Ok(())
     }
 
     fn create_instance_buffer(device: &wgpu::Device, instance_group: &[Instance]) -> wgpu::Buffer {
