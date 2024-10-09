@@ -161,6 +161,7 @@ fn format_url(file_name: &str) -> reqwest::Url {
     base.join("resources/").unwrap().join(file_name).unwrap()
 }
 
+#[allow(clippy::unused_async)]
 pub async fn load_binary(file_name: &str) -> anyhow::Result<Vec<u8>> {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
