@@ -1,9 +1,12 @@
 use winit::application::ApplicationHandler;
 use winit::event_loop::{EventLoop, EventLoopProxy};
 use winit::{
-    event::{ElementState, KeyEvent, WindowEvent},
+    event::{KeyEvent, WindowEvent},
     keyboard::PhysicalKey,
 };
+
+#[cfg(target_arch = "wasm32")]
+use winit::platform::web::WindowExtWebSys;
 
 // use anyhow::*;
 use crate::game_state::GameState;
@@ -73,7 +76,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             use winit::dpi::PhysicalSize;
             let _ = window.request_inner_size(PhysicalSize::new(800, 600));
 
-            use winit::platform::web::WindowExtWebSys;
             web_sys::window()
                 .and_then(|win| win.document())
                 .and_then(|doc| {
