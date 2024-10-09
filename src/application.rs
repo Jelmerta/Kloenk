@@ -57,8 +57,7 @@ pub enum State {
 impl ApplicationHandler<StateInitializationEvent> for Application {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         match self.application_state {
-            State::Initialized(_) => return,
-            State::Initializing => return,
+            State::Initializing | State::Initialized(_) => return,
             State::Uninitialized => {
                 self.application_state = State::Initializing;
             } // Continue

@@ -2,10 +2,10 @@ use cgmath::num_traits::ToPrimitive;
 
 use crate::components::{
     CameraTarget, Entity, Graphics2D, Graphics3D, Hitbox, InStorage, ItemShape, Position, Storable,
-    Storage, Surface,
+    Storage,
 };
 // use std::{collections::HashMap, sync::atomic::AtomicU32};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 pub const TOTAL_DISTANCE: f32 = 200_000.; // Verify naming, probably not total distance
 
 pub struct GameState {
@@ -17,7 +17,7 @@ pub struct GameState {
     pub graphics_3d_components: HashMap<Entity, Graphics3D>,
     pub graphics_2d_components: HashMap<Entity, Graphics2D>,
     pub position_components: HashMap<Entity, Position>,
-    pub surface_components: HashMap<Entity, Surface>,
+    pub surface_components: HashSet<Entity>,
     pub hitbox_components: HashMap<Entity, Hitbox>,
     pub camera_target_components: HashMap<Entity, CameraTarget>,
     pub storable_components: HashMap<Entity, Storable>,
@@ -34,7 +34,7 @@ impl GameState {
         let mut graphics_3d_components = HashMap::new();
         let mut graphics_2d_components = HashMap::new();
         let mut position_components = HashMap::new();
-        let mut surface_components = HashMap::new();
+        let mut surface_components = HashSet::new();
         let mut hitbox_components = HashMap::new();
         let mut camera_target_components = HashMap::new();
         let mut storable_components = HashMap::new();
@@ -160,8 +160,7 @@ impl GameState {
                 };
                 position_components.insert(plane.clone(), plane_position);
 
-                let surface = Surface {};
-                surface_components.insert(plane.clone(), surface);
+                surface_components.insert(plane.clone());
             }
         }
 
