@@ -15,6 +15,7 @@ pub struct TextWriter {
     text_buffer: Buffer,
 }
 
+#[allow(clippy::cast_possible_truncation)]`
 impl TextWriter {
     pub async fn new(
         device: &Device,
@@ -65,6 +66,7 @@ impl TextWriter {
         }
     }
 
+    #[allow(clippy::cast_possible_truncation)]
     pub fn write(
         &mut self,
         device: &Device,
