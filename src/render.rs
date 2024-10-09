@@ -140,7 +140,7 @@ impl InstanceRaw {
 struct RenderGroup {
     buffer: Buffer,
     model_id: String,
-    instance_count: u64,
+    instance_count: u32,
 }
 
 impl Renderer {
