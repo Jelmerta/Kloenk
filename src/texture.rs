@@ -7,7 +7,8 @@ pub struct Texture {
     pub sampler: wgpu::Sampler,
 }
 
-pub struct DepthTexture {
+// Probably just a specific instance of Texture?
+pub struct Depth {
     // pub texture: wgpu::Texture,
     pub view: wgpu::TextureView,
     // pub sampler: wgpu::Sampler,
@@ -82,7 +83,7 @@ impl Texture {
     }
 }
 
-impl DepthTexture {
+impl Depth {
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
     pub fn create_depth_texture(
         device: &wgpu::Device,

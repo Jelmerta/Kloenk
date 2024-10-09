@@ -78,7 +78,7 @@ pub struct Renderer {
     // models: Vec<model::Model>,
     //obj_model: model::Model,
     model_map: HashMap<String, Model>,
-    depth_texture: texture::DepthTexture,
+    depth_texture: texture::Depth,
     render_groups: Vec<RenderGroup>,
     text_writer: TextWriter,
 }
@@ -403,8 +403,7 @@ impl Renderer {
 
         let model_map = Self::load_models(&device, &queue, &texture_bind_group_layout).await;
 
-        let depth_texture =
-            texture::DepthTexture::create_depth_texture(&device, &config, "depth_texture");
+        let depth_texture = texture::Depth::create_depth_texture(&device, &config, "depth_texture");
         let text_writer = TextWriter::new(&device, &queue, &surface, &adapter).await;
         Self {
             surface,
@@ -521,7 +520,7 @@ impl Renderer {
                 conservative: false,
             },
             depth_stencil: Some(wgpu::DepthStencilState {
-                format: texture::DepthTexture::DEPTH_FORMAT,
+                format: texture::Depth::DEPTH_FORMAT,
                 depth_write_enabled: true,
                 depth_compare: wgpu::CompareFunction::Less,
                 stencil: wgpu::StencilState::default(),
@@ -734,11 +733,8 @@ impl Renderer {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-            self.depth_texture = texture::DepthTexture::create_depth_texture(
-                &self.device,
-                &self.config,
-                "depth_texture",
-            );
+            self.depth_texture =
+                texture::Depth::create_depth_texture(&self.device, &self.config, "depth_texture");
         }
     }
 
@@ -1018,6 +1014,7 @@ impl Renderer {
         self.render_groups = render_groups;
     }
 
+    #[allow(clippy::cast_possible_truncation)]
     fn create_render_groups_ui(
         &self,
         game_state: &GameState,
