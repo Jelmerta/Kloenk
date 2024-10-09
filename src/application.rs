@@ -1,10 +1,13 @@
 use winit::application::ApplicationHandler;
 use winit::event_loop::{EventLoop, EventLoopProxy};
-use winit::{event::{ElementState, KeyEvent, WindowEvent}, keyboard::PhysicalKey};
+use winit::{
+    event::{ElementState, KeyEvent, WindowEvent},
+    keyboard::PhysicalKey,
+};
 
-use crate::game_system::GameSystem;
 // use anyhow::*;
 use crate::game_state::GameState;
+use crate::game_system::GameSystem;
 use crate::gui::UIState;
 use crate::input::Input;
 use crate::render::Renderer;
@@ -16,7 +19,7 @@ use winit::window::{Window, WindowId};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
 
-pub struct Game {
+pub struct Engine {
     pub renderer: Renderer,
     pub game_state: GameState,
     pub ui_state: UIState,
@@ -24,40 +27,40 @@ pub struct Game {
     pub window: Arc<Window>,
 }
 
-impl Game {
+impl Engine {
     pub fn window(&self) -> &Window {
         self.window.as_ref()
     }
 }
 
-pub struct StateInitializationEvent(Game);
+pub struct StateInitializationEvent(Engine);
 
 pub struct Application {
-    application_state: ApplicationState,
+    application_state: State,
     event_loop_proxy: EventLoopProxy<StateInitializationEvent>,
 }
 
 impl Application {
     pub fn new(event_loop: &EventLoop<StateInitializationEvent>) -> Application {
         Application {
-            application_state: ApplicationState::Uninitialized,
+            application_state: State::Uninitialized,
             event_loop_proxy: event_loop.create_proxy(),
         }
     }
 }
-pub enum ApplicationState {
+pub enum State {
     Uninitialized,
     Initializing,
-    Initialized(Game),
+    Initialized(Engine),
 }
 
 impl ApplicationHandler<StateInitializationEvent> for Application {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         match self.application_state {
-            ApplicationState::Initialized(_) => return,
-            ApplicationState::Initializing => return,
-            ApplicationState::Uninitialized => {
-                self.application_state = ApplicationState::Initializing;
+            State::Initialized(_) => return,
+            State::Initializing => return,
+            State::Uninitialized => {
+                self.application_state = State::Initializing;
             } // Continue
         }
 
@@ -97,7 +100,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             spawn_local(async move {
                 let renderer = renderer_future.await;
 
-                let game = Game {
+                let game = Engine {
                     renderer,
                     game_state: GameState::new(),
                     ui_state: UIState::new(),
@@ -116,7 +119,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         #[cfg(not(target_arch = "wasm32"))]
         {
             let renderer = pollster::block_on(renderer_future);
-            let game = Game {
+            let game = Engine {
                 renderer,
                 game_state: GameState::new(),
                 ui_state: UIState::new(),
@@ -137,7 +140,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
 
         let game = event.0;
         game.window.request_redraw();
-        self.application_state = ApplicationState::Initialized(game);
+        self.application_state = State::Initialized(game);
     }
 
     fn window_event(
@@ -146,7 +149,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         _window_id: WindowId,
         event: WindowEvent,
     ) {
-        let ApplicationState::Initialized(ref mut game) = self.application_state else {
+        let State::Initialized(ref mut game) = self.application_state else {
             return;
         };
 

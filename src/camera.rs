@@ -1,4 +1,4 @@
-use cgmath::{Matrix4, Point3, Transform, Vector3, ortho};
+use cgmath::{ortho, Matrix4, Point3, Vector3};
 
 #[derive(Debug)]
 pub struct Camera {
