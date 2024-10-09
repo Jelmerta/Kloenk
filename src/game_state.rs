@@ -215,7 +215,7 @@ impl GameState {
         graphics_2d_components.insert(shield.clone(), shield_graphics_inventory);
 
         let shield_position = Position {
-            x: -2.7,
+            x: -2.8,
             y: -2.7,
             z: 0.0,
         };

@@ -43,8 +43,9 @@ Useful rust tools to improve project:
 - Switching to Cranelift for local development, less optimized but produces working executable binaries
 - Switching to nightly compiler:
     - ``rustup target add wasm32-unknown-unknown --toolchain nightly``
+    - or ``rustup toolchain install nightly --allow-downgrade`` ?
     -
-    ``cargo +nightly build -Z build-std=std,panic_abort --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk_bin``
+  ``cargo +nightly build -Z build-std=std,panic_abort --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk_bin``
 - Look at Bevy's optimizations:
     - https://github.com/bevyengine/bevy/blob/main/.cargo/config_fast_builds.toml
 
@@ -65,6 +66,7 @@ cargo watch -x 'run'
 Local development(windows+standalone client):
 cargo run --target x86_64-pc-windows-msvc
 (cargo watch -x 'run --target x86_64-pc-windows-msvc')
+(cargo +nightly watch --delay 60 -x 'run --target x86_64-pc-windows-msvc')
 
 Local development(windows+web):
 Once:

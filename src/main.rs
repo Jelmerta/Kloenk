@@ -10,6 +10,7 @@ use winit::platform::web::EventLoopExtWebSys;
 
 use winit::event_loop::EventLoop;
 mod application;
+mod audio_player;
 mod camera;
 mod components;
 mod game_state;
@@ -21,6 +22,7 @@ mod render;
 mod resources;
 mod text_renderer;
 mod texture;
+
 fn main() {
     run();
 }
@@ -36,6 +38,8 @@ mod wasm {
 
 /// # Panics
 pub fn run() {
+    #[cfg(not(target_arch = "wasm32"))]
+    env::set_var("RUST_LOG", "info");
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
