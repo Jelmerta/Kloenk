@@ -61,23 +61,23 @@ impl CameraUniform {
 
 pub struct Renderer {
     surface: wgpu::Surface<'static>,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
+    device: Device,
+    queue: Queue,
+    config: SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
-    render_pipeline: wgpu::RenderPipeline,
-    render_pipeline_ui: wgpu::RenderPipeline,
+    render_pipeline: RenderPipeline,
+    render_pipeline_ui: RenderPipeline,
     camera: Camera,
     camera_uniform: CameraUniform,
-    camera_buffer: wgpu::Buffer,
-    camera_bind_group: wgpu::BindGroup,
+    camera_buffer: Buffer,
+    camera_bind_group: BindGroup,
     camera_ui: Camera,
     camera_uniform_ui: CameraUniform,
-    camera_buffer_ui: wgpu::Buffer,
-    camera_bind_group_ui: wgpu::BindGroup,
+    camera_buffer_ui: Buffer,
+    camera_bind_group_ui: BindGroup,
     // models: Vec<model::Model>,
     //obj_model: model::Model,
-    model_map: HashMap<String, model::Model>,
+    model_map: HashMap<String, Model>,
     depth_texture: texture::DepthTexture,
     render_groups: Vec<RenderGroup>,
     text_writer: TextWriter,
@@ -138,7 +138,7 @@ impl InstanceRaw {
 }
 
 struct RenderGroup {
-    buffer: wgpu::Buffer,
+    buffer: Buffer,
     model_id: String,
     instance_count: u32,
 }
@@ -186,7 +186,7 @@ impl Renderer {
             .copied()
             .find(wgpu::TextureFormat::is_srgb)
             .unwrap_or(surface_caps.formats[0]);
-        let config = wgpu::SurfaceConfiguration {
+        let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
             width: size.width.max(800), // TODO size was not set and therefore
@@ -894,19 +894,19 @@ impl Renderer {
                 model_id: "sword_inventory".to_string(),
                 instance_count: 1,
             };
-            self.render_ui(&mut render_pass_ui, &inventory_render_group);
+            self.draw_ui(&mut render_pass_ui, &inventory_render_group);
 
             let inventory_items = game_state.get_in_storages(&"player".to_string());
             let render_groups = self.create_render_groups_ui(game_state, ui_state, inventory_items);
             for render_group in &render_groups {
-                self.render_ui(&mut render_pass_ui, render_group);
+                self.draw_ui(&mut render_pass_ui, render_group);
             }
 
             drop(render_pass_ui);
         }
     }
 
-    fn create_instance_buffer(device: &wgpu::Device, instance_group: &[Instance]) -> wgpu::Buffer {
+    fn create_instance_buffer(device: &Device, instance_group: &[Instance]) -> Buffer {
         let raw_instances = instance_group
             .iter()
             .map(Instance::to_raw)
@@ -1101,7 +1101,7 @@ impl Renderer {
         );
     }
 
-    fn render_ui<'a>(&'a self, render_pass: &mut RenderPass<'a>, render_group: &RenderGroup) {
+    fn draw_ui<'a>(&'a self, render_pass: &mut RenderPass<'a>, render_group: &RenderGroup) {
         render_pass.set_bind_group(
             0,
             &self
