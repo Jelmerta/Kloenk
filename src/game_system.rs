@@ -115,7 +115,7 @@ impl GameSystem {
 
     fn update_camera(game_state: &mut GameState, input: &mut Input) {
         let player_camera: &mut CameraTarget =
-            game_state.get_camera_mut("player".to_string()).unwrap();
+            game_state.get_camera_mut(&"player".to_string()).unwrap();
 
         if input.up_pressed.is_pressed {
             player_camera.rotation_y_degrees += CAMERA_MOVEMENT_SPEED;
@@ -326,7 +326,7 @@ impl ItemPickupSystem {
                 return;
             }
 
-            let inventory = game_state.get_storage(player.clone()).unwrap();
+            let inventory = game_state.get_storage(&player).unwrap();
             let inventory_items = StorageManager::get_in_storage(game_state, &player);
             if !StorageManager::has_space(game_state, inventory, &inventory_items, &near_pickup) {
                 ui_state.text =
@@ -343,7 +343,7 @@ impl ItemPickupSystem {
 
             ui_state.text = "You pick up the item!".to_string();
             game_state.remove_position(&near_pickup.clone());
-            game_state.create_in_storage(player.clone(), near_pickup.clone(), empty_spot);
+            game_state.create_in_storage(&player, near_pickup.clone(), empty_spot);
         }
     }
 
@@ -386,7 +386,7 @@ impl StorageManager {
 
         for row in 0..storage.number_of_rows {
             for column in 0..storage.number_of_columns {
-                if Self::check_empty_spot(&padded_storage, row, column, item_shape.clone()) {
+                if Self::check_empty_spot(&padded_storage, row, column, item_shape) {
                     return Some((column, row));
                 }
             }
@@ -398,7 +398,7 @@ impl StorageManager {
         padded_storage: &[Vec<bool>],
         row: u8,
         column: u8,
-        shape: ItemShape,
+        shape: &ItemShape,
     ) -> bool {
         for x in column..column + shape.width {
             for y in row..row + shape.height {
