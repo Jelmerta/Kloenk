@@ -84,7 +84,7 @@ pub struct Material {
 }
 
 // sotrh decides to implement a trait on renderpass
-pub trait draw<'a> {
+pub trait Draw<'a> {
     // fn draw_mesh(&mut self, mesh: &'a Mesh);
     fn draw_mesh_instanced(&mut self, mesh: &'a Mesh, instances: Range<u32>);
 
@@ -96,7 +96,7 @@ pub trait draw<'a> {
     //     );
 }
 
-impl<'a, 'b> draw<'b> for wgpu::RenderPass<'a>
+impl<'a, 'b> Draw<'b> for wgpu::RenderPass<'a>
 where
     'b: 'a,
 {

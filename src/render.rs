@@ -27,7 +27,7 @@ use crate::model::{self};
 use crate::text_renderer::TextWriter;
 // use crate::text_renderer::TextWriter;
 use crate::{resources, texture};
-use model::draw;
+use model::Draw;
 
 // #[wasm_bindgen(start)]
 // pub fn run() -> Result<(), JsValue> {
@@ -677,7 +677,7 @@ impl Renderer {
             //obj_model: garfield,
             depth_texture,
             render_groups: Vec::new(),
-            text_writer: text_writer,
+            text_writer,
         }
     }
 
