@@ -1,34 +1,41 @@
 use crate::resources::load_binary;
-use std::collections::HashMap;
 use std::io::Cursor;
 
 pub struct AudioPlayer {
-    sounds: HashMap<String, Sound>,
+    pub tmp: String,
+    // sounds: HashMap<String, Sound>,
 }
 
 impl AudioPlayer {
-    pub async fn new() -> Self {
-        let mut audio_player = AudioPlayer {
-            sounds: HashMap::new(),
-        };
+    // pub async fn new() -> Self {
+    pub fn new() -> Self {
+        AudioPlayer {
+            // sounds: HashMap::new(),
+            tmp: String::new(),
+        }
 
         // Probably split this up such that audio player does not have data
         // or maybe run on separate thread
-        audio_player.load_sounds().await;
+        // audio_player.load_sounds().await;
+        // audio_player.load_sounds();
 
-        audio_player
+        // audio_player
     }
 
-    async fn load_sounds(&mut self) {
-        let bonk_sound = Sound {
-            // bytes: load_binary("bonk.mp3").await.unwrap(),
-        };
+    // async fn load_sounds(&mut self) {
+    // fn load_sounds(&mut self) {
+    // fn load_sounds() {
 
-        self.sounds.insert("bonk".to_string(), bonk_sound);
-    }
+    //
+    // let bonk_sound = Sound {
+    // bytes: load_binary("bonk.mp3").await.unwrap(),
+    // };
+
+    // self.sounds.insert("bonk".to_string(), bonk_sound);
+    // }
 
     //, sound: &str
-    pub fn play_audio(&self) {
+    pub fn play_audio() {
         std::thread::spawn(move || {
             let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
             let sink = rodio::Sink::try_new(&handle).unwrap();
@@ -42,6 +49,8 @@ impl AudioPlayer {
     }
 }
 
-struct Sound {
-    // bytes: Vec<u8>,
-}
+// struct Sound {
+// bytes: Vec<u8>,
+// }
+
+//
