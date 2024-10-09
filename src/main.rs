@@ -31,7 +31,7 @@ mod wasm {
     }
 }
 
-// # Panics
+/// # Panics
 pub fn run() {
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
