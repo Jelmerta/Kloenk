@@ -140,7 +140,7 @@ impl InstanceRaw {
 struct RenderGroup {
     buffer: Buffer,
     model_id: String,
-    instance_count: u32,
+    instance_count: u64,
 }
 
 impl Renderer {
@@ -1009,7 +1009,7 @@ impl Renderer {
                 let render_group = RenderGroup {
                     buffer,
                     model_id,
-                    instance_count: instance_group.len() as u32,
+                    instance_count: instance_group.len() as u64,
                 };
                 render_groups.push(render_group);
             });
@@ -1020,7 +1020,7 @@ impl Renderer {
         &self,
         game_state: &GameState,
         ui_state: &UIState,
-        inventory_items: HashMap<&Entity, &InStorage>,
+        inventory_items: &HashMap<&Entity, &InStorage>,
     ) -> Vec<RenderGroup> {
         let inventory = game_state.get_storage(&"player".to_string()).unwrap();
         let item_distance_x = ui_state.inventory_width / f32::from(inventory.number_of_columns);
@@ -1069,7 +1069,7 @@ impl Renderer {
                 let render_group = RenderGroup {
                     buffer,
                     model_id,
-                    instance_count: instance_group.len() as u32,
+                    instance_count: instance_group.len() as u64,
                 };
                 render_groups.push(render_group);
             });

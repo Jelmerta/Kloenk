@@ -1,8 +1,8 @@
 use cfg_if::cfg_if;
 
-use wgpu::util::DeviceExt;
 //
 use crate::{model, texture};
+use wgpu::util::DeviceExt;
 
 const CUBE_TEX: &[model::TexVertex] = &[
     // Top ccw as seen from top
@@ -107,7 +107,7 @@ pub async fn load_model(
         contents: bytemuck::cast_slice(indices),
         usage: wgpu::BufferUsages::INDEX,
     });
-    let num_indices = indices.len() as u32;
+    let num_indices = indices.len() as u64;
 
     let meshes = vec![model::Mesh {
         // name: file_name.to_string(),
