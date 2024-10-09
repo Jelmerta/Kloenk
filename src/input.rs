@@ -42,7 +42,7 @@ pub struct Input {
 
     pub right_mouse_clicked: KeyPress,
 
-    pub scrolled_amount: f64,
+    pub scrolled_amount: f32,
 }
 
 impl Input {
@@ -120,8 +120,8 @@ impl Input {
                 // Used by WASM
                 y: scroll,
                 ..
-            }) => *scroll,
-            MouseScrollDelta::LineDelta(_, scroll) => f64::from(*scroll) * 100.0, // Used by standalone client
+            }) => *scroll as f32,
+            MouseScrollDelta::LineDelta(_, scroll) => *scroll * 100.0, // Used by standalone client
         };
     }
 }
