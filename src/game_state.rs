@@ -1,6 +1,9 @@
 use cgmath::num_traits::ToPrimitive;
 
-use crate::components::{CameraTarget, Entity, Graphics2D, Graphics3D, Hitbox, InStorage, ItemShape, Position, Storable, Storage, Surface};
+use crate::components::{
+    CameraTarget, Entity, Graphics2D, Graphics3D, Hitbox, InStorage, ItemShape, Position, Storable,
+    Storage, Surface,
+};
 // use std::{collections::HashMap, sync::atomic::AtomicU32};
 use std::collections::HashMap;
 pub const TOTAL_DISTANCE: f32 = 200_000.; // Verify naming, probably not total distance
@@ -136,12 +139,12 @@ impl GameState {
         }
 
         // Load tiles
-        let map_x_min = -10;
-        let map_x_max = 10;
-        let map_y_min = -10;
-        let map_y_max = 10;
-        for x in map_x_min..map_x_max {
-            for y in map_y_min..map_y_max {
+        let plane_longitude_minimum = -10;
+        let plane_longitude_maximum = 10;
+        let plane_latitude_minimum = -10;
+        let plane_latitude_maximum = 10;
+        for x in plane_longitude_minimum..plane_longitude_maximum {
+            for y in plane_latitude_minimum..plane_latitude_maximum {
                 let plane = format!("plane{x}{y}"); //todo copy?
                 entities.push(plane.clone());
 
