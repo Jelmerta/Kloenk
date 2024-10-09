@@ -273,12 +273,12 @@ impl GameState {
         storage_components.insert(player.clone(), player_storage);
     }
 
-    pub fn get_graphics(&self, entity: Entity) -> Option<&Graphics3D> {
+    pub fn get_graphics(&self, entity: &Entity) -> Option<&Graphics3D> {
         self.graphics_3d_components.get(&entity)
     }
 
     #[allow(dead_code)]
-    pub fn get_graphics_inventory(&self, entity: Entity) -> Option<&Graphics2D> {
+    pub fn get_graphics_inventory(&self, entity: &Entity) -> Option<&Graphics2D> {
         self.graphics_2d_components.get(&entity)
     }
 
@@ -286,19 +286,19 @@ impl GameState {
         self.position_components.insert(entity, position);
     }
 
-    pub fn get_position(&self, entity: Entity) -> Option<&Position> {
+    pub fn get_position(&self, entity: &Entity) -> Option<&Position> {
         self.position_components.get(&entity)
     }
 
-    pub fn get_position_mut(&mut self, entity: Entity) -> Option<&mut Position> {
+    pub fn get_position_mut(&mut self, entity: &Entity) -> Option<&mut Position> {
         self.position_components.get_mut(&entity)
     }
 
-    pub fn remove_position(&mut self, to_remove: Entity) {
+    pub fn remove_position(&mut self, to_remove: &Entity) {
         self.position_components.remove(&to_remove);
     }
 
-    pub fn get_hitbox(&self, entity: Entity) -> Option<&Hitbox> {
+    pub fn get_hitbox(&self, entity: &Entity) -> Option<&Hitbox> {
         self.hitbox_components.get(&entity)
     }
 
