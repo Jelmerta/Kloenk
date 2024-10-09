@@ -6,6 +6,8 @@ use crate::components::{
 };
 // use std::{collections::HashMap, sync::atomic::AtomicU32};
 use std::collections::{HashMap, HashSet};
+use std::f32;
+
 pub const TOTAL_DISTANCE: f32 = 200_000.; // Verify naming, probably not total distance
 
 pub struct GameState {
@@ -124,10 +126,10 @@ impl GameState {
         position_components: &mut HashMap<String, Position>,
         surface_components: &mut HashSet<String>,
     ) {
-        let plane_longitude_minimum = -10;
-        let plane_longitude_maximum = 10;
-        let plane_latitude_minimum = -10;
-        let plane_latitude_maximum = 10;
+        let plane_longitude_minimum: i8 = -10;
+        let plane_longitude_maximum: i8 = 10;
+        let plane_latitude_minimum: i8 = -10;
+        let plane_latitude_maximum: i8 = 10;
         for x in plane_longitude_minimum..plane_longitude_maximum {
             for y in plane_latitude_minimum..plane_latitude_maximum {
                 let plane = format!("plane{x}{y}"); //todo copy?
@@ -139,8 +141,8 @@ impl GameState {
                 graphics_3d_components.insert(plane.clone(), plane_graphics);
 
                 let plane_position = Position {
-                    x: f64::from(x),
-                    y: f64::from(y),
+                    x: f32::from(x),
+                    y: f32::from(y),
                     z: -1.0,
                 };
                 position_components.insert(plane.clone(), plane_position);
