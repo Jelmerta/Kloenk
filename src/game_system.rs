@@ -231,7 +231,7 @@ impl GameSystem {
         game_state
             .entities
             .iter()
-            .filter(|e| game_state.surface_components.contains_key(e.as_str()))
+            .filter(|e| game_state.surface_components.contains(e.as_str()))
             .any(|e| {
                 Self::check_walkable(
                     desired_position,
