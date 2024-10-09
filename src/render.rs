@@ -6,7 +6,7 @@ use std::iter;
 use std::sync::Arc;
 use wgpu::{
     BindGroup, BindGroupLayout, Buffer, Device, Queue, RenderPass, RenderPipeline, ShaderModule,
-    TextureFormat,
+    SurfaceConfiguration, TextureFormat,
 };
 // use gltf::iter::Meshes;
 // use gltf::mesh::util::indices;
@@ -455,7 +455,7 @@ impl Renderer {
 
     fn setup_pipeline(
         device: &Device,
-        config: &SurfaceConfiguration<Vec<TextureFormat>>,
+        config: &SurfaceConfiguration,
         texture_bind_group_layout: &BindGroupLayout,
         shader: &ShaderModule,
     ) -> (Camera, CameraUniform, Buffer, BindGroup, RenderPipeline) {
