@@ -22,6 +22,8 @@ use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowId};
 
+use crate::audio_player;
+use crate::audio_player::AudioPlayer;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
 
@@ -31,6 +33,7 @@ pub struct Engine {
     pub ui_state: UIState,
     pub input_handler: Input,
     pub window: Arc<Window>,
+    pub audio_player: AudioPlayer,
 }
 
 impl Engine {
@@ -103,6 +106,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             let event_loop_proxy = self.event_loop_proxy.clone();
             spawn_local(async move {
                 let renderer = renderer_future.await;
+                let audio_player: AudioPlayer::new();
 
                 let game = Engine {
                     renderer,
@@ -110,6 +114,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     ui_state: UIState::new(),
                     input_handler: Input::new(),
                     window,
+                    audio_player,
                 };
 
                 event_loop_proxy
@@ -123,12 +128,16 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         #[cfg(not(target_arch = "wasm32"))]
         {
             let renderer = pollster::block_on(renderer_future);
+            let audio_player = pollster::block_on(AudioPlayer::new()); // just for audio loading...?
+
             let game = Engine {
                 renderer,
                 game_state: GameState::new(),
                 ui_state: UIState::new(),
                 input_handler: Input::new(),
                 window,
+                audio_player,
+                // audio_player: AudioPlayer::new(),
             };
 
             self.event_loop_proxy
@@ -153,7 +162,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         _window_id: WindowId,
         event: WindowEvent,
     ) {
-        let State::Initialized(ref mut game) = self.application_state else {
+        let State::Initialized(ref mut engine) = self.application_state else {
             return;
         };
 
@@ -178,29 +187,30 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     },
                 ..
             } => {
-                game.input_handler.update(key, state);
+                engine.input_handler.update(key, state);
             }
             WindowEvent::MouseInput { state, button, .. } => {
-                game.input_handler.process_mouse_button(button, state);
+                engine.input_handler.process_mouse_button(button, state);
             }
             WindowEvent::MouseWheel { delta, .. } => {
-                game.input_handler.process_scroll(&delta);
+                engine.input_handler.process_scroll(&delta);
             }
             WindowEvent::Resized(physical_size) => {
-                game.renderer.resize(physical_size);
+                engine.renderer.resize(physical_size);
             }
             WindowEvent::RedrawRequested => {
-                game.window().request_redraw();
+                engine.window().request_redraw();
 
                 GameSystem::update(
-                    &mut game.game_state,
-                    &mut game.ui_state,
-                    &mut game.input_handler,
+                    &mut engine.game_state,
+                    &mut engine.ui_state,
+                    &mut engine.input_handler,
+                    &engine.audio_player,
                 );
-                match game.renderer.render(&game.game_state, &game.ui_state) {
+                match engine.renderer.render(&engine.game_state, &engine.ui_state) {
                     Ok(()) => {}
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        game.renderer.resize(game.renderer.size);
+                        engine.renderer.resize(engine.renderer.size);
                     }
                     Err(wgpu::SurfaceError::OutOfMemory) => {
                         event_loop.exit();
