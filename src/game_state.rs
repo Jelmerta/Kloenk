@@ -302,19 +302,19 @@ impl GameState {
         self.hitbox_components.get(entity)
     }
 
-    pub fn get_camera(&self, entity: Entity) -> Option<&CameraTarget> {
-        self.camera_target_components.get(&entity)
+    pub fn get_camera(&self, entity: &Entity) -> Option<&CameraTarget> {
+        self.camera_target_components.get(entity)
     }
 
-    pub fn get_camera_mut(&mut self, entity: Entity) -> Option<&mut CameraTarget> {
-        self.camera_target_components.get_mut(&entity)
+    pub fn get_camera_mut(&mut self, entity: &Entity) -> Option<&mut CameraTarget> {
+        self.camera_target_components.get_mut(entity)
     }
 
-    pub fn get_storage(&self, entity: Entity) -> Option<&Storage> {
-        self.storage_components.get(&entity)
+    pub fn get_storage(&self, entity: &Entity) -> Option<&Storage> {
+        self.storage_components.get(entity)
     }
 
-    pub fn create_in_storage(&mut self, storage_entity: Entity, to_store: Entity, spot: (u8, u8)) {
+    pub fn create_in_storage(&mut self, storage_entity: &Entity, to_store: Entity, spot: (u8, u8)) {
         let in_storage_component = InStorage {
             storage_entity: storage_entity.clone(),
             position_x: spot.0,

@@ -701,7 +701,7 @@ impl Renderer {
         ui_state: &UIState,
     ) -> Result<(), wgpu::SurfaceError> {
         let player = "player".to_string();
-        let camera = game_state.get_camera(player.clone()).unwrap();
+        let camera = game_state.get_camera(&player).unwrap();
         let rad_x = f32::to_radians(camera.rotation_x_degrees);
         let rad_y = f32::to_radians(camera.rotation_y_degrees);
 
@@ -962,7 +962,7 @@ impl Renderer {
         ui_state: &UIState,
         inventory_items: HashMap<&Entity, &InStorage>,
     ) -> Vec<RenderGroup> {
-        let inventory = game_state.get_storage("player".to_string()).unwrap();
+        let inventory = game_state.get_storage(&"player".to_string()).unwrap();
         let item_distance_x = ui_state.inventory_width / f32::from(inventory.number_of_columns);
         let item_distance_y = ui_state.inventory_height / f32::from(inventory.number_of_rows);
         let item_picture_scale_x =
