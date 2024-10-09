@@ -430,8 +430,8 @@ impl Renderer {
     }
 
     fn setup_texture_layout(device: &Device) -> BindGroupLayout {
-        let texture_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        
+        device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[
                     wgpu::BindGroupLayoutEntry {
                         binding: 0,
@@ -451,8 +451,7 @@ impl Renderer {
                     },
                 ],
                 label: Some("texture_bind_group_layout"),
-            });
-        texture_bind_group_layout
+            })
     }
 
     fn setup_pipeline(
