@@ -274,12 +274,12 @@ impl GameState {
     }
 
     pub fn get_graphics(&self, entity: &Entity) -> Option<&Graphics3D> {
-        self.graphics_3d_components.get(&entity)
+        self.graphics_3d_components.get(entity)
     }
 
     #[allow(dead_code)]
     pub fn get_graphics_inventory(&self, entity: &Entity) -> Option<&Graphics2D> {
-        self.graphics_2d_components.get(&entity)
+        self.graphics_2d_components.get(entity)
     }
 
     pub fn create_position(&mut self, entity: Entity, position: Position) {
@@ -287,19 +287,19 @@ impl GameState {
     }
 
     pub fn get_position(&self, entity: &Entity) -> Option<&Position> {
-        self.position_components.get(&entity)
+        self.position_components.get(entity)
     }
 
     pub fn get_position_mut(&mut self, entity: &Entity) -> Option<&mut Position> {
-        self.position_components.get_mut(&entity)
+        self.position_components.get_mut(entity)
     }
 
     pub fn remove_position(&mut self, to_remove: &Entity) {
-        self.position_components.remove(&to_remove);
+        self.position_components.remove(to_remove);
     }
 
     pub fn get_hitbox(&self, entity: &Entity) -> Option<&Hitbox> {
-        self.hitbox_components.get(&entity)
+        self.hitbox_components.get(entity)
     }
 
     pub fn get_camera(&self, entity: Entity) -> Option<&CameraTarget> {
