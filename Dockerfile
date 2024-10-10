@@ -1,8 +1,10 @@
 FROM rust:1.81 AS rust
 
+# without defining wasmbindgen version it downloads old version 0.2.93. does not have to be separate at some point
 RUN rustup target add wasm32-unknown-unknown \
 	&& rustup component add clippy rustfmt \
-	&& cargo install cargo-audit cargo-chef wasm-bindgen-cli wasm-opt
+	&& cargo install cargo-audit cargo-chef wasm-opt \
+    && cargo install -f wasm-bindgen-cli --version 0.2.94
 WORKDIR /app
 
 FROM rust AS planner
