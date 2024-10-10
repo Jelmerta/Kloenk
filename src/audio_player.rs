@@ -2,6 +2,7 @@
 
 use cpal::traits::{DeviceTrait, HostTrait};
 use std::any::Any;
+use wgpu::Device;
 
 pub struct AudioPlayer {
     pub tmp: String,
@@ -51,7 +52,7 @@ impl AudioPlayer {
         let host = cpal::available_hosts();
         log::warn!("Available hosts: {:?}", host);
         let device: Vec<_> = cpal::default_host().output_devices().unwrap().collect();
-        log::warn!("Devices: {:?}", device.get(0).unwrap().name().unwrap());
+        log::warn!("Using device: {:?}", device.get(0).type_id());
         // let config = device.default_output_config().unwrap();
         // #[cfg(target_arch = "wasm32")]
         // {
