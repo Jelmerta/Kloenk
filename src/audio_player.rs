@@ -1,7 +1,8 @@
+// use wasm_thread as thread;
+
 use crate::resources::load_binary;
 use rodio::Source;
 use std::io::Cursor;
-// use wasm_thread as thread;
 
 pub struct AudioPlayer {
     pub tmp: String,
@@ -47,22 +48,45 @@ impl AudioPlayer {
 
     //, sound: &str
     pub fn play_audio(&self) {
-        // std::thread::spawn(move || {
-        let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
-        // let sink = rodio::Sink::try_new(&handle).unwrap();
+        #[cfg(target_arch = "wasm32")]
+        {
+            // std::thread::spawn(move || {
+            let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
+            // let sink = rodio::Sink::try_new(&handle).unwrap();
 
-        let sound_bytes = pollster::block_on(load_binary("bonk.mp3")).unwrap();
-        let audio_cursor = Cursor::new(sound_bytes);
-        let source = rodio::Decoder::new(audio_cursor).unwrap();
+            let sound_bytes = pollster::block_on(load_binary("bonk.wav")).unwrap();
+            let audio_cursor = Cursor::new(sound_bytes);
+            let source = rodio::Decoder::new(audio_cursor).unwrap();
 
-        handle.play_raw(source.convert_samples()).unwrap();
-        // self.sink.append(source);
+            handle.play_raw(source.convert_samples()).unwrap();
+            // self.sink.append(source);
 
-        // self.sink.sleep_until_end();
-        // self.sink.;
-        // thread::sleep(Duration::from_millis(3000));
-        // self.sink.detach();
-        // });
+            // self.sink.sleep_until_end();
+            // self.sink.;
+            // thread::sleep(Duration::from_millis(3000));
+            // self.sink.detach();
+            // });
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            // std::thread::spawn(move || {
+            let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
+            // let sink = rodio::Sink::try_new(&handle).unwrap();
+
+            let sound_bytes = pollster::block_on(load_binary("bonk.mp3")).unwrap();
+            let audio_cursor = Cursor::new(sound_bytes);
+            let source = rodio::Decoder::new(audio_cursor).unwrap();
+
+            handle.play_raw(source.convert_samples()).unwrap();
+            // self.sink.append(source);
+
+            // self.sink.sleep_until_end();
+            // self.sink.;
+            // thread::sleep(Duration::from_millis(3000));
+            // self.sink.detach();
+            // });
+        }
     }
 }
 
