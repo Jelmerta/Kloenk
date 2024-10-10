@@ -47,11 +47,11 @@ impl AudioPlayer {
 
     //, sound: &str
     pub fn play_audio(&self) {
-        let host = cpal::default_host();
-        let device = host
-            .default_output_device()
-            .expect("No output device available");
-        let config = device.default_output_config().unwrap();
+        let host = cpal::available_hosts();
+        log::warn!("Available hosts: {:?}", host);
+        let device: Vec<_> = cpal::default_host().output_devices().unwrap().collect();
+        log::warn!("Devices: {:?}", device.iter().collect());
+        // let config = device.default_output_config().unwrap();
         // #[cfg(target_arch = "wasm32")]
         // {
         //     // std::thread::spawn(move || {
