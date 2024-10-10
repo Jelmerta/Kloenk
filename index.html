@@ -5,7 +5,7 @@
     <script crossorigin="anonymous" type="module">
         import init, * as bindings from '/kloenk.js';
 
-        const wasm = await init({'/kloenk.wasm'});
+        const wasm = await init({module_or_path: '/kloenk.wasm'});
         window.wasmBindings = bindings;
     </script>
     <link href="/kloenk.js" rel="modulepreload">
