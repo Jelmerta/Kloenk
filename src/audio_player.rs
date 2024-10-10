@@ -51,7 +51,7 @@ impl AudioPlayer {
         // let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
         // let sink = rodio::Sink::try_new(&handle).unwrap();
 
-        let sound_bytes = pollster::block_on(load_binary("bonk.wav")).unwrap();
+        let sound_bytes = pollster::block_on(load_binary("bonk.mp3")).unwrap();
         let audio_cursor = Cursor::new(sound_bytes);
         let source = rodio::Decoder::new(audio_cursor).unwrap();
 
