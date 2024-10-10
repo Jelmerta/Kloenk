@@ -5,7 +5,6 @@ use crate::resources::load_binary;
 use rodio::Source;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Cursor;
-
 #[cfg(target_arch = "wasm32")]
 use web_sys::{AudioContext, HtmlAudioElement};
 
@@ -63,6 +62,8 @@ impl AudioPlayer {
             let audio_cursor = Cursor::new(sound_bytes);
             let source = rodio::Decoder::new(audio_cursor).unwrap();
             handle.play_raw(source.convert_samples()).unwrap();
+            // sink.append(source);
+            // sink.sleep_until_end();
         }
 
         #[cfg(target_arch = "wasm32")]
@@ -72,53 +73,6 @@ impl AudioPlayer {
             audio_element.set_autoplay(true);
             audio_element.play().unwrap();
         }
-        // let host = cpal::available_hosts();
-        // log::warn!("Available hosts: {:?}", host);
-        // let devices = cpal::default_host().output_devices().unwrap();
-        // log::warn!(
-        //     "Device id {:?}",
-        //     devices.into_iter().collect_vec().get(0).unwrap().type_id()
-        // );
-        // let config = device.default_output_config().unwrap();
-        // #[cfg(target_arch = "wasm32")]
-        // {
-        //     // std::thread::spawn(move || {
-        //     let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
-        //     // let sink = rodio::Sink::try_new(&handle).unwrap();
-        //
-        //     let sound_bytes = pollster::block_on(load_binary("bonk.wav")).unwrap();
-        //     let audio_cursor = Cursor::new(sound_bytes);
-        //     let source = rodio::Decoder::new(audio_cursor).unwrap();
-        //
-        //     handle.play_raw(source.convert_samples()).unwrap();
-        //     // self.sink.append(source);
-        //
-        //     // self.sink.sleep_until_end();
-        //     // self.sink.;
-        //     // thread::sleep(Duration::from_millis(3000));
-        //     // self.sink.detach();
-        //     // });
-        // }
-        //
-        // #[cfg(not(target_arch = "wasm32"))]
-        // {
-        //     // std::thread::spawn(move || {
-        //     let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
-        //     // let sink = rodio::Sink::try_new(&handle).unwrap();
-        //
-        //     let sound_bytes = pollster::block_on(load_binary("bonk.mp3")).unwrap();
-        //     let audio_cursor = Cursor::new(sound_bytes);
-        //     let source = rodio::Decoder::new(audio_cursor).unwrap();
-        //
-        //     handle.play_raw(source.convert_samples()).unwrap();
-        //     // self.sink.append(source);
-        //
-        //     // self.sink.sleep_until_end();
-        //     // self.sink.;
-        //     // thread::sleep(Duration::from_millis(3000));
-        //     // self.sink.detach();
-        //     // });
-        // }
     }
 }
 
