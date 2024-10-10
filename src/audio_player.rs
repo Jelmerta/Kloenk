@@ -1,12 +1,10 @@
 // use wasm_thread as thread;
 #[cfg(not(target_arch = "wasm32"))]
-use crate::resources::load_binary;
-#[cfg(not(target_arch = "wasm32"))]
 use rodio::Source;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Cursor;
 #[cfg(target_arch = "wasm32")]
-use web_sys::{AudioContext, HtmlAudioElement};
+use web_sys::HtmlAudioElement;
 
 pub struct AudioPlayer {
     pub tmp: String,
@@ -68,8 +66,9 @@ impl AudioPlayer {
 
         #[cfg(target_arch = "wasm32")]
         {
-            let audio_context = AudioContext::new();
-            let audio_element = HtmlAudioElement::new_with_src("bonk.mp3").unwrap();
+            // let bonk_binary = pollster::block_on(load_binary("bonk.mp3")).unwrap();
+            // let audio_context = AudioContext::new();
+            let audio_element = HtmlAudioElement::new_with_src("resources/bonk.mp3").unwrap();
             audio_element.set_autoplay(true);
             audio_element.play().unwrap();
         }
