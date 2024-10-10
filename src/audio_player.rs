@@ -51,7 +51,7 @@ impl AudioPlayer {
         let host = cpal::available_hosts();
         log::warn!("Available hosts: {:?}", host);
         let device: Vec<_> = cpal::default_host().output_devices().unwrap().collect();
-        log::warn!("Devices: {:?}", device.get(0).unwrap().type_id());
+        log::warn!("Devices: {:?}", device.get(0).unwrap().name().unwrap());
         // let config = device.default_output_config().unwrap();
         // #[cfg(target_arch = "wasm32")]
         // {
