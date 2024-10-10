@@ -1,6 +1,8 @@
 // use wasm_thread as thread;
 
 use cpal::traits::{DeviceTrait, HostTrait};
+use cpal::{Devices, OutputDevices};
+use itertools::Itertools;
 use std::any::Any;
 
 pub struct AudioPlayer {
@@ -50,8 +52,12 @@ impl AudioPlayer {
     pub fn play_audio(&self) {
         let host = cpal::available_hosts();
         log::warn!("Available hosts: {:?}", host);
-        let device: Vec<_> = cpal::default_host().output_devices().unwrap().collect();
-        log::warn!("Devices: {:?}", device.type_id());
+        let devices = cpal::default_host().output_devices().unwrap();
+        log::warn!("Devices: {:?}", devices.try_len());
+        log::warn!(
+            "Device id {:?}",
+            devices.into_iter().collect_vec().get(0).unwrap().type_id()
+        );
         // let config = device.default_output_config().unwrap();
         // #[cfg(target_arch = "wasm32")]
         // {
