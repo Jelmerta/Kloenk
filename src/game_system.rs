@@ -273,8 +273,8 @@ impl GameSystem {
                 entity_hitbox,
             ) {
                 // audio_player.play_audio("bonk");
-                // audio_player.play_audio();
-                AudioPlayer::play_audio();
+                audio_player.play_audio();
+                // AudioPlayer::play_audio();
 
                 return true;
             }
