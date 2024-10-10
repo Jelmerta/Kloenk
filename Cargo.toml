@@ -47,7 +47,7 @@ web-sys = { version = "0.3", features = [
 ] }
 reqwest = { version = "0.12", default-features = false }
 getrandom = { version = "0.2", features = ["js"] }
-rodio = { version = "0.19", default-features = false, features = ["mp3", "wasm-bindgen", "wav"] }
+rodio = { version = "0.19", default-features = false, features = ["mp3", "wasm-bindgen"] }
 
 [[bin]]
 name = "kloenk_bin"
