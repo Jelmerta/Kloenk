@@ -53,7 +53,6 @@ impl AudioPlayer {
         let host = cpal::available_hosts();
         log::warn!("Available hosts: {:?}", host);
         let devices = cpal::default_host().output_devices().unwrap();
-        log::warn!("Devices: {:?}", devices.try_len());
         log::warn!(
             "Device id {:?}",
             devices.into_iter().collect_vec().get(0).unwrap().type_id()
