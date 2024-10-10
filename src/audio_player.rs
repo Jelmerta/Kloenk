@@ -1,9 +1,13 @@
 // use wasm_thread as thread;
+#[cfg(not(target_arch = "wasm32"))]
+use crate::resources::load_binary;
+#[cfg(not(target_arch = "wasm32"))]
+use rodio::Source;
+#[cfg(not(target_arch = "wasm32"))]
+use std::io::Cursor;
 
-use cpal::traits::{DeviceTrait, HostTrait};
-use cpal::{Devices, OutputDevices};
-use itertools::Itertools;
-use std::any::Any;
+#[cfg(target_arch = "wasm32")]
+use web_sys::{AudioContext, HtmlAudioElement};
 
 pub struct AudioPlayer {
     pub tmp: String,
@@ -50,13 +54,31 @@ impl AudioPlayer {
 
     //, sound: &str
     pub fn play_audio(&self) {
-        let host = cpal::available_hosts();
-        log::warn!("Available hosts: {:?}", host);
-        let devices = cpal::default_host().output_devices().unwrap();
-        log::warn!(
-            "Device id {:?}",
-            devices.into_iter().collect_vec().get(0).unwrap().type_id()
-        );
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
+            let sink = rodio::Sink::try_new(&handle).unwrap();
+
+            let sound_bytes = pollster::block_on(load_binary("bonk.mp3")).unwrap();
+            let audio_cursor = Cursor::new(sound_bytes);
+            let source = rodio::Decoder::new(audio_cursor).unwrap();
+            handle.play_raw(source.convert_samples()).unwrap();
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            let audio_context = AudioContext::new();
+            let audio_element = HtmlAudioElement::new_with_src("bonk.mp3").unwrap();
+            audio_element.set_autoplay(true);
+            audio_element.play().unwrap();
+        }
+        // let host = cpal::available_hosts();
+        // log::warn!("Available hosts: {:?}", host);
+        // let devices = cpal::default_host().output_devices().unwrap();
+        // log::warn!(
+        //     "Device id {:?}",
+        //     devices.into_iter().collect_vec().get(0).unwrap().type_id()
+        // );
         // let config = device.default_output_config().unwrap();
         // #[cfg(target_arch = "wasm32")]
         // {

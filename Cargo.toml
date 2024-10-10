@@ -22,8 +22,7 @@ anyhow = { version = "1.0", default-features = false }
 itertools = { version = "0.13", default-features = false, features = ["use_alloc"] }
 glyphon = "0.6"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
-#rodio = { version = "0.19", default-features = false, features = ["mp3", "wav"] }
-cpal = { version = "0.15", default-features = false, features = ["wasm-bindgen"] }
+rodio = { version = "0.19", default-features = false, features = ["mp3"] }
 
 # glob = "0.3.1"
 
@@ -45,12 +44,12 @@ web-sys = { version = "0.3", features = [
     "Window",
     "Element",
     "Location",
-    "HtmlCanvasElement"
+    "HtmlCanvasElement",
+    "HtmlAudioElement",
+    "AudioContext",
 ] }
 reqwest = { version = "0.12", default-features = false }
 getrandom = { version = "0.2", features = ["js"] }
-#rodio = { version = "0.19", default-features = false, features = ["wav", "wasm-bindgen"] }
-cpal = { version = "0.15", default-features = false, features = ["wasm-bindgen"] }
 
 [[bin]]
 name = "kloenk_bin"
