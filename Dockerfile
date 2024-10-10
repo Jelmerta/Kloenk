@@ -40,7 +40,7 @@ RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --
 #nginx:alpine does not include required nginx sub_filter dependencies
 FROM openresty/openresty:alpine
 # Force stages to be run
-COPY --from=checker /etc/hostname /dev/null
+#COPY --from=checker /etc/hostname /dev/null
 COPY --from=auditor /etc/hostname /dev/null
 COPY --from=formatchecker /etc/hostname /dev/null
 
