@@ -69,6 +69,7 @@ impl AudioPlayer {
             // let bonk_binary = pollster::block_on(load_binary("bonk.mp3")).unwrap();
             // let audio_context = AudioContext::new();
             let audio_element = HtmlAudioElement::new_with_src("resources/bonk.mp3").unwrap();
+
             audio_element.set_autoplay(true);
             audio_element.play().unwrap();
         }
