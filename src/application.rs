@@ -105,8 +105,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             let event_loop_proxy = self.event_loop_proxy.clone();
             spawn_local(async move {
                 let renderer = renderer_future.await;
-                let audio_system: AudioSystem = AudioSystem::new();
-                // let audio_player: AudioPlayer = AudioPlayer::new().await;
+                let audio_system: AudioSystem = AudioSystem::new().await;
 
                 let game = Engine {
                     renderer,

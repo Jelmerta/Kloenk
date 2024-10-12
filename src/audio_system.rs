@@ -2,8 +2,11 @@ use crate::resources::load_binary;
 use std::collections::HashMap;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Cursor;
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::js_sys::Uint8Array;
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::JsFuture;
 #[cfg(target_arch = "wasm32")]
 use web_sys::AudioBuffer;
@@ -15,14 +18,18 @@ struct Sound {
 }
 
 pub struct AudioSystem {
+    sounds_in_binary: HashMap<String, Sound>,
     audio_player: AudioPlayer,
 }
 
 impl AudioSystem {
-    pub fn new() -> Self {
-        let sounds = Self::load_sounds();
+    pub async fn new() -> Self {
+        let sounds_in_binary = Self::load_sounds().await;
+        let audio_player = AudioPlayer::new(&sounds_in_binary).await;
+
         AudioSystem {
-            audio_player: AudioPlayer::new(sounds),
+            sounds_in_binary,
+            audio_player,
         }
     }
 
@@ -34,9 +41,9 @@ impl AudioSystem {
         self.audio_player.play_sound(sound);
     }
 
-    fn load_sounds() -> HashMap<String, Sound> {
+    async fn load_sounds() -> HashMap<String, Sound> {
         let bonk_sound = Sound {
-            bytes: pollster::block_on(load_binary("bonk.wav")).unwrap(),
+            bytes: load_binary("bonk.wav").await.unwrap(),
         };
 
         let mut sounds = HashMap::new();
@@ -87,9 +94,9 @@ pub struct AudioPlayer {
 
 #[cfg(target_arch = "wasm32")]
 impl AudioPlayer {
-    pub fn new(sounds: HashMap<String, Sound>) -> Self {
+    pub async fn new(sounds: &HashMap<String, Sound>) -> Self {
         let audio_context = AudioContext::new().unwrap();
-        let audio_buffers = Self::load_buffers(&audio_context, sounds);
+        let audio_buffers = Self::load_buffers(&audio_context, sounds).await;
 
         AudioPlayer {
             audio_context,
@@ -97,9 +104,9 @@ impl AudioPlayer {
         }
     }
 
-    fn load_buffers(
+    async fn load_buffers(
         audio_context: &AudioContext,
-        sounds: HashMap<String, Sound>,
+        sounds: &HashMap<String, Sound>,
     ) -> HashMap<String, AudioBuffer> {
         let mut audio_buffers = HashMap::new();
         for (sound_name, sound) in sounds {
@@ -108,13 +115,13 @@ impl AudioPlayer {
             let array_buffer = uint8_array.buffer();
 
             let promise = audio_context.decode_audio_data(&array_buffer).unwrap();
-            let decoded_buffer = pollster::block_on(JsFuture::from(promise)).unwrap();
+            let decoded_buffer = JsFuture::from(promise).await.unwrap();
             let audio_buffer = decoded_buffer.dyn_into::<AudioBuffer>().unwrap();
 
             // audio_buffer = promise.then(|buffer| {
             //     audio_buffer = buffer;
             // });
-            audio_buffers.insert(sound_name, audio_buffer);
+            audio_buffers.insert(sound_name.to_string(), audio_buffer);
         }
         audio_buffers
     }
