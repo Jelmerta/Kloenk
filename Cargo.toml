@@ -45,7 +45,6 @@ web-sys = { version = "0.3", features = [
     "Element",
     "Location",
     "HtmlCanvasElement",
-    "HtmlAudioElement",
     "AudioContext",
 ] }
 reqwest = { version = "0.12", default-features = false }
@@ -59,7 +58,7 @@ path = "src/main.rs"
 opt-level = 0
 lto = false
 codegen-units = 256
-debug = 0
+debug = 1
 strip = "none"
 incremental = true
 

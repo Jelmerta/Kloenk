@@ -1,16 +1,10 @@
 use crate::application::{Application, StateInitializationEvent};
-#[cfg(not(target_arch = "wasm32"))]
-use fs_extra::copy_items;
-#[cfg(not(target_arch = "wasm32"))]
-use fs_extra::dir::CopyOptions;
-#[cfg(not(target_arch = "wasm32"))]
-use std::env;
 #[cfg(target_arch = "wasm32")]
 use winit::platform::web::EventLoopExtWebSys;
 
 use winit::event_loop::EventLoop;
 mod application;
-mod audio_player;
+mod audio_system;
 mod camera;
 mod components;
 mod game_state;
@@ -38,26 +32,26 @@ mod wasm {
 
 /// # Panics
 pub fn run() {
-    // #[cfg(not(target_arch = "wasm32"))]
-    // env::set_var("RUST_LOG", "info");
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
             console_log::init_with_level(log::Level::Warn).expect("Couldn't initialize logger");
         } else {
-            env_logger::init();
+            env_logger::builder()
+            .filter(None, log::LevelFilter::Warn)
+            .init();
         }
     }
 
-    // No good generic solution yet for this. Folder should be copied during build process
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let out_dir = env::var("OUT_DIR").unwrap();
-        let mut copy_options = CopyOptions::new();
-        copy_options.overwrite = true;
-        let paths_to_copy = vec!["resources/"];
-        copy_items(&paths_to_copy, out_dir, &copy_options).unwrap();
-    }
+    // // No good generic solution yet for this. Folder should be copied during build process
+    // #[cfg(not(target_arch = "wasm32"))]
+    // {
+    //     let out_dir = env::var("OUT_DIR").unwrap();
+    //     let mut copy_options = CopyOptions::new();
+    //     copy_options.overwrite = true;
+    //     let paths_to_copy = vec!["resources/"];
+    //     copy_items(&paths_to_copy, out_dir, &copy_options).unwrap();
+    // }
 
     let event_loop = EventLoop::<StateInitializationEvent>::with_user_event()
         .build()

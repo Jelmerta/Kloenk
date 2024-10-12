@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::audio_player::AudioPlayer;
+use crate::audio_system::AudioSystem;
 use crate::components::{CameraTarget, Entity, Hitbox, ItemShape, Position, Storable, Storage};
 use crate::game_state::GameState;
 use crate::gui::UIState;
@@ -25,12 +25,12 @@ impl GameSystem {
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &mut Input,
-        audio_player: &AudioPlayer,
+        audio_system: &AudioSystem,
     ) {
         ItemPickupSystem::handle_item_pickup(game_state, ui_state, input);
         Self::handle_item_placement(game_state, ui_state, input);
         Self::handle_inventory(ui_state, input);
-        Self::resolve_movement(game_state, input, audio_player);
+        Self::resolve_movement(game_state, input, audio_system);
         Self::update_camera(game_state, input);
     }
 
@@ -165,7 +165,7 @@ impl GameSystem {
         input.scrolled_amount = 0.0;
     }
 
-    fn resolve_movement(game_state: &mut GameState, input: &Input, audio_player: &AudioPlayer) {
+    fn resolve_movement(game_state: &mut GameState, input: &Input, audio_system: &AudioSystem) {
         let mut movement_speed: f32 = BASE_SPEED;
         if input.left_shift_pressed.is_pressed {
             movement_speed *= 2.5;
@@ -179,7 +179,7 @@ impl GameSystem {
                 z: player_position.z,
             };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(game_state, &desired_position, audio_player)
+                && !Self::is_colliding(game_state, &desired_position, audio_system)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
@@ -194,7 +194,7 @@ impl GameSystem {
                 z: player_position.z,
             };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(game_state, &desired_position, audio_player)
+                && !Self::is_colliding(game_state, &desired_position, audio_system)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
@@ -209,7 +209,7 @@ impl GameSystem {
                 z: player_position.z,
             };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(game_state, &desired_position, audio_player)
+                && !Self::is_colliding(game_state, &desired_position, audio_system)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
@@ -224,7 +224,7 @@ impl GameSystem {
                 z: player_position.z,
             };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(game_state, &desired_position, audio_player)
+                && !Self::is_colliding(game_state, &desired_position, audio_system)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
@@ -248,9 +248,8 @@ impl GameSystem {
     fn is_colliding(
         game_state: &GameState,
         desired_position: &Position,
-        audio_player: &AudioPlayer,
+        audio_system: &AudioSystem,
     ) -> bool {
-        log::warn!("{:?}", audio_player.tmp);
         let interactable_entities: Vec<&Entity> = game_state
             .entities
             .iter()
@@ -272,9 +271,7 @@ impl GameSystem {
                 entity_position,
                 entity_hitbox,
             ) {
-                // audio_player.play_audio("bonk");
-                audio_player.play_audio();
-                // AudioPlayer::play_audio();
+                audio_system.play_sound("bonk");
 
                 return true;
             }
