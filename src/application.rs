@@ -205,7 +205,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     &mut engine.game_state,
                     &mut engine.ui_state,
                     &mut engine.input_handler,
-                    &engine.audio_system,
+                    &mut engine.audio_system,
                 );
                 match engine.renderer.render(&engine.game_state, &engine.ui_state) {
                     Ok(()) => {}
