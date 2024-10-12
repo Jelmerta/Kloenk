@@ -22,7 +22,7 @@ use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowId};
 
-use crate::audio_player::AudioPlayer;
+use crate::audio_system::AudioSystem;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
 
@@ -32,7 +32,7 @@ pub struct Engine {
     pub ui_state: UIState,
     pub input_handler: Input,
     pub window: Arc<Window>,
-    pub audio_player: AudioPlayer,
+    pub audio_system: AudioSystem,
 }
 
 impl Engine {
@@ -129,7 +129,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         {
             let renderer = pollster::block_on(renderer_future);
             // renderer
-            let audio_player = AudioPlayer::new(); // just for audio loading...?
+            let audio_system = AudioSystem::new(); // just for audio loading...?
 
             let game = Engine {
                 renderer,
@@ -137,8 +137,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 ui_state: UIState::new(),
                 input_handler: Input::new(),
                 window,
-                audio_player,
-                // audio_player: AudioPlayer::new(),
+                audio_system,
             };
 
             self.event_loop_proxy
@@ -206,7 +205,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     &mut engine.game_state,
                     &mut engine.ui_state,
                     &mut engine.input_handler,
-                    &engine.audio_player,
+                    &engine.audio_system,
                 );
                 match engine.renderer.render(&engine.game_state, &engine.ui_state) {
                     Ok(()) => {}

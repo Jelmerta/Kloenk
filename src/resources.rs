@@ -1,7 +1,6 @@
-use cfg_if::cfg_if;
-
 //
 use crate::{model, texture};
+use cfg_if::cfg_if;
 use wgpu::util::DeviceExt;
 
 const CUBE_TEX: &[model::TexVertex] = &[
@@ -172,9 +171,14 @@ pub async fn load_binary(file_name: &str) -> anyhow::Result<Vec<u8>> {
                 .await?
                 .to_vec();
         } else {
-            let path = std::path::Path::new(std::env::var("OUT_DIR").unwrap().as_str())
+            let path = std::path::Path::new(std::env::var("OUT_DIR").unwrap_or_else(|_| String::from(".")).as_str())
                 .join("resources")
                 .join(file_name);
+
+            // #[cfg(debug_assertions)] {
+                log::info!("{}", path.display());
+            // }
+
             let data = std::fs::read(path)?;
         }
     }

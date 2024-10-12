@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::iter;
 use std::sync::Arc;
 use wgpu::{
-    BindGroup, BindGroupLayout, Buffer, CommandEncoder, Device, MemoryHints,
+    BindGroup, BindGroupLayout, Buffer, CommandEncoder, Device, InstanceFlags, MemoryHints,
     PipelineCompilationOptions, Queue, RenderPass, RenderPipeline, ShaderModule,
     SurfaceConfiguration, TextureView,
 };
@@ -149,6 +149,7 @@ impl Renderer {
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
+            flags: InstanceFlags::empty(), // Remove Vulkan validation layer as this leads to tons of unhelpful logging (and VK_LAYER_KHRONOS_validation does not seem to exist? not debugging this)
             ..Default::default()
         });
 
