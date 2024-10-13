@@ -206,16 +206,19 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             WindowEvent::RedrawRequested => {
                 engine.window().request_redraw();
 
+                // TODO make sure run once
                 #[cfg(target_arch = "wasm32")]
                 {
                     let audio_system_clone = engine.audio_system.clone();
                     let has_gestured = engine.input_handler.user_has_gestured.clone();
-                    spawn_local(async move {
-                        let mut audio_system = audio_system_clone.borrow_mut();
-                        if audio_system.is_none() && has_gestured {
-                            *audio_system = Some(AudioSystem::new().await);
-                        }
-                    });
+                    if engine.audio_system.borrow().is_none() {
+                        spawn_local(async move {
+                            let mut audio_system = audio_system_clone.borrow_mut();
+                            if audio_system.is_none() && has_gestured {
+                                *audio_system = Some(AudioSystem::new().await);
+                            }
+                        });
+                    }
                 }
 
                 #[cfg(not(target_arch = "wasm32"))]
@@ -223,12 +226,22 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     engine.audio_system = Some(pollster::block_on(AudioSystem::new()));
                 }
 
-                GameSystem::update(
-                    &mut engine.game_state,
-                    &mut engine.ui_state,
-                    &mut engine.input_handler,
-                    &mut engine.audio_system.borrow_mut(),
-                );
+                if engine.audio_system.borrow().is_some() {
+                    GameSystem::update(
+                        &mut engine.game_state,
+                        &mut engine.ui_state,
+                        &mut engine.input_handler,
+                        &mut engine.audio_system.borrow_mut(),
+                    );
+                } else {
+                    GameSystem::update(
+                        &mut engine.game_state,
+                        &mut engine.ui_state,
+                        &mut engine.input_handler,
+                        &mut None,
+                    );
+                }
+
                 match engine.renderer.render(&engine.game_state, &engine.ui_state) {
                     Ok(()) => {}
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
