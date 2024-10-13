@@ -1,6 +1,4 @@
-#[cfg(target_arch = "wasm32")]
 use std::cell::RefCell;
-#[cfg(target_arch = "wasm32")]
 use std::rc::Rc;
 use winit::application::ApplicationHandler;
 use winit::event_loop::{EventLoop, EventLoopProxy};
@@ -37,10 +35,11 @@ pub struct Engine {
     pub ui_state: UIState,
     pub input_handler: Input,
     pub window: Arc<Window>,
-    #[cfg(target_arch = "wasm32")]
-    pub audio_system: Rc<RefCell<Option<AudioSystem>>>,
-    #[cfg(not(target_arch = "wasm32"))]
-    pub audio_system: AudioSystem,
+    pub audio_system: Rc<RefCell<AudioSystem>>,
+    // #[cfg(target_arch = "wasm32")]
+    // pub audio_system: Rc<RefCell<Option<AudioSystem>>>,
+    // #[cfg(not(target_arch = "wasm32"))]
+    // pub audio_system: AudioSystem,
 }
 
 impl Engine {
@@ -106,21 +105,24 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             let _ = window.request_inner_size(PhysicalSize::new(800, 600));
         }
 
+        let input_handler = Input::new();
         let renderer_future = Renderer::new(window.clone());
+        let audio_future = AudioSystem::new();
 
         #[cfg(target_arch = "wasm32")]
         {
             let event_loop_proxy = self.event_loop_proxy.clone();
             spawn_local(async move {
                 let renderer = renderer_future.await;
+                let audio_system = Rc::new(RefCell::new(audio_future.await));
 
                 let game = Engine {
                     renderer,
                     game_state: GameState::new(),
                     ui_state: UIState::new(),
-                    input_handler: Input::new(),
+                    input_handler,
+                    audio_system,
                     window,
-                    audio_system: Rc::new(RefCell::new(None)),
                 };
 
                 event_loop_proxy
@@ -192,10 +194,16 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     },
                 ..
             } => {
-                engine.input_handler.update(key, state);
+                engine
+                    .input_handler
+                    .update(key, state, &mut engine.audio_system.borrow_mut());
             }
             WindowEvent::MouseInput { state, button, .. } => {
-                engine.input_handler.process_mouse_button(button, state);
+                engine.input_handler.process_mouse_button(
+                    button,
+                    state,
+                    &mut engine.audio_system.borrow_mut(),
+                );
             }
             WindowEvent::MouseWheel { delta, .. } => {
                 engine.input_handler.process_scroll(&delta);
@@ -206,42 +214,12 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             WindowEvent::RedrawRequested => {
                 engine.window().request_redraw();
 
-                // TODO make sure run once
-                #[cfg(target_arch = "wasm32")]
-                {
-                    let audio_system_clone = engine.audio_system.clone();
-                    let has_gestured = engine.input_handler.user_has_gestured.clone();
-                    let audio_system_loaded = engine.audio_system.borrow().is_some();
-                    if !audio_system_loaded {
-                        spawn_local(async move {
-                            let mut audio_system = audio_system_clone.borrow_mut();
-                            if audio_system.is_none() && has_gestured {
-                                *audio_system = Some(AudioSystem::new().await);
-                            }
-                        });
-                    }
-                }
-
-                #[cfg(not(target_arch = "wasm32"))]
-                if engine.audio_system.is_none() {
-                    engine.audio_system = Some(pollster::block_on(AudioSystem::new()));
-                }
-
-                if engine.audio_system.borrow().is_some() {
-                    GameSystem::update(
-                        &mut engine.game_state,
-                        &mut engine.ui_state,
-                        &mut engine.input_handler,
-                        &mut engine.audio_system.borrow_mut(),
-                    );
-                } else {
-                    GameSystem::update(
-                        &mut engine.game_state,
-                        &mut engine.ui_state,
-                        &mut engine.input_handler,
-                        &mut None,
-                    );
-                }
+                GameSystem::update(
+                    &mut engine.game_state,
+                    &mut engine.ui_state,
+                    &mut engine.input_handler,
+                    &mut engine.audio_system.borrow_mut(),
+                );
 
                 match engine.renderer.render(&engine.game_state, &engine.ui_state) {
                     Ok(()) => {}

@@ -1,3 +1,8 @@
+use crate::audio_system::AudioSystem;
+use std::cell::RefCell;
+use std::rc::Rc;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen_futures::spawn_local;
 use winit::dpi::PhysicalPosition;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta};
 use winit::keyboard::KeyCode;
@@ -25,7 +30,7 @@ impl KeyPress {
 
 #[derive(Debug, Default)]
 pub struct Input {
-    pub user_has_gestured: bool, // We could have a start button or other gesture instead of generic check on all inputs
+    user_has_gestured: bool,
 
     pub w_pressed: KeyPress,
     pub s_pressed: KeyPress,
@@ -52,11 +57,22 @@ impl Input {
         Input::default()
     }
 
-    pub fn update(&mut self, keycode: KeyCode, state: ElementState) {
+    pub async fn update(
+        &mut self,
+        keycode: KeyCode,
+        state: ElementState,
+        audio_system: Rc<RefCell<AudioSystem>>,
+    ) {
         let is_pressed = state == ElementState::Pressed;
 
+        // Yeah... Bit ugly... Thought of callback or observer pattern but that honestly seems way too complex compared to this.
         if !self.user_has_gestured && is_pressed {
             self.user_has_gestured = true;
+            let audio_system_clone = audio_system.clone();
+            spawn_local(async move {
+                let mut audio_system_mut = audio_system_clone.borrow_mut();
+                audio_system_mut.start()
+            });
         }
 
         match keycode {
@@ -107,11 +123,22 @@ impl Input {
         }
     }
 
-    pub fn process_mouse_button(&mut self, button: MouseButton, state: ElementState) {
+    pub fn process_mouse_button(
+        &mut self,
+        button: MouseButton,
+        state: ElementState,
+        audio_system: Rc<RefCell<AudioSystem>>,
+    ) {
         let is_pressed = state == ElementState::Pressed;
 
+        // Yeah... Bit ugly... Thought of callback or observer pattern but that honestly seems way too complex compared to this.
         if !self.user_has_gestured && is_pressed {
             self.user_has_gestured = true;
+            let audio_system_clone = audio_system.clone();
+            spawn_local(async move {
+                let mut audio_system_mut = audio_system_clone.borrow_mut();
+                audio_system_mut.start()
+            });
         }
 
         #[allow(clippy::single_match)]
