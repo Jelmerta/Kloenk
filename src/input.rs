@@ -61,7 +61,7 @@ impl Input {
         &mut self,
         keycode: KeyCode,
         state: ElementState,
-        audio_system: Rc<RefCell<AudioSystem>>,
+        audio_system: &Rc<RefCell<AudioSystem>>,
     ) {
         let is_pressed = state == ElementState::Pressed;
 
@@ -71,7 +71,7 @@ impl Input {
             let audio_system_clone = audio_system.clone();
             spawn_local(async move {
                 let mut audio_system_mut = audio_system_clone.borrow_mut();
-                audio_system_mut.start()
+                audio_system_mut.start();
             });
         }
 
@@ -127,7 +127,7 @@ impl Input {
         &mut self,
         button: MouseButton,
         state: ElementState,
-        audio_system: Rc<RefCell<AudioSystem>>,
+        audio_system: &Rc<RefCell<AudioSystem>>,
     ) {
         let is_pressed = state == ElementState::Pressed;
 
@@ -137,7 +137,7 @@ impl Input {
             let audio_system_clone = audio_system.clone();
             spawn_local(async move {
                 let mut audio_system_mut = audio_system_clone.borrow_mut();
-                audio_system_mut.start()
+                audio_system_mut.start();
             });
         }
 
