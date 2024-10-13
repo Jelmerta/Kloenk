@@ -1,11 +1,12 @@
-use std::collections::HashMap;
-
 use crate::audio_system::AudioSystem;
 use crate::components::{CameraTarget, Entity, Hitbox, ItemShape, Position, Storable, Storage};
 use crate::game_state::GameState;
 use crate::gui::UIState;
 use crate::input::Input;
 use cgmath::num_traits::ToPrimitive;
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::rc::Rc;
 
 pub struct GameSystem {}
 
@@ -25,7 +26,7 @@ impl GameSystem {
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &mut Input,
-        audio_system: &mut AudioSystem,
+        audio_system: &Rc<RefCell<AudioSystem>>,
     ) {
         ItemPickupSystem::handle_item_pickup(game_state, ui_state, input);
         Self::handle_item_placement(game_state, ui_state, input);
@@ -165,7 +166,11 @@ impl GameSystem {
         input.scrolled_amount = 0.0;
     }
 
-    fn resolve_movement(game_state: &mut GameState, input: &Input, audio_system: &mut AudioSystem) {
+    fn resolve_movement(
+        game_state: &mut GameState,
+        input: &Input,
+        audio_system: &Rc<RefCell<AudioSystem>>,
+    ) {
         let mut movement_speed: f32 = BASE_SPEED;
         if input.left_shift_pressed.is_pressed {
             movement_speed *= 2.5;
@@ -248,7 +253,7 @@ impl GameSystem {
     fn is_colliding(
         game_state: &GameState,
         desired_position: &Position,
-        audio_system: &mut AudioSystem,
+        audio_system: &Rc<RefCell<AudioSystem>>,
     ) -> bool {
         let interactable_entities: Vec<&Entity> = game_state
             .entities
@@ -271,7 +276,10 @@ impl GameSystem {
                 entity_position,
                 entity_hitbox,
             ) {
-                audio_system.play_sound("bonk");
+                let result = audio_system.try_borrow_mut();
+                if result.is_ok() {
+                    result.unwrap().play_sound("bonk");
+                } // Otherwise audio is not yet loaded
 
                 return true;
             }

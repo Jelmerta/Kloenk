@@ -35,6 +35,8 @@ pub struct Engine {
     pub ui_state: UIState,
     pub input_handler: Input,
     pub window: Arc<Window>,
+    // AudioSystem is loaded after user has used a gesture. This is to get rid of this warning in Chrome:
+    // The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://goo.gl/7K7WLu
     pub audio_system: Rc<RefCell<AudioSystem>>,
     // #[cfg(target_arch = "wasm32")]
     // pub audio_system: Rc<RefCell<Option<AudioSystem>>>,
@@ -216,7 +218,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     &mut engine.game_state,
                     &mut engine.ui_state,
                     &mut engine.input_handler,
-                    &mut engine.audio_system.borrow_mut(),
+                    &mut engine.audio_system,
                 );
 
                 match engine.renderer.render(&engine.game_state, &engine.ui_state) {
