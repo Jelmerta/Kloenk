@@ -1,9 +1,10 @@
 use crate::resources::load_binary;
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Cursor;
 use std::rc::Rc;
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
@@ -21,7 +22,6 @@ struct Sound {
 }
 
 pub struct AudioSystem {
-    sounds_in_binary: HashMap<String, Sound>,
     audio_player: AudioPlayer,
 }
 
@@ -30,10 +30,7 @@ impl AudioSystem {
         let sounds_in_binary = Self::load_sounds().await;
         let audio_player = AudioPlayer::new(&sounds_in_binary).await;
 
-        AudioSystem {
-            sounds_in_binary,
-            audio_player,
-        }
+        AudioSystem { audio_player }
     }
 
     pub fn play_sound(&mut self, sound: &str) {
@@ -89,10 +86,10 @@ impl AudioPlayer {
 
 // Was unable to get cpal/rodio working on wasm as no devices are returned from default device. Instead going for a web-sys implementation
 #[cfg(target_arch = "wasm32")]
-pub struct AudioPlayer {
+struct AudioPlayer {
     audio_context: AudioContext,
     audio_buffers: HashMap<String, AudioBuffer>,
-    is_playing: Rc<RefCell<HashMap<String, bool>>>,
+    is_playing: Rc<RefCell<HashSet<String>>>,
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -102,14 +99,14 @@ impl AudioPlayer {
         let audio_buffers = Self::load_buffers(&audio_context, sounds).await;
 
         AudioPlayer {
-            is_playing: Rc::new(RefCell::new(HashMap::new())),
+            is_playing: Rc::new(RefCell::new(HashSet::new())),
             audio_context,
             audio_buffers,
         }
     }
 
     fn is_playing(&self, sound: &str) -> bool {
-        self.is_playing.borrow().get(sound).is_some()
+        self.is_playing.borrow().contains(sound)
     }
 
     async fn load_buffers(
@@ -153,12 +150,7 @@ impl AudioPlayer {
             .unwrap();
 
         buffer_source.start().unwrap();
-        self.is_playing.borrow_mut().insert(sound.to_string(), true);
+        self.is_playing.borrow_mut().insert(sound.to_string());
         remove_audio_closure.forget();
     }
 }
-
-// Closure::wrap(Box::new(move || &self.audio_buffers.remove(sound)))
-//     .into_js_result()
-//     .unwrap()
-//     .unchecked_into::<Function>(),
