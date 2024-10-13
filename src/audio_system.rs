@@ -68,6 +68,7 @@ struct AudioStream {
     handle: OutputStreamHandle,
     sink: Option<Sink>,
 }
+//Impl audiostream: is_playing?
 
 #[cfg(not(target_arch = "wasm32"))]
 struct AudioPlayer {
@@ -112,6 +113,7 @@ impl AudioPlayer {
 // Was unable to get cpal/rodio working on wasm as no devices are returned from default device. Instead going for a web-sys implementation
 #[cfg(target_arch = "wasm32")]
 struct AudioPlayer {
+    // Probably should just a hashmap with each sound having a buffer/playing?
     audio_context: AudioContext,
     audio_buffers: HashMap<String, AudioBuffer>,
     is_playing: Rc<RefCell<HashSet<String>>>,

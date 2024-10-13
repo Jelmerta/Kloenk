@@ -25,6 +25,8 @@ impl KeyPress {
 
 #[derive(Debug, Default)]
 pub struct Input {
+    pub user_has_gestured: bool, // We could have a start button or other gesture instead of generic check on all inputs
+
     pub w_pressed: KeyPress,
     pub s_pressed: KeyPress,
     pub a_pressed: KeyPress,
@@ -52,6 +54,10 @@ impl Input {
 
     pub fn update(&mut self, keycode: KeyCode, state: ElementState) {
         let is_pressed = state == ElementState::Pressed;
+
+        if !self.user_has_gestured && is_pressed {
+            self.user_has_gestured = true;
+        }
 
         match keycode {
             KeyCode::KeyW => {
@@ -103,6 +109,10 @@ impl Input {
 
     pub fn process_mouse_button(&mut self, button: MouseButton, state: ElementState) {
         let is_pressed = state == ElementState::Pressed;
+
+        if !self.user_has_gestured && is_pressed {
+            self.user_has_gestured = true;
+        }
 
         #[allow(clippy::single_match)]
         match button {

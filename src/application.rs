@@ -1,3 +1,7 @@
+#[cfg(target_arch = "wasm32")]
+use std::cell::RefCell;
+#[cfg(target_arch = "wasm32")]
+use std::rc::Rc;
 use winit::application::ApplicationHandler;
 use winit::event_loop::{EventLoop, EventLoopProxy};
 use winit::{
@@ -23,6 +27,7 @@ use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowId};
 
 use crate::audio_system::AudioSystem;
+
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
 
@@ -32,6 +37,9 @@ pub struct Engine {
     pub ui_state: UIState,
     pub input_handler: Input,
     pub window: Arc<Window>,
+    #[cfg(target_arch = "wasm32")]
+    pub audio_system: Rc<RefCell<Option<AudioSystem>>>,
+    #[cfg(not(target_arch = "wasm32"))]
     pub audio_system: AudioSystem,
 }
 
@@ -105,7 +113,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             let event_loop_proxy = self.event_loop_proxy.clone();
             spawn_local(async move {
                 let renderer = renderer_future.await;
-                let audio_system: AudioSystem = AudioSystem::new().await;
 
                 let game = Engine {
                     renderer,
@@ -113,7 +120,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     ui_state: UIState::new(),
                     input_handler: Input::new(),
                     window,
-                    audio_system,
+                    audio_system: Rc::new(RefCell::new(None)),
                 };
 
                 event_loop_proxy
@@ -127,7 +134,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         #[cfg(not(target_arch = "wasm32"))]
         {
             let renderer = pollster::block_on(renderer_future);
-            let audio_system = pollster::block_on(AudioSystem::new());
+            let audio_system = Some(pollster::block_on(AudioSystem::new()));
 
             let game = Engine {
                 renderer,
@@ -199,11 +206,28 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             WindowEvent::RedrawRequested => {
                 engine.window().request_redraw();
 
+                #[cfg(target_arch = "wasm32")]
+                {
+                    let audio_system_clone = engine.audio_system.clone();
+                    let has_gestured = engine.input_handler.user_has_gestured.clone();
+                    spawn_local(async move {
+                        let mut audio_system = audio_system_clone.borrow_mut();
+                        if audio_system.is_none() && has_gestured {
+                            *audio_system = Some(AudioSystem::new().await);
+                        }
+                    });
+                }
+
+                #[cfg(not(target_arch = "wasm32"))]
+                if engine.audio_system.is_none() {
+                    engine.audio_system = Some(pollster::block_on(AudioSystem::new()));
+                }
+
                 GameSystem::update(
                     &mut engine.game_state,
                     &mut engine.ui_state,
                     &mut engine.input_handler,
-                    &mut engine.audio_system,
+                    &mut engine.audio_system.borrow_mut(),
                 );
                 match engine.renderer.render(&engine.game_state, &engine.ui_state) {
                     Ok(()) => {}
