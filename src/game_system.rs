@@ -25,7 +25,7 @@ impl GameSystem {
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &mut Input,
-        audio_system: &mut Option<AudioSystem>,
+        audio_system: &mut AudioSystem,
     ) {
         ItemPickupSystem::handle_item_pickup(game_state, ui_state, input);
         Self::handle_item_placement(game_state, ui_state, input);
@@ -165,11 +165,7 @@ impl GameSystem {
         input.scrolled_amount = 0.0;
     }
 
-    fn resolve_movement(
-        game_state: &mut GameState,
-        input: &Input,
-        audio_system: &mut Option<AudioSystem>,
-    ) {
+    fn resolve_movement(game_state: &mut GameState, input: &Input, audio_system: &mut AudioSystem) {
         let mut movement_speed: f32 = BASE_SPEED;
         if input.left_shift_pressed.is_pressed {
             movement_speed *= 2.5;
@@ -252,7 +248,7 @@ impl GameSystem {
     fn is_colliding(
         game_state: &GameState,
         desired_position: &Position,
-        audio_system: &mut Option<AudioSystem>,
+        audio_system: &mut AudioSystem,
     ) -> bool {
         let interactable_entities: Vec<&Entity> = game_state
             .entities
@@ -275,9 +271,7 @@ impl GameSystem {
                 entity_position,
                 entity_hitbox,
             ) {
-                if let Some(ref mut system) = audio_system {
-                    system.play_sound("bonk");
-                }
+                audio_system.play_sound("bonk");
 
                 return true;
             }

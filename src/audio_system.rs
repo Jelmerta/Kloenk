@@ -1,15 +1,9 @@
 use crate::resources::load_binary;
 #[cfg(not(target_arch = "wasm32"))]
 use rodio::{OutputStream, OutputStreamHandle, Sink};
-#[cfg(target_arch = "wasm32")]
-use std::cell::RefCell;
 use std::collections::HashMap;
-#[cfg(target_arch = "wasm32")]
-use std::collections::HashSet;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Cursor;
-#[cfg(target_arch = "wasm32")]
-use std::rc::Rc;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
@@ -28,19 +22,49 @@ struct Sound {
 }
 
 pub struct AudioSystem {
+    sounds: HashMap<String, Sound>,
     audio_player: AudioPlayer,
 }
 
 impl AudioSystem {
     pub async fn new() -> Self {
-        let sounds_in_binary = Self::load_sounds().await;
+        let sounds = Self::load_sounds().await;
 
         #[cfg(target_arch = "wasm32")]
-        let audio_player = AudioPlayer::new(sounds_in_binary).await;
+        let audio_player = AudioPlayer::new();
         #[cfg(not(target_arch = "wasm32"))]
-        let audio_player = AudioPlayer::new(sounds_in_binary);
+        let audio_player = AudioPlayer::new(sounds);
 
-        AudioSystem { audio_player }
+        AudioSystem {
+            sounds,
+            audio_player,
+        }
+
+        // user_has_gestured: bool
+        // // TODO make sure run once
+        // #[cfg(target_arch = "wasm32")]
+        // {
+        //     let audio_system_clone = engine.audio_system.clone();
+        //     let has_gestured = engine.input_handler.user_has_gestured.clone();
+        //     let audio_system_loaded = engine.audio_system.borrow().is_some();
+        //     if !audio_system_loaded {
+        //         spawn_local(async move {
+        //             let mut audio_system = audio_system_clone.borrow_mut();
+        //             if audio_system.is_none() && has_gestured {
+        //                 *audio_system = Some(AudioSystem::new().await);
+        //             }
+        //         });
+        //     }
+        // }
+        //
+        // #[cfg(not(target_arch = "wasm32"))]
+        // if engine.audio_system.is_none() {
+        //     engine.audio_system = Some(pollster::block_on(AudioSystem::new()));
+        // }
+    }
+
+    pub async fn start(&mut self) {
+        self.audio_player.fill_buffers(&self.sounds).await;
     }
 
     pub fn play_sound(&mut self, sound: &str) {
@@ -110,38 +134,36 @@ impl AudioPlayer {
     }
 }
 
+struct AudioResource {
+    audio_context: AudioContext,
+    audio_buffer: AudioBuffer,
+    is_playing: bool,
+}
+
 // Was unable to get cpal/rodio working on wasm as no devices are returned from default device. Instead going for a web-sys implementation
 #[cfg(target_arch = "wasm32")]
 struct AudioPlayer {
-    // Probably should just a hashmap with each sound having a buffer/playing?
-    audio_context: AudioContext,
-    audio_buffers: HashMap<String, AudioBuffer>,
-    is_playing: Rc<RefCell<HashSet<String>>>,
+    audio_resources: HashMap<String, AudioResource>,
 }
 
 #[cfg(target_arch = "wasm32")]
 impl AudioPlayer {
-    pub async fn new(sounds: HashMap<String, Sound>) -> Self {
-        let audio_context = AudioContext::new().unwrap(); // TODO Should load on user gesture instead of immediately https://goo.gl/7K7WLu
-        let audio_buffers = Self::load_buffers(&audio_context, sounds).await;
-
+    pub fn new() -> Self {
         AudioPlayer {
-            is_playing: Rc::new(RefCell::new(HashSet::new())),
-            audio_context,
-            audio_buffers,
+            audio_resources: HashMap::new(),
         }
     }
 
     fn is_playing(&self, sound: &str) -> bool {
-        self.is_playing.borrow().contains(sound)
+        self.audio_resources
+            .get(sound)
+            .is_some_and(|sound| sound.is_playing)
     }
 
-    async fn load_buffers(
-        audio_context: &AudioContext,
-        sounds: HashMap<String, Sound>,
-    ) -> HashMap<String, AudioBuffer> {
-        let mut audio_buffers = HashMap::new();
+    async fn fill_buffers(&mut self, sounds: &HashMap<String, Sound>) {
         for (sound_name, sound) in sounds {
+            let audio_context = AudioContext::new().unwrap();
+
             let uint8_array = Uint8Array::new_with_length(sound.bytes.len() as u32);
             uint8_array.copy_from(&sound.bytes);
             let array_buffer = uint8_array.buffer();
@@ -150,15 +172,22 @@ impl AudioPlayer {
             let decoded_buffer = JsFuture::from(promise).await.unwrap();
             let audio_buffer = decoded_buffer.dyn_into::<AudioBuffer>().unwrap();
 
-            audio_buffers.insert(sound_name.to_string(), audio_buffer);
+            let audio_resource = AudioResource {
+                audio_context,
+                audio_buffer,
+                is_playing: false,
+            };
+
+            self.audio_resources
+                .insert(sound_name.to_string(), audio_resource);
         }
-        audio_buffers
     }
 
     pub fn play_sound(&mut self, sound: &str) {
-        let is_playing = self.is_playing.clone();
-        let audio_buffer = self.audio_buffers.get(sound).unwrap();
-        let buffer_source = self.audio_context.create_buffer_source().unwrap();
+        let audio_resource = self.audio_resources.get(sound).unwrap();
+        let is_playing = audio_resource.is_playing.clone();
+        let audio_buffer = audio_resource.audio_buffer.clone();
+        let buffer_source = audio_resource.audio_context.create_buffer_source().unwrap();
         buffer_source.set_buffer(Some(&audio_buffer));
         let sound_name = sound.to_string();
         let remove_audio_closure = Closure::wrap(Box::new(move || {
