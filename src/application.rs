@@ -196,14 +196,12 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             } => {
                 engine
                     .input_handler
-                    .update(key, state, &mut engine.audio_system.borrow_mut());
+                    .update(key, state, &engine.audio_system);
             }
             WindowEvent::MouseInput { state, button, .. } => {
-                engine.input_handler.process_mouse_button(
-                    button,
-                    state,
-                    &mut engine.audio_system.borrow_mut(),
-                );
+                engine
+                    .input_handler
+                    .process_mouse_button(button, state, &engine.audio_system);
             }
             WindowEvent::MouseWheel { delta, .. } => {
                 engine.input_handler.process_scroll(&delta);

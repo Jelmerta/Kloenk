@@ -1,9 +1,13 @@
 use crate::resources::load_binary;
 #[cfg(not(target_arch = "wasm32"))]
 use rodio::{OutputStream, OutputStreamHandle, Sink};
+#[cfg(target_arch = "wasm32")]
+use std::cell::RefCell;
 use std::collections::HashMap;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Cursor;
+#[cfg(target_arch = "wasm32")]
+use std::rc::Rc;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
@@ -134,10 +138,11 @@ impl AudioPlayer {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
 struct AudioResource {
     audio_context: AudioContext,
     audio_buffer: AudioBuffer,
-    is_playing: bool,
+    is_playing: Rc<RefCell<bool>>,
 }
 
 // Was unable to get cpal/rodio working on wasm as no devices are returned from default device. Instead going for a web-sys implementation
@@ -157,7 +162,7 @@ impl AudioPlayer {
     fn is_playing(&self, sound: &str) -> bool {
         self.audio_resources
             .get(sound)
-            .is_some_and(|sound| sound.is_playing)
+            .is_some_and(|sound| *sound.is_playing.borrow())
     }
 
     async fn fill_buffers(&mut self, sounds: &HashMap<String, Sound>) {
@@ -175,7 +180,7 @@ impl AudioPlayer {
             let audio_resource = AudioResource {
                 audio_context,
                 audio_buffer,
-                is_playing: false,
+                is_playing: Rc::new(RefCell::new(false)),
             };
 
             self.audio_resources
@@ -186,12 +191,14 @@ impl AudioPlayer {
     pub fn play_sound(&mut self, sound: &str) {
         let audio_resource = self.audio_resources.get(sound).unwrap();
         let is_playing = audio_resource.is_playing.clone();
+        let is_playing_set = audio_resource.is_playing.clone();
         let audio_buffer = audio_resource.audio_buffer.clone();
         let buffer_source = audio_resource.audio_context.create_buffer_source().unwrap();
         buffer_source.set_buffer(Some(&audio_buffer));
         let sound_name = sound.to_string();
         let remove_audio_closure = Closure::wrap(Box::new(move || {
-            is_playing.borrow_mut().remove(&sound_name);
+            let mut mut_is_playing = is_playing.borrow_mut();
+            *mut_is_playing = false;
         }) as Box<dyn FnMut()>);
 
         buffer_source
@@ -202,11 +209,20 @@ impl AudioPlayer {
             .unwrap();
 
         buffer_source
-            .connect_with_audio_node(&self.audio_context.destination())
+            .connect_with_audio_node(
+                &self
+                    .audio_resources
+                    .get(sound)
+                    .unwrap()
+                    .audio_context
+                    .destination(),
+            )
             .unwrap();
 
         buffer_source.start().unwrap();
-        self.is_playing.borrow_mut().insert(sound.to_string());
+        //let is_playing_clone = is_playing.clone();
+        let mut mut_is_playing = is_playing_set.borrow_mut();
+        *mut_is_playing = true;
         remove_audio_closure.forget();
     }
 }
