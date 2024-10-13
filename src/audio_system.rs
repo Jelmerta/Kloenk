@@ -1,7 +1,10 @@
 use crate::resources::load_binary;
+use std::cell::RefCell;
 use std::collections::HashMap;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Cursor;
+use std::rc::Rc;
+use wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 #[cfg(target_arch = "wasm32")]
@@ -34,10 +37,9 @@ impl AudioSystem {
     }
 
     pub fn play_sound(&mut self, sound: &str) {
-        // if self.audio_player.is_playing() {
-        //     return;
-        // }
-        // let sound = self.sounds.get(sound).unwrap();
+        if self.audio_player.is_playing(sound) {
+            return;
+        }
         self.audio_player.play_sound(sound);
     }
 
@@ -89,19 +91,25 @@ impl AudioPlayer {
 #[cfg(target_arch = "wasm32")]
 pub struct AudioPlayer {
     audio_context: AudioContext,
-    audio_buffers: HashMap<String, AudioBuffer>,
+    audio_buffers: Rc<RefCell<HashMap<String, AudioBuffer>>>,
 }
 
 #[cfg(target_arch = "wasm32")]
 impl AudioPlayer {
     pub async fn new(sounds: &HashMap<String, Sound>) -> Self {
-        let audio_context = AudioContext::new().unwrap();
-        let audio_buffers = Self::load_buffers(&audio_context, sounds).await;
+        let audio_context = AudioContext::new().unwrap(); // TODO Should load on user gesture instead of immediately https://goo.gl/7K7WLu
+        let audio_buffers = Rc::new(RefCell::new(
+            Self::load_buffers(&audio_context, sounds).await,
+        ));
 
         AudioPlayer {
             audio_context,
             audio_buffers,
         }
+    }
+
+    fn is_playing(&self, sound: &str) -> bool {
+        self.audio_buffers.borrow().get(sound).is_some()
     }
 
     async fn load_buffers(
@@ -118,21 +126,37 @@ impl AudioPlayer {
             let decoded_buffer = JsFuture::from(promise).await.unwrap();
             let audio_buffer = decoded_buffer.dyn_into::<AudioBuffer>().unwrap();
 
-            // audio_buffer = promise.then(|buffer| {
-            //     audio_buffer = buffer;
-            // });
             audio_buffers.insert(sound_name.to_string(), audio_buffer);
         }
         audio_buffers
     }
 
-    pub fn play_sound(&self, sound: &str) {
-        let audio_buffer = self.audio_buffers.get(sound).unwrap();
+    pub fn play_sound(&mut self, sound: &str) {
+        let audio_buffers = self.audio_buffers.clone();
+        let audio_buffer = audio_buffers.borrow().get(sound).unwrap().clone();
         let buffer_source = self.audio_context.create_buffer_source().unwrap();
-        buffer_source.set_buffer(Some(audio_buffer));
+        buffer_source.set_buffer(Some(&audio_buffer));
+        let sound_name = sound.to_string();
+        let remove_audio_closure = Closure::wrap(Box::new(move || {
+            audio_buffers.borrow_mut().remove(&sound_name);
+        }) as Box<dyn FnMut()>);
+
+        buffer_source
+            .add_event_listener_with_callback(
+                "ended",
+                remove_audio_closure.as_ref().unchecked_ref(),
+            )
+            .unwrap();
+
         buffer_source
             .connect_with_audio_node(&self.audio_context.destination())
             .unwrap();
+
         buffer_source.start().unwrap();
     }
 }
+
+// Closure::wrap(Box::new(move || &self.audio_buffers.remove(sound)))
+//     .into_js_result()
+//     .unwrap()
+//     .unchecked_into::<Function>(),
