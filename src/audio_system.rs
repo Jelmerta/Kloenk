@@ -91,25 +91,25 @@ impl AudioPlayer {
 #[cfg(target_arch = "wasm32")]
 pub struct AudioPlayer {
     audio_context: AudioContext,
-    audio_buffers: Rc<RefCell<HashMap<String, AudioBuffer>>>,
+    audio_buffers: HashMap<String, AudioBuffer>,
+    is_playing: Rc<RefCell<HashMap<String, bool>>>,
 }
 
 #[cfg(target_arch = "wasm32")]
 impl AudioPlayer {
     pub async fn new(sounds: &HashMap<String, Sound>) -> Self {
         let audio_context = AudioContext::new().unwrap(); // TODO Should load on user gesture instead of immediately https://goo.gl/7K7WLu
-        let audio_buffers = Rc::new(RefCell::new(
-            Self::load_buffers(&audio_context, sounds).await,
-        ));
+        let audio_buffers = Self::load_buffers(&audio_context, sounds).await;
 
         AudioPlayer {
+            is_playing: Rc::new(RefCell::new(HashMap::new())),
             audio_context,
             audio_buffers,
         }
     }
 
     fn is_playing(&self, sound: &str) -> bool {
-        self.audio_buffers.borrow().get(sound).is_some()
+        self.is_playing.borrow().get(sound).is_some()
     }
 
     async fn load_buffers(
@@ -132,13 +132,13 @@ impl AudioPlayer {
     }
 
     pub fn play_sound(&mut self, sound: &str) {
-        let audio_buffers = self.audio_buffers.clone();
-        let audio_buffer = audio_buffers.borrow().get(sound).unwrap().clone();
+        let is_playing = self.is_playing.clone();
+        let audio_buffer = self.audio_buffers.get(sound).unwrap();
         let buffer_source = self.audio_context.create_buffer_source().unwrap();
         buffer_source.set_buffer(Some(&audio_buffer));
         let sound_name = sound.to_string();
         let remove_audio_closure = Closure::wrap(Box::new(move || {
-            audio_buffers.borrow_mut().remove(&sound_name);
+            is_playing.borrow_mut().remove(&sound_name);
         }) as Box<dyn FnMut()>);
 
         buffer_source
@@ -153,6 +153,7 @@ impl AudioPlayer {
             .unwrap();
 
         buffer_source.start().unwrap();
+        self.is_playing.borrow_mut().insert(sound.to_string(), true);
         remove_audio_closure.forget();
     }
 }
