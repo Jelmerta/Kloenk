@@ -153,6 +153,7 @@ impl AudioPlayer {
             .unwrap();
 
         buffer_source.start().unwrap();
+        remove_audio_closure.forget();
     }
 }
 
