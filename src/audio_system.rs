@@ -1,8 +1,14 @@
 use crate::resources::load_binary;
+#[cfg(not(target_arch = "wasm32"))]
+use rodio::{OutputStream, OutputStreamHandle, Sink};
+#[cfg(target_arch = "wasm32")]
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
+#[cfg(target_arch = "wasm32")]
+use std::collections::HashSet;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Cursor;
+#[cfg(target_arch = "wasm32")]
 use std::rc::Rc;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::closure::Closure;
@@ -28,7 +34,11 @@ pub struct AudioSystem {
 impl AudioSystem {
     pub async fn new() -> Self {
         let sounds_in_binary = Self::load_sounds().await;
-        let audio_player = AudioPlayer::new(&sounds_in_binary).await;
+
+        #[cfg(target_arch = "wasm32")]
+        let audio_player = AudioPlayer::new(sounds_in_binary).await;
+        #[cfg(not(target_arch = "wasm32"))]
+        let audio_player = AudioPlayer::new(sounds_in_binary);
 
         AudioSystem { audio_player }
     }
@@ -52,35 +62,50 @@ impl AudioSystem {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-struct AudioPlayer {
-    sounds: HashMap<String, Sound>,
+struct AudioStream {
+    sound_bytes: Sound,
     _stream: OutputStream, // Needs to be kept alive as long as handle lives to play audio
     handle: OutputStreamHandle,
     sink: Option<Sink>,
 }
+
+#[cfg(not(target_arch = "wasm32"))]
+struct AudioPlayer {
+    audio_streams: HashMap<String, AudioStream>,
+}
 #[cfg(not(target_arch = "wasm32"))]
 impl AudioPlayer {
     pub fn new(sounds: HashMap<String, Sound>) -> Self {
-        let (_stream, handle) = OutputStream::try_default().unwrap();
-        AudioPlayer {
-            sounds,
-            _stream,
-            handle,
-            sink: None,
+        let mut audio_streams = HashMap::new();
+        for (sound_name, sound) in sounds {
+            let (_stream, handle) = OutputStream::try_default().unwrap();
+            let sink = None;
+            let audio_stream = AudioStream {
+                sound_bytes: sound,
+                _stream,
+                handle,
+                sink,
+            };
+            audio_streams.insert(sound_name, audio_stream);
         }
+
+        AudioPlayer { audio_streams }
     }
 
-    pub fn is_playing(&self) -> bool {
-        self.sink.is_some() && !self.sink.as_ref().unwrap().empty()
+    pub fn is_playing(&self, sound: &str) -> bool {
+        let audio_stream = self.audio_streams.get(sound);
+        audio_stream.is_some()
+            && audio_stream.unwrap().sink.is_some()
+            && !audio_stream.unwrap().sink.as_ref().unwrap().empty()
     }
 
-    pub fn play_sound(&mut self, sound: &Sound) {
-        let audio_cursor = Cursor::new(sound.bytes.clone());
+    pub fn play_sound(&mut self, sound: &str) {
+        let audio_stream = self.audio_streams.get_mut(sound).unwrap();
+        let audio_cursor = Cursor::new(audio_stream.sound_bytes.bytes.clone());
         let source = rodio::Decoder::new(audio_cursor).unwrap();
-        // self.handle.play_raw(source.convert_samples()).unwrap();
-        let sink = Sink::try_new(&self.handle).unwrap();
+        let sink = Sink::try_new(&audio_stream.handle).unwrap();
         sink.append(source);
-        self.sink = Some(sink);
+        audio_stream.sink = Some(sink);
     }
 }
 
@@ -94,7 +119,7 @@ struct AudioPlayer {
 
 #[cfg(target_arch = "wasm32")]
 impl AudioPlayer {
-    pub async fn new(sounds: &HashMap<String, Sound>) -> Self {
+    pub async fn new(sounds: HashMap<String, Sound>) -> Self {
         let audio_context = AudioContext::new().unwrap(); // TODO Should load on user gesture instead of immediately https://goo.gl/7K7WLu
         let audio_buffers = Self::load_buffers(&audio_context, sounds).await;
 
@@ -111,7 +136,7 @@ impl AudioPlayer {
 
     async fn load_buffers(
         audio_context: &AudioContext,
-        sounds: &HashMap<String, Sound>,
+        sounds: HashMap<String, Sound>,
     ) -> HashMap<String, AudioBuffer> {
         let mut audio_buffers = HashMap::new();
         for (sound_name, sound) in sounds {

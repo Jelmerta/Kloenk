@@ -127,8 +127,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         #[cfg(not(target_arch = "wasm32"))]
         {
             let renderer = pollster::block_on(renderer_future);
-            // renderer
-            let audio_system = AudioSystem::new(); // just for audio loading...?
+            let audio_system = pollster::block_on(AudioSystem::new());
 
             let game = Engine {
                 renderer,
