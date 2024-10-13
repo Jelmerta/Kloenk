@@ -43,28 +43,6 @@ impl AudioSystem {
             sounds,
             audio_player,
         }
-
-        // user_has_gestured: bool
-        // // TODO make sure run once
-        // #[cfg(target_arch = "wasm32")]
-        // {
-        //     let audio_system_clone = engine.audio_system.clone();
-        //     let has_gestured = engine.input_handler.user_has_gestured.clone();
-        //     let audio_system_loaded = engine.audio_system.borrow().is_some();
-        //     if !audio_system_loaded {
-        //         spawn_local(async move {
-        //             let mut audio_system = audio_system_clone.borrow_mut();
-        //             if audio_system.is_none() && has_gestured {
-        //                 *audio_system = Some(AudioSystem::new().await);
-        //             }
-        //         });
-        //     }
-        // }
-        //
-        // #[cfg(not(target_arch = "wasm32"))]
-        // if engine.audio_system.is_none() {
-        //     engine.audio_system = Some(pollster::block_on(AudioSystem::new()));
-        // }
     }
 
     pub async fn start(&mut self) {
