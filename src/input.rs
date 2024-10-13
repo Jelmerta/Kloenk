@@ -57,7 +57,7 @@ impl Input {
         Input::default()
     }
 
-    pub async fn update(
+    pub fn update(
         &mut self,
         keycode: KeyCode,
         state: ElementState,
@@ -71,7 +71,7 @@ impl Input {
             let audio_system_clone = audio_system.clone();
             spawn_local(async move {
                 let mut audio_system_mut = audio_system_clone.borrow_mut();
-                audio_system_mut.start();
+                audio_system_mut.start().await;
             });
         }
 
@@ -137,7 +137,7 @@ impl Input {
             let audio_system_clone = audio_system.clone();
             spawn_local(async move {
                 let mut audio_system_mut = audio_system_clone.borrow_mut();
-                audio_system_mut.start();
+                audio_system_mut.start().await;
             });
         }
 
