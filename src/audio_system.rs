@@ -195,7 +195,6 @@ impl AudioPlayer {
         let audio_buffer = audio_resource.audio_buffer.clone();
         let buffer_source = audio_resource.audio_context.create_buffer_source().unwrap();
         buffer_source.set_buffer(Some(&audio_buffer));
-        let sound_name = sound.to_string();
         let remove_audio_closure = Closure::wrap(Box::new(move || {
             let mut mut_is_playing = is_playing.borrow_mut();
             *mut_is_playing = false;
@@ -220,7 +219,6 @@ impl AudioPlayer {
             .unwrap();
 
         buffer_source.start().unwrap();
-        //let is_playing_clone = is_playing.clone();
         let mut mut_is_playing = is_playing_set.borrow_mut();
         *mut_is_playing = true;
         remove_audio_closure.forget();
