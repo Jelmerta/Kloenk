@@ -21,11 +21,13 @@ use web_sys::AudioBuffer;
 #[cfg(target_arch = "wasm32")]
 use web_sys::AudioContext;
 
+#[derive(Clone)]
 struct Sound {
     bytes: Vec<u8>,
 }
 
 pub struct AudioSystem {
+    #[allow(dead_code)] // Only used for wasm
     sounds: HashMap<String, Sound>,
     audio_player: AudioPlayer,
 }
@@ -37,7 +39,7 @@ impl AudioSystem {
         #[cfg(target_arch = "wasm32")]
         let audio_player = AudioPlayer::new();
         #[cfg(not(target_arch = "wasm32"))]
-        let audio_player = AudioPlayer::new(sounds);
+        let audio_player = AudioPlayer::new(sounds.clone());
 
         AudioSystem {
             sounds,
@@ -45,8 +47,9 @@ impl AudioSystem {
         }
     }
 
+    #[cfg(target_arch = "wasm32")]
     pub async fn start(&mut self) {
-        self.audio_player.fill_buffers(&self.sounds).await;
+        self.audio_player.build_audio_resources(&self.sounds).await;
     }
 
     pub fn play_sound(&mut self, sound: &str) {
@@ -68,7 +71,7 @@ impl AudioSystem {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-struct AudioStream {
+struct AudioResource {
     sound_bytes: Sound,
     _stream: OutputStream, // Needs to be kept alive as long as handle lives to play audio
     handle: OutputStreamHandle,
@@ -78,7 +81,7 @@ struct AudioStream {
 
 #[cfg(not(target_arch = "wasm32"))]
 struct AudioPlayer {
-    audio_streams: HashMap<String, AudioStream>,
+    audio_streams: HashMap<String, AudioResource>,
 }
 #[cfg(not(target_arch = "wasm32"))]
 impl AudioPlayer {
@@ -87,7 +90,7 @@ impl AudioPlayer {
         for (sound_name, sound) in sounds {
             let (_stream, handle) = OutputStream::try_default().unwrap();
             let sink = None;
-            let audio_stream = AudioStream {
+            let audio_stream = AudioResource {
                 sound_bytes: sound,
                 _stream,
                 handle,
@@ -143,7 +146,7 @@ impl AudioPlayer {
             .is_some_and(|sound| *sound.is_playing.borrow())
     }
 
-    async fn fill_buffers(&mut self, sounds: &HashMap<String, Sound>) {
+    async fn build_audio_resources(&mut self, sounds: &HashMap<String, Sound>) {
         for (sound_name, sound) in sounds {
             let audio_context = AudioContext::new().unwrap();
 
