@@ -16,7 +16,7 @@ log = "0.4"
 # wgpu = { version = "22.1.0", default-features = false } We might not need features like metal not sure yet
 wgpu = "22.1"
 pollster = "0.3"
-bytemuck = "1.18"
+bytemuck = "1.19"
 cgmath = "0.18"
 anyhow = { version = "1.0", default-features = false }
 itertools = { version = "0.13", default-features = false, features = ["use_alloc"] }
