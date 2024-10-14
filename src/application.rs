@@ -37,9 +37,8 @@ pub struct Engine {
     pub window: Arc<Window>,
     // AudioSystem is loaded after user has used a gesture. This is to get rid of this warning in Chrome:
     // The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://goo.gl/7K7WLu
-    pub audio_system: Rc<RefCell<AudioSystem>>,
     // #[cfg(target_arch = "wasm32")]
-    // pub audio_system: Rc<RefCell<Option<AudioSystem>>>,
+    pub audio_system: Rc<RefCell<AudioSystem>>,
     // #[cfg(not(target_arch = "wasm32"))]
     // pub audio_system: AudioSystem,
 }
@@ -107,13 +106,12 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             let _ = window.request_inner_size(PhysicalSize::new(800, 600));
         }
 
-        let input_handler = Input::new();
         let renderer_future = Renderer::new(window.clone());
-        let audio_future = AudioSystem::new();
 
         #[cfg(target_arch = "wasm32")]
         {
             let event_loop_proxy = self.event_loop_proxy.clone();
+            let audio_future = AudioSystem::new();
             spawn_local(async move {
                 let renderer = renderer_future.await;
                 let audio_system = Rc::new(RefCell::new(audio_future.await));
@@ -122,7 +120,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     renderer,
                     game_state: GameState::new(),
                     ui_state: UIState::new(),
-                    input_handler,
+                    input_handler: Input::new(),
                     audio_system,
                     window,
                 };
@@ -138,7 +136,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         #[cfg(not(target_arch = "wasm32"))]
         {
             let renderer = pollster::block_on(renderer_future);
-            let audio_system = Some(pollster::block_on(AudioSystem::new()));
+            let audio_system = Rc::new(RefCell::new(pollster::block_on(AudioSystem::new())));
 
             let game = Engine {
                 renderer,
@@ -196,14 +194,20 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     },
                 ..
             } => {
+                #[cfg(target_arch = "wasm32")]
                 engine
                     .input_handler
                     .update(key, state, &engine.audio_system);
+                #[cfg(not(target_arch = "wasm32"))]
+                engine.input_handler.update(key, state);
             }
             WindowEvent::MouseInput { state, button, .. } => {
+                #[cfg(target_arch = "wasm32")]
                 engine
                     .input_handler
                     .process_mouse_button(button, state, &engine.audio_system);
+                #[cfg(not(target_arch = "wasm32"))]
+                engine.input_handler.process_mouse_button(button, state);
             }
             WindowEvent::MouseWheel { delta, .. } => {
                 engine.input_handler.process_scroll(&delta);
@@ -218,7 +222,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     &mut engine.game_state,
                     &mut engine.ui_state,
                     &mut engine.input_handler,
-                    &mut engine.audio_system,
+                    &engine.audio_system,
                 );
 
                 match engine.renderer.render(&engine.game_state, &engine.ui_state) {

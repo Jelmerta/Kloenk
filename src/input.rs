@@ -1,5 +1,8 @@
+#[cfg(target_arch = "wasm32")]
 use crate::audio_system::AudioSystem;
+#[cfg(target_arch = "wasm32")]
 use std::cell::RefCell;
+#[cfg(target_arch = "wasm32")]
 use std::rc::Rc;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
@@ -30,6 +33,7 @@ impl KeyPress {
 
 #[derive(Debug, Default)]
 pub struct Input {
+    #[allow(dead_code)] // Only used for wasm loading audio system
     user_has_gestured: bool,
 
     pub w_pressed: KeyPress,
@@ -61,11 +65,12 @@ impl Input {
         &mut self,
         keycode: KeyCode,
         state: ElementState,
-        audio_system: &Rc<RefCell<AudioSystem>>,
+        #[cfg(target_arch = "wasm32")] audio_system: &Rc<RefCell<AudioSystem>>,
     ) {
         let is_pressed = state == ElementState::Pressed;
 
         // Yeah... Bit ugly... Thought of callback or observer pattern but that honestly seems way too complex compared to this.
+        #[cfg(target_arch = "wasm32")]
         if !self.user_has_gestured && is_pressed {
             self.user_has_gestured = true;
             let audio_system_clone = audio_system.clone();
@@ -127,11 +132,12 @@ impl Input {
         &mut self,
         button: MouseButton,
         state: ElementState,
-        audio_system: &Rc<RefCell<AudioSystem>>,
+        #[cfg(target_arch = "wasm32")] audio_system: &Rc<RefCell<AudioSystem>>,
     ) {
         let is_pressed = state == ElementState::Pressed;
 
         // Yeah... Bit ugly... Thought of callback or observer pattern but that honestly seems way too complex compared to this.
+        #[cfg(target_arch = "wasm32")]
         if !self.user_has_gestured && is_pressed {
             self.user_has_gestured = true;
             let audio_system_clone = audio_system.clone();
