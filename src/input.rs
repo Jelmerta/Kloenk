@@ -2,6 +2,7 @@
 use crate::audio_system::AudioSystem;
 #[cfg(target_arch = "wasm32")]
 use std::cell::RefCell;
+use std::ops::DerefMut;
 #[cfg(target_arch = "wasm32")]
 use std::rc::Rc;
 #[cfg(target_arch = "wasm32")]
@@ -75,8 +76,13 @@ impl Input {
             self.user_has_gestured = true;
             let audio_system_clone = audio_system.clone();
             spawn_local(async move {
-                let mut audio_system_mut = audio_system_clone.borrow_mut();
-                audio_system_mut.start().await;
+                let mut audio_cloned;
+                let start = {
+                    let mut ref_mut = audio_system_clone.borrow_mut();
+                    audio_cloned = ref_mut.deref_mut().clone();
+                    audio_cloned.start()
+                };
+                start.await;
             });
         }
 
@@ -142,8 +148,13 @@ impl Input {
             self.user_has_gestured = true;
             let audio_system_clone = audio_system.clone();
             spawn_local(async move {
-                let mut audio_system_mut = audio_system_clone.borrow_mut();
-                audio_system_mut.start().await;
+                let mut audio_cloned;
+                let start = {
+                    let mut ref_mut = audio_system_clone.borrow_mut();
+                    audio_cloned = ref_mut.deref_mut().clone();
+                    audio_cloned.start()
+                };
+                start.await;
             });
         }
 
