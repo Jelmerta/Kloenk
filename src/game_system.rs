@@ -277,8 +277,8 @@ impl GameSystem {
                 entity_hitbox,
             ) {
                 let result = audio_system.try_borrow_mut();
-                if result.is_ok() {
-                    result.unwrap().play_sound("bonk");
+                if let Ok(mut audio_system_unwrapped) = result {
+                    audio_system_unwrapped.play_sound("bonk");
                 } // Otherwise audio is not yet loaded
 
                 return true;

@@ -26,6 +26,7 @@ struct Sound {
     bytes: Vec<u8>,
 }
 
+#[derive(Clone)]
 pub struct AudioSystem {
     #[allow(dead_code)] // Only used for wasm
     sounds: HashMap<String, Sound>,
@@ -73,7 +74,8 @@ impl AudioSystem {
 #[cfg(not(target_arch = "wasm32"))]
 struct AudioResource {
     sound_bytes: Sound,
-    _stream: OutputStream, // Needs to be kept alive as long as handle lives to play audio
+    #[allow(dead_code)]
+    stream: OutputStream, // Needs to be kept alive as long as handle lives to play audio
     handle: OutputStreamHandle,
     sink: Option<Sink>,
 }
@@ -88,11 +90,11 @@ impl AudioPlayer {
     pub fn new(sounds: HashMap<String, Sound>) -> Self {
         let mut audio_streams = HashMap::new();
         for (sound_name, sound) in sounds {
-            let (_stream, handle) = OutputStream::try_default().unwrap();
+            let (stream, handle) = OutputStream::try_default().unwrap();
             let sink = None;
             let audio_stream = AudioResource {
                 sound_bytes: sound,
-                _stream,
+                stream,
                 handle,
                 sink,
             };
@@ -120,6 +122,7 @@ impl AudioPlayer {
 }
 
 #[cfg(target_arch = "wasm32")]
+#[derive(Clone)]
 struct AudioResource {
     audio_context: AudioContext,
     audio_buffer: AudioBuffer,
@@ -128,6 +131,7 @@ struct AudioResource {
 
 // Was unable to get cpal/rodio working on wasm as no devices are returned from default device. Instead going for a web-sys implementation
 #[cfg(target_arch = "wasm32")]
+#[derive(Clone)]
 struct AudioPlayer {
     audio_resources: HashMap<String, AudioResource>,
 }
@@ -150,7 +154,8 @@ impl AudioPlayer {
         for (sound_name, sound) in sounds {
             let audio_context = AudioContext::new().unwrap();
 
-            let uint8_array = Uint8Array::new_with_length(sound.bytes.len() as u32);
+            let uint8_array =
+                Uint8Array::new_with_length(u32::try_from(sound.bytes.len()).unwrap());
             uint8_array.copy_from(&sound.bytes);
             let array_buffer = uint8_array.buffer();
 
