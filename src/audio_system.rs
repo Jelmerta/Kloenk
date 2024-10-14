@@ -26,7 +26,6 @@ struct Sound {
     bytes: Vec<u8>,
 }
 
-#[derive(Clone)]
 pub struct AudioSystem {
     #[allow(dead_code)] // Only used for wasm
     sounds: HashMap<String, Sound>,
@@ -122,7 +121,6 @@ impl AudioPlayer {
 }
 
 #[cfg(target_arch = "wasm32")]
-#[derive(Clone)]
 struct AudioResource {
     audio_context: AudioContext,
     audio_buffer: AudioBuffer,
@@ -131,7 +129,6 @@ struct AudioResource {
 
 // Was unable to get cpal/rodio working on wasm as no devices are returned from default device. Instead going for a web-sys implementation
 #[cfg(target_arch = "wasm32")]
-#[derive(Clone)]
 struct AudioPlayer {
     audio_resources: HashMap<String, AudioResource>,
 }
