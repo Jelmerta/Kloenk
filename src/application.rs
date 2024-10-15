@@ -24,7 +24,7 @@ use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowId};
 
-use crate::audio_system::AudioSystem;
+use crate::audio_system::{AudioPlayer, AudioSystem};
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
@@ -37,10 +37,14 @@ pub struct Engine {
     pub window: Arc<Window>,
     // AudioSystem is loaded after user has used a gesture. This is to get rid of this warning in Chrome:
     // The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://goo.gl/7K7WLu
-    // #[cfg(target_arch = "wasm32")]
-    pub audio_system: Rc<RefCell<AudioSystem>>,
-    // #[cfg(not(target_arch = "wasm32"))]
-    // pub audio_system: AudioSystem,
+    pub audio_loading_state: Rc<RefCell<AudioState>>,
+    pub audio_system: AudioSystem,
+}
+
+pub enum AudioState {
+    NotLoaded,
+    Loading,
+    Loaded,
 }
 
 impl Engine {
@@ -114,13 +118,14 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             let audio_future = AudioSystem::new();
             spawn_local(async move {
                 let renderer = renderer_future.await;
-                let audio_system = Rc::new(RefCell::new(audio_future.await));
+                let audio_system = audio_future.await;
 
                 let game = Engine {
                     renderer,
                     game_state: GameState::new(),
                     ui_state: UIState::new(),
                     input_handler: Input::new(),
+                    audio_loading_state: Rc::new(RefCell::new(AudioState::NotLoaded)),
                     audio_system,
                     window,
                 };
@@ -194,20 +199,54 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     },
                 ..
             } => {
-                #[cfg(target_arch = "wasm32")]
-                engine
-                    .input_handler
-                    .update(key, state, &engine.audio_system);
-                #[cfg(not(target_arch = "wasm32"))]
                 engine.input_handler.update(key, state);
+
+                // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
+                #[cfg(target_arch = "wasm32")]
+                {
+                    let loading_state_clone = engine.audio_loading_state.clone();
+                    let mut loading_state_mut = engine.audio_loading_state.borrow_mut();
+                    match *loading_state_mut {
+                        AudioState::NotLoaded => {
+                            *loading_state_mut = AudioState::Loading;
+                            let audio_player = engine.audio_system.audio_player.clone();
+                            let audio_binaries = engine.audio_system.sounds.clone();
+                            spawn_local(async move {
+                                let mut ref_mut = loading_state_clone.borrow_mut();
+                                let mut audio_player_mut = audio_player.borrow_mut();
+                                *audio_player_mut =
+                                    Some(AudioPlayer::build_audio_player(&audio_binaries).await);
+                                *ref_mut = AudioState::Loaded;
+                            });
+                        }
+                        _ => (),
+                    }
+                }
             }
             WindowEvent::MouseInput { state, button, .. } => {
-                #[cfg(target_arch = "wasm32")]
-                engine
-                    .input_handler
-                    .process_mouse_button(button, state, &engine.audio_system);
-                #[cfg(not(target_arch = "wasm32"))]
                 engine.input_handler.process_mouse_button(button, state);
+
+                // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
+                #[cfg(target_arch = "wasm32")]
+                {
+                    let loading_state_clone = engine.audio_loading_state.clone();
+                    let mut loading_state_mut = engine.audio_loading_state.borrow_mut();
+                    match *loading_state_mut {
+                        AudioState::NotLoaded => {
+                            *loading_state_mut = AudioState::Loading;
+                            let audio_player = engine.audio_system.audio_player.clone();
+                            let audio_binaries = engine.audio_system.sounds.clone();
+                            spawn_local(async move {
+                                let mut ref_mut = loading_state_clone.borrow_mut();
+                                let mut audio_player_mut = audio_player.borrow_mut();
+                                *audio_player_mut =
+                                    Some(AudioPlayer::build_audio_player(&audio_binaries).await);
+                                *ref_mut = AudioState::Loaded;
+                            });
+                        }
+                        _ => (),
+                    }
+                }
             }
             WindowEvent::MouseWheel { delta, .. } => {
                 engine.input_handler.process_scroll(&delta);
@@ -222,7 +261,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     &mut engine.game_state,
                     &mut engine.ui_state,
                     &mut engine.input_handler,
-                    &engine.audio_system,
+                    &mut engine.audio_system,
                 );
 
                 match engine.renderer.render(&engine.game_state, &engine.ui_state) {
