@@ -41,6 +41,7 @@ pub struct Input {
     pub left_shift_pressed: KeyPress,
 
     pub right_mouse_clicked: KeyPress,
+    pub left_mouse_clicked: KeyPress,
 
     pub scrolled_amount: f32,
 }
@@ -104,10 +105,13 @@ impl Input {
     pub fn process_mouse_button(&mut self, button: MouseButton, state: ElementState) {
         let is_pressed = state == ElementState::Pressed;
 
-        #[allow(clippy::single_match)]
         match button {
             MouseButton::Right => {
                 self.right_mouse_clicked.set_press_state(is_pressed);
+            }
+
+            MouseButton::Left => {
+                self.left_mouse_clicked.set_press_state(is_pressed);
             }
 
             _ => {}
