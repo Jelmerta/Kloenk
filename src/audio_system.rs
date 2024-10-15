@@ -42,10 +42,6 @@ impl AudioSystem {
     }
 
     pub fn play_sound(&mut self, sound: &str) {
-        if !self.audio_player.try_borrow().unwrap().is_none() {
-            return;
-        }
-
         let mut audio_player_mut = self.audio_player.borrow_mut();
         if let Some(ref mut audio_player) = *audio_player_mut {
             if audio_player.is_playing(sound) {
