@@ -43,6 +43,7 @@ pub struct Hitbox {
 // Does not contain any data (yet?)
 // pub struct Surface {}
 
+#[derive(Clone, Copy)]
 pub struct CameraTarget {
     pub distance: f32,
     pub rotation_x_degrees: f32, // Spherical coordinates

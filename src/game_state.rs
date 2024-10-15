@@ -1,10 +1,11 @@
 use cgmath::num_traits::ToPrimitive;
 
+// use std::{collections::HashMap, sync::atomic::AtomicU32};
+use crate::camera::Camera;
 use crate::components::{
     CameraTarget, Entity, Graphics2D, Graphics3D, Hitbox, InStorage, ItemShape, Position, Storable,
     Storage,
 };
-// use std::{collections::HashMap, sync::atomic::AtomicU32};
 use std::collections::{HashMap, HashSet};
 use std::f32;
 
@@ -21,6 +22,7 @@ pub struct GameState {
     pub position_components: HashMap<Entity, Position>,
     pub surface_components: HashSet<Entity>,
     pub hitbox_components: HashMap<Entity, Hitbox>,
+    pub camera_components: HashMap<Entity, Camera>,
     pub camera_target_components: HashMap<Entity, CameraTarget>,
     pub storable_components: HashMap<Entity, Storable>,
     pub storage_components: HashMap<Entity, Storage>,
@@ -38,6 +40,7 @@ impl GameState {
         let mut position_components = HashMap::new();
         let mut surface_components = HashSet::new();
         let mut hitbox_components = HashMap::new();
+        let mut camera_components = HashMap::new();
         let mut camera_target_components = HashMap::new();
         let mut storable_components = HashMap::new();
         let mut storage_components = HashMap::new();
@@ -51,6 +54,8 @@ impl GameState {
             &mut camera_target_components,
             &mut storage_components,
         );
+        Self::load_camera(&mut entities, &mut camera_components);
+
         Self::load_shield(
             &mut entities,
             &mut graphics_3d_components,
@@ -88,6 +93,7 @@ impl GameState {
             position_components,
             surface_components,
             hitbox_components,
+            camera_components,
             camera_target_components,
             storable_components,
             storage_components,
@@ -96,7 +102,7 @@ impl GameState {
     }
 
     fn load_tree(
-        entities: &mut Vec<String>,
+        entities: &mut Vec<Entity>,
         graphics_3d_components: &mut HashMap<String, Graphics3D>,
         position_components: &mut HashMap<String, Position>,
         hitbox_components: &mut HashMap<String, Hitbox>,
@@ -121,7 +127,7 @@ impl GameState {
     }
 
     fn load_tiles(
-        entities: &mut Vec<String>,
+        entities: &mut Vec<Entity>,
         graphics_3d_components: &mut HashMap<String, Graphics3D>,
         position_components: &mut HashMap<String, Position>,
         surface_components: &mut HashSet<String>,
@@ -153,7 +159,7 @@ impl GameState {
     }
 
     fn load_swords(
-        entities: &mut Vec<String>,
+        entities: &mut Vec<Entity>,
         graphics_3d_components: &mut HashMap<String, Graphics3D>,
         graphics_2d_components: &mut HashMap<String, Graphics2D>,
         position_components: &mut HashMap<String, Position>,
@@ -195,12 +201,12 @@ impl GameState {
     }
 
     fn load_shield(
-        entities: &mut Vec<String>,
-        graphics_3d_components: &mut HashMap<String, Graphics3D>,
-        graphics_2d_components: &mut HashMap<String, Graphics2D>,
-        position_components: &mut HashMap<String, Position>,
-        hitbox_components: &mut HashMap<String, Hitbox>,
-        storable_components: &mut HashMap<String, Storable>,
+        entities: &mut Vec<Entity>,
+        graphics_3d_components: &mut HashMap<Entity, Graphics3D>,
+        graphics_2d_components: &mut HashMap<Entity, Graphics2D>,
+        position_components: &mut HashMap<Entity, Position>,
+        hitbox_components: &mut HashMap<Entity, Hitbox>,
+        storable_components: &mut HashMap<Entity, Storable>,
     ) {
         let shield = "shield".to_string();
         entities.push(shield.clone());
@@ -234,12 +240,12 @@ impl GameState {
     }
 
     fn load_player(
-        entities: &mut Vec<String>,
-        graphics_3d_components: &mut HashMap<String, Graphics3D>,
-        position_components: &mut HashMap<String, Position>,
-        hitbox_components: &mut HashMap<String, Hitbox>,
-        camera_target_components: &mut HashMap<String, CameraTarget>,
-        storage_components: &mut HashMap<String, Storage>,
+        entities: &mut Vec<Entity>,
+        graphics_3d_components: &mut HashMap<Entity, Graphics3D>,
+        position_components: &mut HashMap<Entity, Position>,
+        hitbox_components: &mut HashMap<Entity, Hitbox>,
+        camera_target_components: &mut HashMap<Entity, CameraTarget>,
+        storage_components: &mut HashMap<Entity, Storage>,
     ) {
         let player = "player".to_string();
         entities.push(player.clone());
@@ -273,6 +279,13 @@ impl GameState {
         storage_components.insert(player.clone(), player_storage);
     }
 
+    fn load_camera(entities: &mut Vec<Entity>, camera_components: &mut HashMap<String, Camera>) {
+        let camera = "camera".to_string();
+        let camera_component = Camera::new();
+        entities.push(camera.clone());
+        camera_components.insert(camera.clone(), camera_component);
+    }
+
     pub fn get_graphics(&self, entity: &Entity) -> Option<&Graphics3D> {
         self.graphics_3d_components.get(entity)
     }
@@ -302,12 +315,21 @@ impl GameState {
         self.hitbox_components.get(entity)
     }
 
-    pub fn get_camera(&self, entity: &Entity) -> Option<&CameraTarget> {
+    pub fn get_camera_target(&self, entity: &Entity) -> Option<&CameraTarget> {
         self.camera_target_components.get(entity)
     }
 
-    pub fn get_camera_mut(&mut self, entity: &Entity) -> Option<&mut CameraTarget> {
+    pub fn get_camera_target_mut(&mut self, entity: &Entity) -> Option<&mut CameraTarget> {
         self.camera_target_components.get_mut(entity)
+    }
+
+    #[allow(dead_code)]
+    pub fn get_camera(&self, entity: &Entity) -> Option<&Camera> {
+        self.camera_components.get(entity)
+    }
+
+    pub fn get_camera_mut(&mut self, entity: &str) -> Option<&mut Camera> {
+        self.camera_components.get_mut(entity)
     }
 
     pub fn get_storage(&self, entity: &Entity) -> Option<&Storage> {

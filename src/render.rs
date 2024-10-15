@@ -67,7 +67,7 @@ pub struct Renderer {
     pub size: winit::dpi::PhysicalSize<u32>,
     render_pipeline: RenderPipeline,
     render_pipeline_ui: RenderPipeline,
-    camera: Camera,
+    // camera: Camera,
     camera_uniform: CameraUniform,
     camera_buffer: Buffer,
     camera_bind_group: BindGroup,
@@ -207,7 +207,7 @@ impl Renderer {
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
         });
 
-        let (camera, camera_uniform, camera_buffer, camera_bind_group, render_pipeline) =
+        let (camera_uniform, camera_buffer, camera_bind_group, render_pipeline) =
             Self::setup_pipeline(&device, &config, &texture_bind_group_layout, &shader);
 
         let (
@@ -414,7 +414,6 @@ impl Renderer {
             size,
             render_pipeline,
             render_pipeline_ui,
-            camera,
             camera_uniform,
             camera_buffer,
             camera_bind_group,
@@ -459,11 +458,9 @@ impl Renderer {
         config: &SurfaceConfiguration,
         texture_bind_group_layout: &BindGroupLayout,
         shader: &ShaderModule,
-    ) -> (Camera, CameraUniform, Buffer, BindGroup, RenderPipeline) {
-        let camera = Camera::new();
-
-        let mut camera_uniform = CameraUniform::new();
-        camera_uniform.update_view_projection(&camera);
+    ) -> (CameraUniform, Buffer, BindGroup, RenderPipeline) {
+        let camera_uniform = CameraUniform::new();
+        // camera_uniform.update_view_projection(&camera);
 
         let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer"),
@@ -546,7 +543,7 @@ impl Renderer {
             cache: None,
         });
         (
-            camera,
+            // camera,
             camera_uniform,
             camera_buffer,
             camera_bind_group,
@@ -744,28 +741,8 @@ impl Renderer {
         game_state: &GameState,
         ui_state: &UIState,
     ) -> Result<(), wgpu::SurfaceError> {
-        let player = "player".to_string();
-        let camera = game_state.get_camera(&player).unwrap();
-        let rad_x = f32::to_radians(camera.rotation_x_degrees);
-        let rad_y = f32::to_radians(camera.rotation_y_degrees);
-
-        let player_position = game_state.get_position(&player.clone()).unwrap();
-        self.camera.eye = Point3 {
-            x: player_position.x + camera.distance * rad_y.sin() * rad_x.cos(),
-            y: player_position.z + camera.distance * rad_y.cos(),
-            z: player_position.y + camera.distance * rad_y.sin() * rad_x.sin(),
-        };
-        self.camera.target = Point3 {
-            x: player_position.x,
-            y: 0.0,
-            z: player_position.y, // This can be confusing: our 2d world has x
-                                  // and y. in 3d the y is seen as vertical
-        };
-        let view_direction = (self.camera.target - self.camera.eye).normalize();
-        let right = Vector3::unit_y().cross(view_direction).normalize();
-        self.camera.up = view_direction.cross(right).normalize();
-
-        self.camera_uniform.update_view_projection(&self.camera);
+        let camera = game_state.camera_components.get("camera").unwrap();
+        self.camera_uniform.update_view_projection(camera);
         self.queue.write_buffer(
             &self.camera_buffer,
             0,

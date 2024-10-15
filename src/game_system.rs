@@ -4,6 +4,7 @@ use crate::game_state::GameState;
 use crate::gui::UIState;
 use crate::input::Input;
 use cgmath::num_traits::ToPrimitive;
+use cgmath::{InnerSpace, Point3, Vector3};
 use std::collections::HashMap;
 
 pub struct GameSystem {}
@@ -26,12 +27,12 @@ impl GameSystem {
         input: &mut Input,
         audio_system: &mut AudioSystem,
     ) {
-        // Self::handle_mouse_click(game_state, input);
         ItemPickupSystem::handle_item_pickup(game_state, ui_state, input);
         Self::handle_item_placement(game_state, ui_state, input);
         Self::handle_inventory(ui_state, input);
         Self::resolve_movement(game_state, input, audio_system);
         Self::update_camera(game_state, input);
+        // Self::handle_right_mouse_click(game_state, input);
     }
 
     fn handle_item_placement(
@@ -39,7 +40,7 @@ impl GameSystem {
         ui_state: &mut UIState,
         input: &mut Input,
     ) {
-        if input.right_mouse_clicked.is_toggled_on() {
+        if input.left_mouse_clicked.is_toggled_on() {
             let item = StorageManager::find_in_storage(game_state, &"player".to_string());
             if item.is_none() {
                 ui_state.text = "No items in inventory to place.".to_string();
@@ -119,8 +120,39 @@ impl GameSystem {
     }
 
     fn update_camera(game_state: &mut GameState, input: &mut Input) {
-        let player_camera: &mut CameraTarget =
-            game_state.get_camera_mut(&"player".to_string()).unwrap();
+        Self::setup_camera_target(game_state, input);
+        Self::setup_camera(game_state);
+    }
+
+    fn setup_camera(game_state: &mut GameState) {
+        let player = "player".to_string();
+        let player_position = game_state.get_position(&player).unwrap().clone();
+        let player_camera = game_state.get_camera_target(&player).unwrap().clone();
+
+        let rad_x = f32::to_radians(player_camera.rotation_x_degrees);
+        let rad_y = f32::to_radians(player_camera.rotation_y_degrees);
+
+        let camera = game_state.get_camera_mut(&"camera".to_string()).unwrap();
+        camera.eye = Point3 {
+            x: player_position.x + player_camera.distance * rad_y.sin() * rad_x.cos(),
+            y: player_position.z + player_camera.distance * rad_y.cos(),
+            z: player_position.y + player_camera.distance * rad_y.sin() * rad_x.sin(),
+        };
+        camera.target = Point3 {
+            x: player_position.x,
+            y: 0.0,
+            z: player_position.y, // This can be confusing: our 2d world has x
+                                  // and y. in 3d the y is seen as vertical
+        };
+        let view_direction = (camera.target - camera.eye).normalize();
+        let right = Vector3::unit_y().cross(view_direction).normalize();
+        camera.up = view_direction.cross(right).normalize();
+    }
+
+    fn setup_camera_target(game_state: &mut GameState, input: &mut Input) {
+        let player_camera: &mut CameraTarget = game_state
+            .get_camera_target_mut(&"player".to_string())
+            .unwrap();
 
         if input.up_pressed.is_pressed {
             player_camera.rotation_y_degrees += CAMERA_MOVEMENT_SPEED;
@@ -311,12 +343,21 @@ impl GameSystem {
             && position2 + boundary2 >= position1 - boundary1
     }
 
-    // fn handle_mouse_click(game_state: &mut GameState, input: &mut Input) {
+    // fn handle_right_mouse_click(game_state: &mut GameState, input: &mut Input) {
     //     // TODO Handle UI click first
     //
+    //     if input.right_mouse_clicked.was_pressed {
+    //         game_state
+    //         // Get ray origin point
+    //         // Find ray direction
+    //         // Create ray
+    //         // For every interactable entity
+    //         // Check hitbox with aabb ray slab algorithm
+    //     }
     //     find_world_entity(position_x: f32, position_y: f32)
     // }
 }
+
 impl ItemPickupSystem {
     fn handle_item_pickup(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
         // mut input just for is
