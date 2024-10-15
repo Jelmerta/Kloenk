@@ -1,9 +1,13 @@
 use crate::resources::load_binary;
 #[cfg(not(target_arch = "wasm32"))]
 use rodio::{OutputStream, OutputStreamHandle, Sink};
+#[cfg(target_arch = "wasm32")]
+use std::cell::RefCell;
 use std::collections::HashMap;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Cursor;
+#[cfg(target_arch = "wasm32")]
+use std::rc::Rc;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
@@ -36,6 +40,8 @@ impl AudioSystem {
         let sounds = Self::load_sounds().await;
 
         AudioSystem {
+            #[cfg(target_arch = "wasm32")]
+            sounds,
             #[cfg(target_arch = "wasm32")]
             audio_player: Rc::new(RefCell::new(None)),
             #[cfg(not(target_arch = "wasm32"))]
