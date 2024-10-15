@@ -1,4 +1,6 @@
+#[cfg(target_arch = "wasm32")]
 use std::cell::RefCell;
+#[cfg(target_arch = "wasm32")]
 use std::rc::Rc;
 use winit::application::ApplicationHandler;
 use winit::event_loop::{EventLoop, EventLoopProxy};
@@ -24,7 +26,9 @@ use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowId};
 
-use crate::audio_system::{AudioPlayer, AudioSystem};
+#[cfg(target_arch = "wasm32")]
+use crate::audio_system::AudioPlayer;
+use crate::audio_system::AudioSystem;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
@@ -37,10 +41,12 @@ pub struct Engine {
     pub window: Arc<Window>,
     // AudioSystem is loaded after user has used a gesture. This is to get rid of this warning in Chrome:
     // The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://goo.gl/7K7WLu
+    #[cfg(target_arch = "wasm32")]
     pub audio_loading_state: Rc<RefCell<AudioState>>,
     pub audio_system: AudioSystem,
 }
 
+#[cfg(target_arch = "wasm32")]
 pub enum AudioState {
     NotLoaded,
     Loading,
@@ -141,7 +147,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         #[cfg(not(target_arch = "wasm32"))]
         {
             let renderer = pollster::block_on(renderer_future);
-            let audio_system = Rc::new(RefCell::new(pollster::block_on(AudioSystem::new())));
+            let audio_system = pollster::block_on(AudioSystem::new());
 
             let game = Engine {
                 renderer,
