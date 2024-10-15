@@ -1,12 +1,12 @@
 use crate::resources::load_binary;
 #[cfg(not(target_arch = "wasm32"))]
 use rodio::{OutputStream, OutputStreamHandle, Sink};
-#[cfg(target_arch = "wasm32")]
+// #[cfg(target_arch = "wasm32")]
 use std::cell::RefCell;
 use std::collections::HashMap;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Cursor;
-#[cfg(target_arch = "wasm32")]
+// #[cfg(target_arch = "wasm32")]
 use std::rc::Rc;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::closure::Closure;
@@ -22,41 +22,38 @@ use web_sys::AudioBuffer;
 use web_sys::AudioContext;
 
 #[derive(Clone)]
-struct Sound {
+pub struct Sound {
     bytes: Vec<u8>,
 }
 
 pub struct AudioSystem {
-    #[allow(dead_code)] // Only used for wasm
-    sounds: HashMap<String, Sound>,
-    audio_player: AudioPlayer,
+    pub sounds: HashMap<String, Sound>,
+    pub audio_player: Rc<RefCell<Option<AudioPlayer>>>,
 }
 
 impl AudioSystem {
     pub async fn new() -> Self {
         let sounds = Self::load_sounds().await;
 
-        #[cfg(target_arch = "wasm32")]
-        let audio_player = AudioPlayer::new();
-        #[cfg(not(target_arch = "wasm32"))]
-        let audio_player = AudioPlayer::new(sounds.clone());
-
         AudioSystem {
             sounds,
-            audio_player,
+            audio_player: Rc::new(RefCell::new(None)),
         }
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    pub async fn start(&mut self) {
-        self.audio_player.build_audio_resources(&self.sounds).await;
     }
 
     pub fn play_sound(&mut self, sound: &str) {
-        if self.audio_player.is_playing(sound) {
+        if !self.audio_player.try_borrow().unwrap().is_none() {
             return;
         }
-        self.audio_player.play_sound(sound);
+
+        let mut audio_player_mut = self.audio_player.borrow_mut();
+        if let Some(ref mut audio_player) = *audio_player_mut {
+            if audio_player.is_playing(sound) {
+                return;
+            }
+
+            audio_player.play_sound(sound);
+        }
     }
 
     async fn load_sounds() -> HashMap<String, Sound> {
@@ -129,25 +126,29 @@ struct AudioResource {
 
 // Was unable to get cpal/rodio working on wasm as no devices are returned from default device. Instead going for a web-sys implementation
 #[cfg(target_arch = "wasm32")]
-struct AudioPlayer {
+pub struct AudioPlayer {
     audio_resources: HashMap<String, AudioResource>,
 }
 
 #[cfg(target_arch = "wasm32")]
 impl AudioPlayer {
-    pub fn new() -> Self {
-        AudioPlayer {
-            audio_resources: HashMap::new(),
-        }
-    }
-
     fn is_playing(&self, sound: &str) -> bool {
         self.audio_resources
             .get(sound)
             .is_some_and(|sound| *sound.is_playing.borrow())
     }
 
-    async fn build_audio_resources(&mut self, sounds: &HashMap<String, Sound>) {
+    pub async fn build_audio_player(sounds: &HashMap<String, Sound>) -> AudioPlayer {
+        AudioPlayer {
+            audio_resources: Self::build_audio_resources(sounds).await,
+        }
+    }
+
+    async fn build_audio_resources(
+        sounds: &HashMap<String, Sound>,
+    ) -> HashMap<String, AudioResource> {
+        let mut audio_resources = HashMap::new();
+
         for (sound_name, sound) in sounds {
             let audio_context = AudioContext::new().unwrap();
 
@@ -166,9 +167,10 @@ impl AudioPlayer {
                 is_playing: Rc::new(RefCell::new(false)),
             };
 
-            self.audio_resources
-                .insert(sound_name.to_string(), audio_resource);
+            audio_resources.insert(sound_name.to_string(), audio_resource);
         }
+
+        audio_resources
     }
 
     pub fn play_sound(&mut self, sound: &str) {

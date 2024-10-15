@@ -1,11 +1,3 @@
-#[cfg(target_arch = "wasm32")]
-use crate::audio_system::AudioSystem;
-#[cfg(target_arch = "wasm32")]
-use std::cell::RefCell;
-#[cfg(target_arch = "wasm32")]
-use std::rc::Rc;
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen_futures::spawn_local;
 use winit::dpi::PhysicalPosition;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta};
 use winit::keyboard::KeyCode;
@@ -33,9 +25,6 @@ impl KeyPress {
 
 #[derive(Debug, Default)]
 pub struct Input {
-    #[allow(dead_code)] // Only used for wasm loading audio system
-    user_has_gestured: bool,
-
     pub w_pressed: KeyPress,
     pub s_pressed: KeyPress,
     pub a_pressed: KeyPress,
@@ -61,25 +50,8 @@ impl Input {
         Input::default()
     }
 
-    pub fn update(
-        &mut self,
-        keycode: KeyCode,
-        state: ElementState,
-        #[cfg(target_arch = "wasm32")] audio_system: &Rc<RefCell<AudioSystem>>,
-    ) {
+    pub fn update(&mut self, keycode: KeyCode, state: ElementState) {
         let is_pressed = state == ElementState::Pressed;
-
-        // Yeah... Bit ugly... Thought of callback or observer pattern but that honestly seems way too complex compared to this.
-        #[cfg(target_arch = "wasm32")]
-        if !self.user_has_gestured && is_pressed {
-            self.user_has_gestured = true;
-            let audio_system_clone = audio_system.clone();
-            spawn_local(async move {
-                let mut ref_mut = audio_system_clone.borrow_mut();
-                let start = { ref_mut.start() };
-                start.await;
-            });
-        }
 
         match keycode {
             KeyCode::KeyW => {
@@ -129,25 +101,8 @@ impl Input {
         }
     }
 
-    pub fn process_mouse_button(
-        &mut self,
-        button: MouseButton,
-        state: ElementState,
-        #[cfg(target_arch = "wasm32")] audio_system: &Rc<RefCell<AudioSystem>>,
-    ) {
+    pub fn process_mouse_button(&mut self, button: MouseButton, state: ElementState) {
         let is_pressed = state == ElementState::Pressed;
-
-        // Yeah... Bit ugly... Thought of callback or observer pattern but that honestly seems way too complex compared to this.
-        #[cfg(target_arch = "wasm32")]
-        if !self.user_has_gestured && is_pressed {
-            self.user_has_gestured = true;
-            let audio_system_clone = audio_system.clone();
-            spawn_local(async move {
-                let mut ref_mut = audio_system_clone.borrow_mut();
-                let start = { ref_mut.start() };
-                start.await;
-            });
-        }
 
         #[allow(clippy::single_match)]
         match button {

@@ -4,9 +4,7 @@ use crate::game_state::GameState;
 use crate::gui::UIState;
 use crate::input::Input;
 use cgmath::num_traits::ToPrimitive;
-use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
 
 pub struct GameSystem {}
 
@@ -26,8 +24,9 @@ impl GameSystem {
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &mut Input,
-        audio_system: &Rc<RefCell<AudioSystem>>,
+        audio_system: &mut AudioSystem,
     ) {
+        // Self::handle_mouse_click(game_state, input);
         ItemPickupSystem::handle_item_pickup(game_state, ui_state, input);
         Self::handle_item_placement(game_state, ui_state, input);
         Self::handle_inventory(ui_state, input);
@@ -166,11 +165,7 @@ impl GameSystem {
         input.scrolled_amount = 0.0;
     }
 
-    fn resolve_movement(
-        game_state: &mut GameState,
-        input: &Input,
-        audio_system: &Rc<RefCell<AudioSystem>>,
-    ) {
+    fn resolve_movement(game_state: &mut GameState, input: &Input, audio_system: &mut AudioSystem) {
         let mut movement_speed: f32 = BASE_SPEED;
         if input.left_shift_pressed.is_pressed {
             movement_speed *= 2.5;
@@ -253,7 +248,7 @@ impl GameSystem {
     fn is_colliding(
         game_state: &GameState,
         desired_position: &Position,
-        audio_system: &Rc<RefCell<AudioSystem>>,
+        audio_system: &mut AudioSystem,
     ) -> bool {
         let interactable_entities: Vec<&Entity> = game_state
             .entities
@@ -276,10 +271,7 @@ impl GameSystem {
                 entity_position,
                 entity_hitbox,
             ) {
-                let result = audio_system.try_borrow_mut();
-                if let Ok(mut audio_system_unwrapped) = result {
-                    audio_system_unwrapped.play_sound("bonk");
-                } // Otherwise audio is not yet loaded
+                audio_system.play_sound("bonk");
 
                 return true;
             }
@@ -318,6 +310,12 @@ impl GameSystem {
         position1 + boundary1 >= position2 - boundary2
             && position2 + boundary2 >= position1 - boundary1
     }
+
+    // fn handle_mouse_click(game_state: &mut GameState, input: &mut Input) {
+    //     // TODO Handle UI click first
+    //
+    //     find_world_entity(position_x: f32, position_y: f32)
+    // }
 }
 impl ItemPickupSystem {
     fn handle_item_pickup(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
