@@ -23,13 +23,12 @@ use wgpu::util::DeviceExt;
 use winit::window::Window;
 
 use crate::camera::Camera;
-use crate::components::{Entity, InStorage, Position};
+use crate::components::{Entity, InStorage};
 use crate::game_state::GameState;
 use crate::gui::UIState;
 use crate::model::{self};
 use crate::model::{Model, Vertex};
 use crate::text_renderer::TextWriter;
-// use crate::text_renderer::TextWriter;
 use crate::{resources, texture};
 use model::Draw;
 
@@ -893,7 +892,7 @@ impl Renderer {
         })
     }
 
-    fn convert_instance(position: &Position) -> Instance {
+    fn convert_instance(position: &Point3<f32>) -> Instance {
         Instance {
             position: Vector3 {
                 x: position.x,
