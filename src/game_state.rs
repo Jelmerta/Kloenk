@@ -117,8 +117,8 @@ impl GameState {
 
         let tree_position = Point3 {
             x: 2.0,
-            y: -3.0,
-            z: 0.0,
+            y: 0.0,
+            z: -3.0,
         };
 
         position_components.insert(tree.clone(), tree_position);
@@ -143,8 +143,8 @@ impl GameState {
         let plane_latitude_minimum: i8 = -10;
         let plane_latitude_maximum: i8 = 10;
         for x in plane_longitude_minimum..plane_longitude_maximum {
-            for y in plane_latitude_minimum..plane_latitude_maximum {
-                let plane = format!("plane{x}{y}"); //todo copy?
+            for z in plane_latitude_minimum..plane_latitude_maximum {
+                let plane = format!("plane{x}{z}"); //todo copy?
                 entities.push(plane.clone());
 
                 let plane_graphics = Graphics3D {
@@ -154,8 +154,8 @@ impl GameState {
 
                 let plane_position = Point3 {
                     x: f32::from(x),
-                    y: f32::from(y),
-                    z: -1.0,
+                    y: -1.0,
+                    z: f32::from(z),
                 };
                 position_components.insert(plane.clone(), plane_position);
 
@@ -188,8 +188,8 @@ impl GameState {
 
             let sword_position = Point3 {
                 x: i.to_f32().unwrap() + 0.1,
-                y: i.to_f32().unwrap() + 0.1,
-                z: 0.0,
+                y: 0.0,
+                z: i.to_f32().unwrap() + 0.1,
             };
             position_components.insert(sword.clone(), sword_position);
 
@@ -233,8 +233,8 @@ impl GameState {
 
         let shield_position = Point3 {
             x: -2.8,
-            y: -2.7,
-            z: 0.0,
+            y: 0.0,
+            z: -2.7,
         };
         position_components.insert(shield.clone(), shield_position);
 
