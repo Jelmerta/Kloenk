@@ -3,8 +3,8 @@ use crate::components::{CameraTarget, Entity, Hitbox, ItemShape, Storable, Stora
 use crate::game_state::GameState;
 use crate::gui::UIState;
 use crate::input::Input;
-use cgmath::num_traits::ToPrimitive;
-use cgmath::{ElementWise, InnerSpace, Point3, Vector3};
+use cgmath::num_traits::{Float, ToPrimitive};
+use cgmath::{ElementWise, InnerSpace, Point3, Vector3, Vector4};
 use std::collections::HashMap;
 
 pub struct GameSystem {}
@@ -20,7 +20,8 @@ pub const ITEM_PICKUP_RANGE: f32 = 1.5;
 
 pub struct ItemPickupSystem {}
 
-struct ray {
+#[derive(Debug)]
+struct Ray {
     origin: Point3<f32>,
     direction: Vector3<f32>,
     direction_inverted: Vector3<f32>,
@@ -39,6 +40,7 @@ impl GameSystem {
         Self::resolve_movement(game_state, input, audio_system);
         Self::update_camera(game_state, input);
         // Self::handle_right_mouse_click(game_state, input);
+        Self::find_world_object_on_cursor(game_state, input);
     }
 
     fn handle_item_placement(
@@ -135,6 +137,9 @@ impl GameSystem {
     fn update_camera(game_state: &mut GameState, input: &mut Input) {
         Self::setup_camera_target(game_state, input);
         Self::setup_camera(game_state);
+        let camera = game_state.get_camera_mut("camera").unwrap();
+        camera.update_view_projection_matrix();
+        camera.update_inverse_matrix();
     }
 
     fn setup_camera(game_state: &mut GameState) {
@@ -153,9 +158,9 @@ impl GameSystem {
         };
         camera.target = Point3 {
             x: player_position.x,
-            y: 0.0,
             z: player_position.y, // This can be confusing: our 2d world has x
-                                  // and y. in 3d the y is seen as vertical
+            y: 0.0,
+            // and y. in 3d the y is seen as vertical
         };
         let view_direction = (camera.target - camera.eye).normalize();
         let right = Vector3::unit_y().cross(view_direction).normalize();
@@ -388,15 +393,6 @@ impl GameSystem {
     //     // TODO Handle UI click first
     //
     //     if input.right_mouse_clicked.was_pressed {
-    //         let camera = game_state.get_camera("camera").unwrap();
-    //         let view_direction = (camera.target - camera.eye).normalize();
-    //         let view_direction_inverse = Vector3::new(1.0, 1.0, 1.0).div_element_wise(view_direction);
-    //
-    //         let ray = ray {
-    //             origin: camera.eye,
-    //             direction: view_direction,
-    //             direction_inverted: view_direction_inverse
-    //         };
     //
     //         game_state
     //
@@ -405,6 +401,55 @@ impl GameSystem {
     //     }
     //     find_world_entity(position_x: f32, position_y: f32)
     // }
+
+    fn find_world_object_on_cursor(game_state: &mut GameState, input: &mut Input) {
+        let camera = game_state.get_camera_mut("camera").unwrap();
+
+        let ray_clip_near = Vector4::new(
+            input.mouse_position_ndc.x,
+            camera.z_near,
+            input.mouse_position_ndc.y,
+            // 1.0, // 1.0 or 0.0?
+            1.0,
+        );
+        let ray_world_space = camera.view_projection_matrix_inverse * ray_clip_near;
+        // TODO Reverse divide? https://antongerdelan.net/opengl/raycasting.html mentions not necessary.. we do not have perspective anyway. probably unnecessary
+        let ray_direction = ray_world_space.truncate().normalize();
+        // let ray_direction = ray_world_space.truncate();
+        let ray_direction_inverted = Vector3::new(1.0, 1.0, 1.0).div_element_wise(ray_direction);
+
+        let ray = Ray {
+            origin: camera.eye,
+            direction: ray_direction,
+            direction_inverted: ray_direction_inverted,
+        };
+
+        let mut found_objects = Vec::new();
+        for (entity, hitbox) in game_state.hitbox_components.iter() {
+            if Self::intersection(&ray, hitbox) {
+                found_objects.push(entity.clone());
+            }
+        }
+        log::warn!("{:?}", ray);
+        log::warn!("{:?}", found_objects);
+    }
+
+    fn intersection(ray: &Ray, hitbox: &Hitbox) -> bool {
+        let mut t_min = 0.0;
+        let mut t_max = f32::infinity();
+
+        for dimension in 0..3 {
+            let t1 = (hitbox.box_corner_min[dimension] - ray.origin[dimension])
+                * ray.direction_inverted[dimension];
+            let t2 = (hitbox.box_corner_max[dimension] - ray.origin[dimension])
+                * ray.direction_inverted[dimension];
+
+            t_min = f32::max(t_min, f32::min(t1, t2));
+            t_max = f32::min(t_max, f32::max(t1, t2));
+        }
+
+        t_min < t_max
+    }
 }
 
 impl ItemPickupSystem {

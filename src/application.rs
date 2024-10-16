@@ -254,6 +254,9 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     }
                 }
             }
+            WindowEvent::CursorMoved { position, .. } => {
+                engine.input_handler.process_mouse_movement(position);
+            }
             WindowEvent::MouseWheel { delta, .. } => {
                 engine.input_handler.process_scroll(&delta);
             }
@@ -270,7 +273,10 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     &mut engine.audio_system,
                 );
 
-                match engine.renderer.render(&engine.game_state, &engine.ui_state) {
+                match engine
+                    .renderer
+                    .render(&mut engine.game_state, &engine.ui_state)
+                {
                     Ok(()) => {}
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
                         engine.renderer.resize(engine.renderer.size);
