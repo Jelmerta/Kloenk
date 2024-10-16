@@ -3,9 +3,9 @@ use cgmath::num_traits::ToPrimitive;
 // use std::{collections::HashMap, sync::atomic::AtomicU32};
 use crate::camera::Camera;
 use crate::components::{
-    CameraTarget, Entity, Graphics2D, Graphics3D, Hitbox, InStorage, ItemShape, Position, Storable,
-    Storage,
+    CameraTarget, Entity, Graphics2D, Graphics3D, Hitbox, InStorage, ItemShape, Storable, Storage,
 };
+use cgmath::{ElementWise, Point3};
 use std::collections::{HashMap, HashSet};
 use std::f32;
 
@@ -19,7 +19,7 @@ pub struct GameState {
     pub entities: Vec<Entity>,
     pub graphics_3d_components: HashMap<Entity, Graphics3D>,
     pub graphics_2d_components: HashMap<Entity, Graphics2D>,
-    pub position_components: HashMap<Entity, Position>,
+    pub position_components: HashMap<Entity, Point3<f32>>,
     pub surface_components: HashSet<Entity>,
     pub hitbox_components: HashMap<Entity, Hitbox>,
     pub camera_components: HashMap<Entity, Camera>,
@@ -104,7 +104,7 @@ impl GameState {
     fn load_tree(
         entities: &mut Vec<Entity>,
         graphics_3d_components: &mut HashMap<String, Graphics3D>,
-        position_components: &mut HashMap<String, Position>,
+        position_components: &mut HashMap<String, Point3<f32>>,
         hitbox_components: &mut HashMap<String, Hitbox>,
     ) {
         let tree = "tree".to_string();
@@ -115,21 +115,27 @@ impl GameState {
         };
         graphics_3d_components.insert(tree.clone(), tree_graphics);
 
-        let tree_position = Position {
+        let tree_position = Point3 {
             x: 2.0,
             y: -3.0,
             z: 0.0,
         };
+
         position_components.insert(tree.clone(), tree_position);
 
-        let tree_hitbox = Hitbox { hitbox: 0.51 };
+        let tree_hitbox_min = tree_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51));
+        let tree_hitbox_max = tree_position.add_element_wise(Point3::new(0.51, 0.51, 0.51));
+        let tree_hitbox = Hitbox {
+            box_corner_min: tree_hitbox_min,
+            box_corner_max: tree_hitbox_max,
+        };
         hitbox_components.insert(tree.clone(), tree_hitbox);
     }
 
     fn load_tiles(
         entities: &mut Vec<Entity>,
         graphics_3d_components: &mut HashMap<String, Graphics3D>,
-        position_components: &mut HashMap<String, Position>,
+        position_components: &mut HashMap<String, Point3<f32>>,
         surface_components: &mut HashSet<String>,
     ) {
         let plane_longitude_minimum: i8 = -10;
@@ -146,7 +152,7 @@ impl GameState {
                 };
                 graphics_3d_components.insert(plane.clone(), plane_graphics);
 
-                let plane_position = Position {
+                let plane_position = Point3 {
                     x: f32::from(x),
                     y: f32::from(y),
                     z: -1.0,
@@ -162,7 +168,7 @@ impl GameState {
         entities: &mut Vec<Entity>,
         graphics_3d_components: &mut HashMap<String, Graphics3D>,
         graphics_2d_components: &mut HashMap<String, Graphics2D>,
-        position_components: &mut HashMap<String, Position>,
+        position_components: &mut HashMap<String, Point3<f32>>,
         hitbox_components: &mut HashMap<String, Hitbox>,
         storable_components: &mut HashMap<String, Storable>,
     ) {
@@ -180,14 +186,19 @@ impl GameState {
             };
             graphics_2d_components.insert(sword.clone(), sword_graphics_inventory);
 
-            let sword_position = Position {
+            let sword_position = Point3 {
                 x: i.to_f32().unwrap() + 0.1,
                 y: i.to_f32().unwrap() + 0.1,
                 z: 0.0,
             };
             position_components.insert(sword.clone(), sword_position);
 
-            let sword_hitbox = Hitbox { hitbox: 0.51 };
+            let sword_hitbox_min = sword_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51));
+            let sword_hitbox_max = sword_position.add_element_wise(Point3::new(0.51, 0.51, 0.51));
+            let sword_hitbox = Hitbox {
+                box_corner_min: sword_hitbox_min,
+                box_corner_max: sword_hitbox_max,
+            };
             hitbox_components.insert(sword.clone(), sword_hitbox);
 
             let sword_storable = Storable {
@@ -204,7 +215,7 @@ impl GameState {
         entities: &mut Vec<Entity>,
         graphics_3d_components: &mut HashMap<Entity, Graphics3D>,
         graphics_2d_components: &mut HashMap<Entity, Graphics2D>,
-        position_components: &mut HashMap<Entity, Position>,
+        position_components: &mut HashMap<Entity, Point3<f32>>,
         hitbox_components: &mut HashMap<Entity, Hitbox>,
         storable_components: &mut HashMap<Entity, Storable>,
     ) {
@@ -220,14 +231,19 @@ impl GameState {
         };
         graphics_2d_components.insert(shield.clone(), shield_graphics_inventory);
 
-        let shield_position = Position {
+        let shield_position = Point3 {
             x: -2.8,
             y: -2.7,
             z: 0.0,
         };
         position_components.insert(shield.clone(), shield_position);
 
-        let shield_hitbox = Hitbox { hitbox: 0.51 };
+        let shield_hitbox_min = shield_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51));
+        let shield_hitbox_max = shield_position.add_element_wise(Point3::new(0.51, 0.51, 0.51));
+        let shield_hitbox = Hitbox {
+            box_corner_min: shield_hitbox_min,
+            box_corner_max: shield_hitbox_max,
+        };
         hitbox_components.insert(shield.clone(), shield_hitbox);
 
         let shield_storable = Storable {
@@ -242,7 +258,7 @@ impl GameState {
     fn load_player(
         entities: &mut Vec<Entity>,
         graphics_3d_components: &mut HashMap<Entity, Graphics3D>,
-        position_components: &mut HashMap<Entity, Position>,
+        position_components: &mut HashMap<Entity, Point3<f32>>,
         hitbox_components: &mut HashMap<Entity, Hitbox>,
         camera_target_components: &mut HashMap<Entity, CameraTarget>,
         storage_components: &mut HashMap<Entity, Storage>,
@@ -255,14 +271,19 @@ impl GameState {
         };
         graphics_3d_components.insert(player.clone(), player_graphics);
 
-        let player_position = Position {
+        let player_position = Point3 {
             x: 0.0,
             y: 0.0,
             z: 0.0,
         };
         position_components.insert(player.clone(), player_position);
 
-        let player_hitbox = Hitbox { hitbox: 0.5 };
+        let player_hitbox_min = player_position.sub_element_wise(Point3::new(0.50, 0.50, 0.50));
+        let player_hitbox_max = player_position.add_element_wise(Point3::new(0.50, 0.50, 0.50));
+        let player_hitbox = Hitbox {
+            box_corner_min: player_hitbox_min,
+            box_corner_max: player_hitbox_max,
+        };
         hitbox_components.insert(player.clone(), player_hitbox);
 
         let camera_target = CameraTarget {
@@ -295,24 +316,34 @@ impl GameState {
         self.graphics_2d_components.get(entity)
     }
 
-    pub fn create_position(&mut self, entity: Entity, position: Position) {
+    // Note: On a position change, also consider updating the hitbox
+    pub fn create_position(&mut self, entity: Entity, position: Point3<f32>) {
         self.position_components.insert(entity, position);
     }
 
-    pub fn get_position(&self, entity: &Entity) -> Option<&Position> {
+    pub fn get_position(&self, entity: &Entity) -> Option<&Point3<f32>> {
         self.position_components.get(entity)
     }
 
-    pub fn get_position_mut(&mut self, entity: &Entity) -> Option<&mut Position> {
+    pub fn get_position_mut(&mut self, entity: &Entity) -> Option<&mut Point3<f32>> {
         self.position_components.get_mut(entity)
     }
 
+    // Note: On a position change, also consider updating the hitbox
     pub fn remove_position(&mut self, to_remove: &Entity) {
         self.position_components.remove(to_remove);
     }
 
+    pub fn create_hitbox(&mut self, entity: Entity, hitbox: Hitbox) {
+        self.hitbox_components.insert(entity, hitbox);
+    }
+
     pub fn get_hitbox(&self, entity: &Entity) -> Option<&Hitbox> {
         self.hitbox_components.get(entity)
+    }
+
+    pub fn remove_hitbox(&mut self, to_remove: &Entity) {
+        self.hitbox_components.remove(to_remove);
     }
 
     pub fn get_camera_target(&self, entity: &Entity) -> Option<&CameraTarget> {
@@ -324,7 +355,7 @@ impl GameState {
     }
 
     #[allow(dead_code)]
-    pub fn get_camera(&self, entity: &Entity) -> Option<&Camera> {
+    pub fn get_camera(&self, entity: &str) -> Option<&Camera> {
         self.camera_components.get(entity)
     }
 

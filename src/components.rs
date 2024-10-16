@@ -1,3 +1,5 @@
+use cgmath::Point3;
+
 pub type Entity = String;
 
 pub struct Graphics3D {
@@ -29,15 +31,9 @@ pub struct ItemShape {
     pub height: u8,
 }
 
-#[derive(Clone, Copy)]
-pub struct Position {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
-
 pub struct Hitbox {
-    pub hitbox: f32,
+    pub box_corner_min: Point3<f32>,
+    pub box_corner_max: Point3<f32>,
 }
 
 // Does not contain any data (yet?)

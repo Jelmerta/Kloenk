@@ -1,10 +1,10 @@
 use crate::audio_system::AudioSystem;
-use crate::components::{CameraTarget, Entity, Hitbox, ItemShape, Position, Storable, Storage};
+use crate::components::{CameraTarget, Entity, Hitbox, ItemShape, Storable, Storage};
 use crate::game_state::GameState;
 use crate::gui::UIState;
 use crate::input::Input;
 use cgmath::num_traits::ToPrimitive;
-use cgmath::{InnerSpace, Point3, Vector3};
+use cgmath::{ElementWise, InnerSpace, Point3, Vector3};
 use std::collections::HashMap;
 
 pub struct GameSystem {}
@@ -19,6 +19,12 @@ pub const CAMERA_TOP_LIMIT: f32 = 350.0;
 pub const ITEM_PICKUP_RANGE: f32 = 1.5;
 
 pub struct ItemPickupSystem {}
+
+struct ray {
+    origin: Point3<f32>,
+    direction: Vector3<f32>,
+    direction_inverted: Vector3<f32>,
+}
 
 impl GameSystem {
     pub fn update(
@@ -49,7 +55,7 @@ impl GameSystem {
             let item_unwrap = item.unwrap().clone();
 
             let player_position = game_state.get_position(&"player".to_string()).unwrap();
-            let placed_position = Position {
+            let placed_position = Point3 {
                 x: player_position.x - 1.1,
                 y: player_position.y - 1.1,
                 z: player_position.z,
@@ -60,20 +66,24 @@ impl GameSystem {
                 return;
             }
 
-            let item_hitbox = game_state.get_hitbox(&item_unwrap.to_string()).unwrap();
+            // Generate a dynamic hitbox for the item to be placed
+            let item_hitbox_min = placed_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51));
+            let item_hitbox_max = placed_position.add_element_wise(Point3::new(0.51, 0.51, 0.51));
+            let item_hitbox = Hitbox {
+                box_corner_min: item_hitbox_min,
+                box_corner_max: item_hitbox_max,
+            };
 
             let colliding_entities: Vec<Entity> = game_state
                 .entities
                 .iter()
-                .filter(|e| game_state.hitbox_components.contains_key(e.as_str()))
-                .filter(|e| game_state.position_components.contains_key(e.as_str()))
-                .filter(|e| *e != "player")
-                .filter(|e| {
+                .filter(|entity| game_state.hitbox_components.contains_key(entity.as_str()))
+                .filter(|entity| game_state.position_components.contains_key(entity.as_str()))
+                .filter(|entity| *entity != "player")
+                .filter(|entity| {
                     Self::check_collision(
-                        game_state.get_position(&(*e).to_string()).unwrap(),
-                        game_state.get_hitbox(&(*e).to_string()).unwrap(),
-                        &placed_position,
-                        item_hitbox,
+                        game_state.get_hitbox(&(*entity).to_string()).unwrap(),
+                        &item_hitbox,
                     )
                 })
                 .cloned()
@@ -86,17 +96,20 @@ impl GameSystem {
 
             ui_state.text = "You drop the item.".to_string();
             game_state.create_position(item_unwrap.to_string(), placed_position);
+            game_state.create_hitbox(item_unwrap.to_string(), item_hitbox);
             game_state.remove_in_storage(&item_unwrap.to_string());
         }
     }
 
-    fn is_placeable_area(game_state: &GameState, desired_position: &Position) -> bool {
+    fn is_placeable_area(game_state: &GameState, desired_position: &Point3<f32>) -> bool {
         game_state
             .entities
             .iter()
             .filter(|entity| game_state.surface_components.contains(entity.as_str()))
             .filter(|entity| {
                 Self::check_in_dimension(
+                    // &placed_entity_hitbox,
+                    // game_state.get_hitbox(&entity.to_string()).unwrap(),
                     desired_position.x,
                     0.0,
                     game_state.get_position(&(*entity).to_string()).unwrap().x,
@@ -132,7 +145,7 @@ impl GameSystem {
         let rad_x = f32::to_radians(player_camera.rotation_x_degrees);
         let rad_y = f32::to_radians(player_camera.rotation_y_degrees);
 
-        let camera = game_state.get_camera_mut(&"camera".to_string()).unwrap();
+        let camera = game_state.get_camera_mut("camera").unwrap();
         camera.eye = Point3 {
             x: player_position.x + player_camera.distance * rad_y.sin() * rad_x.cos(),
             y: player_position.z + player_camera.distance * rad_y.cos(),
@@ -205,7 +218,7 @@ impl GameSystem {
 
         if input.w_pressed.is_pressed {
             let player_position = game_state.get_position(&"player".to_string()).unwrap();
-            let desired_position = Position {
+            let desired_position = Point3 {
                 x: player_position.x - movement_speed,
                 y: player_position.y - movement_speed,
                 z: player_position.z,
@@ -220,7 +233,7 @@ impl GameSystem {
 
         if input.s_pressed.is_pressed {
             let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
-            let desired_position = Position {
+            let desired_position = Point3 {
                 x: player_position.x + movement_speed,
                 y: player_position.y + movement_speed,
                 z: player_position.z,
@@ -235,7 +248,7 @@ impl GameSystem {
 
         if input.a_pressed.is_pressed {
             let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
-            let desired_position = Position {
+            let desired_position = Point3 {
                 x: player_position.x - movement_speed,
                 y: player_position.y + movement_speed,
                 z: player_position.z,
@@ -250,7 +263,7 @@ impl GameSystem {
 
         if input.d_pressed.is_pressed {
             let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
-            let desired_position = Position {
+            let desired_position = Point3 {
                 x: player_position.x + movement_speed,
                 y: player_position.y - movement_speed,
                 z: player_position.z,
@@ -264,7 +277,7 @@ impl GameSystem {
         }
     }
 
-    fn is_walkable(game_state: &GameState, desired_position: &Position) -> bool {
+    fn is_walkable(game_state: &GameState, desired_position: &Point3<f32>) -> bool {
         game_state
             .entities
             .iter()
@@ -279,7 +292,7 @@ impl GameSystem {
 
     fn is_colliding(
         game_state: &GameState,
-        desired_position: &Position,
+        desired_position: &Point3<f32>,
         audio_system: &mut AudioSystem,
     ) -> bool {
         let interactable_entities: Vec<&Entity> = game_state
@@ -292,26 +305,32 @@ impl GameSystem {
             })
             .collect();
 
-        let player_hitbox = game_state.get_hitbox(&"player".to_string()).unwrap();
-
         for entity in interactable_entities {
-            let entity_position = game_state.get_position(&entity.to_string()).unwrap();
             let entity_hitbox = game_state.get_hitbox(&entity.to_string()).unwrap();
-            if Self::check_collision(
-                desired_position,
-                player_hitbox,
-                entity_position,
-                entity_hitbox,
-            ) {
+
+            let player_hitbox_min =
+                desired_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51));
+            let player_hitbox_max =
+                desired_position.add_element_wise(Point3::new(0.51, 0.51, 0.51));
+            let player_hitbox = Hitbox {
+                box_corner_min: player_hitbox_min,
+                box_corner_max: player_hitbox_max,
+            };
+
+            if Self::check_collision(&player_hitbox, entity_hitbox) {
                 audio_system.play_sound("bonk");
 
                 return true;
             }
         }
+
         false
     }
 
-    fn check_walkable(desired_position: &Position, walkable_tile_position: &Position) -> bool {
+    fn check_walkable(
+        desired_position: &Point3<f32>,
+        walkable_tile_position: &Point3<f32>,
+    ) -> bool {
         let tile_size = 0.5; // Just hardcoded here for now.
         let is_walkable_x = desired_position.x >= walkable_tile_position.x - tile_size
             && walkable_tile_position.x + tile_size >= desired_position.x;
@@ -322,20 +341,26 @@ impl GameSystem {
         is_walkable_x && is_walkable_y
     }
 
-    fn check_collision(
-        position1: &Position,
-        hitbox1: &Hitbox,
-        position2: &Position,
-        hitbox2: &Hitbox,
-    ) -> bool {
-        let is_collision_x =
-            Self::check_in_dimension(position1.x, hitbox1.hitbox, position2.x, hitbox2.hitbox);
-        let is_collision_y =
-            Self::check_in_dimension(position1.y, hitbox1.hitbox, position2.y, hitbox2.hitbox);
-        let is_collision_z =
-            Self::check_in_dimension(position1.z, hitbox1.hitbox, position2.z, hitbox2.hitbox);
+    fn check_collision(bounding_box_one: &Hitbox, bounding_box_two: &Hitbox) -> bool {
+        if bounding_box_one.box_corner_max.x < bounding_box_two.box_corner_min.x
+            || bounding_box_one.box_corner_min.x > bounding_box_two.box_corner_max.x
+        {
+            return false;
+        }
 
-        is_collision_x && is_collision_y && is_collision_z
+        if bounding_box_one.box_corner_max.y < bounding_box_two.box_corner_min.y
+            || bounding_box_one.box_corner_min.y > bounding_box_two.box_corner_max.y
+        {
+            return false;
+        }
+
+        if bounding_box_one.box_corner_max.z < bounding_box_two.box_corner_min.z
+            || bounding_box_one.box_corner_min.z > bounding_box_two.box_corner_max.z
+        {
+            return false;
+        }
+
+        true
     }
 
     fn check_in_dimension(position1: f32, boundary1: f32, position2: f32, boundary2: f32) -> bool {
@@ -343,14 +368,38 @@ impl GameSystem {
             && position2 + boundary2 >= position1 - boundary1
     }
 
+    // fn check_collision(
+    //     position1: &Position,
+    //     hitbox1: &Hitbox,
+    //     position2: &Position,
+    //     hitbox2: &Hitbox,
+    // ) -> bool {
+    //     let is_collision_x =
+    //         Self::check_in_dimension(position1.x, hitbox1.hitbox, position2.x, hitbox2.hitbox);
+    //     let is_collision_y =
+    //         Self::check_in_dimension(position1.y, hitbox1.hitbox, position2.y, hitbox2.hitbox);
+    //     let is_collision_z =
+    //         Self::check_in_dimension(position1.z, hitbox1.hitbox, position2.z, hitbox2.hitbox);
+    //
+    //     is_collision_x && is_collision_y && is_collision_z
+    // }
+
     // fn handle_right_mouse_click(game_state: &mut GameState, input: &mut Input) {
     //     // TODO Handle UI click first
     //
     //     if input.right_mouse_clicked.was_pressed {
+    //         let camera = game_state.get_camera("camera").unwrap();
+    //         let view_direction = (camera.target - camera.eye).normalize();
+    //         let view_direction_inverse = Vector3::new(1.0, 1.0, 1.0).div_element_wise(view_direction);
+    //
+    //         let ray = ray {
+    //             origin: camera.eye,
+    //             direction: view_direction,
+    //             direction_inverted: view_direction_inverse
+    //         };
+    //
     //         game_state
-    //         // Get ray origin point
-    //         // Find ray direction
-    //         // Create ray
+    //
     //         // For every interactable entity
     //         // Check hitbox with aabb ray slab algorithm
     //     }
@@ -401,11 +450,12 @@ impl ItemPickupSystem {
 
             ui_state.text = "You pick up the item!".to_string();
             game_state.remove_position(&near_pickup.clone());
+            game_state.remove_hitbox(&near_pickup.clone());
             game_state.create_in_storage(&player, near_pickup.clone(), empty_spot);
         }
     }
 
-    fn in_range(position1: &Position, position2: &Position) -> bool {
+    fn in_range(position1: &Point3<f32>, position2: &Point3<f32>) -> bool {
         PositionManager::distance_2d(position1, position2) < ITEM_PICKUP_RANGE
     }
 }
@@ -547,7 +597,7 @@ struct PositionManager {}
 
 impl PositionManager {
     pub fn find_nearest_pickup(
-        positions: &HashMap<Entity, Position>,
+        positions: &HashMap<Entity, Point3<f32>>,
         storables: &HashMap<Entity, Storable>,
         entities: &[Entity],
         entity: &Entity,
@@ -567,7 +617,7 @@ impl PositionManager {
             .cloned()
     }
 
-    fn distance_2d(position1: &Position, position2: &Position) -> f32 {
+    fn distance_2d(position1: &Point3<f32>, position2: &Point3<f32>) -> f32 {
         ((position2.x - position1.x).powi(2) + (position2.y - position1.y).powi(2)).sqrt()
     }
 }
