@@ -153,17 +153,16 @@ impl GameSystem {
         let camera = game_state.get_camera_mut("camera").unwrap();
         camera.eye = Point3 {
             x: player_position.x + player_camera.distance * rad_y.sin() * rad_x.cos(),
-            y: player_position.z + player_camera.distance * rad_y.cos(),
-            z: player_position.y + player_camera.distance * rad_y.sin() * rad_x.sin(),
+            y: player_position.y + player_camera.distance * rad_y.sin() * rad_x.sin(),
+            z: player_position.z + player_camera.distance * rad_y.cos(),
         };
         camera.target = Point3 {
             x: player_position.x,
-            z: player_position.y, // This can be confusing: our 2d world has x
-            y: 0.0,
-            // and y. in 3d the y is seen as vertical
+            y: player_position.y,
+            z: 0.0,
         };
         let view_direction = (camera.target - camera.eye).normalize();
-        let right = Vector3::unit_y().cross(view_direction).normalize();
+        let right = Vector3::unit_z().cross(view_direction).normalize();
         camera.up = view_direction.cross(right).normalize();
     }
 
@@ -225,8 +224,8 @@ impl GameSystem {
             let player_position = game_state.get_position(&"player".to_string()).unwrap();
             let desired_position = Point3 {
                 x: player_position.x - movement_speed,
-                y: player_position.y - movement_speed,
-                z: player_position.z,
+                y: player_position.y,
+                z: player_position.z - movement_speed,
             };
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(game_state, &desired_position, audio_system)
@@ -240,8 +239,8 @@ impl GameSystem {
             let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
             let desired_position = Point3 {
                 x: player_position.x + movement_speed,
-                y: player_position.y + movement_speed,
-                z: player_position.z,
+                y: player_position.y,
+                z: player_position.z + movement_speed,
             };
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(game_state, &desired_position, audio_system)
@@ -255,8 +254,8 @@ impl GameSystem {
             let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
             let desired_position = Point3 {
                 x: player_position.x - movement_speed,
-                y: player_position.y + movement_speed,
-                z: player_position.z,
+                y: player_position.y,
+                z: player_position.z + movement_speed,
             };
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(game_state, &desired_position, audio_system)
@@ -270,8 +269,8 @@ impl GameSystem {
             let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
             let desired_position = Point3 {
                 x: player_position.x + movement_speed,
-                y: player_position.y - movement_speed,
-                z: player_position.z,
+                y: player_position.y,
+                z: player_position.z - movement_speed,
             };
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(game_state, &desired_position, audio_system)
@@ -340,10 +339,10 @@ impl GameSystem {
         let is_walkable_x = desired_position.x >= walkable_tile_position.x - tile_size
             && walkable_tile_position.x + tile_size >= desired_position.x;
 
-        let is_walkable_y = desired_position.y >= walkable_tile_position.y - tile_size
-            && walkable_tile_position.y + tile_size >= desired_position.y;
+        let is_walkable_z = desired_position.z >= walkable_tile_position.z - tile_size
+            && walkable_tile_position.z + tile_size >= desired_position.z;
 
-        is_walkable_x && is_walkable_y
+        is_walkable_x && is_walkable_z
     }
 
     fn check_collision(bounding_box_one: &Hitbox, bounding_box_two: &Hitbox) -> bool {
@@ -407,8 +406,8 @@ impl GameSystem {
 
         let ray_clip_near = Vector4::new(
             input.mouse_position_ndc.x,
-            camera.z_near,
             input.mouse_position_ndc.y,
+            camera.z_near,
             // 1.0, // 1.0 or 0.0?
             1.0,
         );
@@ -663,6 +662,6 @@ impl PositionManager {
     }
 
     fn distance_2d(position1: &Point3<f32>, position2: &Point3<f32>) -> f32 {
-        ((position2.x - position1.x).powi(2) + (position2.y - position1.y).powi(2)).sqrt()
+        ((position2.x - position1.x).powi(2) + (position2.z - position1.z).powi(2)).sqrt()
     }
 }

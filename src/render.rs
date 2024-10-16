@@ -897,8 +897,8 @@ impl Renderer {
         Instance {
             position: Vector3 {
                 x: position.x,
-                y: position.z,
-                z: position.y,
+                y: position.y,
+                z: position.z,
             },
             scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(1.0, 1.0, 1.0, 1.0)),
             rotation: cgmath::Quaternion::from_axis_angle(Vector3::unit_z(), cgmath::Deg(0.0)),
