@@ -53,8 +53,8 @@ impl CameraUniform {
         }
     }
 
-    fn update_view_projection(&mut self, camera: &Camera) {
-        self.view_projection = camera.build_view_projection_matrix().into();
+    fn update_view_projection(&mut self, camera: &mut Camera) {
+        self.view_projection = camera.view_projection_matrix.into();
     }
 }
 
@@ -556,10 +556,11 @@ impl Renderer {
         texture_bind_group_layout: &BindGroupLayout,
         shader: &ShaderModule,
     ) -> (Camera, CameraUniform, Buffer, BindGroup, RenderPipeline) {
-        let camera_ui = Camera::new();
+        let mut camera_ui = Camera::new();
+        camera_ui.update_view_projection_matrix();
 
         let mut camera_uniform_ui = CameraUniform::new();
-        camera_uniform_ui.update_view_projection(&camera_ui);
+        // camera_uniform_ui.update_view_projection(&camera_ui);
 
         let camera_buffer_ui = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer UI"),
@@ -737,10 +738,10 @@ impl Renderer {
 
     pub fn render(
         &mut self,
-        game_state: &GameState,
+        game_state: &mut GameState,
         ui_state: &UIState,
     ) -> Result<(), wgpu::SurfaceError> {
-        let camera = game_state.camera_components.get("camera").unwrap();
+        let camera = game_state.camera_components.get_mut("camera").unwrap();
         self.camera_uniform.update_view_projection(camera);
         self.queue.write_buffer(
             &self.camera_buffer,
@@ -1069,7 +1070,7 @@ impl Renderer {
         self.camera_ui.z_far = 1.0;
 
         self.camera_uniform_ui
-            .update_view_projection(&self.camera_ui);
+            .update_view_projection(&mut self.camera_ui);
         self.queue.write_buffer(
             &self.camera_buffer_ui,
             0,

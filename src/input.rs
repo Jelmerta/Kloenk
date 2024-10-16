@@ -1,3 +1,4 @@
+use cgmath::Point2;
 use winit::dpi::PhysicalPosition;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta};
 use winit::keyboard::KeyCode;
@@ -23,7 +24,7 @@ impl KeyPress {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Input {
     pub w_pressed: KeyPress,
     pub s_pressed: KeyPress,
@@ -40,6 +41,7 @@ pub struct Input {
 
     pub left_shift_pressed: KeyPress,
 
+    pub mouse_position_ndc: Point2<f32>,
     pub right_mouse_clicked: KeyPress,
     pub left_mouse_clicked: KeyPress,
 
@@ -48,7 +50,28 @@ pub struct Input {
 
 impl Input {
     pub fn new() -> Self {
-        Input::default()
+        Input {
+            w_pressed: Default::default(),
+            s_pressed: Default::default(),
+            a_pressed: Default::default(),
+            d_pressed: Default::default(),
+
+            i_pressed: Default::default(),
+            e_pressed: Default::default(),
+
+            up_pressed: Default::default(),
+            down_pressed: Default::default(),
+            left_pressed: Default::default(),
+            right_pressed: Default::default(),
+
+            left_shift_pressed: Default::default(),
+
+            mouse_position_ndc: Point2::new(0.0, 0.0), // TODO what's a default position for the mouse?
+            right_mouse_clicked: Default::default(),
+            left_mouse_clicked: Default::default(),
+
+            scrolled_amount: 0.0,
+        }
     }
 
     pub fn update(&mut self, keycode: KeyCode, state: ElementState) {
@@ -115,6 +138,14 @@ impl Input {
             }
 
             _ => {}
+        }
+    }
+
+    pub fn process_mouse_movement(&mut self, mouse_position: PhysicalPosition<f64>) {
+        // Convert to value between 0 and 1
+        self.mouse_position_ndc = Point2 {
+            x: (2.0 * mouse_position.x) as f32 / 800.0, // -1.0?
+            y: 1.0 - (2.0 * mouse_position.y) as f32 / 600.0,
         }
     }
 
