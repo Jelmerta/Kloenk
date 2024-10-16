@@ -404,18 +404,23 @@ impl GameSystem {
     fn find_world_object_on_cursor(game_state: &mut GameState, input: &mut Input) {
         let camera = game_state.get_camera_mut("camera").unwrap();
 
+        log::warn!("{:?}", input.mouse_position_ndc);
         let ray_clip_near = Vector4::new(
-            input.mouse_position_ndc.x,
-            input.mouse_position_ndc.y,
+            // input.mouse_position_ndc.x,
+            input.mouse_position_ndc.x / 3.6,
+            input.mouse_position_ndc.y / 2.8,
             camera.z_near,
+            // 0.25,
             // 1.0, // 1.0 or 0.0?
-            1.0,
+            0.0,
         );
         let ray_world_space = camera.view_projection_matrix_inverse * ray_clip_near;
         // TODO Reverse divide? https://antongerdelan.net/opengl/raycasting.html mentions not necessary.. we do not have perspective anyway. probably unnecessary
         let ray_direction = ray_world_space.truncate().normalize();
         // let ray_direction = ray_world_space.truncate();
-        let ray_direction_inverted = Vector3::new(1.0, 1.0, 1.0).div_element_wise(ray_direction);
+        let ray_direction_inverted = Vector3::new(1.0, 1.0, 1.0)
+            .div_element_wise(ray_direction)
+            .normalize();
 
         let ray = Ray {
             origin: camera.eye,
