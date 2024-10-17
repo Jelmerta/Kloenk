@@ -45,13 +45,9 @@ impl Camera {
             self.z_far,
         );
         self.view_projection_matrix = OPENGL_TO_WGPU_MATRIX * isometric_projection * view;
-        log::warn!("{:?}", self.view_projection_matrix);
     }
 
     pub fn update_inverse_matrix(&mut self) {
-        // if self.view_projection_matrix.eq(Matrix4::zero()) {
-        //     self.update_view_projection_matrix()
-        // }
         self.view_projection_matrix_inverse = cgmath::Matrix4::from(self.view_projection_matrix)
             .invert()
             .unwrap();

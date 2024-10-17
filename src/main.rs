@@ -39,6 +39,7 @@ pub fn run() {
         } else {
             env_logger::builder()
             .filter(None, log::LevelFilter::Warn)
+            .filter(Some("wgpu_hal::vulkan"), log::LevelFilter::Error)
             .init();
         }
     }

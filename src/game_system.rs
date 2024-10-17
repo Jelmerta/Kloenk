@@ -2,9 +2,9 @@ use crate::audio_system::AudioSystem;
 use crate::components::{CameraTarget, Entity, Hitbox, ItemShape, Storable, Storage};
 use crate::game_state::GameState;
 use crate::gui::UIState;
-use crate::input::Input;
+use crate::input::{self, Input};
 use cgmath::num_traits::{Float, ToPrimitive};
-use cgmath::{ElementWise, InnerSpace, Point3, Vector3, Vector4};
+use cgmath::{ElementWise, InnerSpace, Point2, Point3, Vector3, Vector4};
 use std::collections::HashMap;
 
 pub struct GameSystem {}
@@ -41,6 +41,7 @@ impl GameSystem {
         Self::update_camera(game_state, input);
         // Self::handle_right_mouse_click(game_state, input);
         Self::find_world_object_on_cursor(game_state, input);
+        Self::handle_inventory_click(ui_state, input)
     }
 
     fn handle_item_placement(
@@ -130,7 +131,27 @@ impl GameSystem {
 
     fn handle_inventory(ui_state: &mut UIState, input: &mut Input) {
         if input.i_pressed.is_toggled_on() {
-            ui_state.inventory_open = !ui_state.inventory_open;
+            ui_state.inventory.toggle_visibility();
+        }
+    }
+
+    fn handle_inventory_click(ui_state: &mut UIState, input: &mut Input) {
+        // Assume toggle is handled. Probably toggles should be handled before performing any
+        // systems on them
+        if input.i_pressed.is_pressed {
+            // First check if cursoe is within inventory screen?
+            // TODO Maybe UI should use NDC coordinates, as this makes it simple to work with? or
+            // other way around of course
+            let cursor_ndc = input.mouse_position_ndc;
+            let cursor_ui_space = Point2::new(cursor_ndc.x / 2.0 + 0.5, -cursor_ndc.y / 2.0 + 0.5);
+
+            log::warn!("{:?}", cursor_ndc);
+            log::warn!("{:?}", cursor_ui_space);
+            log::warn!("{:?}", ui_state.inventory.position_top_left);
+            log::warn!("{:?}", ui_state.inventory.position_bottom_right);
+            if ui_state.inventory.contains(cursor_ui_space) {
+                log::warn!("Yep");
+            }
         }
     }
 
@@ -429,8 +450,6 @@ impl GameSystem {
                 found_objects.push(entity.clone());
             }
         }
-        log::warn!("{:?}", ray);
-        log::warn!("{:?}", found_objects);
     }
 
     fn intersection(ray: &Ray, hitbox: &Hitbox) -> bool {
