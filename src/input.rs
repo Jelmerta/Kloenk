@@ -142,9 +142,10 @@ impl Input {
     }
 
     pub fn process_mouse_movement(&mut self, mouse_position: PhysicalPosition<f64>) {
-        // Convert to value between 0 and 1
+        log::warn!("{:?}", mouse_position.x);
+        log::warn!("{:?}", mouse_position.y);
         self.mouse_position_ndc = Point2 {
-            x: (2.0 * mouse_position.x) as f32 / 800.0, // -1.0?
+            x: (2.0 * mouse_position.x) as f32 / 800.0 - 1.0,
             y: 1.0 - (2.0 * mouse_position.y) as f32 / 600.0,
         }
     }

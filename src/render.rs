@@ -842,7 +842,7 @@ impl Renderer {
         view: &TextureView,
         encoder: &mut CommandEncoder,
     ) {
-        if ui_state.inventory_open {
+        if ui_state.inventory.is_visible {
             self.set_camera_data_ui();
             let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass UI"),
@@ -908,13 +908,13 @@ impl Renderer {
     fn create_inventory_instance(ui_state: &UIState) -> Instance {
         Instance {
             position: Vector3 {
-                x: UIState::convert_clip_space_x(ui_state.inventory_position_x),
-                y: UIState::convert_clip_space_y(ui_state.inventory_position_y),
+                x: UIState::convert_clip_space_x(ui_state.inventory.position_top_left.x),
+                y: UIState::convert_clip_space_y(ui_state.inventory.position_top_left.y),
                 z: 0.0,
             },
             scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                UIState::convert_scale_x(ui_state.inventory_width),
-                UIState::convert_scale_y(ui_state.inventory_height),
+                UIState::convert_scale_x(ui_state.inventory.width),
+                UIState::convert_scale_y(ui_state.inventory.height),
                 1.0,
                 1.0,
             )),
@@ -933,10 +933,12 @@ impl Renderer {
         Instance {
             position: Vector3 {
                 x: UIState::convert_clip_space_x(
-                    ui_state.inventory_position_x + f32::from(item.position_x) * item_distance_x,
+                    ui_state.inventory.position_top_left.x
+                        + f32::from(item.position_x) * item_distance_x,
                 ),
                 y: UIState::convert_clip_space_y(
-                    ui_state.inventory_position_y + f32::from(item.position_y) * item_distance_y,
+                    ui_state.inventory.position_top_left.y
+                        + f32::from(item.position_y) * item_distance_y,
                 ),
                 z: 0.0,
             },
@@ -1000,11 +1002,11 @@ impl Renderer {
         inventory_items: &HashMap<&Entity, &InStorage>,
     ) -> Vec<RenderGroup> {
         let inventory = game_state.get_storage(&"player".to_string()).unwrap();
-        let item_distance_x = ui_state.inventory_width / f32::from(inventory.number_of_columns);
-        let item_distance_y = ui_state.inventory_height / f32::from(inventory.number_of_rows);
+        let item_distance_x = ui_state.inventory.width / f32::from(inventory.number_of_columns);
+        let item_distance_y = ui_state.inventory.height / f32::from(inventory.number_of_rows);
         let item_picture_scale_x =
-            ui_state.inventory_width / f32::from(inventory.number_of_columns);
-        let item_picture_scale_y = ui_state.inventory_height / f32::from(inventory.number_of_rows);
+            ui_state.inventory.width / f32::from(inventory.number_of_columns);
+        let item_picture_scale_y = ui_state.inventory.height / f32::from(inventory.number_of_rows);
 
         let mut render_groups = Vec::new();
         inventory_items
@@ -1068,6 +1070,7 @@ impl Renderer {
 
         self.camera_ui.z_near = -1.0;
         self.camera_ui.z_far = 1.0;
+        self.camera_ui.update_view_projection_matrix();
 
         self.camera_uniform_ui
             .update_view_projection(&mut self.camera_ui);
