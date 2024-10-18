@@ -23,6 +23,7 @@ pub struct ItemPickupSystem {}
 #[derive(Debug)]
 struct Ray {
     origin: Point3<f32>,
+    #[allow(dead_code)] // Other algorithm choice might use direction
     direction: Vector3<f32>,
     direction_inverted: Vector3<f32>,
 }
@@ -39,7 +40,6 @@ impl GameSystem {
         Self::handle_inventory(ui_state, input);
         Self::resolve_movement(game_state, input, audio_system);
         Self::update_camera(game_state, input);
-        // Self::handle_right_mouse_click(game_state, input);
         Self::find_world_object_on_cursor(game_state, input);
     }
 
@@ -59,8 +59,8 @@ impl GameSystem {
             let player_position = game_state.get_position(&"player".to_string()).unwrap();
             let placed_position = Point3 {
                 x: player_position.x - 1.1,
-                y: player_position.y - 1.1,
-                z: player_position.z,
+                y: player_position.y,
+                z: player_position.z - 1.1,
             };
 
             if !Self::is_placeable_area(game_state, &placed_position) {
@@ -110,8 +110,6 @@ impl GameSystem {
             .filter(|entity| game_state.surface_components.contains(entity.as_str()))
             .filter(|entity| {
                 Self::check_in_dimension(
-                    // &placed_entity_hitbox,
-                    // game_state.get_hitbox(&entity.to_string()).unwrap(),
                     desired_position.x,
                     0.0,
                     game_state.get_position(&(*entity).to_string()).unwrap().x,
@@ -120,9 +118,9 @@ impl GameSystem {
             }) // Assume 0.5 as half tile
             .any(|entity| {
                 Self::check_in_dimension(
-                    desired_position.y,
+                    desired_position.z,
                     0.0,
-                    game_state.get_position(&entity.to_string()).unwrap().y,
+                    game_state.get_position(&entity.to_string()).unwrap().z,
                     0.5,
                 )
             }) // Assume 0.5 as half tile
@@ -144,8 +142,8 @@ impl GameSystem {
 
     fn setup_camera(game_state: &mut GameState) {
         let player = "player".to_string();
-        let player_position = game_state.get_position(&player).unwrap().clone();
-        let player_camera = game_state.get_camera_target(&player).unwrap().clone();
+        let player_position = *game_state.get_position(&player).unwrap();
+        let player_camera = *game_state.get_camera_target(&player).unwrap();
 
         let rad_x = f32::to_radians(player_camera.rotation_x_degrees);
         let rad_y = f32::to_radians(player_camera.rotation_y_degrees);
@@ -228,10 +226,11 @@ impl GameSystem {
                 z: player_position.z - movement_speed,
             };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(game_state, &desired_position, audio_system)
+                && !Self::is_colliding(game_state, audio_system)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
+                update_hitbox(game_state, desired_position);
             }
         }
 
@@ -243,10 +242,11 @@ impl GameSystem {
                 z: player_position.z + movement_speed,
             };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(game_state, &desired_position, audio_system)
+                && !Self::is_colliding(game_state, audio_system)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
+                update_hitbox(game_state, desired_position);
             }
         }
 
@@ -258,10 +258,11 @@ impl GameSystem {
                 z: player_position.z + movement_speed,
             };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(game_state, &desired_position, audio_system)
+                && !Self::is_colliding(game_state, audio_system)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
+                update_hitbox(game_state, desired_position);
             }
         }
 
@@ -273,10 +274,11 @@ impl GameSystem {
                 z: player_position.z - movement_speed,
             };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(game_state, &desired_position, audio_system)
+                && !Self::is_colliding(game_state, audio_system)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
+                update_hitbox(game_state, desired_position);
             }
         }
     }
@@ -294,11 +296,7 @@ impl GameSystem {
             })
     }
 
-    fn is_colliding(
-        game_state: &GameState,
-        desired_position: &Point3<f32>,
-        audio_system: &mut AudioSystem,
-    ) -> bool {
+    fn is_colliding(game_state: &GameState, audio_system: &mut AudioSystem) -> bool {
         let interactable_entities: Vec<&Entity> = game_state
             .entities
             .iter()
@@ -309,19 +307,11 @@ impl GameSystem {
             })
             .collect();
 
+        let player_hitbox = game_state.hitbox_components.get("player").unwrap();
         for entity in interactable_entities {
             let entity_hitbox = game_state.get_hitbox(&entity.to_string()).unwrap();
 
-            let player_hitbox_min =
-                desired_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51));
-            let player_hitbox_max =
-                desired_position.add_element_wise(Point3::new(0.51, 0.51, 0.51));
-            let player_hitbox = Hitbox {
-                box_corner_min: player_hitbox_min,
-                box_corner_max: player_hitbox_max,
-            };
-
-            if Self::check_collision(&player_hitbox, entity_hitbox) {
+            if Self::check_collision(player_hitbox, entity_hitbox) {
                 audio_system.play_sound("bonk");
 
                 return true;
@@ -372,59 +362,39 @@ impl GameSystem {
             && position2 + boundary2 >= position1 - boundary1
     }
 
-    // fn check_collision(
-    //     position1: &Position,
-    //     hitbox1: &Hitbox,
-    //     position2: &Position,
-    //     hitbox2: &Hitbox,
-    // ) -> bool {
-    //     let is_collision_x =
-    //         Self::check_in_dimension(position1.x, hitbox1.hitbox, position2.x, hitbox2.hitbox);
-    //     let is_collision_y =
-    //         Self::check_in_dimension(position1.y, hitbox1.hitbox, position2.y, hitbox2.hitbox);
-    //     let is_collision_z =
-    //         Self::check_in_dimension(position1.z, hitbox1.hitbox, position2.z, hitbox2.hitbox);
-    //
-    //     is_collision_x && is_collision_y && is_collision_z
-    // }
-
-    // fn handle_right_mouse_click(game_state: &mut GameState, input: &mut Input) {
-    //     // TODO Handle UI click first
-    //
-    //     if input.right_mouse_clicked.was_pressed {
-    //
-    //         game_state
-    //
-    //         // For every interactable entity
-    //         // Check hitbox with aabb ray slab algorithm
-    //     }
-    //     find_world_entity(position_x: f32, position_y: f32)
-    // }
-
     fn find_world_object_on_cursor(game_state: &mut GameState, input: &mut Input) {
         let camera = game_state.get_camera_mut("camera").unwrap();
 
-        log::warn!("{:?}", input.mouse_position_ndc);
         let ray_clip_near = Vector4::new(
-            // input.mouse_position_ndc.x,
-            input.mouse_position_ndc.x / 3.6,
-            input.mouse_position_ndc.y / 2.8,
-            camera.z_near,
-            // 0.25,
-            // 1.0, // 1.0 or 0.0?
-            0.0,
+            input.mouse_position_ndc.x,
+            input.mouse_position_ndc.y,
+            0.0, // ndc z goes from 0.0-1.0
+            1.0,
         );
-        let ray_world_space = camera.view_projection_matrix_inverse * ray_clip_near;
-        // TODO Reverse divide? https://antongerdelan.net/opengl/raycasting.html mentions not necessary.. we do not have perspective anyway. probably unnecessary
-        let ray_direction = ray_world_space.truncate().normalize();
-        // let ray_direction = ray_world_space.truncate();
-        let ray_direction_inverted = Vector3::new(1.0, 1.0, 1.0)
-            .div_element_wise(ray_direction)
-            .normalize();
+
+        // Very important! Orthographic projection means rays are parallel, and do not come from a single origin point.
+        // This means that we cannot do something like ray_near - camera.eye but instead need two points in the world space to figure out the direction.
+        // A perspective projection would not need this as it would have a single origin point.
+        let ray_clip_far = Vector4::new(
+            input.mouse_position_ndc.x,
+            input.mouse_position_ndc.y,
+            0.999999, // Hm, 1.0 (far plane) does not work
+            1.0,
+        );
+
+        let point_near = camera.view_projection_matrix_inverted * ray_clip_near;
+        let point_near_normalized =
+            Point3::new(point_near.x, point_near.y, point_near.z) / point_near.w;
+        let point_far = camera.view_projection_matrix_inverted * ray_clip_far;
+        let point_far_normalized = Point3::new(point_far.x, point_far.y, point_far.z) / point_far.w;
+
+        let ray_world = (point_far_normalized - point_near_normalized).normalize();
+
+        let ray_direction_inverted = (1.0 / ray_world).normalize();
 
         let ray = Ray {
-            origin: camera.eye,
-            direction: ray_direction,
+            origin: point_near_normalized, // Not camera origin! (orthographic)
+            direction: ray_world,
             direction_inverted: ray_direction_inverted,
         };
 
@@ -434,8 +404,9 @@ impl GameSystem {
                 found_objects.push(entity.clone());
             }
         }
-        log::warn!("{:?}", ray);
-        log::warn!("{:?}", found_objects);
+        // log::warn!("{:?}", found_objects);
+
+        // TODO Find nearest?
     }
 
     fn intersection(ray: &Ray, hitbox: &Hitbox) -> bool {
@@ -454,6 +425,17 @@ impl GameSystem {
 
         t_min < t_max
     }
+}
+
+fn update_hitbox(game_state: &mut GameState, position: Point3<f32>) {
+    let player_hitbox = Hitbox {
+        box_corner_min: position.sub_element_wise(Point3::new(0.51, 0.51, 0.51)),
+        box_corner_max: position.add_element_wise(Point3::new(0.51, 0.51, 0.51)),
+    };
+    game_state.hitbox_components.remove("player");
+    game_state
+        .hitbox_components
+        .insert("player".to_string(), player_hitbox);
 }
 
 impl ItemPickupSystem {

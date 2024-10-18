@@ -7,7 +7,6 @@ use crate::components::{
 };
 use cgmath::{ElementWise, Point3};
 use std::collections::{HashMap, HashSet};
-use std::f32;
 
 pub const TOTAL_DISTANCE: f32 = 200_000.; // Verify naming, probably not total distance
 
