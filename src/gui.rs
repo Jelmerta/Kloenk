@@ -36,9 +36,9 @@ impl UIElement {
     }
 }
 
-struct WindowSize {
-    width: u32,
-    height: u32,
+pub struct WindowSize {
+    pub width: u32,
+    pub height: u32,
 }
 
 pub struct UIState {
@@ -61,12 +61,9 @@ pub struct UIState {
 }
 
 impl UIState {
-    pub fn new() -> Self {
+    pub fn new(width: u32, height: u32) -> Self {
         UIState {
-            window_size: WindowSize {
-                width: 800,
-                height: 600,
-            },
+            window_size: WindowSize { width, height },
             inventory: UIElement::new(false, Point2::new(0.6, 0.6), Point2::new(0.95, 0.95)),
             //inventory_open: false,
 
