@@ -89,15 +89,18 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             } // Continue
         }
 
+        let window_width = 800;
+        let window_height = 600;
+
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
-            .with_inner_size(LogicalSize::new(800.0, 600.0));
+            .with_inner_size(LogicalSize::new(window_width as f32, window_height as f32));
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
         #[cfg(target_arch = "wasm32")]
         {
             use winit::dpi::PhysicalSize;
-            let _ = window.request_inner_size(PhysicalSize::new(800, 600));
+            let _ = window.request_inner_size(PhysicalSize::new(window_width, window_height));
 
             web_sys::window()
                 .and_then(|win| win.document())
@@ -113,7 +116,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 })
                 .expect("Couldn't append canvas to document body.");
             // Not sure why, but width/height not yet set... Do it again.
-            let _ = window.request_inner_size(PhysicalSize::new(800, 600));
+            let _ = window.request_inner_size(PhysicalSize::new(window_width, window_height));
         }
 
         let renderer_future = Renderer::new(window.clone());
@@ -152,7 +155,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             let game = Engine {
                 renderer,
                 game_state: GameState::new(),
-                ui_state: UIState::new(),
+                ui_state: UIState::new(window_width, window_height),
                 input_handler: Input::new(),
                 window,
                 audio_system,

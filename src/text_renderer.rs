@@ -85,8 +85,8 @@ impl TextWriter {
         self.viewport.update(
             queue,
             Resolution {
-                width: 800,
-                height: 600,
+                width: ui_state.window_size.width,
+                height: ui_state.window_size.height,
             },
         );
 
@@ -99,15 +99,19 @@ impl TextWriter {
                 &self.viewport,
                 [TextArea {
                     buffer: &self.text_buffer,
-                    left: 800.0 * ui_state.text_position_x,
-                    top: 600.0 * ui_state.text_position_y,
+                    left: ui_state.window_size.width as f32 * ui_state.text_position_x,
+                    top: ui_state.window_size.height as f32 * ui_state.text_position_y,
                     scale: 1.0,
                     bounds: TextBounds {
-                        left: (800.0 * ui_state.text_position_x) as i32 - 10, // Adding 10 for some padding so text is fully shown
-                        top: (600.0 * ui_state.text_position_y) as i32 - 10,
-                        right: (800.0 * ui_state.text_position_x + 800.0 * ui_state.text_width)
+                        left: (ui_state.window_size.width as f32 * ui_state.text_position_x) as i32
+                            - 10, // Adding 10 for some padding so text is fully shown
+                        top: (ui_state.window_size.height as f32 * ui_state.text_position_y) as i32
+                            - 10,
+                        right: (ui_state.window_size.width as f32 * ui_state.text_position_x
+                            + ui_state.window_size.width as f32 * ui_state.text_width)
                             as i32,
-                        bottom: (600.0 * ui_state.text_position_y + 600.0 * ui_state.text_height)
+                        bottom: (ui_state.window_size.height as f32 * ui_state.text_position_y
+                            + ui_state.window_size.height as f32 * ui_state.text_height)
                             as i32,
                     },
                     default_color: Color::rgb(255, 255, 0),
