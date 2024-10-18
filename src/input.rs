@@ -143,8 +143,8 @@ impl Input {
 
     pub fn process_mouse_movement(&mut self, mouse_position: PhysicalPosition<f64>) {
         self.mouse_position_ndc = Point2 {
-            x: (2.0 * mouse_position.x) as f32 / 600.0 - 800.0 / 600.0, // yes 600 as clip space width is -800/600 to 800/600
-            y: 1.0 - (2.0 * mouse_position.y) as f32 / 600.0, // clip space between -1 and 1
+            x: ((2.0 * mouse_position.x) / 800.0 - 1.0) as f32, // / 600.0 - 800.0 / 600.0, // yes 600 as clip space width is -800/600 to 800/600
+            y: (1.0 - (2.0 * mouse_position.y) / 600.0) as f32, // clip space between -1 and 1
         }
     }
 
