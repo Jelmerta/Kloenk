@@ -132,7 +132,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 let game = Engine {
                     renderer,
                     game_state: GameState::new(),
-                    ui_state: UIState::new(),
+                    ui_state: UIState::new(window_width, window_height),
                     input_handler: Input::new(),
                     audio_loading_state: Rc::new(RefCell::new(AudioState::NotLoaded)),
                     audio_system,

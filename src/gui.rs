@@ -3,6 +3,7 @@ use cgmath::Point2;
 pub enum Payload {
     Text(String),
     // Container,
+    #[allow(dead_code)]
     Image(String),
 }
 

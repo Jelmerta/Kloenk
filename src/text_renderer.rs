@@ -41,7 +41,7 @@ impl TextWriter {
             .unwrap_or(caps.formats[0]);
         let swash_cache = SwashCache::new();
         let cache = Cache::new(device);
-        let mut viewport = Viewport::new(device, &cache);
+        let viewport = Viewport::new(device, &cache);
         let mut atlas = TextAtlas::new(device, queue, &cache, surface_format);
         let text_renderer =
             TextRenderer::new(&mut atlas, device, wgpu::MultisampleState::default(), None);
