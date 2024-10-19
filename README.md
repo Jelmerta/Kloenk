@@ -35,6 +35,7 @@ Useful rust tools to improve project:
 - ``cargo clippy`` for linting tips, small code improvements
 - ``cargo outdated`` or ``cargo outdated --depth 1`` to find new versions of dependencies. Alternatively, cargo-machete
   can be used.
+- ``cargo update --verbose`` can also be used to find older dependencies
 - ``cargo bloat --release -n 100`` optionally with ``--crates`` to figure out functions and dependencies that contribute
   most to binary size
   Other things to consider:

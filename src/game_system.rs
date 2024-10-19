@@ -246,12 +246,16 @@ impl GameSystem {
                 y: player_position.y,
                 z: player_position.z - movement_speed,
             };
+            let desired_player_hitbox = Hitbox {
+                box_corner_min: desired_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51)),
+                box_corner_max: desired_position.add_element_wise(Point3::new(0.51, 0.51, 0.51)),
+            };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(game_state, audio_system)
+                && !Self::is_colliding(&desired_player_hitbox, game_state, audio_system)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
-                update_hitbox(game_state, desired_position);
+                update_hitbox(game_state, desired_player_hitbox);
             }
         }
 
@@ -262,12 +266,16 @@ impl GameSystem {
                 y: player_position.y,
                 z: player_position.z + movement_speed,
             };
+            let desired_player_hitbox = Hitbox {
+                box_corner_min: desired_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51)),
+                box_corner_max: desired_position.add_element_wise(Point3::new(0.51, 0.51, 0.51)),
+            };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(game_state, audio_system)
+                && !Self::is_colliding(&desired_player_hitbox, game_state, audio_system)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
-                update_hitbox(game_state, desired_position);
+                update_hitbox(game_state, desired_player_hitbox);
             }
         }
 
@@ -278,12 +286,16 @@ impl GameSystem {
                 y: player_position.y,
                 z: player_position.z + movement_speed,
             };
+            let desired_player_hitbox = Hitbox {
+                box_corner_min: desired_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51)),
+                box_corner_max: desired_position.add_element_wise(Point3::new(0.51, 0.51, 0.51)),
+            };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(game_state, audio_system)
+                && !Self::is_colliding(&desired_player_hitbox, game_state, audio_system)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
-                update_hitbox(game_state, desired_position);
+                update_hitbox(game_state, desired_player_hitbox);
             }
         }
 
@@ -294,12 +306,16 @@ impl GameSystem {
                 y: player_position.y,
                 z: player_position.z - movement_speed,
             };
+            let desired_player_hitbox = Hitbox {
+                box_corner_min: desired_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51)),
+                box_corner_max: desired_position.add_element_wise(Point3::new(0.51, 0.51, 0.51)),
+            };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(game_state, audio_system)
+                && !Self::is_colliding(&desired_player_hitbox, game_state, audio_system)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
-                update_hitbox(game_state, desired_position);
+                update_hitbox(game_state, desired_player_hitbox);
             }
         }
     }
@@ -317,7 +333,11 @@ impl GameSystem {
             })
     }
 
-    fn is_colliding(game_state: &GameState, audio_system: &mut AudioSystem) -> bool {
+    fn is_colliding(
+        desired_player_hitbox: &Hitbox,
+        game_state: &GameState,
+        audio_system: &mut AudioSystem,
+    ) -> bool {
         let interactable_entities: Vec<&Entity> = game_state
             .entities
             .iter()
@@ -328,11 +348,10 @@ impl GameSystem {
             })
             .collect();
 
-        let player_hitbox = game_state.hitbox_components.get("player").unwrap();
         for entity in interactable_entities {
             let entity_hitbox = game_state.get_hitbox(&entity.to_string()).unwrap();
 
-            if Self::check_collision(player_hitbox, entity_hitbox) {
+            if Self::check_collision(desired_player_hitbox, entity_hitbox) {
                 audio_system.play_sound("bonk");
 
                 return true;
@@ -357,20 +376,20 @@ impl GameSystem {
     }
 
     fn check_collision(bounding_box_one: &Hitbox, bounding_box_two: &Hitbox) -> bool {
-        if bounding_box_one.box_corner_max.x < bounding_box_two.box_corner_min.x
-            || bounding_box_one.box_corner_min.x > bounding_box_two.box_corner_max.x
+        if bounding_box_one.box_corner_max.x <= bounding_box_two.box_corner_min.x
+            || bounding_box_one.box_corner_min.x >= bounding_box_two.box_corner_max.x
         {
             return false;
         }
 
-        if bounding_box_one.box_corner_max.y < bounding_box_two.box_corner_min.y
-            || bounding_box_one.box_corner_min.y > bounding_box_two.box_corner_max.y
+        if bounding_box_one.box_corner_max.y <= bounding_box_two.box_corner_min.y
+            || bounding_box_one.box_corner_min.y >= bounding_box_two.box_corner_max.y
         {
             return false;
         }
 
-        if bounding_box_one.box_corner_max.z < bounding_box_two.box_corner_min.z
-            || bounding_box_one.box_corner_min.z > bounding_box_two.box_corner_max.z
+        if bounding_box_one.box_corner_max.z <= bounding_box_two.box_corner_min.z
+            || bounding_box_one.box_corner_min.z >= bounding_box_two.box_corner_max.z
         {
             return false;
         }
@@ -448,15 +467,11 @@ impl GameSystem {
     }
 }
 
-fn update_hitbox(game_state: &mut GameState, position: Point3<f32>) {
-    let player_hitbox = Hitbox {
-        box_corner_min: position.sub_element_wise(Point3::new(0.51, 0.51, 0.51)),
-        box_corner_max: position.add_element_wise(Point3::new(0.51, 0.51, 0.51)),
-    };
+fn update_hitbox(game_state: &mut GameState, new_hitbox: Hitbox) {
     game_state.hitbox_components.remove("player");
     game_state
         .hitbox_components
-        .insert("player".to_string(), player_hitbox);
+        .insert("player".to_string(), new_hitbox);
 }
 
 impl ItemPickupSystem {

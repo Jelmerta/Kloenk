@@ -58,6 +58,12 @@ pub struct UIState {
     pub text_position_y: f32,
     pub text_width: f32,
     pub text_height: f32,
+
+    pub selected_text: String,
+    pub selected_text_position_x: f32,
+    pub selected_text_position_y: f32,
+    pub selected_text_width: f32,
+    pub selected_text_height: f32,
 }
 
 impl UIState {
@@ -80,6 +86,12 @@ impl UIState {
             text_position_y: 0.6,
             text_width: 0.6,
             text_height: 0.4,
+
+            selected_text: String::new(),
+            selected_text_position_x: 0.05,
+            selected_text_position_y: 0.1,
+            selected_text_width: 0.6,
+            selected_text_height: 0.4,
         }
     }
 
