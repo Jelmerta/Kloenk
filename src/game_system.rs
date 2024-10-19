@@ -1,10 +1,11 @@
 use crate::audio_system::AudioSystem;
 use crate::components::{CameraTarget, Entity, Hitbox, ItemShape, Storable, Storage};
 use crate::game_state::GameState;
-use crate::gui::UIState;
+use crate::gui::{Payload, UIState};
 use crate::input::{self, Input};
 use cgmath::num_traits::{Float, ToPrimitive};
 use cgmath::{ElementWise, InnerSpace, Point2, Point3, Vector3, Vector4};
+use itertools::join;
 use std::collections::HashMap;
 
 pub struct GameSystem {}
@@ -40,7 +41,7 @@ impl GameSystem {
         Self::handle_inventory(ui_state, input);
         Self::resolve_movement(game_state, input, audio_system);
         Self::update_camera(game_state, input);
-        Self::find_world_object_on_cursor(game_state, input);
+        Self::find_world_object_on_cursor(game_state, ui_state, input);
         Self::handle_inventory_click(ui_state, input)
     }
 
@@ -52,7 +53,8 @@ impl GameSystem {
         if input.left_mouse_clicked.is_toggled_on() {
             let item = StorageManager::find_in_storage(game_state, &"player".to_string());
             if item.is_none() {
-                ui_state.text = "No items in inventory to place.".to_string();
+                ui_state.action_text.payload =
+                    Payload::Text("No items in inventory to place.".to_string());
                 return;
             }
             let item_unwrap = item.unwrap().clone();
@@ -65,7 +67,8 @@ impl GameSystem {
             };
 
             if !Self::is_placeable_area(game_state, &placed_position) {
-                ui_state.text = "Cannot place outside placeable area.".to_string();
+                ui_state.action_text.payload =
+                    Payload::Text("Cannot place outside placeable area.".to_string());
                 return;
             }
 
@@ -92,12 +95,13 @@ impl GameSystem {
                 .cloned()
                 .collect();
             if !colliding_entities.is_empty() {
-                ui_state.text =
-                    "Found a colliding object.\nNot allowed to place there.".to_string();
+                ui_state.action_text.payload = Payload::Text(
+                    "Found a colliding object.\nNot allowed to place there.".to_string(),
+                );
                 return;
             }
 
-            ui_state.text = "You drop the item.".to_string();
+            ui_state.action_text.payload = Payload::Text("You drop the item.".to_string());
             game_state.create_position(item_unwrap.to_string(), placed_position);
             game_state.create_hitbox(item_unwrap.to_string(), item_hitbox);
             game_state.remove_in_storage(&item_unwrap.to_string());
@@ -143,10 +147,10 @@ impl GameSystem {
             let cursor_ndc = input.mouse_position_ndc;
             let cursor_ui_space = Point2::new(cursor_ndc.x / 2.0 + 0.5, -cursor_ndc.y / 2.0 + 0.5);
 
-            log::warn!("{:?}", cursor_ndc);
-            log::warn!("{:?}", cursor_ui_space);
-            log::warn!("{:?}", ui_state.inventory.position_top_left);
-            log::warn!("{:?}", ui_state.inventory.position_bottom_right);
+            // log::warn!("{:?}", cursor_ndc);
+            // log::warn!("{:?}", cursor_ui_space);
+            // log::warn!("{:?}", ui_state.inventory.position_top_left);
+            // log::warn!("{:?}", ui_state.inventory.position_bottom_right);
             if ui_state.inventory.contains(cursor_ui_space) {
                 log::warn!("Yep");
             }
@@ -402,7 +406,11 @@ impl GameSystem {
             && position2 + boundary2 >= position1 - boundary1
     }
 
-    fn find_world_object_on_cursor(game_state: &mut GameState, input: &mut Input) {
+    fn find_world_object_on_cursor(
+        game_state: &mut GameState,
+        ui_state: &mut UIState,
+        input: &mut Input,
+    ) {
         let camera = game_state.get_camera_mut("camera").unwrap();
 
         let ray_clip_near = Vector4::new(
@@ -444,7 +452,9 @@ impl GameSystem {
                 found_objects.push(entity.clone());
             }
         }
-        // log::warn!("{:?}", found_objects);
+
+        let found_objects_text = found_objects.join(", ");
+        ui_state.selected_text.payload = Payload::Text(found_objects_text.to_string());
 
         // TODO Find nearest?
     }
@@ -487,7 +497,8 @@ impl ItemPickupSystem {
                 &player,
             );
             if near_pickup.is_none() {
-                ui_state.text = "No item found around you to pick up.".to_string();
+                ui_state.action_text.payload =
+                    Payload::Text("No item found around you to pick up.".to_string());
                 return;
             }
             let near_pickup = near_pickup.unwrap();
@@ -496,15 +507,17 @@ impl ItemPickupSystem {
                 game_state.get_position(&player.clone()).unwrap(),
                 game_state.get_position(&near_pickup.clone()).unwrap(),
             ) {
-                ui_state.text = "No item found around you to pick up.".to_string();
+                ui_state.action_text.payload =
+                    Payload::Text("No item found around you to pick up.".to_string());
                 return;
             }
 
             let inventory = game_state.get_storage(&player).unwrap();
             let inventory_items = StorageManager::get_in_storage(game_state, &player);
             if !StorageManager::has_space(game_state, inventory, &inventory_items, &near_pickup) {
-                ui_state.text =
-                    "There is no space left in your\ninventory to pick up this item.".to_string();
+                ui_state.action_text.payload = Payload::Text(
+                    "There is no space left in your\ninventory to pick up this item.".to_string(),
+                );
                 return;
             }
             let empty_spot = StorageManager::find_empty_spot(
@@ -515,7 +528,7 @@ impl ItemPickupSystem {
             )
             .unwrap();
 
-            ui_state.text = "You pick up the item!".to_string();
+            ui_state.action_text.payload = Payload::Text("You pick up the item!".to_string());
             game_state.remove_position(&near_pickup.clone());
             game_state.remove_hitbox(&near_pickup.clone());
             game_state.create_in_storage(&player, near_pickup.clone(), empty_spot);
