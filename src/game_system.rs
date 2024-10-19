@@ -2,10 +2,9 @@ use crate::audio_system::AudioSystem;
 use crate::components::{CameraTarget, Entity, Hitbox, ItemShape, Storable, Storage};
 use crate::game_state::GameState;
 use crate::gui::{Payload, UIState};
-use crate::input::{self, Input};
+use crate::input::Input;
 use cgmath::num_traits::{Float, ToPrimitive};
 use cgmath::{ElementWise, InnerSpace, Point2, Point3, Vector3, Vector4};
-use itertools::join;
 use std::collections::HashMap;
 
 pub struct GameSystem {}
