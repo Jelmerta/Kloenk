@@ -25,7 +25,7 @@ use winit::window::Window;
 use crate::camera::Camera;
 use crate::components::{Entity, InStorage};
 use crate::game_state::GameState;
-use crate::gui::UIState;
+use crate::gui::{Payload, UIState};
 use crate::model::{self};
 use crate::model::{Model, Vertex};
 use crate::text_renderer::TextWriter;
@@ -766,7 +766,23 @@ impl Renderer {
         self.render_ui(game_state, ui_state, &view, &mut encoder);
 
         self.text_writer
-            .write(&self.device, &self.queue, &mut encoder, &view, ui_state);
+            .prepare(&self.device, &self.queue, ui_state);
+
+        let selected_text = match &ui_state.selected_text.payload {
+            Payload::Text(text) => text,
+            _ => panic!("unexpected payload"),
+        };
+
+        self.text_writer
+            .write_selected_text_buffer(&mut encoder, &view, selected_text);
+
+        let action_text = match &ui_state.action_text.payload {
+            Payload::Text(text) => text,
+            _ => panic!("unexpected payload"),
+        };
+
+        self.text_writer
+            .write_action_text_buffer(&mut encoder, &view, action_text);
 
         //use model::DrawModel;
         // let garfield = self.models.pop().unwrap();

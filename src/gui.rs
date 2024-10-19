@@ -1,20 +1,45 @@
 use cgmath::Point2;
 
+pub enum Payload {
+    Text(String),
+    // Container,
+    Image(String),
+}
+
 pub struct UIElement {
     pub is_visible: bool,
     pub position_top_left: Point2<f32>,
     pub position_bottom_right: Point2<f32>,
     pub width: f32, // Could be calculated field (or bottom right could be)
     pub height: f32,
+    pub payload: Payload,
 }
 
 impl UIElement {
-    pub fn new(
+    pub fn new_text(
+        text: String,
         is_visible: bool,
         position_top_left: Point2<f32>,
         position_bottom_right: Point2<f32>,
     ) -> UIElement {
         Self {
+            payload: Payload::Text(text),
+            is_visible,
+            position_top_left,
+            position_bottom_right,
+            width: position_bottom_right.x - position_top_left.x,
+            height: position_bottom_right.y - position_top_left.y,
+        }
+    }
+
+    pub fn new_image(
+        image: String,
+        is_visible: bool,
+        position_top_left: Point2<f32>,
+        position_bottom_right: Point2<f32>,
+    ) -> UIElement {
+        Self {
+            payload: Payload::Image(image),
             is_visible,
             position_top_left,
             position_bottom_right,
@@ -44,54 +69,38 @@ pub struct WindowSize {
 pub struct UIState {
     pub window_size: WindowSize,
 
-    //pub inventory_open: bool,
-    //pub inventory_position_x: f32,
-    //pub inventory_position_y: f32,
-    //pub inventory_width: f32,
-    //pub inventory_height: f32,
-    //pub inventory_position_top_left: Point2<f32>,
-    //pub inventory_position_bottom_right: Point2<f32>,
     pub inventory: UIElement,
-
-    pub text: String,
-    pub text_position_x: f32,
-    pub text_position_y: f32,
-    pub text_width: f32,
-    pub text_height: f32,
-
-    pub selected_text: String,
-    pub selected_text_position_x: f32,
-    pub selected_text_position_y: f32,
-    pub selected_text_width: f32,
-    pub selected_text_height: f32,
+    pub action_text: UIElement,
+    pub selected_text: UIElement,
 }
 
 impl UIState {
     pub fn new(width: u32, height: u32) -> Self {
         UIState {
             window_size: WindowSize { width, height },
-            inventory: UIElement::new(false, Point2::new(0.6, 0.6), Point2::new(0.95, 0.95)),
-            //inventory_open: false,
-
-            //inventory_position_top_left:
-            //inventory_position_bottom_right: Point2::new(0.95, 0.95),
-            //inventory_width: 0.35,
-            //inventory_height: 0.35,
+            inventory: UIElement::new_image(
+                "inventory".to_string(),
+                false,
+                Point2::new(0.6, 0.6),
+                Point2::new(0.95, 0.95),
+            ),
 
             // TODO We can probably store items here on a signal when inv changes. That
             // way we do not need to calculate inventory every frame when inventory is
             // shown
-            text: String::new(),
-            text_position_x: 0.05,
-            text_position_y: 0.6,
-            text_width: 0.6,
-            text_height: 0.4,
+            action_text: UIElement::new_text(
+                "".to_string(),
+                false,
+                Point2::new(0.05, 0.6),
+                Point2::new(0.65, 1.0),
+            ),
 
-            selected_text: String::new(),
-            selected_text_position_x: 0.05,
-            selected_text_position_y: 0.1,
-            selected_text_width: 0.6,
-            selected_text_height: 0.4,
+            selected_text: UIElement::new_text(
+                "".to_string(),
+                false,
+                Point2::new(0.05, 0.1),
+                Point2::new(0.65, 0.15),
+            ),
         }
     }
 
