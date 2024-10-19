@@ -30,6 +30,7 @@ use winit::window::{Window, WindowId};
 use crate::audio_system::AudioPlayer;
 use crate::audio_system::AudioSystem;
 
+use crate::frame_state::FrameState;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
 
@@ -38,6 +39,7 @@ pub struct Engine {
     pub game_state: GameState,
     pub ui_state: UIState,
     pub input_handler: Input,
+    pub frame_state: FrameState,
     pub window: Arc<Window>,
     // AudioSystem is loaded after user has used a gesture. This is to get rid of this warning in Chrome:
     // The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://goo.gl/7K7WLu
@@ -134,6 +136,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     game_state: GameState::new(),
                     ui_state: UIState::new(window_width, window_height),
                     input_handler: Input::new(),
+                    frame_state: FrameState::new(),
                     audio_loading_state: Rc::new(RefCell::new(AudioState::NotLoaded)),
                     audio_system,
                     window,
@@ -157,6 +160,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 game_state: GameState::new(),
                 ui_state: UIState::new(window_width, window_height),
                 input_handler: Input::new(),
+                frame_state: FrameState::new(),
                 window,
                 audio_system,
             };
@@ -276,6 +280,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     &mut engine.game_state,
                     &mut engine.ui_state,
                     &mut engine.input_handler,
+                    &mut engine.frame_state,
                     &mut engine.audio_system,
                 );
 

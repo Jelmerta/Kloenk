@@ -1,10 +1,13 @@
 use crate::audio_system::AudioSystem;
 use crate::components::{CameraTarget, Entity, Hitbox, ItemShape, Storable, Storage};
+use crate::frame_state::FrameState;
 use crate::game_state::GameState;
 use crate::gui::{Payload, UIState};
 use crate::input::Input;
+use crate::utility::distance_3d;
 use cgmath::num_traits::{Float, ToPrimitive};
 use cgmath::{ElementWise, InnerSpace, Point2, Point3, Vector3, Vector4};
+use itertools::Itertools;
 use std::collections::HashMap;
 
 pub struct GameSystem {}
@@ -33,14 +36,18 @@ impl GameSystem {
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &mut Input,
+        frame_state: &mut FrameState,
         audio_system: &mut AudioSystem,
     ) {
+        *frame_state = FrameState::new();
         ItemPickupSystem::handle_item_pickup(game_state, ui_state, input);
         Self::handle_item_placement(game_state, ui_state, input);
         Self::handle_inventory(ui_state, input);
         Self::resolve_movement(game_state, input, audio_system);
         Self::update_camera(game_state, input);
-        Self::find_world_object_on_cursor(game_state, ui_state, input);
+        Self::find_world_object_on_cursor(game_state, ui_state, input, frame_state);
+        Self::set_nearest_object(game_state, frame_state);
+        ItemPickupSystem::handle_right_click(game_state, ui_state, input, frame_state);
         Self::handle_inventory_click(ui_state, input)
     }
 
@@ -409,6 +416,7 @@ impl GameSystem {
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &mut Input,
+        frame_state: &mut FrameState,
     ) {
         let camera = game_state.get_camera_mut("camera").unwrap();
 
@@ -445,17 +453,14 @@ impl GameSystem {
             direction_inverted: ray_direction_inverted,
         };
 
-        let mut found_objects = Vec::new();
         for (entity, hitbox) in game_state.hitbox_components.iter() {
             if Self::intersection(&ray, hitbox) {
-                found_objects.push(entity.clone());
+                frame_state.add_object(entity.clone());
             }
         }
 
-        let found_objects_text = found_objects.join(", ");
+        let found_objects_text = frame_state.get_objects_on_cursor().join(", ");
         ui_state.selected_text.payload = Payload::Text(found_objects_text.to_string());
-
-        // TODO Find nearest?
     }
 
     fn intersection(ray: &Ray, hitbox: &Hitbox) -> bool {
@@ -474,6 +479,23 @@ impl GameSystem {
 
         t_min < t_max
     }
+
+    fn set_nearest_object(game_state: &GameState, frame_state: &mut FrameState) {
+        let player_position = game_state.get_position(&"player".to_string()).unwrap();
+        let nearest_object: Option<Entity> = frame_state
+            .get_objects_on_cursor()
+            .iter()
+            .map(|entity| {
+                let object_position = game_state.get_position(entity).unwrap();
+                let distance = distance_3d(object_position, player_position);
+                (entity, distance)
+            })
+            .sorted_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap())
+            .map(|(entity, _)| entity.clone())
+            .next();
+
+        frame_state.set_nearest_object_on_cursor(nearest_object);
+    }
 }
 
 fn update_hitbox(game_state: &mut GameState, new_hitbox: Hitbox) {
@@ -485,53 +507,75 @@ fn update_hitbox(game_state: &mut GameState, new_hitbox: Hitbox) {
 
 impl ItemPickupSystem {
     fn handle_item_pickup(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
+        let player = "player".to_string();
+
         // mut input just for is
         // toggled on. could possibly be changed
         if input.e_pressed.is_toggled_on() {
-            let player = "player".to_string();
             let near_pickup = PositionManager::find_nearest_pickup(
                 &game_state.position_components,
                 &game_state.storable_components,
                 &game_state.entities,
                 &player,
             );
+
             if near_pickup.is_none() {
                 ui_state.action_text.payload =
                     Payload::Text("No item found around you to pick up.".to_string());
                 return;
             }
-            let near_pickup = near_pickup.unwrap();
-
-            if !Self::in_range(
-                game_state.get_position(&player.clone()).unwrap(),
-                game_state.get_position(&near_pickup.clone()).unwrap(),
-            ) {
-                ui_state.action_text.payload =
-                    Payload::Text("No item found around you to pick up.".to_string());
-                return;
-            }
-
-            let inventory = game_state.get_storage(&player).unwrap();
-            let inventory_items = StorageManager::get_in_storage(game_state, &player);
-            if !StorageManager::has_space(game_state, inventory, &inventory_items, &near_pickup) {
-                ui_state.action_text.payload = Payload::Text(
-                    "There is no space left in your\ninventory to pick up this item.".to_string(),
-                );
-                return;
-            }
-            let empty_spot = StorageManager::find_empty_spot(
-                game_state,
-                inventory,
-                &inventory_items,
-                &near_pickup,
-            )
-            .unwrap();
-
-            ui_state.action_text.payload = Payload::Text("You pick up the item!".to_string());
-            game_state.remove_position(&near_pickup.clone());
-            game_state.remove_hitbox(&near_pickup.clone());
-            game_state.create_in_storage(&player, near_pickup.clone(), empty_spot);
+            Self::item_pickup(game_state, ui_state, near_pickup.unwrap());
         }
+    }
+
+    fn handle_right_click(
+        game_state: &mut GameState,
+        ui_state: &mut UIState,
+        input: &mut Input,
+        frame_state: &FrameState,
+    ) {
+        if input.right_mouse_clicked.is_toggled_on() {
+            if let Some(nearest_object) = frame_state.get_nearest_object_on_cursor() {
+                Self::item_pickup(game_state, ui_state, nearest_object.clone());
+            }
+        }
+    }
+
+    fn item_pickup(game_state: &mut GameState, ui_state: &mut UIState, near_pickup: Entity) {
+        let player = "player".to_string();
+
+        let pickup = game_state.storable_components.get(&near_pickup);
+        if pickup.is_none() {
+            ui_state.action_text.payload = Payload::Text("That cannot be picked up.".to_string());
+            return;
+        }
+
+        if !Self::in_range(
+            game_state.get_position(&player.clone()).unwrap(),
+            game_state.get_position(&near_pickup.clone()).unwrap(),
+        ) {
+            ui_state.action_text.payload =
+                Payload::Text("No item found around you to pick up.".to_string());
+            return;
+        }
+
+        let inventory = game_state.get_storage(&player).unwrap();
+        let inventory_items = StorageManager::get_in_storage(game_state, &player);
+        log::warn!("{:?}", near_pickup);
+        if !StorageManager::has_space(game_state, inventory, &inventory_items, &near_pickup) {
+            ui_state.action_text.payload = Payload::Text(
+                "There is no space left in your\ninventory to pick up this item.".to_string(),
+            );
+            return;
+        }
+        let empty_spot =
+            StorageManager::find_empty_spot(game_state, inventory, &inventory_items, &near_pickup)
+                .unwrap();
+
+        ui_state.action_text.payload = Payload::Text("You pick up the item!".to_string());
+        game_state.remove_position(&near_pickup.clone());
+        game_state.remove_hitbox(&near_pickup.clone());
+        game_state.create_in_storage(&player, near_pickup.clone(), empty_spot);
     }
 
     fn in_range(position1: &Point3<f32>, position2: &Point3<f32>) -> bool {

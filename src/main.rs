@@ -7,6 +7,7 @@ mod application;
 mod audio_system;
 mod camera;
 mod components;
+mod frame_state;
 mod game_state;
 mod game_system;
 mod gui;
@@ -16,6 +17,7 @@ mod render;
 mod resources;
 mod text_renderer;
 mod texture;
+mod utility;
 
 fn main() {
     run();
