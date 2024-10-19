@@ -559,8 +559,7 @@ impl Renderer {
         let mut camera_ui = Camera::new();
         camera_ui.update_view_projection_matrix();
 
-        let mut camera_uniform_ui = CameraUniform::new();
-        // camera_uniform_ui.update_view_projection(&camera_ui);
+        let camera_uniform_ui = CameraUniform::new();
 
         let camera_buffer_ui = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer UI"),
@@ -1072,6 +1071,7 @@ impl Renderer {
         self.camera_ui.z_far = 1.0;
         self.camera_ui.update_view_projection_matrix();
 
+        self.camera_ui.update_view_projection_matrix();
         self.camera_uniform_ui
             .update_view_projection(&mut self.camera_ui);
         self.queue.write_buffer(
