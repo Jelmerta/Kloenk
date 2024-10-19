@@ -1,4 +1,4 @@
-use cgmath::{ortho, Matrix4, Point3, SquareMatrix, Transform, Vector3, Zero};
+use cgmath::{ortho, Matrix4, Point3, SquareMatrix, Vector3, Zero};
 
 #[derive(Debug)]
 pub struct Camera {
@@ -7,8 +7,10 @@ pub struct Camera {
     pub up: Vector3<f32>,
     pub z_near: f32,
     pub z_far: f32,
+
     pub view_projection_matrix: Matrix4<f32>,
-    pub view_projection_matrix_inverse: Matrix4<f32>,
+
+    pub view_projection_matrix_inverted: Matrix4<f32>,
 }
 
 // This is just used to convert OpenGL's coordinate system to WGPUs (as used in Metal/DX)
@@ -28,8 +30,10 @@ impl Camera {
             up: Vector3::unit_y(),
             z_near: 0.1,
             z_far: 100.0,
+
             view_projection_matrix: Matrix4::zero(),
-            view_projection_matrix_inverse: Matrix4::zero(),
+
+            view_projection_matrix_inverted: Matrix4::zero(),
         }
     }
 
@@ -39,6 +43,8 @@ impl Camera {
         let isometric_projection = ortho(
             -800.0 / 600.0,
             800.0 / 600.0,
+            // -1.,
+            // 1.,
             -1.,
             1.,
             self.z_near,
@@ -48,7 +54,7 @@ impl Camera {
     }
 
     pub fn update_inverse_matrix(&mut self) {
-        self.view_projection_matrix_inverse = cgmath::Matrix4::from(self.view_projection_matrix)
+        self.view_projection_matrix_inverted = cgmath::Matrix4::from(self.view_projection_matrix)
             .invert()
             .unwrap();
     }
