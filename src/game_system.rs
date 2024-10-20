@@ -44,7 +44,7 @@ impl GameSystem {
         Self::handle_item_placement(game_state, ui_state, input);
         Self::handle_inventory(ui_state, input);
         Self::resolve_movement(game_state, input, audio_system);
-        Self::update_camera(game_state, input);
+        Self::update_camera(game_state, ui_state, input);
         Self::find_world_object_on_cursor(game_state, ui_state, input, frame_state);
         Self::set_nearest_object(game_state, frame_state);
         ItemPickupSystem::handle_right_click(game_state, ui_state, input, frame_state);
@@ -146,28 +146,29 @@ impl GameSystem {
     fn handle_inventory_click(ui_state: &mut UIState, input: &mut Input) {
         // Assume toggle is handled. Probably toggles should be handled before performing any
         // systems on them
-        if input.i_pressed.is_pressed {
+        if ui_state.inventory.is_visible {
             // First check if cursoe is within inventory screen?
             // TODO Maybe UI should use NDC coordinates, as this makes it simple to work with? or
             // other way around of course
             let cursor_ndc = input.mouse_position_ndc;
             let cursor_ui_space = Point2::new(cursor_ndc.x / 2.0 + 0.5, -cursor_ndc.y / 2.0 + 0.5);
 
-            // log::warn!("{:?}", cursor_ndc);
-            // log::warn!("{:?}", cursor_ui_space);
-            // log::warn!("{:?}", ui_state.inventory.position_top_left);
-            // log::warn!("{:?}", ui_state.inventory.position_bottom_right);
+            log::warn!("{:?}", cursor_ndc);
+            log::warn!("{:?}", cursor_ui_space);
+            log::warn!("{:?}", ui_state.inventory.position_top_left);
+            log::warn!("{:?}", ui_state.inventory.position_bottom_right);
             if ui_state.inventory.contains(cursor_ui_space) {
                 log::warn!("Yep");
             }
         }
     }
 
-    fn update_camera(game_state: &mut GameState, input: &mut Input) {
+    fn update_camera(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
         Self::setup_camera_target(game_state, input);
         Self::setup_camera(game_state);
         let camera = game_state.get_camera_mut("camera").unwrap();
-        camera.update_view_projection_matrix();
+        camera
+            .update_view_projection_matrix(ui_state.window_size.width, ui_state.window_size.height);
         camera.update_inverse_matrix();
     }
 
@@ -536,6 +537,8 @@ impl ItemPickupSystem {
         frame_state: &FrameState,
     ) {
         if input.right_mouse_clicked.is_toggled_on() {
+            //if
+
             if let Some(nearest_object) = frame_state.get_nearest_object_on_cursor() {
                 Self::item_pickup(game_state, ui_state, nearest_object.clone());
             }

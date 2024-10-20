@@ -262,7 +262,12 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 }
             }
             WindowEvent::CursorMoved { position, .. } => {
-                engine.input_handler.process_mouse_movement(position);
+                let window_size = &engine.ui_state.window_size;
+                engine.input_handler.process_mouse_movement(
+                    position,
+                    window_size.width as f32,
+                    window_size.height as f32,
+                );
             }
             WindowEvent::MouseWheel { delta, .. } => {
                 engine.input_handler.process_scroll(&delta);

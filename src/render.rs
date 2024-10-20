@@ -9,6 +9,7 @@ use wgpu::{
     PipelineCompilationOptions, Queue, RenderPass, RenderPipeline, ShaderModule,
     SurfaceConfiguration, TextureView,
 };
+use winit::dpi::PhysicalSize;
 // use gltf::iter::Meshes;
 // use gltf::mesh::util::indices;
 // use gltf::texture as gltf_texture;
@@ -214,7 +215,14 @@ impl Renderer {
             camera_buffer_ui,
             camera_bind_group_ui,
             render_pipeline_ui,
-        ) = Self::setup_ui_pipeline(&device, &config, &texture_bind_group_layout, &shader);
+        ) = Self::setup_ui_pipeline(
+            size.width,
+            size.height,
+            &device,
+            &config,
+            &texture_bind_group_layout,
+            &shader,
+        );
 
         // let vertex_buffer = device.create_buffer_init(
         //     &wgpu::util::BufferInitDescriptor {
@@ -403,7 +411,15 @@ impl Renderer {
         let model_map = Self::load_models(&device, &queue, &texture_bind_group_layout).await;
 
         let depth_texture = texture::Depth::create_depth_texture(&device, &config, "depth_texture");
-        let text_writer = TextWriter::new(&device, &queue, &surface, &adapter).await;
+        let text_writer = TextWriter::new(
+            &device,
+            &queue,
+            &surface,
+            &adapter,
+            size.width as f32,
+            size.height as f32,
+        )
+        .await;
         Self {
             surface,
             device,
@@ -550,13 +566,15 @@ impl Renderer {
     }
 
     fn setup_ui_pipeline(
+        window_width: u32,
+        window_height: u32,
         device: &Device,
         config: &SurfaceConfiguration,
         texture_bind_group_layout: &BindGroupLayout,
         shader: &ShaderModule,
     ) -> (Camera, CameraUniform, Buffer, BindGroup, RenderPipeline) {
         let mut camera_ui = Camera::new();
-        camera_ui.update_view_projection_matrix();
+        camera_ui.update_view_projection_matrix(window_width, window_height);
 
         let camera_uniform_ui = CameraUniform::new();
 
@@ -857,7 +875,7 @@ impl Renderer {
         encoder: &mut CommandEncoder,
     ) {
         if ui_state.inventory.is_visible {
-            self.set_camera_data_ui();
+            self.set_camera_data_ui(ui_state);
             let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass UI"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -932,12 +950,20 @@ impl Renderer {
     fn create_inventory_instance(ui_state: &UIState) -> Instance {
         Instance {
             position: Vector3 {
-                x: UIState::convert_clip_space_x(ui_state.inventory.position_top_left.x),
+                x: UIState::convert_clip_space_x(
+                    ui_state.inventory.position_top_left.x,
+                    ui_state.window_size.width as f32,
+                    ui_state.window_size.height as f32,
+                ),
                 y: UIState::convert_clip_space_y(ui_state.inventory.position_top_left.y),
                 z: 0.0,
             },
             scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                UIState::convert_scale_x(ui_state.inventory.width),
+                UIState::convert_scale_x(
+                    ui_state.inventory.width,
+                    ui_state.window_size.width as f32,
+                    ui_state.window_size.height as f32,
+                ),
                 UIState::convert_scale_y(ui_state.inventory.height),
                 1.0,
                 1.0,
@@ -959,6 +985,8 @@ impl Renderer {
                 x: UIState::convert_clip_space_x(
                     ui_state.inventory.position_top_left.x
                         + f32::from(item.position_x) * item_distance_x,
+                    ui_state.window_size.width as f32,
+                    ui_state.window_size.height as f32,
                 ),
                 y: UIState::convert_clip_space_y(
                     ui_state.inventory.position_top_left.y
@@ -967,7 +995,11 @@ impl Renderer {
                 z: 0.0,
             },
             scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                UIState::convert_scale_x(item_picture_scale_x),
+                UIState::convert_scale_x(
+                    item_picture_scale_x,
+                    ui_state.window_size.width as f32,
+                    ui_state.window_size.height as f32,
+                ),
                 UIState::convert_scale_y(item_picture_scale_y),
                 1.0,
                 1.0,
@@ -1081,7 +1113,7 @@ impl Renderer {
         render_groups
     }
 
-    fn set_camera_data_ui(&mut self) {
+    fn set_camera_data_ui(&mut self, ui_state: &UIState) {
         self.camera_ui.eye = Point3 {
             x: 0.0,
             y: 0.0,
@@ -1096,9 +1128,9 @@ impl Renderer {
 
         self.camera_ui.z_near = -1.0;
         self.camera_ui.z_far = 1.0;
-        self.camera_ui.update_view_projection_matrix();
 
-        self.camera_ui.update_view_projection_matrix();
+        self.camera_ui
+            .update_view_projection_matrix(ui_state.window_size.width, ui_state.window_size.height);
         self.camera_uniform_ui
             .update_view_projection(&mut self.camera_ui);
         self.queue.write_buffer(
