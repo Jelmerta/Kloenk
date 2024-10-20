@@ -9,7 +9,6 @@ use wgpu::{
     PipelineCompilationOptions, Queue, RenderPass, RenderPipeline, ShaderModule,
     SurfaceConfiguration, TextureView,
 };
-use winit::dpi::PhysicalSize;
 // use gltf::iter::Meshes;
 // use gltf::mesh::util::indices;
 // use gltf::texture as gltf_texture;
@@ -216,8 +215,8 @@ impl Renderer {
             camera_bind_group_ui,
             render_pipeline_ui,
         ) = Self::setup_ui_pipeline(
-            size.width,
-            size.height,
+            window_width,
+            window_height,
             &device,
             &config,
             &texture_bind_group_layout,
@@ -416,8 +415,8 @@ impl Renderer {
             &queue,
             &surface,
             &adapter,
-            size.width as f32,
-            size.height as f32,
+            window_width as f32,
+            window_height as f32,
         )
         .await;
         Self {
