@@ -23,7 +23,7 @@ use wgpu::util::DeviceExt;
 use winit::window::Window;
 
 use crate::camera::Camera;
-use crate::components::{Entity, InStorage};
+use crate::components::{Entity, InStorage, Size};
 use crate::game_state::GameState;
 use crate::gui::{Payload, UIState};
 use crate::model::{self};
@@ -908,14 +908,24 @@ impl Renderer {
         })
     }
 
-    fn convert_instance(position: &Point3<f32>) -> Instance {
+    fn convert_instance(position: &Point3<f32>, size: Option<&Size>) -> Instance {
+        let scale = if let Some(size_unwrap) = size {
+            cgmath::Vector4::new(
+                size_unwrap.scale_x,
+                size_unwrap.scale_y,
+                size_unwrap.scale_z,
+                1.0,
+            )
+        } else {
+            cgmath::Vector4::new(1.0, 1.0, 1.0, 1.0)
+        };
         Instance {
             position: Vector3 {
                 x: position.x,
                 y: position.y,
                 z: position.z,
             },
-            scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(1.0, 1.0, 1.0, 1.0)),
+            scale: cgmath::Matrix4::from_diagonal(scale),
             rotation: cgmath::Quaternion::from_axis_angle(Vector3::unit_z(), cgmath::Deg(0.0)),
         }
     }
@@ -993,8 +1003,10 @@ impl Renderer {
                 let instance_group: Vec<Instance> = entity_group
                     .into_iter()
                     .map(|entity| {
+                        let size = game_state.get_size(entity);
                         Self::convert_instance(
                             game_state.get_position(&entity.to_string()).unwrap(),
+                            size,
                         )
                     })
                     .collect();
