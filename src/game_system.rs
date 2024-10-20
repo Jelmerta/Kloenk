@@ -68,7 +68,7 @@ impl GameSystem {
             let player_position = game_state.get_position(&"player".to_string()).unwrap();
             let placed_position = Point3 {
                 x: player_position.x - 1.1,
-                y: player_position.y,
+                y: player_position.y - 0.25,
                 z: player_position.z - 1.1,
             };
 
@@ -79,8 +79,8 @@ impl GameSystem {
             }
 
             // Generate a dynamic hitbox for the item to be placed
-            let item_hitbox_min = placed_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51));
-            let item_hitbox_max = placed_position.add_element_wise(Point3::new(0.51, 0.51, 0.51));
+            let item_hitbox_min = placed_position.sub_element_wise(Point3::new(0.26, 0.26, 0.26));
+            let item_hitbox_max = placed_position.add_element_wise(Point3::new(0.26, 0.26, 0.26));
             let item_hitbox = Hitbox {
                 box_corner_min: item_hitbox_min,
                 box_corner_max: item_hitbox_max,
@@ -485,6 +485,7 @@ impl GameSystem {
         let nearest_object: Option<Entity> = frame_state
             .get_objects_on_cursor()
             .iter()
+            .filter(|entity| !(*entity).eq(&"player".to_string()))
             .map(|entity| {
                 let object_position = game_state.get_position(entity).unwrap();
                 let distance = distance_3d(object_position, player_position);
@@ -561,7 +562,6 @@ impl ItemPickupSystem {
 
         let inventory = game_state.get_storage(&player).unwrap();
         let inventory_items = StorageManager::get_in_storage(game_state, &player);
-        log::warn!("{:?}", near_pickup);
         if !StorageManager::has_space(game_state, inventory, &inventory_items, &near_pickup) {
             ui_state.action_text.payload = Payload::Text(
                 "There is no space left in your\ninventory to pick up this item.".to_string(),

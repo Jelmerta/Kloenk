@@ -3,7 +3,8 @@ use cgmath::num_traits::ToPrimitive;
 // use std::{collections::HashMap, sync::atomic::AtomicU32};
 use crate::camera::Camera;
 use crate::components::{
-    CameraTarget, Entity, Graphics2D, Graphics3D, Hitbox, InStorage, ItemShape, Storable, Storage,
+    CameraTarget, Entity, Graphics2D, Graphics3D, Hitbox, InStorage, ItemShape, Size, Storable,
+    Storage,
 };
 use cgmath::{ElementWise, Point3};
 use std::collections::{HashMap, HashSet};
@@ -20,6 +21,7 @@ pub struct GameState {
     pub graphics_2d_components: HashMap<Entity, Graphics2D>,
     pub position_components: HashMap<Entity, Point3<f32>>,
     pub surface_components: HashSet<Entity>,
+    pub size_components: HashMap<Entity, Size>,
     pub hitbox_components: HashMap<Entity, Hitbox>,
     pub camera_components: HashMap<Entity, Camera>,
     pub camera_target_components: HashMap<Entity, CameraTarget>,
@@ -27,6 +29,8 @@ pub struct GameState {
     pub storage_components: HashMap<Entity, Storage>,
     pub in_storage_components: HashMap<Entity, InStorage>,
 }
+
+impl GameState {}
 
 impl GameState {
     pub fn new() -> Self {
@@ -38,6 +42,7 @@ impl GameState {
         let mut graphics_2d_components = HashMap::new();
         let mut position_components = HashMap::new();
         let mut surface_components = HashSet::new();
+        let mut size_components = HashMap::new();
         let mut hitbox_components = HashMap::new();
         let mut camera_components = HashMap::new();
         let mut camera_target_components = HashMap::new();
@@ -60,6 +65,7 @@ impl GameState {
             &mut graphics_3d_components,
             &mut graphics_2d_components,
             &mut position_components,
+            &mut size_components,
             &mut hitbox_components,
             &mut storable_components,
         );
@@ -68,6 +74,7 @@ impl GameState {
             &mut graphics_3d_components,
             &mut graphics_2d_components,
             &mut position_components,
+            &mut size_components,
             &mut hitbox_components,
             &mut storable_components,
         );
@@ -91,6 +98,7 @@ impl GameState {
             graphics_2d_components,
             position_components,
             surface_components,
+            size_components,
             hitbox_components,
             camera_components,
             camera_target_components,
@@ -168,6 +176,7 @@ impl GameState {
         graphics_3d_components: &mut HashMap<String, Graphics3D>,
         graphics_2d_components: &mut HashMap<String, Graphics2D>,
         position_components: &mut HashMap<String, Point3<f32>>,
+        size_components: &mut HashMap<String, Size>,
         hitbox_components: &mut HashMap<String, Hitbox>,
         storable_components: &mut HashMap<String, Storable>,
     ) {
@@ -187,13 +196,20 @@ impl GameState {
 
             let sword_position = Point3 {
                 x: i.to_f32().unwrap() + 0.1,
-                y: 0.0,
+                y: -0.25,
                 z: i.to_f32().unwrap() + 0.1,
             };
             position_components.insert(sword.clone(), sword_position);
 
-            let sword_hitbox_min = sword_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51));
-            let sword_hitbox_max = sword_position.add_element_wise(Point3::new(0.51, 0.51, 0.51));
+            let size = Size {
+                scale_x: 0.5,
+                scale_y: 0.5,
+                scale_z: 0.5,
+            };
+            size_components.insert(sword.clone(), size);
+
+            let sword_hitbox_min = sword_position.sub_element_wise(Point3::new(0.26, 0.26, 0.26));
+            let sword_hitbox_max = sword_position.add_element_wise(Point3::new(0.26, 0.26, 0.26));
             let sword_hitbox = Hitbox {
                 box_corner_min: sword_hitbox_min,
                 box_corner_max: sword_hitbox_max,
@@ -215,6 +231,7 @@ impl GameState {
         graphics_3d_components: &mut HashMap<Entity, Graphics3D>,
         graphics_2d_components: &mut HashMap<Entity, Graphics2D>,
         position_components: &mut HashMap<Entity, Point3<f32>>,
+        size_components: &mut HashMap<Entity, Size>,
         hitbox_components: &mut HashMap<Entity, Hitbox>,
         storable_components: &mut HashMap<Entity, Storable>,
     ) {
@@ -232,13 +249,20 @@ impl GameState {
 
         let shield_position = Point3 {
             x: -2.8,
-            y: 0.0,
+            y: -0.25,
             z: -2.7,
         };
         position_components.insert(shield.clone(), shield_position);
 
-        let shield_hitbox_min = shield_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51));
-        let shield_hitbox_max = shield_position.add_element_wise(Point3::new(0.51, 0.51, 0.51));
+        let size = Size {
+            scale_x: 0.5,
+            scale_y: 0.5,
+            scale_z: 0.5,
+        };
+        size_components.insert(shield.clone(), size);
+
+        let shield_hitbox_min = shield_position.sub_element_wise(Point3::new(0.26, 0.26, 0.26));
+        let shield_hitbox_max = shield_position.add_element_wise(Point3::new(0.26, 0.26, 0.26));
         let shield_hitbox = Hitbox {
             box_corner_min: shield_hitbox_min,
             box_corner_max: shield_hitbox_max,
@@ -331,6 +355,10 @@ impl GameState {
     // Note: On a position change, also consider updating the hitbox
     pub fn remove_position(&mut self, to_remove: &Entity) {
         self.position_components.remove(to_remove);
+    }
+
+    pub fn get_size(&self, entity: &Entity) -> Option<&Size> {
+        self.size_components.get(entity)
     }
 
     pub fn create_hitbox(&mut self, entity: Entity, hitbox: Hitbox) {

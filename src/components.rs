@@ -46,6 +46,12 @@ pub struct CameraTarget {
     pub rotation_y_degrees: f32,
 }
 
+pub struct Size {
+    pub scale_x: f32,
+    pub scale_y: f32,
+    pub scale_z: f32,
+}
+
 // //Health?
 // pub struct Resource {
 //     amount_of_items: u8,
