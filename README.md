@@ -72,9 +72,9 @@ cargo run --target x86_64-pc-windows-msvc
 Local development(windows+web):
 Once:
 Run nginx
-cp .\resources\web\nginx.conf C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\conf
-cp .\resources\web\common_headers.conf C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\conf
-cp -r .\resources\ C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html\
+cp -Force .\resources\web\nginx.conf C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\conf
+cp -Force .\resources\web\common_headers.conf C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\conf
+cp -r -Force .\resources\ C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html\
 cp .\index.html C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html
 
 Every change:
