@@ -20,6 +20,7 @@ use wgpu::{
 // use wasm_bindgen::prelude::*;
 
 use wgpu::util::DeviceExt;
+use winit::dpi::PhysicalSize;
 use winit::window::Window;
 
 use crate::camera::Camera;
@@ -143,9 +144,7 @@ struct RenderGroup {
 }
 
 impl Renderer {
-    pub async fn new(window: Arc<Window>) -> Renderer {
-        let size = window.inner_size();
-
+    pub async fn new(window: Arc<Window>, window_width: u32, window_height: u32) -> Renderer {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             flags: InstanceFlags::empty(), // Remove Vulkan validation layer as this leads to tons of unhelpful logging (and VK_LAYER_KHRONOS_validation does not seem to exist? not debugging this)
@@ -189,9 +188,9 @@ impl Renderer {
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            width: size.width.max(800), // TODO size was not set and therefore
+            width: window_width.max(800u32), // TODO size was not set and therefore
             // hardcoded here
-            height: size.height.max(600),
+            height: window_height.max(600u32),
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
@@ -410,7 +409,7 @@ impl Renderer {
             device,
             queue,
             config,
-            size,
+            size: PhysicalSize::new(window_width, window_height),
             render_pipeline,
             render_pipeline_ui,
             camera_uniform,

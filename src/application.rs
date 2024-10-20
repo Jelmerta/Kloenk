@@ -121,7 +121,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             let _ = window.request_inner_size(PhysicalSize::new(window_width, window_height));
         }
 
-        let renderer_future = Renderer::new(window.clone());
+        let renderer_future = Renderer::new(window.clone(), window_width, window_height);
 
         #[cfg(target_arch = "wasm32")]
         {
