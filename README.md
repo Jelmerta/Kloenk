@@ -63,6 +63,7 @@ Now we can deploy
 
 Local development(linux+standalone client):
 cargo watch -x 'run'
+cargo +nightly run -Z build-std=std,panic_abort --target-dir target --bin kloenk_bin --target x86_64-unknown-linux-gnu
 
 Local development(windows+standalone client):
 cargo run --target x86_64-pc-windows-msvc

@@ -37,12 +37,12 @@ impl Camera {
         }
     }
 
-    pub fn update_view_projection_matrix(&mut self) {
+    pub fn update_view_projection_matrix(&mut self, window_width: u32, window_height: u32) {
         let view = Matrix4::look_at_rh(self.eye, self.target, self.up);
 
         let isometric_projection = ortho(
-            -800.0 / 600.0,
-            800.0 / 600.0,
+            -(window_width as f32) / window_height as f32,
+            window_width as f32 / window_height as f32,
             // -1.,
             // 1.,
             -1.,
