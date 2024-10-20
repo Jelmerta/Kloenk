@@ -141,10 +141,15 @@ impl Input {
         }
     }
 
-    pub fn process_mouse_movement(&mut self, mouse_position: PhysicalPosition<f64>) {
+    pub fn process_mouse_movement(
+        &mut self,
+        mouse_position: PhysicalPosition<f64>,
+        window_width: f32,
+        window_height: f32,
+    ) {
         self.mouse_position_ndc = Point2 {
-            x: (2.0 * mouse_position.x) as f32 / 800.0 - 1.0,
-            y: 1.0 - (2.0 * mouse_position.y) as f32 / 600.0,
+            x: (2.0 * mouse_position.x) as f32 / window_width - 1.0,
+            y: 1.0 - (2.0 * mouse_position.y) as f32 / window_height,
         }
     }
 

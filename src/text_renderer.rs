@@ -23,6 +23,8 @@ impl TextWriter {
         queue: &Queue,
         surface: &Surface<'_>,
         adapter: &Adapter,
+        window_width: f32,
+        window_height: f32,
     ) -> Self {
         let font_data = resources::load_binary("PlaywriteNL-Regular.ttf")
             .await
@@ -46,25 +48,14 @@ impl TextWriter {
         let text_renderer =
             TextRenderer::new(&mut atlas, device, wgpu::MultisampleState::default(), None);
 
-        let physical_width = (800.0 * 1.0) as f32;
-        let physical_height = (600.0 * 1.0) as f32;
-
         let mut selected_text_buffer = Buffer::new(&mut font_system, Metrics::new(16.0, 20.0));
 
-        selected_text_buffer.set_size(
-            &mut font_system,
-            Some(physical_width),
-            Some(physical_height),
-        );
+        selected_text_buffer.set_size(&mut font_system, Some(window_width), Some(window_height));
         selected_text_buffer.shape_until_scroll(&mut font_system, false);
 
         let mut action_text_buffer = Buffer::new(&mut font_system, Metrics::new(16.0, 20.0));
 
-        action_text_buffer.set_size(
-            &mut font_system,
-            Some(physical_width),
-            Some(physical_height),
-        );
+        action_text_buffer.set_size(&mut font_system, Some(window_width), Some(window_height));
         action_text_buffer.shape_until_scroll(&mut font_system, false);
 
         TextWriter {
@@ -85,6 +76,17 @@ impl TextWriter {
                 width: ui_state.window_size.width,
                 height: ui_state.window_size.height,
             },
+        );
+
+        self.selected_text_buffer.set_size(
+            &mut self.font_system,
+            Some(ui_state.window_size.width as f32),
+            Some(ui_state.window_size.height as f32),
+        );
+        self.action_text_buffer.set_size(
+            &mut self.font_system,
+            Some(ui_state.window_size.width as f32),
+            Some(ui_state.window_size.height as f32),
         );
 
         self.text_renderer

@@ -111,13 +111,13 @@ impl UIState {
     }
 
     // Maps 0 (left of screen) to -800/600 (pixel values) and 1 to 800/600
-    pub fn convert_clip_space_x(value: f32) -> f32 {
+    pub fn convert_clip_space_x(value: f32, window_width: f32, window_height: f32) -> f32 {
         // Would it be better to use NDC?
-        -800.0 / 600.0 + 2.0 * (800.0 / 600.0) * value
+        -window_width / window_height + 2.0 * (window_width / window_height) * value
     }
 
-    pub fn convert_scale_x(value: f32) -> f32 {
-        value * 2.0 * (800.0 / 600.0)
+    pub fn convert_scale_x(value: f32, window_width: f32, window_height: f32) -> f32 {
+        value * 2.0 * (window_width / window_height)
     }
 
     // Maps 0 (top of screen) to 1 and 1 to -1
