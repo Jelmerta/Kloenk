@@ -15,7 +15,7 @@ env_logger = { version = "0.11", default-features = false }
 log = "0.4"
 # wgpu = { version = "22.1.0", default-features = false } We might not need features like metal not sure yet
 wgpu = "22.1"
-pollster = "0.3"
+pollster = "0.4"
 bytemuck = "1.19"
 cgmath = "0.18"
 anyhow = { version = "1.0", default-features = false }

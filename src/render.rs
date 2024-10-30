@@ -1065,6 +1065,17 @@ impl Renderer {
             ui_state.inventory.width / f32::from(inventory.number_of_columns);
         let item_picture_scale_y = ui_state.inventory.height / f32::from(inventory.number_of_rows);
 
+        ui_state
+            .inventory
+            .child_elements
+            .iter()
+            .chunk_by(|entity| match &entity.payload {
+                Payload::Image(image) => image,
+                _ => panic!("Inventory only contains images"),
+            })
+            .into_iter()
+            .for_each(|(image_name, item_group)| {});
+
         let mut render_groups = Vec::new();
         inventory_items
             .iter()
@@ -1098,6 +1109,7 @@ impl Renderer {
                             item_distance_y,
                             item_picture_scale_x * f32::from(item_shape.width),
                             item_picture_scale_y * f32::from(item_shape.height),
+                            ddd,
                         )
                     })
                     .collect();
