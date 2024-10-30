@@ -40,15 +40,22 @@ impl GameSystem {
         audio_system: &mut AudioSystem,
     ) {
         *frame_state = FrameState::new();
-        ItemPickupSystem::handle_item_pickup(game_state, ui_state, input);
-        Self::handle_item_placement(game_state, ui_state, input);
-        Self::handle_inventory(ui_state, input);
-        Self::resolve_movement(game_state, input, audio_system);
-        Self::update_camera(game_state, ui_state, input);
+
+        // TODO A key should probably at most lead to one action (clicking inv should not interact with 3d world)
+        // Setup data required
         Self::find_world_object_on_cursor(game_state, ui_state, input, frame_state);
         Self::set_nearest_object(game_state, frame_state);
-        ItemPickupSystem::handle_right_click(game_state, ui_state, input, frame_state);
-        Self::handle_inventory_click(ui_state, input)
+
+        Self::handle_inventory_click(ui_state, input);
+        Self::handle_item_placement(game_state, ui_state, input);
+        ItemPickupSystem::handle_item_pickup_keyboard(game_state, ui_state, input);
+        ItemPickupSystem::handle_item_pickup_mouse(game_state, ui_state, input, frame_state);
+
+        Self::resolve_movement(game_state, input, audio_system);
+
+        // Visual stuff (pre-render)
+        Self::handle_inventory(ui_state, input);
+        Self::update_camera(game_state, ui_state, input);
     }
 
     fn handle_item_placement(
@@ -153,12 +160,11 @@ impl GameSystem {
             let cursor_ndc = input.mouse_position_ndc;
             let cursor_ui_space = Point2::new(cursor_ndc.x / 2.0 + 0.5, -cursor_ndc.y / 2.0 + 0.5);
 
-            log::warn!("{:?}", cursor_ndc);
-            log::warn!("{:?}", cursor_ui_space);
-            log::warn!("{:?}", ui_state.inventory.position_top_left);
-            log::warn!("{:?}", ui_state.inventory.position_bottom_right);
             if ui_state.inventory.contains(cursor_ui_space) {
                 log::warn!("Yep");
+                log::warn!("{:?}", cursor_ui_space);
+                log::warn!("{:?}", ui_state.inventory.position_top_left);
+                log::warn!("{:?}", ui_state.inventory.position_bottom_right);
             }
         }
     }
@@ -508,7 +514,11 @@ fn update_hitbox(game_state: &mut GameState, new_hitbox: Hitbox) {
 }
 
 impl ItemPickupSystem {
-    fn handle_item_pickup(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
+    fn handle_item_pickup_keyboard(
+        game_state: &mut GameState,
+        ui_state: &mut UIState,
+        input: &mut Input,
+    ) {
         let player = "player".to_string();
 
         // mut input just for is
@@ -530,7 +540,7 @@ impl ItemPickupSystem {
         }
     }
 
-    fn handle_right_click(
+    fn handle_item_pickup_mouse(
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &mut Input,
@@ -576,6 +586,7 @@ impl ItemPickupSystem {
                 .unwrap();
 
         ui_state.action_text.payload = Payload::Text("You pick up the item!".to_string());
+        ui_state.inventory.child_elements.insert(near_pickup.clone(), )
         game_state.remove_position(&near_pickup.clone());
         game_state.remove_hitbox(&near_pickup.clone());
         game_state.create_in_storage(&player, near_pickup.clone(), empty_spot);

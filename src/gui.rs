@@ -1,4 +1,5 @@
 use cgmath::Point2;
+use std::collections::HashMap;
 
 pub enum Payload {
     Text(String),
@@ -9,11 +10,14 @@ pub enum Payload {
 
 pub struct UIElement {
     pub is_visible: bool,
+
     pub position_top_left: Point2<f32>,
     pub position_bottom_right: Point2<f32>,
     pub width: f32, // Could be calculated field (or bottom right could be)
     pub height: f32,
+
     pub payload: Payload,
+    pub child_elements: HashMap<String, UIElement>, // Basically entity mapping... But think we want to separate ECS/UI
 }
 
 impl UIElement {
@@ -24,12 +28,13 @@ impl UIElement {
         position_bottom_right: Point2<f32>,
     ) -> UIElement {
         Self {
-            payload: Payload::Text(text),
             is_visible,
             position_top_left,
             position_bottom_right,
             width: position_bottom_right.x - position_top_left.x,
             height: position_bottom_right.y - position_top_left.y,
+            payload: Payload::Text(text),
+            child_elements: HashMap::new(),
         }
     }
 
@@ -40,12 +45,13 @@ impl UIElement {
         position_bottom_right: Point2<f32>,
     ) -> UIElement {
         Self {
-            payload: Payload::Image(image),
             is_visible,
             position_top_left,
             position_bottom_right,
             width: position_bottom_right.x - position_top_left.x,
             height: position_bottom_right.y - position_top_left.y,
+            payload: Payload::Image(image),
+            child_elements: HashMap::new(),
         }
     }
 
