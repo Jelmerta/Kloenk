@@ -188,9 +188,8 @@ impl Renderer {
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            width: window_width.max(800u32), // TODO size was not set and therefore
-            // hardcoded here
-            height: window_height.max(600u32),
+            width: window_width,
+            height: window_height,
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
