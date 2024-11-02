@@ -298,6 +298,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                         engine.renderer.resize(engine.renderer.size);
                     }
                     Err(wgpu::SurfaceError::OutOfMemory) => {
+                        log::error!("Out of memory");
                         event_loop.exit();
                     }
 

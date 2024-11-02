@@ -517,6 +517,7 @@ impl Renderer {
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
                 module: shader,
+                // entry_point: Some("vs_main"),
                 entry_point: "vs_main",
                 buffers: &[model::TexVertex::desc(), InstanceRaw::desc()],
                 compilation_options: PipelineCompilationOptions::default(),
@@ -544,6 +545,7 @@ impl Renderer {
             },
             fragment: Some(wgpu::FragmentState {
                 module: shader,
+                // entry_point: Some("fs_main"),
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
@@ -620,6 +622,7 @@ impl Renderer {
             vertex: wgpu::VertexState {
                 module: shader,
                 entry_point: "vs_main",
+                // entry_point: Some("vs_main"),
                 buffers: &[model::TexVertex::desc(), InstanceRaw::desc()],
                 compilation_options: PipelineCompilationOptions::default(),
             },
@@ -640,6 +643,7 @@ impl Renderer {
             },
             fragment: Some(wgpu::FragmentState {
                 module: shader,
+                // entry_point: Some("fs_main"),
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
@@ -1069,7 +1073,7 @@ impl Renderer {
             .inventory
             .child_elements
             .iter()
-            .chunk_by(|entity| match &entity.payload {
+            .chunk_by(|entry| match &(*entry).1.payload {
                 Payload::Image(image) => image,
                 _ => panic!("Inventory only contains images"),
             })
@@ -1109,7 +1113,6 @@ impl Renderer {
                             item_distance_y,
                             item_picture_scale_x * f32::from(item_shape.width),
                             item_picture_scale_y * f32::from(item_shape.height),
-                            ddd,
                         )
                     })
                     .collect();
