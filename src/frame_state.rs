@@ -6,6 +6,7 @@ pub struct FrameState {
 
     pub handled_left_click: bool,
     pub handled_right_click: bool,
+    pub handled_e_click: bool,
 }
 
 impl FrameState {
@@ -15,6 +16,7 @@ impl FrameState {
             nearest_object: None,
             handled_left_click: false,
             handled_right_click: false,
+            handled_e_click: false,
         }
     }
 

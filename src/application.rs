@@ -22,7 +22,7 @@ use crate::gui::UIState;
 use crate::input::Input;
 use crate::render::Renderer;
 use std::sync::Arc;
-use winit::dpi::LogicalSize;
+use winit::dpi::{LogicalSize, PhysicalSize};
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowId};
 
@@ -177,6 +177,10 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         log::info!("Received initialization event");
 
         let game = event.0;
+        let _ = game.window.request_inner_size(PhysicalSize::new(
+            game.ui_state.window_size.width,
+            game.ui_state.window_size.height,
+        ));
         game.window.request_redraw();
         self.application_state = State::Initialized(game);
     }
@@ -239,6 +243,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             WindowEvent::MouseInput { state, button, .. } => {
                 engine.input_handler.process_mouse_button(button, state);
 
+                // Loading audio only after user has gestured
                 // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
                 #[cfg(target_arch = "wasm32")]
                 {

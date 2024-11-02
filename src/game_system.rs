@@ -48,7 +48,7 @@ impl GameSystem {
 
         Self::handle_inventory_click(ui_state, input, frame_state);
         Self::handle_item_placement(game_state, ui_state, input, frame_state);
-        ItemPickupSystem::handle_item_pickup_keyboard(game_state, ui_state, input);
+        ItemPickupSystem::handle_item_pickup_keyboard(game_state, ui_state, input, frame_state);
         ItemPickupSystem::handle_item_pickup_mouse(game_state, ui_state, input, frame_state);
 
         Self::resolve_movement(game_state, input, audio_system);
@@ -178,6 +178,7 @@ impl GameSystem {
             log::warn!("{:?}", cursor_ui_space);
             log::warn!("{:?}", ui_state.inventory.position_top_left);
             log::warn!("{:?}", ui_state.inventory.position_bottom_right);
+            frame_state.handled_left_click = true;
         }
     }
 
@@ -530,12 +531,13 @@ impl ItemPickupSystem {
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &mut Input,
+        frame_state: &mut FrameState,
     ) {
         let player = "player".to_string();
 
         // mut input just for is
         // toggled on. could possibly be changed
-        if input.e_pressed.is_toggled_on() {
+        if input.e_pressed.is_toggled_on() && !frame_state.handled_e_click {
             let near_pickup = PositionManager::find_nearest_pickup(
                 &game_state.position_components,
                 &game_state.storable_components,
@@ -549,6 +551,7 @@ impl ItemPickupSystem {
                 return;
             }
             Self::item_pickup(game_state, ui_state, near_pickup.unwrap());
+            frame_state.handled_e_click = true;
         }
     }
 
@@ -556,7 +559,7 @@ impl ItemPickupSystem {
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &mut Input,
-        frame_state: &FrameState,
+        frame_state: &mut FrameState,
     ) {
         if !input.right_mouse_clicked.is_toggled_on() {
             return;
@@ -570,6 +573,8 @@ impl ItemPickupSystem {
         if let Some(nearest_object) = frame_state.get_nearest_object_on_cursor() {
             Self::item_pickup(game_state, ui_state, nearest_object.clone());
         }
+
+        frame_state.handled_right_click = true;
     }
 
     fn item_pickup(game_state: &mut GameState, ui_state: &mut UIState, near_pickup: Entity) {
