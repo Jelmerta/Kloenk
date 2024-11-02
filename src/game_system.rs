@@ -2,7 +2,7 @@ use crate::audio_system::AudioSystem;
 use crate::components::{CameraTarget, Entity, Hitbox, ItemShape, Storable, Storage};
 use crate::frame_state::FrameState;
 use crate::game_state::GameState;
-use crate::gui::{Payload, UIState};
+use crate::gui::{Payload, UIElement, UIState};
 use crate::input::Input;
 use crate::utility::distance_3d;
 use cgmath::num_traits::{Float, ToPrimitive};
@@ -46,8 +46,8 @@ impl GameSystem {
         Self::find_world_object_on_cursor(game_state, ui_state, input, frame_state);
         Self::set_nearest_object(game_state, frame_state);
 
-        Self::handle_inventory_click(ui_state, input);
-        Self::handle_item_placement(game_state, ui_state, input);
+        Self::handle_inventory_click(ui_state, input, frame_state);
+        Self::handle_item_placement(game_state, ui_state, input, frame_state);
         ItemPickupSystem::handle_item_pickup_keyboard(game_state, ui_state, input);
         ItemPickupSystem::handle_item_pickup_mouse(game_state, ui_state, input, frame_state);
 
@@ -62,8 +62,9 @@ impl GameSystem {
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &mut Input,
+        frame_state: &FrameState,
     ) {
-        if input.left_mouse_clicked.is_toggled_on() {
+        if input.left_mouse_clicked.is_toggled_on() && !frame_state.handled_left_click {
             let item = StorageManager::find_in_storage(game_state, &"player".to_string());
             if item.is_none() {
                 ui_state.action_text.payload =
@@ -150,22 +151,33 @@ impl GameSystem {
         }
     }
 
-    fn handle_inventory_click(ui_state: &mut UIState, input: &mut Input) {
+    fn handle_inventory_click(
+        ui_state: &mut UIState,
+        input: &mut Input,
+        frame_state: &mut FrameState,
+    ) {
         // Assume toggle is handled. Probably toggles should be handled before performing any
         // systems on them
-        if ui_state.inventory.is_visible {
-            // First check if cursoe is within inventory screen?
-            // TODO Maybe UI should use NDC coordinates, as this makes it simple to work with? or
-            // other way around of course
-            let cursor_ndc = input.mouse_position_ndc;
-            let cursor_ui_space = Point2::new(cursor_ndc.x / 2.0 + 0.5, -cursor_ndc.y / 2.0 + 0.5);
 
-            if ui_state.inventory.contains(cursor_ui_space) {
-                log::warn!("Yep");
-                log::warn!("{:?}", cursor_ui_space);
-                log::warn!("{:?}", ui_state.inventory.position_top_left);
-                log::warn!("{:?}", ui_state.inventory.position_bottom_right);
-            }
+        if !ui_state.inventory.is_visible {
+            return;
+        }
+
+        if frame_state.handled_left_click {
+            return;
+        }
+
+        // First check if cursoe is within inventory screen?
+        // TODO Maybe UI should use NDC coordinates, as this makes it simple to work with? or
+        // other way around of course
+        let cursor_ndc = input.mouse_position_ndc;
+        let cursor_ui_space = Point2::new(cursor_ndc.x / 2.0 + 0.5, -cursor_ndc.y / 2.0 + 0.5);
+
+        if ui_state.inventory.contains(cursor_ui_space) {
+            log::warn!("Yep");
+            log::warn!("{:?}", cursor_ui_space);
+            log::warn!("{:?}", ui_state.inventory.position_top_left);
+            log::warn!("{:?}", ui_state.inventory.position_bottom_right);
         }
     }
 
@@ -546,12 +558,17 @@ impl ItemPickupSystem {
         input: &mut Input,
         frame_state: &FrameState,
     ) {
-        if input.right_mouse_clicked.is_toggled_on() {
-            //if
+        if !input.right_mouse_clicked.is_toggled_on() {
+            return;
+        }
 
-            if let Some(nearest_object) = frame_state.get_nearest_object_on_cursor() {
-                Self::item_pickup(game_state, ui_state, nearest_object.clone());
-            }
+        if frame_state.handled_right_click {
+            return;
+        }
+        //if
+
+        if let Some(nearest_object) = frame_state.get_nearest_object_on_cursor() {
+            Self::item_pickup(game_state, ui_state, nearest_object.clone());
         }
     }
 
@@ -585,8 +602,20 @@ impl ItemPickupSystem {
             StorageManager::find_empty_spot(game_state, inventory, &inventory_items, &near_pickup)
                 .unwrap();
 
+        let x_min = empty_spot.0 as f32 / inventory.number_of_columns as f32;
+        let y_min = empty_spot.1 as f32 / inventory.number_of_rows as f32;
+        let ui_inventory_item = UIElement::new_image(
+            "NONEWHYISTHISNECESSARY".to_string(), //todo
+            true,
+            Point2::new(x_min, x_min + 1.0 / inventory.number_of_columns as f32),
+            Point2::new(y_min, y_min + 1.0 / inventory.number_of_rows as f32),
+        );
+
         ui_state.action_text.payload = Payload::Text("You pick up the item!".to_string());
-        ui_state.inventory.child_elements.insert(near_pickup.clone(), )
+        ui_state
+            .inventory
+            .child_elements
+            .insert(near_pickup.clone(), ui_inventory_item);
         game_state.remove_position(&near_pickup.clone());
         game_state.remove_hitbox(&near_pickup.clone());
         game_state.create_in_storage(&player, near_pickup.clone(), empty_spot);

@@ -4,8 +4,8 @@ pub struct FrameState {
     objects_on_cursor: Vec<Entity>,
     nearest_object: Option<Entity>, //In orthographic we can't just calculate this by ray distance (all objects on plane will be same distance)
 
-    handled_left_click: bool,
-    handled_right_click: bool,
+    pub handled_left_click: bool,
+    pub handled_right_click: bool,
 }
 
 impl FrameState {

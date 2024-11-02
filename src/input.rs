@@ -15,12 +15,8 @@ impl KeyPress {
         self.is_pressed = new_state;
     }
 
-    pub fn is_toggled_on(&mut self) -> bool {
-        // Once pressed , we do not get n update every frame, so we just make sure that this method
-        // is not called again every frame by setting was pressed
-        let is_toggled = !self.was_pressed && self.is_pressed;
-        self.was_pressed = true;
-        is_toggled
+    pub fn is_toggled_on(&self) -> bool {
+        !self.was_pressed && self.is_pressed
     }
 }
 
