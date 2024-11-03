@@ -408,6 +408,7 @@ impl GameState {
         self.in_storage_components.remove(entity);
     }
 
+    #[allow(dead_code)]
     pub fn get_in_storages(&self, storage_entity: &Entity) -> HashMap<&Entity, &InStorage> {
         self.in_storage_components
             .iter()

@@ -24,7 +24,7 @@ use winit::dpi::PhysicalSize;
 use winit::window::Window;
 
 use crate::camera::Camera;
-use crate::components::{Entity, InStorage, Size};
+use crate::components::{Entity, Size};
 use crate::game_state::GameState;
 use crate::gui::{Payload, UIElement, UIState};
 use crate::model::{self};
@@ -904,9 +904,7 @@ impl Renderer {
             };
             self.draw_ui(&mut render_pass_ui, &inventory_render_group);
 
-            let inventory_items = game_state.get_in_storages(&"player".to_string());
-            let render_groups =
-                self.create_render_groups_ui(game_state, ui_state, &inventory_items);
+            let render_groups = self.create_render_groups_ui(game_state, ui_state);
             for render_group in &render_groups {
                 self.draw_ui(&mut render_pass_ui, render_group);
             }
@@ -974,42 +972,6 @@ impl Renderer {
         }
     }
 
-    fn create_inventory_item_instance(
-        ui_state: &UIState,
-        item: &InStorage,
-        item_distance_x: f32,
-        item_distance_y: f32,
-        item_picture_scale_x: f32,
-        item_picture_scale_y: f32,
-    ) -> Instance {
-        Instance {
-            position: Vector3 {
-                x: UIState::convert_clip_space_x(
-                    ui_state.inventory.position_top_left.x
-                        + f32::from(item.position_x) * item_distance_x,
-                    ui_state.window_size.width as f32,
-                    ui_state.window_size.height as f32,
-                ),
-                y: UIState::convert_clip_space_y(
-                    ui_state.inventory.position_top_left.y
-                        + f32::from(item.position_y) * item_distance_y,
-                ),
-                z: 0.0,
-            },
-            scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                UIState::convert_scale_x(
-                    item_picture_scale_x,
-                    ui_state.window_size.width as f32,
-                    ui_state.window_size.height as f32,
-                ),
-                UIState::convert_scale_y(item_picture_scale_y),
-                1.0,
-                1.0,
-            )),
-            rotation: cgmath::Quaternion::from_axis_angle(Vector3::unit_z(), cgmath::Deg(0.0)),
-        }
-    }
-
     #[allow(clippy::cast_possible_truncation)]
     fn create_render_groups(&mut self, game_state: &GameState) {
         let mut render_groups: Vec<RenderGroup> = Vec::new();
@@ -1059,11 +1021,8 @@ impl Renderer {
         &self,
         game_state: &GameState,
         ui_state: &UIState,
-        inventory_items: &HashMap<&Entity, &InStorage>,
     ) -> Vec<RenderGroup> {
         let inventory = game_state.get_storage(&"player".to_string()).unwrap();
-        let item_distance_x = ui_state.inventory.width / f32::from(inventory.number_of_columns);
-        let item_distance_y = ui_state.inventory.height / f32::from(inventory.number_of_rows);
         let item_picture_scale_x =
             ui_state.inventory.width / f32::from(inventory.number_of_columns);
         let item_picture_scale_y = ui_state.inventory.height / f32::from(inventory.number_of_rows);
@@ -1103,17 +1062,9 @@ impl Renderer {
                             ui_state,
                             &ui_state.inventory,
                             item_ui_element,
-                            item_picture_scale_x,
-                            item_picture_scale_y,
+                            item_picture_scale_x * f32::from(item_shape.width),
+                            item_picture_scale_y * f32::from(item_shape.height),
                         )
-                        // Self::create_inventory_item_instance(
-                        //     ui_state,
-                        //     in_storage,
-                        //     item_distance_x,
-                        //     item_distance_y,
-                        //     item_picture_scale_x * f32::from(item_shape.width),
-                        //     item_picture_scale_y * f32::from(item_shape.height),
-                        // )
                     })
                     .collect();
                 let buffer = Self::create_instance_buffer(&self.device, &instance_group);
@@ -1124,51 +1075,6 @@ impl Renderer {
                 };
                 render_groups.push(render_group);
             });
-
-        // let mut render_groups = Vec::new();
-        // inventory_items
-        //     .iter()
-        //     .chunk_by(|(entity, _)| {
-        //         // "group_by"
-        //         game_state
-        //             .get_graphics_inventory(entity)
-        //             .unwrap()
-        //             .model_id
-        //             .clone()
-        //     })
-        //     .into_iter()
-        //     .for_each(|(model_id, group)| {
-        //         let mut entity_group: Vec<&Entity> = Vec::new();
-        //         let instance_group: Vec<Instance> = group
-        //             .into_iter()
-        //             .map(|(entity, in_storage)| {
-        //                 // TODO I think this should depend on the image:
-        //                 // The image size should fore xample already be 1x2
-        //                 // instead of sizing based on shape
-        //                 let item_shape = &game_state
-        //                     .storable_components
-        //                     .get(entity.as_str())
-        //                     .unwrap()
-        //                     .shape;
-        //                 entity_group.push(entity);
-        //                 Self::create_inventory_item_instance(
-        //                     ui_state,
-        //                     in_storage,
-        //                     item_distance_x,
-        //                     item_distance_y,
-        //                     item_picture_scale_x * f32::from(item_shape.width),
-        //                     item_picture_scale_y * f32::from(item_shape.height),
-        //                 )
-        //             })
-        //             .collect();
-        //         let buffer = Self::create_instance_buffer(&self.device, &instance_group);
-        //         let render_group = RenderGroup {
-        //             buffer,
-        //             model_id,
-        //             instance_count: instance_group.len() as u32,
-        //         };
-        //         render_groups.push(render_group);
-        //     });
         render_groups
     }
 
