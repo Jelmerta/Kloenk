@@ -772,6 +772,7 @@ impl StorageManager {
             .collect()
     }
 
+    #[allow(dead_code)]
     pub fn get_in_storage_entities<'a>(
         game_state: &'a GameState,
         entity: &Entity,
@@ -795,6 +796,7 @@ impl StorageManager {
             .collect()
     }
 
+    #[allow(dead_code)]
     pub fn find_in_storage<'a>(game_state: &'a GameState, entity: &Entity) -> Option<&'a Entity> {
         let storage_entities = StorageManager::get_in_storage_entities(game_state, entity);
         storage_entities.first().copied()
