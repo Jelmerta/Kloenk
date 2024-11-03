@@ -1,3 +1,5 @@
+use crate::game_state::GameState;
+use crate::game_system::GameSystem;
 use cgmath::Point2;
 use std::collections::HashMap;
 
@@ -18,6 +20,9 @@ pub struct UIElement {
 
     pub payload: Payload,
     pub child_elements: HashMap<String, UIElement>, // Basically entity mapping... But think we want to separate ECS/UI
+
+    pub on_click:
+        Option<Box<dyn FnMut(&mut GameState, &mut UIElement, &mut UIElement, Point2<f32>)>>,
 }
 
 impl UIElement {
@@ -35,15 +40,20 @@ impl UIElement {
             height: position_bottom_right.y - position_top_left.y,
             payload: Payload::Text(text),
             child_elements: HashMap::new(),
+            on_click: None,
         }
     }
 
-    pub fn new_image(
+    pub fn new_image<F>(
         image: String,
         is_visible: bool,
         position_top_left: Point2<f32>,
         position_bottom_right: Point2<f32>,
-    ) -> UIElement {
+        on_click: Option<F>,
+    ) -> UIElement
+    where
+        F: FnMut(&mut GameState, &mut UIElement, &mut UIElement, Point2<f32>) + 'static,
+    {
         Self {
             is_visible,
             position_top_left,
@@ -52,6 +62,23 @@ impl UIElement {
             height: position_bottom_right.y - position_top_left.y,
             payload: Payload::Image(image),
             child_elements: HashMap::new(),
+            on_click: on_click.map(|f| {
+                Box::new(f)
+                    as Box<dyn FnMut(&mut GameState, &mut UIElement, &mut UIElement, Point2<f32>)>
+            }),
+        }
+    }
+
+    pub fn trigger_click(
+        &mut self,
+        click_point: Point2<f32>,
+        game_state: &mut GameState,
+        action_text: &mut UIElement,
+    ) {
+        // // TODO deal with multicell items
+        if let Some(mut on_click) = self.on_click.take() {
+            on_click(game_state, action_text, self, click_point);
+            self.on_click = Some(on_click);
         }
     }
 
@@ -61,6 +88,20 @@ impl UIElement {
             && position.x < self.position_bottom_right.x
             && position.y >= self.position_top_left.y
             && position.y < self.position_bottom_right.y
+    }
+
+    pub fn to_ui_element_space(&self, external_point: Point2<f32>) -> Point2<f32> {
+        if !self.contains(external_point) {
+            panic!("Unintended call. Can only map from point within ui element");
+        }
+
+        let relative_x = external_point.x - self.position_top_left.x;
+        let relative_y = external_point.y - self.position_top_left.y;
+
+        let normalized_x = relative_x / (self.position_bottom_right.x - self.position_top_left.x);
+        let normalized_y = relative_y / (self.position_bottom_right.y - self.position_top_left.y);
+
+        Point2::new(normalized_x, normalized_y)
     }
 
     pub fn toggle_visibility(&mut self) {
@@ -90,6 +131,19 @@ impl UIState {
                 false,
                 Point2::new(0.6, 0.6),
                 Point2::new(0.95, 0.95),
+                Some(
+                    |game_state: &mut GameState,
+                     action_text: &mut UIElement,
+                     inventory: &mut UIElement,
+                     click_point: Point2<f32>| {
+                        GameSystem::handle_item_placement(
+                            game_state,
+                            action_text,
+                            inventory,
+                            click_point,
+                        )
+                    },
+                ),
             ),
 
             // TODO We can probably store items here on a signal when inv changes. That

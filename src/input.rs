@@ -18,6 +18,10 @@ impl KeyPress {
     pub fn is_toggled_on(&self) -> bool {
         !self.was_pressed && self.is_pressed
     }
+
+    pub fn update_end_frame(&mut self) {
+        self.was_pressed = self.is_pressed;
+    }
 }
 
 #[derive(Debug)]
@@ -119,6 +123,22 @@ impl Input {
             }
             _ => {}
         }
+    }
+
+    pub fn update_end_frame(&mut self) {
+        self.w_pressed.update_end_frame();
+        self.s_pressed.update_end_frame();
+        self.a_pressed.update_end_frame();
+        self.d_pressed.update_end_frame();
+        self.i_pressed.update_end_frame();
+        self.e_pressed.update_end_frame();
+        self.up_pressed.update_end_frame();
+        self.down_pressed.update_end_frame();
+        self.left_pressed.update_end_frame();
+        self.right_pressed.update_end_frame();
+        self.left_shift_pressed.update_end_frame();
+        self.right_mouse_clicked.update_end_frame();
+        self.left_mouse_clicked.update_end_frame();
     }
 
     pub fn process_mouse_button(&mut self, button: MouseButton, state: ElementState) {
