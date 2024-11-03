@@ -46,8 +46,7 @@ impl GameSystem {
         Self::find_world_object_on_cursor(game_state, ui_state, input, frame_state);
         Self::set_nearest_object(game_state, frame_state);
 
-        Self::handle_inventory_click(ui_state, input, frame_state);
-        Self::handle_item_placement(game_state, ui_state, input, frame_state);
+        Self::handle_inventory_click(game_state, ui_state, input, frame_state);
         ItemPickupSystem::handle_item_pickup_keyboard(game_state, ui_state, input, frame_state);
         ItemPickupSystem::handle_item_pickup_mouse(game_state, ui_state, input, frame_state);
 
@@ -56,70 +55,99 @@ impl GameSystem {
         // Visual stuff (pre-render)
         Self::handle_inventory(ui_state, input);
         Self::update_camera(game_state, ui_state, input);
+
+        input.update_end_frame();
     }
 
-    fn handle_item_placement(
+    // fn handle_item_placement(
+    //     game_state: &mut GameState,
+    //     ui_state: &mut UIState,
+    //     input: &mut Input,
+    //     frame_state: &FrameState,
+    // ) {
+    //     if input.left_mouse_clicked.is_toggled_on() && !frame_state.handled_left_click {
+    //         let item = StorageManager::find_in_storage(game_state, &"player".to_string());
+    //         if item.is_none() {
+    //             ui_state.action_text.payload =
+    //                 Payload::Text("No items in inventory to place.".to_string());
+    //             return;
+    //         }
+    //         let item_unwrap = item.unwrap().clone();
+    //
+    //         Self::place_item(game_state, ui_state, &item_unwrap);
+    //     }
+    // }
+
+    pub fn handle_item_placement(
         game_state: &mut GameState,
-        ui_state: &mut UIState,
-        input: &mut Input,
-        frame_state: &FrameState,
+        action_text: &mut UIElement,
+        inventory: &mut UIElement,
+        click_point: Point2<f32>,
     ) {
-        if input.left_mouse_clicked.is_toggled_on() && !frame_state.handled_left_click {
-            let item = StorageManager::find_in_storage(game_state, &"player".to_string());
-            if item.is_none() {
-                ui_state.action_text.payload =
-                    Payload::Text("No items in inventory to place.".to_string());
-                return;
+        let mut found_item = None;
+        for (entity, element) in &inventory.child_elements {
+            if element.contains(click_point) {
+                found_item = Some(entity.clone());
+                break;
             }
-            let item_unwrap = item.unwrap().clone();
-
-            let player_position = game_state.get_position(&"player".to_string()).unwrap();
-            let placed_position = Point3 {
-                x: player_position.x - 1.1,
-                y: player_position.y - 0.25,
-                z: player_position.z - 1.1,
-            };
-
-            if !Self::is_placeable_area(game_state, &placed_position) {
-                ui_state.action_text.payload =
-                    Payload::Text("Cannot place outside placeable area.".to_string());
-                return;
-            }
-
-            // Generate a dynamic hitbox for the item to be placed
-            let item_hitbox_min = placed_position.sub_element_wise(Point3::new(0.26, 0.26, 0.26));
-            let item_hitbox_max = placed_position.add_element_wise(Point3::new(0.26, 0.26, 0.26));
-            let item_hitbox = Hitbox {
-                box_corner_min: item_hitbox_min,
-                box_corner_max: item_hitbox_max,
-            };
-
-            let colliding_entities: Vec<Entity> = game_state
-                .entities
-                .iter()
-                .filter(|entity| game_state.hitbox_components.contains_key(entity.as_str()))
-                .filter(|entity| game_state.position_components.contains_key(entity.as_str()))
-                .filter(|entity| *entity != "player")
-                .filter(|entity| {
-                    Self::check_collision(
-                        game_state.get_hitbox(&(*entity).to_string()).unwrap(),
-                        &item_hitbox,
-                    )
-                })
-                .cloned()
-                .collect();
-            if !colliding_entities.is_empty() {
-                ui_state.action_text.payload = Payload::Text(
-                    "Found a colliding object.\nNot allowed to place there.".to_string(),
-                );
-                return;
-            }
-
-            ui_state.action_text.payload = Payload::Text("You drop the item.".to_string());
-            game_state.create_position(item_unwrap.to_string(), placed_position);
-            game_state.create_hitbox(item_unwrap.to_string(), item_hitbox);
-            game_state.remove_in_storage(&item_unwrap.to_string());
         }
+
+        if let Some(item) = found_item {
+            Self::place_item(game_state, action_text, inventory, &item);
+        }
+    }
+
+    fn place_item(
+        game_state: &mut GameState,
+        action_text: &mut UIElement,
+        inventory: &mut UIElement,
+        item_unwrap: &String,
+    ) {
+        let player_position = game_state.get_position(&"player".to_string()).unwrap();
+        let placed_position = Point3 {
+            x: player_position.x - 1.1,
+            y: player_position.y - 0.25,
+            z: player_position.z - 1.1,
+        };
+
+        if !Self::is_placeable_area(game_state, &placed_position) {
+            action_text.payload = Payload::Text("Cannot place outside placeable area.".to_string());
+            return;
+        }
+
+        // Generate a dynamic hitbox for the item to be placed
+        let item_hitbox_min = placed_position.sub_element_wise(Point3::new(0.26, 0.26, 0.26));
+        let item_hitbox_max = placed_position.add_element_wise(Point3::new(0.26, 0.26, 0.26));
+        let item_hitbox = Hitbox {
+            box_corner_min: item_hitbox_min,
+            box_corner_max: item_hitbox_max,
+        };
+
+        let colliding_entities: Vec<Entity> = game_state
+            .entities
+            .iter()
+            .filter(|entity| game_state.hitbox_components.contains_key(entity.as_str()))
+            .filter(|entity| game_state.position_components.contains_key(entity.as_str()))
+            .filter(|entity| *entity != "player")
+            .filter(|entity| {
+                Self::check_collision(
+                    game_state.get_hitbox(&(*entity).to_string()).unwrap(),
+                    &item_hitbox,
+                )
+            })
+            .cloned()
+            .collect();
+        if !colliding_entities.is_empty() {
+            action_text.payload =
+                Payload::Text("Found a colliding object.\nNot allowed to place there.".to_string());
+            return;
+        }
+
+        action_text.payload = Payload::Text("You drop the item.".to_string());
+        inventory.child_elements.remove(&item_unwrap.to_string());
+        game_state.create_position(item_unwrap.to_string(), placed_position);
+        game_state.create_hitbox(item_unwrap.to_string(), item_hitbox);
+        game_state.remove_in_storage(&item_unwrap.to_string());
     }
 
     fn is_placeable_area(game_state: &GameState, desired_position: &Point3<f32>) -> bool {
@@ -152,6 +180,7 @@ impl GameSystem {
     }
 
     fn handle_inventory_click(
+        game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &mut Input,
         frame_state: &mut FrameState,
@@ -167,19 +196,24 @@ impl GameSystem {
             return;
         }
 
-        // First check if cursoe is within inventory screen?
-        // TODO Maybe UI should use NDC coordinates, as this makes it simple to work with? or
-        // other way around of course
+        if !input.left_mouse_clicked.is_toggled_on() {
+            return;
+        }
+
         let cursor_ndc = input.mouse_position_ndc;
         let cursor_ui_space = Point2::new(cursor_ndc.x / 2.0 + 0.5, -cursor_ndc.y / 2.0 + 0.5);
 
-        if ui_state.inventory.contains(cursor_ui_space) {
-            log::warn!("Yep");
-            log::warn!("{:?}", cursor_ui_space);
-            log::warn!("{:?}", ui_state.inventory.position_top_left);
-            log::warn!("{:?}", ui_state.inventory.position_bottom_right);
-            frame_state.handled_left_click = true;
+        if !ui_state.inventory.contains(cursor_ui_space) {
+            return;
         }
+        let cursor_inventory_space = ui_state.inventory.to_ui_element_space(cursor_ui_space);
+
+        ui_state.inventory.trigger_click(
+            cursor_inventory_space,
+            game_state,
+            &mut ui_state.action_text,
+        );
+        frame_state.handled_left_click = true;
     }
 
     fn update_camera(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
@@ -568,7 +602,6 @@ impl ItemPickupSystem {
         if frame_state.handled_right_click {
             return;
         }
-        //if
 
         if let Some(nearest_object) = frame_state.get_nearest_object_on_cursor() {
             Self::item_pickup(game_state, ui_state, nearest_object.clone());
@@ -610,10 +643,14 @@ impl ItemPickupSystem {
         let x_min = empty_spot.0 as f32 / inventory.number_of_columns as f32;
         let y_min = empty_spot.1 as f32 / inventory.number_of_rows as f32;
         let ui_inventory_item = UIElement::new_image(
-            "NONEWHYISTHISNECESSARY".to_string(), //todo
+            "".to_string(),
             true,
-            Point2::new(x_min, x_min + 1.0 / inventory.number_of_columns as f32),
-            Point2::new(y_min, y_min + 1.0 / inventory.number_of_rows as f32),
+            Point2::new(x_min, y_min),
+            Point2::new(
+                x_min + 1.0 / inventory.number_of_columns as f32,
+                y_min + 1.0 / inventory.number_of_rows as f32,
+            ),
+            None::<fn(&mut GameState, &mut UIElement, &mut UIElement, Point2<f32>)>,
         );
 
         ui_state.action_text.payload = Payload::Text("You pick up the item!".to_string());

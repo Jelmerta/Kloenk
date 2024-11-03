@@ -101,9 +101,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
 
         #[cfg(target_arch = "wasm32")]
         {
-            use winit::dpi::PhysicalSize;
-            let _ = window.request_inner_size(PhysicalSize::new(window_width, window_height));
-
             web_sys::window()
                 .and_then(|win| win.document())
                 .and_then(|doc| {
@@ -117,8 +114,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     Some(())
                 })
                 .expect("Couldn't append canvas to document body.");
-            // Not sure why, but width/height not yet set... Do it again.
-            let _ = window.request_inner_size(PhysicalSize::new(window_width, window_height));
         }
 
         let renderer_future = Renderer::new(window.clone(), window_width, window_height);
