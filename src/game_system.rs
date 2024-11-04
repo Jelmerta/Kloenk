@@ -647,8 +647,8 @@ impl ItemPickupSystem {
             true,
             Point2::new(x_min, y_min),
             Point2::new(
-                x_min + 1.0 / inventory.number_of_columns as f32,
-                y_min + 1.0 / inventory.number_of_rows as f32,
+                x_min + pickup.unwrap().shape.width as f32 / inventory.number_of_columns as f32,
+                y_min + pickup.unwrap().shape.height as f32 / inventory.number_of_rows as f32,
             ),
             None::<fn(&mut GameState, &mut UIElement, &mut UIElement, Point2<f32>)>,
         );
