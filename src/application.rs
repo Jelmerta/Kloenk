@@ -91,8 +91,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             } // Continue
         }
 
-        let window_width = 800;
-        let window_height = 600;
+        let window_width = 1920;
+        let window_height = 1080;
 
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
