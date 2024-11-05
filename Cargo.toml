@@ -14,17 +14,23 @@ winit = "0.30"
 env_logger = { version = "0.11", default-features = false }
 log = "0.4"
 # wgpu = { version = "22.1.0", default-features = false } We might not need features like metal not sure yet
-wgpu = "22.1.0" # while glyphon uses 22
+#wgpu = "23.0" #wgpu is now split into two different windows versions with its gpu-allocator dependency allowing an older version and me using cpal
+wgpu = "22.1"
 pollster = "0.4"
 bytemuck = "1.19"
 cgmath = "0.18"
 anyhow = { version = "1.0", default-features = false }
 itertools = { version = "0.13", default-features = false, features = ["use_alloc"] }
 glyphon = "0.6"
+#glyphon = { git = "https://github.com/grovesNL/glyphon.git" } uses wgpu 23.0
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+#cpal uses 0.54 windows atm. conflicts with wgpu 23
 rodio = { version = "0.19", default-features = false, features = ["wav"] }
-
 # glob = "0.3.1"
+#windows = "=0.58"
+
+#[patch.crates-io]
+#windows = { version = "0.58" }
 
 [build-dependencies]
 anyhow = "1.0"

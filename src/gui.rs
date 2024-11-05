@@ -1,5 +1,5 @@
 use crate::game_state::GameState;
-use crate::game_system::GameSystem;
+use crate::systems::game_system::GameSystem;
 use cgmath::Point2;
 use std::collections::HashMap;
 

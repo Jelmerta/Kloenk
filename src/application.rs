@@ -17,7 +17,6 @@ use winit::platform::web::WindowExtWebSys;
 
 // use anyhow::*;
 use crate::game_state::GameState;
-use crate::game_system::GameSystem;
 use crate::gui::UIState;
 use crate::input::Input;
 use crate::render::Renderer;
@@ -27,10 +26,11 @@ use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowId};
 
 #[cfg(target_arch = "wasm32")]
-use crate::audio_system::AudioPlayer;
-use crate::audio_system::AudioSystem;
+use crate::systems::audio_system::AudioPlayer;
+use crate::systems::audio_system::AudioSystem;
 
 use crate::frame_state::FrameState;
+use crate::systems::game_system::GameSystem;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
 
