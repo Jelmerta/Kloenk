@@ -1,5 +1,6 @@
 use crate::game_state::GameState;
-use crate::systems::game_system::GameSystem;
+use crate::input::Input;
+use crate::systems::item_placement_system::ItemPlacementSystem;
 use cgmath::Point2;
 use std::collections::HashMap;
 
@@ -21,8 +22,7 @@ pub struct UIElement {
     pub payload: Payload,
     pub child_elements: HashMap<String, UIElement>, // Basically entity mapping... But think we want to separate ECS/UI
 
-    pub on_click:
-        Option<Box<dyn FnMut(&mut GameState, &mut UIElement, &mut UIElement, Point2<f32>)>>,
+    pub on_click: Option<Box<dyn FnMut(&mut GameState, &mut UIState, &Input)>>,
 }
 
 impl UIElement {
@@ -52,7 +52,7 @@ impl UIElement {
         on_click: Option<F>,
     ) -> UIElement
     where
-        F: FnMut(&mut GameState, &mut UIElement, &mut UIElement, Point2<f32>) + 'static,
+        F: FnMut(&mut GameState, &mut UIState, &Input) + 'static,
     {
         Self {
             is_visible,
@@ -62,23 +62,20 @@ impl UIElement {
             height: position_bottom_right.y - position_top_left.y,
             payload: Payload::Image(image),
             child_elements: HashMap::new(),
-            on_click: on_click.map(|f| {
-                Box::new(f)
-                    as Box<dyn FnMut(&mut GameState, &mut UIElement, &mut UIElement, Point2<f32>)>
-            }),
+            on_click: on_click
+                .map(|f| Box::new(f) as Box<dyn FnMut(&mut GameState, &mut UIState, &Input)>),
         }
     }
 
-    pub fn trigger_click(
-        &mut self,
-        click_point: Point2<f32>,
+    pub fn inventory_trigger_click(
         game_state: &mut GameState,
-        action_text: &mut UIElement,
+        ui_state: &mut UIState,
+        input: &Input,
+        // Frame
     ) {
-        // // TODO deal with multicell items
-        if let Some(mut on_click) = self.on_click.take() {
-            on_click(game_state, action_text, self, click_point);
-            self.on_click = Some(on_click);
+        if let Some(mut on_click) = ui_state.inventory.on_click.take() {
+            on_click(game_state, ui_state, input);
+            ui_state.inventory.on_click = Some(on_click);
         }
     }
 
@@ -120,6 +117,8 @@ pub struct UIState {
     pub inventory: UIElement,
     pub action_text: UIElement,
     pub selected_text: UIElement,
+
+    pub object_menu: Option<UIElement>,
 }
 
 impl UIState {
@@ -132,16 +131,8 @@ impl UIState {
                 Point2::new(0.6, 0.6),
                 Point2::new(0.95, 0.95),
                 Some(
-                    |game_state: &mut GameState,
-                     action_text: &mut UIElement,
-                     inventory: &mut UIElement,
-                     click_point: Point2<f32>| {
-                        GameSystem::handle_item_placement(
-                            game_state,
-                            action_text,
-                            inventory,
-                            click_point,
-                        )
+                    |game_state: &mut GameState, ui_state: &mut UIState, input: &Input| {
+                        ItemPlacementSystem::handle_item_placement(game_state, ui_state, input)
                     },
                 ),
             ),
@@ -162,6 +153,8 @@ impl UIState {
                 Point2::new(0.05, 0.1),
                 Point2::new(0.65, 0.15),
             ),
+
+            object_menu: None,
         }
     }
 
