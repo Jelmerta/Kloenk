@@ -516,8 +516,7 @@ impl Renderer {
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
                 module: shader,
-                // entry_point: Some("vs_main"),
-                entry_point: "vs_main",
+                entry_point: Some("vs_main"),
                 buffers: &[model::TexVertex::desc(), InstanceRaw::desc()],
                 compilation_options: PipelineCompilationOptions::default(),
             },
@@ -544,8 +543,7 @@ impl Renderer {
             },
             fragment: Some(wgpu::FragmentState {
                 module: shader,
-                // entry_point: Some("fs_main"),
-                entry_point: "fs_main",
+                entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
                     blend: Some(wgpu::BlendState::REPLACE),
@@ -620,8 +618,7 @@ impl Renderer {
             layout: Some(&render_pipeline_layout_ui),
             vertex: wgpu::VertexState {
                 module: shader,
-                entry_point: "vs_main",
-                // entry_point: Some("vs_main"),
+                entry_point: Some("vs_main"),
                 buffers: &[model::TexVertex::desc(), InstanceRaw::desc()],
                 compilation_options: PipelineCompilationOptions::default(),
             },
@@ -642,8 +639,7 @@ impl Renderer {
             },
             fragment: Some(wgpu::FragmentState {
                 module: shader,
-                // entry_point: Some("fs_main"),
-                entry_point: "fs_main",
+                entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
                     blend: Some(wgpu::BlendState::REPLACE),

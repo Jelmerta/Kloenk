@@ -16,13 +16,11 @@ impl ItemPickupSystem {
     pub fn handle_item_pickup_keyboard(
         game_state: &mut GameState,
         ui_state: &mut UIState,
-        input: &mut Input,
+        input: &Input,
         frame_state: &mut FrameState,
     ) {
         let player = "player".to_string();
 
-        // mut input just for is
-        // toggled on. could possibly be changed
         if input.e_pressed.is_toggled_on() && !frame_state.handled_e_click {
             let near_pickup = PositionManager::find_nearest_pickup(
                 &game_state.position_components,
@@ -44,7 +42,7 @@ impl ItemPickupSystem {
     pub fn handle_item_pickup_mouse(
         game_state: &mut GameState,
         ui_state: &mut UIState,
-        input: &mut Input,
+        input: &Input,
         frame_state: &mut FrameState,
     ) {
         if !input.right_mouse_clicked.is_toggled_on() {
@@ -102,7 +100,7 @@ impl ItemPickupSystem {
                 x_min + pickup.unwrap().shape.width as f32 / inventory.number_of_columns as f32,
                 y_min + pickup.unwrap().shape.height as f32 / inventory.number_of_rows as f32,
             ),
-            None::<fn(&mut GameState, &mut UIElement, &mut UIElement, Point2<f32>)>,
+            None::<fn(&mut GameState, &mut UIState, &Input)>,
         );
 
         ui_state.action_text.payload = Payload::Text("You pick up the item!".to_string());
