@@ -35,7 +35,7 @@ impl InventorySystem {
             return;
         }
 
-        UIElement::inventory_trigger_click(game_state, ui_state, input);
+        UIElement::inventory_trigger_click(game_state, ui_state, input, frame_state);
         frame_state.handled_left_click = true;
     }
 

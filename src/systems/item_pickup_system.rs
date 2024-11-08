@@ -45,11 +45,11 @@ impl ItemPickupSystem {
         input: &Input,
         frame_state: &mut FrameState,
     ) {
-        if !input.right_mouse_clicked.is_toggled_on() {
+        if !input.left_mouse_clicked.is_toggled_on() {
             return;
         }
 
-        if frame_state.handled_right_click {
+        if frame_state.handled_left_click {
             return;
         }
 
@@ -57,7 +57,53 @@ impl ItemPickupSystem {
             Self::item_pickup(game_state, ui_state, nearest_object.clone());
         }
 
-        frame_state.handled_right_click = true;
+        frame_state.handled_left_click = true;
+    }
+
+    pub fn handle_item_pickup_menu(
+        game_state: &mut GameState,
+        ui_state: &mut UIState,
+        input: &Input,
+        frame_state: &mut FrameState,
+    ) {
+        let cursor_ndc = input.mouse_position_ndc;
+        let cursor_ui_space = Point2::new(cursor_ndc.x / 2.0 + 0.5, -cursor_ndc.y / 2.0 + 0.5);
+        if ui_state.object_menu.is_none() {
+            return;
+        }
+        if !ui_state
+            .object_menu
+            .as_mut()
+            .unwrap()
+            .contains(cursor_ui_space)
+        {
+            return;
+        }
+
+        if frame_state.handled_left_click {
+            return;
+        }
+
+        if !input.left_mouse_clicked.is_toggled_on() {
+            return;
+        }
+
+        if let Some(mut on_click) = ui_state.object_menu.as_mut().unwrap().on_click.take() {
+            on_click(game_state, ui_state, input, frame_state);
+            ui_state.object_menu.as_mut().unwrap().on_click = Some(on_click);
+        }
+
+        frame_state.handled_left_click = true;
+    }
+
+    pub fn pickup_item_object_menu_callback(
+        game_state: &mut GameState,
+        ui_state: &mut UIState,
+        _input: &Input,
+        _frame_state: &mut FrameState,
+    ) {
+        let selected_object = ui_state.selected_objects_for_object_menu.get(0).unwrap(); // Just get first item for now.
+        Self::item_pickup(game_state, ui_state, selected_object.clone());
     }
 
     fn item_pickup(game_state: &mut GameState, ui_state: &mut UIState, near_pickup: Entity) {
@@ -100,7 +146,7 @@ impl ItemPickupSystem {
                 x_min + pickup.unwrap().shape.width as f32 / inventory.number_of_columns as f32,
                 y_min + pickup.unwrap().shape.height as f32 / inventory.number_of_rows as f32,
             ),
-            None::<fn(&mut GameState, &mut UIState, &Input)>,
+            None::<fn(&mut GameState, &mut UIState, &Input, &mut FrameState)>,
         );
 
         ui_state.action_text.payload = Payload::Text("You pick up the item!".to_string());

@@ -13,7 +13,7 @@ cfg-if = "1.0"
 winit = "0.30"
 env_logger = { version = "0.11", default-features = false }
 log = "0.4"
-# Rodio needs to be before wgpu at the moment. Otherwise loads incorrect windows version for wgpu
+# Rodio needs to be before wgpu at the moment. Otherwise loads incorrect windows version for wgpu with dumb resolution behavior
 rodio = { version = "0.19", default-features = false, features = ["wav"] }
 wgpu = "23.0"
 pollster = "0.4"
