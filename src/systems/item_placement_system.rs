@@ -1,5 +1,6 @@
 use crate::collision_manager::CollisionManager;
 use crate::components::{Entity, Hitbox};
+use crate::frame_state::FrameState;
 use crate::game_state::GameState;
 use crate::gui::{Payload, UIElement, UIState};
 use crate::input::Input;
@@ -30,6 +31,7 @@ impl ItemPlacementSystem {
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &Input,
+        _frame_state: &FrameState,
     ) {
         let cursor_ndc = input.mouse_position_ndc;
         let cursor_ui_space = Point2::new(cursor_ndc.x / 2.0 + 0.5, -cursor_ndc.y / 2.0 + 0.5);

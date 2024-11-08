@@ -25,6 +25,7 @@ impl GameSystem {
 
         InventorySystem::handle_inventory_click(game_state, ui_state, input, frame_state);
         ItemPickupSystem::handle_item_pickup_keyboard(game_state, ui_state, input, frame_state);
+        ItemPickupSystem::handle_item_pickup_menu(game_state, ui_state, input, frame_state);
         ItemPickupSystem::handle_item_pickup_mouse(game_state, ui_state, input, frame_state);
 
         MovementSystem::resolve_movement(game_state, input, audio_system);

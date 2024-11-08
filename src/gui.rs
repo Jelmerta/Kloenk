@@ -1,3 +1,5 @@
+use crate::components::Entity;
+use crate::frame_state::FrameState;
 use crate::game_state::GameState;
 use crate::input::Input;
 use crate::systems::item_placement_system::ItemPlacementSystem;
@@ -21,8 +23,7 @@ pub struct UIElement {
 
     pub payload: Payload,
     pub child_elements: HashMap<String, UIElement>, // Basically entity mapping... But think we want to separate ECS/UI
-
-    pub on_click: Option<Box<dyn FnMut(&mut GameState, &mut UIState, &Input)>>,
+    pub on_click: Option<Box<dyn FnMut(&mut GameState, &mut UIState, &Input, &mut FrameState)>>,
 }
 
 impl UIElement {
@@ -52,7 +53,7 @@ impl UIElement {
         on_click: Option<F>,
     ) -> UIElement
     where
-        F: FnMut(&mut GameState, &mut UIState, &Input) + 'static,
+        F: FnMut(&mut GameState, &mut UIState, &Input, &mut FrameState) + 'static,
     {
         Self {
             is_visible,
@@ -62,8 +63,9 @@ impl UIElement {
             height: position_bottom_right.y - position_top_left.y,
             payload: Payload::Image(image),
             child_elements: HashMap::new(),
-            on_click: on_click
-                .map(|f| Box::new(f) as Box<dyn FnMut(&mut GameState, &mut UIState, &Input)>),
+            on_click: on_click.map(|f| {
+                Box::new(f) as Box<dyn FnMut(&mut GameState, &mut UIState, &Input, &mut FrameState)>
+            }),
         }
     }
 
@@ -71,10 +73,10 @@ impl UIElement {
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &Input,
-        // Frame
+        frame_state: &mut FrameState,
     ) {
         if let Some(mut on_click) = ui_state.inventory.on_click.take() {
-            on_click(game_state, ui_state, input);
+            on_click(game_state, ui_state, input, frame_state);
             ui_state.inventory.on_click = Some(on_click);
         }
     }
@@ -119,6 +121,7 @@ pub struct UIState {
     pub selected_text: UIElement,
 
     pub object_menu: Option<UIElement>,
+    pub selected_objects_for_object_menu: Vec<Entity>, // Probably not the right place for this. Maybe in the ui element as payload?
 }
 
 impl UIState {
@@ -131,8 +134,16 @@ impl UIState {
                 Point2::new(0.6, 0.6),
                 Point2::new(0.95, 0.95),
                 Some(
-                    |game_state: &mut GameState, ui_state: &mut UIState, input: &Input| {
-                        ItemPlacementSystem::handle_item_placement(game_state, ui_state, input)
+                    |game_state: &mut GameState,
+                     ui_state: &mut UIState,
+                     input: &Input,
+                     frame_state: &mut FrameState| {
+                        ItemPlacementSystem::handle_item_placement(
+                            game_state,
+                            ui_state,
+                            input,
+                            frame_state,
+                        )
                     },
                 ),
             ),
@@ -155,6 +166,7 @@ impl UIState {
             ),
 
             object_menu: None,
+            selected_objects_for_object_menu: Vec::new(),
         }
     }
 

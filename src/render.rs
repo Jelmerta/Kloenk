@@ -907,6 +907,39 @@ impl Renderer {
 
             drop(render_pass_ui);
         }
+
+        if let Some(object_menu) = &ui_state.object_menu {
+            if object_menu.is_visible {
+                self.set_camera_data_ui(ui_state);
+                let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("Render Pass UI"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Load,
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                    occlusion_query_set: None,
+                    timestamp_writes: None,
+                });
+
+                render_pass_ui.set_pipeline(&self.render_pipeline_ui);
+                render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
+
+                let object_menu_instance = Self::create_object_menu_instance(ui_state);
+                let object_menu_render_group = RenderGroup {
+                    buffer: Self::create_instance_buffer(&self.device, &[object_menu_instance]),
+                    model_id: "sword_inventory".to_string(),
+                    instance_count: 1,
+                };
+                self.draw_ui(&mut render_pass_ui, &object_menu_render_group);
+
+                drop(render_pass_ui);
+            }
+        }
     }
 
     fn create_instance_buffer(device: &Device, instance_group: &[Instance]) -> Buffer {
@@ -961,6 +994,34 @@ impl Renderer {
                     ui_state.window_size.height as f32,
                 ),
                 UIState::convert_scale_y(ui_state.inventory.height),
+                1.0,
+                1.0,
+            )),
+            rotation: cgmath::Quaternion::from_axis_angle(Vector3::unit_z(), cgmath::Deg(0.0)),
+        }
+    }
+
+    fn create_object_menu_instance(ui_state: &UIState) -> Instance {
+        let Some(object_menu) = &ui_state.object_menu else {
+            panic!("Object menu should exist at this point.")
+        };
+        Instance {
+            position: Vector3 {
+                x: UIState::convert_clip_space_x(
+                    object_menu.position_top_left.x,
+                    ui_state.window_size.width as f32,
+                    ui_state.window_size.height as f32,
+                ),
+                y: UIState::convert_clip_space_y(object_menu.position_top_left.y),
+                z: 0.0,
+            },
+            scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
+                UIState::convert_scale_x(
+                    object_menu.width,
+                    ui_state.window_size.width as f32,
+                    ui_state.window_size.height as f32,
+                ),
+                UIState::convert_scale_y(object_menu.height),
                 1.0,
                 1.0,
             )),
