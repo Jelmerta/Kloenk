@@ -1,5 +1,5 @@
 // use anyhow::*;
-use cgmath::{prelude::*, Point3, Vector3};
+use cgmath::{prelude::*, Point2, Point3, Vector3};
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::iter;
@@ -25,14 +25,14 @@ use winit::window::Window;
 
 use crate::camera::Camera;
 use crate::components::{Entity, Size};
+use crate::frame_state::FrameState;
 use crate::game_state::GameState;
-use crate::gui::{Payload, UIElement, UIState};
+use crate::gui::{Rect, RenderCommand, UIState};
 use crate::model::{self};
 use crate::model::{Model, Vertex};
 use crate::text_renderer::TextWriter;
 use crate::{resources, texture};
 use model::Draw;
-
 // #[wasm_bindgen(start)]
 // pub fn run() -> Result<(), JsValue> {
 //     let gltf_data = include_bytes!("../models/garfield/scene.gltf");
@@ -664,7 +664,7 @@ impl Renderer {
         queue: &Queue,
         texture_bind_group_layout: &BindGroupLayout,
     ) -> HashMap<String, Model> {
-        let mut model_map: HashMap<String, model::Model> = HashMap::new();
+        let mut model_map: HashMap<String, Model> = HashMap::new();
         let shield = resources::load_model(
             "shield.jpg",
             device,
@@ -739,7 +739,7 @@ impl Renderer {
         model_map
     }
 
-    pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+    pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
             self.size = new_size;
             self.config.width = new_size.width;
@@ -754,6 +754,7 @@ impl Renderer {
         &mut self,
         game_state: &mut GameState,
         ui_state: &UIState,
+        frame_state: &FrameState,
     ) -> Result<(), wgpu::SurfaceError> {
         let camera = game_state.camera_components.get_mut("camera").unwrap();
         self.camera_uniform.update_view_projection(camera);
@@ -778,26 +779,26 @@ impl Renderer {
 
         self.render_world(&view, &mut encoder);
 
-        self.render_ui(game_state, ui_state, &view, &mut encoder);
+        self.render_ui(ui_state, frame_state, &view, &mut encoder);
 
-        self.text_writer
-            .prepare(&self.device, &self.queue, ui_state);
-
-        let selected_text = match &ui_state.selected_text.payload {
-            Payload::Text(text) => text,
-            _ => panic!("unexpected payload"),
-        };
-
-        self.text_writer
-            .write_selected_text_buffer(&mut encoder, &view, selected_text);
-
-        let action_text = match &ui_state.action_text.payload {
-            Payload::Text(text) => text,
-            _ => panic!("unexpected payload"),
-        };
-
-        self.text_writer
-            .write_action_text_buffer(&mut encoder, &view, action_text);
+        // self.text_writer
+        //     .prepare(&self.device, &self.queue, ui_state);
+        //
+        // let selected_text = match &ui_state.selected_text.payload {
+        //     Payload::Text(text) => text,
+        //     _ => panic!("unexpected payload"),
+        // };
+        //
+        // self.text_writer
+        //     .write_selected_text_buffer(&mut encoder, &view, selected_text);
+        //
+        // let action_text = match &ui_state.action_text.payload {
+        //     Payload::Text(text) => text,
+        //     _ => panic!("unexpected payload"),
+        // };
+        //
+        // self.text_writer
+        //     .write_action_text_buffer(&mut encoder, &view, action_text);
 
         //use model::DrawModel;
         // let garfield = self.models.pop().unwrap();
@@ -867,79 +868,138 @@ impl Renderer {
 
     fn render_ui(
         &mut self,
-        game_state: &GameState,
         ui_state: &UIState,
+        frame_state: &FrameState,
         view: &TextureView,
         encoder: &mut CommandEncoder,
     ) {
-        if ui_state.inventory.is_visible {
-            self.set_camera_data_ui(ui_state);
-            let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass UI"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Load,
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                occlusion_query_set: None,
-                timestamp_writes: None,
+        self.set_camera_data_ui(ui_state);
+        frame_state
+            .gui
+            .render_commands
+            .iter()
+            .for_each(|render_command| {
+                match render_command {
+                    RenderCommand::Text { rect, text } => {
+                        self.text_writer.prepare(
+                            &self.device,
+                            &self.queue,
+                            rect.scale(
+                                ui_state.window_size.width as f32,
+                                ui_state.window_size.height as f32,
+                            ),
+                        );
+
+                        self.text_writer.write_text_buffer(encoder, view, text);
+                    }
+                    RenderCommand::Image { rect, image_name } => {
+                        let mut render_pass_ui =
+                            encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                                label: Some("Render Pass UI"),
+                                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                                    view,
+                                    resolve_target: None,
+                                    ops: wgpu::Operations {
+                                        load: wgpu::LoadOp::Load,
+                                        store: wgpu::StoreOp::Store,
+                                    },
+                                })],
+                                depth_stencil_attachment: None,
+                                occlusion_query_set: None,
+                                timestamp_writes: None,
+                            });
+
+                        render_pass_ui.set_pipeline(&self.render_pipeline_ui);
+                        render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
+
+                        let element_instance = Self::create_ui_element_instance(
+                            Point2::new(
+                                ui_state.window_size.width as f32,
+                                ui_state.window_size.height as f32,
+                            ),
+                            *rect,
+                        );
+                        let element_render_group = RenderGroup {
+                            buffer: Self::create_instance_buffer(&self.device, &[element_instance]),
+                            // model_id: "sword_inventory".to_string(),
+                            model_id: image_name.to_string(),
+                            instance_count: 1,
+                        };
+                        self.draw_ui(&mut render_pass_ui, &element_render_group);
+
+                        drop(render_pass_ui);
+                    }
+                } // TODO or maybe call it widget?
             });
 
-            render_pass_ui.set_pipeline(&self.render_pipeline_ui);
-            render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
-
-            let inventory_instance = Self::create_inventory_instance(ui_state);
-            let inventory_render_group = RenderGroup {
-                buffer: Self::create_instance_buffer(&self.device, &[inventory_instance]),
-                model_id: "sword_inventory".to_string(),
-                instance_count: 1,
-            };
-            self.draw_ui(&mut render_pass_ui, &inventory_render_group);
-
-            let render_groups = self.create_render_groups_ui(game_state, ui_state);
-            for render_group in &render_groups {
-                self.draw_ui(&mut render_pass_ui, render_group);
-            }
-
-            drop(render_pass_ui);
-        }
-
-        if let Some(object_menu) = &ui_state.object_menu {
-            if object_menu.is_visible {
-                self.set_camera_data_ui(ui_state);
-                let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    label: Some("Render Pass UI"),
-                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                        view,
-                        resolve_target: None,
-                        ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Load,
-                            store: wgpu::StoreOp::Store,
-                        },
-                    })],
-                    depth_stencil_attachment: None,
-                    occlusion_query_set: None,
-                    timestamp_writes: None,
-                });
-
-                render_pass_ui.set_pipeline(&self.render_pipeline_ui);
-                render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
-
-                let object_menu_instance = Self::create_object_menu_instance(ui_state);
-                let object_menu_render_group = RenderGroup {
-                    buffer: Self::create_instance_buffer(&self.device, &[object_menu_instance]),
-                    model_id: "sword_inventory".to_string(),
-                    instance_count: 1,
-                };
-                self.draw_ui(&mut render_pass_ui, &object_menu_render_group);
-
-                drop(render_pass_ui);
-            }
-        }
+        // if ui_state.inventory.is_visible {
+        //     self.set_camera_data_ui(ui_state);
+        //     let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        //         label: Some("Render Pass UI"),
+        //         color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+        //             view,
+        //             resolve_target: None,
+        //             ops: wgpu::Operations {
+        //                 load: wgpu::LoadOp::Load,
+        //                 store: wgpu::StoreOp::Store,
+        //             },
+        //         })],
+        //         depth_stencil_attachment: None,
+        //         occlusion_query_set: None,
+        //         timestamp_writes: None,
+        //     });
+        //
+        //     render_pass_ui.set_pipeline(&self.render_pipeline_ui);
+        //     render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
+        //
+        //     let inventory_instance = Self::create_inventory_instance(ui_state);
+        //     let inventory_render_group = RenderGroup {
+        //         buffer: Self::create_instance_buffer(&self.device, &[inventory_instance]),
+        //         model_id: "sword_inventory".to_string(),
+        //         instance_count: 1,
+        //     };
+        //     self.draw_ui(&mut render_pass_ui, &inventory_render_group);
+        //
+        //     let render_groups = self.create_render_groups_ui(game_state, ui_state);
+        //     for render_group in &render_groups {
+        //         self.draw_ui(&mut render_pass_ui, render_group);
+        //     }
+        //
+        //     drop(render_pass_ui);
+        // }
+        //
+        // if let Some(object_menu) = &ui_state.object_menu {
+        //     if object_menu.is_visible {
+        //         self.set_camera_data_ui(ui_state);
+        //         let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        //             label: Some("Render Pass UI"),
+        //             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+        //                 view,
+        //                 resolve_target: None,
+        //                 ops: wgpu::Operations {
+        //                     load: wgpu::LoadOp::Load,
+        //                     store: wgpu::StoreOp::Store,
+        //                 },
+        //             })],
+        //             depth_stencil_attachment: None,
+        //             occlusion_query_set: None,
+        //             timestamp_writes: None,
+        //         });
+        //
+        //         render_pass_ui.set_pipeline(&self.render_pipeline_ui);
+        //         render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
+        //
+        //         let object_menu_instance = Self::create_object_menu_instance(ui_state);
+        //         let object_menu_render_group = RenderGroup {
+        //             buffer: Self::create_instance_buffer(&self.device, &[object_menu_instance]),
+        //             model_id: "sword_inventory".to_string(),
+        //             instance_count: 1,
+        //         };
+        //         self.draw_ui(&mut render_pass_ui, &object_menu_render_group);
+        //
+        //         drop(render_pass_ui);
+        //     }
+        // }
     }
 
     fn create_instance_buffer(device: &Device, instance_group: &[Instance]) -> Buffer {
@@ -976,24 +1036,20 @@ impl Renderer {
         }
     }
 
-    fn create_inventory_instance(ui_state: &UIState) -> Instance {
+    fn create_ui_element_instance(window_dimensions: Point2<f32>, rect: Rect) -> Instance {
         Instance {
             position: Vector3 {
                 x: UIState::convert_clip_space_x(
-                    ui_state.inventory.position_top_left.x,
-                    ui_state.window_size.width as f32,
-                    ui_state.window_size.height as f32,
+                    rect.top_left.x,
+                    window_dimensions.x,
+                    window_dimensions.y,
                 ),
-                y: UIState::convert_clip_space_y(ui_state.inventory.position_top_left.y),
+                y: UIState::convert_clip_space_y(rect.top_left.y),
                 z: 0.0,
             },
             scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                UIState::convert_scale_x(
-                    ui_state.inventory.width,
-                    ui_state.window_size.width as f32,
-                    ui_state.window_size.height as f32,
-                ),
-                UIState::convert_scale_y(ui_state.inventory.height),
+                UIState::convert_scale_x(rect.width(), window_dimensions.x, window_dimensions.y),
+                UIState::convert_scale_y(rect.height()),
                 1.0,
                 1.0,
             )),
@@ -1001,33 +1057,58 @@ impl Renderer {
         }
     }
 
-    fn create_object_menu_instance(ui_state: &UIState) -> Instance {
-        let Some(object_menu) = &ui_state.object_menu else {
-            panic!("Object menu should exist at this point.")
-        };
-        Instance {
-            position: Vector3 {
-                x: UIState::convert_clip_space_x(
-                    object_menu.position_top_left.x,
-                    ui_state.window_size.width as f32,
-                    ui_state.window_size.height as f32,
-                ),
-                y: UIState::convert_clip_space_y(object_menu.position_top_left.y),
-                z: 0.0,
-            },
-            scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                UIState::convert_scale_x(
-                    object_menu.width,
-                    ui_state.window_size.width as f32,
-                    ui_state.window_size.height as f32,
-                ),
-                UIState::convert_scale_y(object_menu.height),
-                1.0,
-                1.0,
-            )),
-            rotation: cgmath::Quaternion::from_axis_angle(Vector3::unit_z(), cgmath::Deg(0.0)),
-        }
-    }
+    // fn create_inventory_instance(ui_state: &UIState) -> Instance {
+    //     Instance {
+    //         position: Vector3 {
+    //             x: UIState::convert_clip_space_x(
+    //                 ui_state.inventory.position_top_left.x,
+    //                 ui_state.window_size.width as f32,
+    //                 ui_state.window_size.height as f32,
+    //             ),
+    //             y: UIState::convert_clip_space_y(ui_state.inventory.position_top_left.y),
+    //             z: 0.0,
+    //         },
+    //         scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
+    //             UIState::convert_scale_x(
+    //                 ui_state.inventory.width,
+    //                 ui_state.window_size.width as f32,
+    //                 ui_state.window_size.height as f32,
+    //             ),
+    //             UIState::convert_scale_y(ui_state.inventory.height),
+    //             1.0,
+    //             1.0,
+    //         )),
+    //         rotation: cgmath::Quaternion::from_axis_angle(Vector3::unit_z(), cgmath::Deg(0.0)),
+    //     }
+    // }
+    //
+    // fn create_object_menu_instance(ui_state: &UIState) -> Instance {
+    //     let Some(object_menu) = &ui_state.object_menu else {
+    //         panic!("Object menu should exist at this point.")
+    //     };
+    //     Instance {
+    //         position: Vector3 {
+    //             x: UIState::convert_clip_space_x(
+    //                 object_menu.position_top_left.x,
+    //                 ui_state.window_size.width as f32,
+    //                 ui_state.window_size.height as f32,
+    //             ),
+    //             y: UIState::convert_clip_space_y(object_menu.position_top_left.y),
+    //             z: 0.0,
+    //         },
+    //         scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
+    //             UIState::convert_scale_x(
+    //                 object_menu.width,
+    //                 ui_state.window_size.width as f32,
+    //                 ui_state.window_size.height as f32,
+    //             ),
+    //             UIState::convert_scale_y(object_menu.height),
+    //             1.0,
+    //             1.0,
+    //         )),
+    //         rotation: cgmath::Quaternion::from_axis_angle(Vector3::unit_z(), cgmath::Deg(0.0)),
+    //     }
+    // }
 
     #[allow(clippy::cast_possible_truncation)]
     fn create_render_groups(&mut self, game_state: &GameState) {
@@ -1073,67 +1154,67 @@ impl Renderer {
         self.render_groups = render_groups;
     }
 
-    #[allow(clippy::cast_possible_truncation)]
-    fn create_render_groups_ui(
-        &self,
-        game_state: &GameState,
-        ui_state: &UIState,
-    ) -> Vec<RenderGroup> {
-        let inventory = game_state.get_storage(&"player".to_string()).unwrap();
-        let item_picture_scale_x =
-            ui_state.inventory.width / f32::from(inventory.number_of_columns);
-        let item_picture_scale_y = ui_state.inventory.height / f32::from(inventory.number_of_rows);
-
-        let mut render_groups = Vec::new();
-        ui_state
-            .inventory
-            .child_elements
-            .iter()
-            .chunk_by(|entry| {
-                game_state
-                    .get_graphics_inventory((*entry).0)
-                    .unwrap()
-                    .model_id
-                    .clone()
-                // match &(*entry).1.payload {
-                // // Get 2d component from ECS instead TODO
-                // Payload::Image(image) => image,
-                // _ => panic!("Inventory only contains images"),
-            })
-            .into_iter()
-            .for_each(|(model_id, item_group)| {
-                let mut entity_group: Vec<&Entity> = Vec::new();
-                let instance_group: Vec<Instance> = item_group
-                    .into_iter()
-                    .map(|(entity, item_ui_element)| {
-                        // TODO I think this should depend on the image:
-                        // The image size should for example already be 1x2
-                        // instead of sizing based on shape
-                        let item_shape = &game_state
-                            .storable_components
-                            .get(entity.as_str())
-                            .unwrap()
-                            .shape;
-                        entity_group.push(entity);
-                        Self::convert_item_ui_element_instance(
-                            ui_state,
-                            &ui_state.inventory,
-                            item_ui_element,
-                            item_picture_scale_x * f32::from(item_shape.width),
-                            item_picture_scale_y * f32::from(item_shape.height),
-                        )
-                    })
-                    .collect();
-                let buffer = Self::create_instance_buffer(&self.device, &instance_group);
-                let render_group = RenderGroup {
-                    buffer,
-                    model_id: model_id.to_string(),
-                    instance_count: instance_group.len() as u32,
-                };
-                render_groups.push(render_group);
-            });
-        render_groups
-    }
+    // #[allow(clippy::cast_possible_truncation)]
+    // fn create_render_groups_ui(
+    //     &self,
+    //     game_state: &GameState,
+    //     ui_state: &UIState,
+    // ) -> Vec<RenderGroup> {
+    //     let inventory = game_state.get_storage(&"player".to_string()).unwrap();
+    //     let item_picture_scale_x =
+    //         ui_state.inventory.width / f32::from(inventory.number_of_columns);
+    //     let item_picture_scale_y = ui_state.inventory.height / f32::from(inventory.number_of_rows);
+    //
+    //     let mut render_groups = Vec::new();
+    //     ui_state
+    //         .inventory
+    //         .child_elements
+    //         .iter()
+    //         .chunk_by(|entry| {
+    //             game_state
+    //                 .get_graphics_inventory((*entry).0)
+    //                 .unwrap()
+    //                 .model_id
+    //                 .clone()
+    //             // match &(*entry).1.payload {
+    //             // // Get 2d component from ECS instead TODO
+    //             // Payload::Image(image) => image,
+    //             // _ => panic!("Inventory only contains images"),
+    //         })
+    //         .into_iter()
+    //         .for_each(|(model_id, item_group)| {
+    //             let mut entity_group: Vec<&Entity> = Vec::new();
+    //             let instance_group: Vec<Instance> = item_group
+    //                 .into_iter()
+    //                 .map(|(entity, item_ui_element)| {
+    //                     // TODO I think this should depend on the image:
+    //                     // The image size should for example already be 1x2
+    //                     // instead of sizing based on shape
+    //                     let item_shape = &game_state
+    //                         .storable_components
+    //                         .get(entity.as_str())
+    //                         .unwrap()
+    //                         .shape;
+    //                     entity_group.push(entity);
+    //                     Self::convert_item_ui_element_instance(
+    //                         ui_state,
+    //                         &ui_state.inventory,
+    //                         item_ui_element,
+    //                         item_picture_scale_x * f32::from(item_shape.width),
+    //                         item_picture_scale_y * f32::from(item_shape.height),
+    //                     )
+    //                 })
+    //                 .collect();
+    //             let buffer = Self::create_instance_buffer(&self.device, &instance_group);
+    //             let render_group = RenderGroup {
+    //                 buffer,
+    //                 model_id: model_id.to_string(),
+    //                 instance_count: instance_group.len() as u32,
+    //             };
+    //             render_groups.push(render_group);
+    //         });
+    //     render_groups
+    // }
 
     fn set_camera_data_ui(&mut self, ui_state: &UIState) {
         self.camera_ui.eye = Point3 {
@@ -1178,40 +1259,5 @@ impl Renderer {
             &self.model_map.get(&render_group.model_id).unwrap().meshes[0],
             0..render_group.instance_count,
         );
-    }
-
-    fn convert_item_ui_element_instance(
-        ui_state: &UIState,
-        inventory: &UIElement,
-        item_ui_element: &UIElement,
-        item_picture_scale_x: f32,
-        item_picture_scale_y: f32,
-    ) -> Instance {
-        Instance {
-            position: Vector3 {
-                x: UIState::convert_clip_space_x(
-                    inventory.position_top_left.x
-                        + (item_ui_element.position_top_left.x / 1.0) * inventory.width,
-                    ui_state.window_size.width as f32,
-                    ui_state.window_size.height as f32,
-                ),
-                y: UIState::convert_clip_space_y(
-                    inventory.position_top_left.y
-                        + (item_ui_element.position_top_left.y / 1.0) * inventory.height,
-                ),
-                z: 0.0,
-            },
-            scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                UIState::convert_scale_x(
-                    item_picture_scale_x,
-                    ui_state.window_size.width as f32,
-                    ui_state.window_size.height as f32,
-                ),
-                UIState::convert_scale_y(item_picture_scale_y),
-                1.0,
-                1.0,
-            )),
-            rotation: cgmath::Quaternion::from_axis_angle(Vector3::unit_z(), cgmath::Deg(0.0)),
-        }
     }
 }

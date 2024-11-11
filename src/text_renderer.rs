@@ -1,19 +1,22 @@
-use crate::gui::UIState;
+use crate::gui::Rect;
 use crate::resources;
+use cgmath::Point2;
 use glyphon::{
     fontdb, Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping,
     SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
 };
+use std::collections::HashMap;
 use wgpu::{Adapter, Device, Queue, Surface};
 
 pub struct TextWriter {
     text_renderer: TextRenderer,
-    font_system: FontSystem,
+    pub font_system: FontSystem,
     swash_cache: SwashCache,
     viewport: Viewport,
     atlas: TextAtlas,
-    selected_text_buffer: Buffer,
-    action_text_buffer: Buffer,
+    pub text_buffers: HashMap<String, Buffer>,
+    // selected_text_buffer: Buffer,
+    // pub action_text_buffer: Buffer,
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -49,14 +52,17 @@ impl TextWriter {
             TextRenderer::new(&mut atlas, device, wgpu::MultisampleState::default(), None);
 
         let mut selected_text_buffer = Buffer::new(&mut font_system, Metrics::new(16.0, 20.0));
-
         selected_text_buffer.set_size(&mut font_system, Some(window_width), Some(window_height));
         selected_text_buffer.shape_until_scroll(&mut font_system, false);
 
         let mut action_text_buffer = Buffer::new(&mut font_system, Metrics::new(16.0, 20.0));
-
         action_text_buffer.set_size(&mut font_system, Some(window_width), Some(window_height));
         action_text_buffer.shape_until_scroll(&mut font_system, false);
+
+        // TODO have not found a way yet to handle dynamic buffers correctly (so we have to pre-create buffers...)
+        let mut text_buffers = HashMap::new();
+        text_buffers.insert("selected_text".to_string(), selected_text_buffer);
+        text_buffers.insert("action_text".to_string(), action_text_buffer);
 
         TextWriter {
             text_renderer,
@@ -64,29 +70,19 @@ impl TextWriter {
             swash_cache,
             viewport,
             atlas,
-            selected_text_buffer,
-            action_text_buffer,
+            text_buffers,
         }
     }
 
-    pub fn prepare(&mut self, device: &Device, queue: &Queue, ui_state: &UIState) {
+    pub fn prepare(&mut self, device: &Device, queue: &Queue, rect: Rect) {
+        let screen = Rect::new(Point2::new(0.0, 0.0), Point2::new(1920.0, 1080.0));
+
         self.viewport.update(
             queue,
             Resolution {
-                width: ui_state.window_size.width,
-                height: ui_state.window_size.height,
+                width: screen.width() as u32,
+                height: screen.height() as u32,
             },
-        );
-
-        self.selected_text_buffer.set_size(
-            &mut self.font_system,
-            Some(ui_state.window_size.width as f32),
-            Some(ui_state.window_size.height as f32),
-        );
-        self.action_text_buffer.set_size(
-            &mut self.font_system,
-            Some(ui_state.window_size.width as f32),
-            Some(ui_state.window_size.height as f32),
         );
 
         self.text_renderer
@@ -96,114 +92,50 @@ impl TextWriter {
                 &mut self.font_system,
                 &mut self.atlas,
                 &self.viewport,
-                [
-                    TextArea {
-                        buffer: &self.selected_text_buffer,
-                        left: ui_state.window_size.width as f32
-                            * ui_state.selected_text.position_top_left.x,
-                        top: ui_state.window_size.height as f32
-                            * ui_state.selected_text.position_top_left.y,
-                        scale: 1.0,
-                        bounds: TextBounds {
-                            left: (ui_state.window_size.width as f32
-                                * ui_state.selected_text.position_top_left.x)
-                                as i32
-                                - 10, // Adding 10 for some padding so text is fully shown
-                            top: (ui_state.window_size.height as f32
-                                * ui_state.selected_text.position_top_left.y)
-                                as i32
-                                - 10,
-                            right: (ui_state.window_size.width as f32
-                                * ui_state.selected_text.position_bottom_right.x)
-                                as i32,
-                            bottom: (ui_state.window_size.height as f32
-                                * ui_state.selected_text.position_bottom_right.y)
-                                as i32,
-                        },
-                        default_color: Color::rgb(255, 255, 0),
-                        custom_glyphs: &[],
+                [TextArea {
+                    // buffer: &self.action_text_buffer,
+                    buffer: &self.text_buffers.get(&"action_text".to_string()).unwrap(),
+                    left: rect.top_left.x,
+                    top: rect.top_left.y,
+                    scale: 1.0,
+                    bounds: TextBounds {
+                        left: (rect.top_left.x) as i32 - 10, // Adding 10 for some padding so text is fully shown
+                        top: (rect.top_left.y) as i32 - 10,
+                        right: (rect.bottom_right.x) as i32,
+                        bottom: (rect.bottom_right.y) as i32,
                     },
-                    TextArea {
-                        buffer: &self.action_text_buffer,
-                        left: ui_state.window_size.width as f32
-                            * ui_state.action_text.position_top_left.x,
-                        top: ui_state.window_size.height as f32
-                            * ui_state.action_text.position_top_left.y,
-                        scale: 1.0,
-                        bounds: TextBounds {
-                            left: (ui_state.window_size.width as f32
-                                * ui_state.action_text.position_top_left.x)
-                                as i32
-                                - 10, // Adding 10 for some padding so text is fully shown
-                            top: (ui_state.window_size.height as f32
-                                * ui_state.action_text.position_top_left.y)
-                                as i32
-                                - 10,
-                            right: (ui_state.window_size.width as f32
-                                * ui_state.action_text.position_bottom_right.x)
-                                as i32,
-                            bottom: (ui_state.window_size.height as f32
-                                * ui_state.action_text.position_bottom_right.y)
-                                as i32,
-                        },
-                        default_color: Color::rgb(255, 255, 0),
-                        custom_glyphs: &[],
-                    },
-                ],
+                    default_color: Color::rgb(255, 255, 0),
+                    custom_glyphs: &[],
+                }],
                 &mut self.swash_cache,
             )
             .unwrap();
+
+        // self.action_text_buffer
     }
 
     #[allow(clippy::cast_possible_truncation)]
-    pub fn write_selected_text_buffer(
+    pub fn write_text_buffer(
         &mut self,
         encoder: &mut wgpu::CommandEncoder,
         view: &wgpu::TextureView,
         text: &str,
     ) {
-        self.selected_text_buffer.set_text(
+        let buffer = self.text_buffers.get_mut("action_text").unwrap();
+
+        buffer.set_text(
             &mut self.font_system,
             text,
             Attrs::new().family(Family::Name("Playwrite NL")),
             Shaping::Advanced,
         );
 
-        {
-            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: None,
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Load,
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
-            });
-
-            self.text_renderer
-                .render(&self.atlas, &self.viewport, &mut pass)
-                .unwrap();
-        }
-    }
-
-    #[allow(clippy::cast_possible_truncation)]
-    pub fn write_action_text_buffer(
-        &mut self,
-        encoder: &mut wgpu::CommandEncoder,
-        view: &wgpu::TextureView,
-        text: &str,
-    ) {
-        self.action_text_buffer.set_text(
-            &mut self.font_system,
-            text,
-            Attrs::new().family(Family::Name("Playwrite NL")),
-            Shaping::Advanced,
-        );
+        // / self.action_text_buffer.set_text(
+        //     &mut self.font_system,
+        //     text,
+        //     Attrs::new().family(Family::Name("Playwrite NL")),
+        //     Shaping::Advanced,
+        // );
 
         {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {

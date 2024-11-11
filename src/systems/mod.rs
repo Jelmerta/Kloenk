@@ -1,5 +1,6 @@
 pub mod audio_system;
 pub mod camera_system;
+mod command_handle_system;
 pub mod game_system;
 mod inventory_system;
 pub mod item_pickup_system;

@@ -1,68 +1,14 @@
 use crate::collision_manager::CollisionManager;
 use crate::components::{Entity, Hitbox};
-use crate::frame_state::FrameState;
+use crate::frame_state::ActionEffect;
 use crate::game_state::GameState;
-use crate::gui::{Payload, UIElement, UIState};
-use crate::input::Input;
-use cgmath::{ElementWise, Point2, Point3};
+use cgmath::{ElementWise, Point3};
 
 pub struct ItemPlacementSystem {}
 impl ItemPlacementSystem {
-    // pub fn handle_item_placement(
-    //     game_state: &mut GameState,
-    //     action_text: &mut UIElement,
-    //     inventory: &mut UIElement,
-    //     click_point: Point2<f32>,
-    // ) {
-    //     let mut found_item = None;
-    //     for (entity, element) in &inventory.child_elements {
-    //         if element.contains(click_point) {
-    //             found_item = Some(entity.clone());
-    //             break;
-    //         }
-    //     }
-    //
-    //     if let Some(item) = found_item {
-    //         Self::place_item(game_state, action_text, inventory, &item);
-    //     }
-    // }
-
-    pub fn handle_item_placement(
+    pub fn place_item(
         game_state: &mut GameState,
-        ui_state: &mut UIState,
-        input: &Input,
-        _frame_state: &FrameState,
-    ) {
-        let cursor_ndc = input.mouse_position_ndc;
-        let cursor_ui_space = Point2::new(cursor_ndc.x / 2.0 + 0.5, -cursor_ndc.y / 2.0 + 0.5);
-
-        if !ui_state.inventory.contains(cursor_ui_space) {
-            return;
-        }
-        let cursor_inventory_space = ui_state.inventory.to_ui_element_space(cursor_ui_space);
-
-        let mut found_item = None;
-        for (entity, element) in &ui_state.inventory.child_elements {
-            if element.contains(cursor_inventory_space) {
-                found_item = Some(entity.clone());
-                break;
-            }
-        }
-
-        if let Some(item) = found_item {
-            Self::place_item(
-                game_state,
-                &mut ui_state.action_text,
-                &mut ui_state.inventory,
-                &item,
-            );
-        }
-    }
-
-    fn place_item(
-        game_state: &mut GameState,
-        action_text: &mut UIElement,
-        inventory: &mut UIElement,
+        action_effects: &mut Vec<ActionEffect>,
         item_unwrap: &String,
     ) {
         let player_position = game_state.get_position(&"player".to_string()).unwrap();
@@ -73,7 +19,7 @@ impl ItemPlacementSystem {
         };
 
         if !Self::is_placeable_area(game_state, &placed_position) {
-            action_text.payload = Payload::Text("Cannot place outside placeable area.".to_string());
+            action_effects.push(ActionEffect::PlaceItemNonPlaceable);
             return;
         }
 
@@ -100,13 +46,11 @@ impl ItemPlacementSystem {
             .cloned()
             .collect();
         if !colliding_entities.is_empty() {
-            action_text.payload =
-                Payload::Text("Found a colliding object.\nNot allowed to place there.".to_string());
+            action_effects.push(ActionEffect::PlaceItemCollidingItem);
             return;
         }
 
-        action_text.payload = Payload::Text("You drop the item.".to_string());
-        inventory.child_elements.remove(&item_unwrap.to_string());
+        action_effects.push(ActionEffect::PlaceItemSucceeded);
         game_state.create_position(item_unwrap.to_string(), placed_position);
         game_state.create_hitbox(item_unwrap.to_string(), item_hitbox);
         game_state.remove_in_storage(&item_unwrap.to_string());

@@ -1,7 +1,6 @@
 use crate::components::{Entity, Hitbox};
-use crate::frame_state::FrameState;
+use crate::frame_state::{ActionEffect, FrameState};
 use crate::game_state::GameState;
-use crate::gui::{Payload, UIState};
 use crate::input::Input;
 use crate::utility::distance_3d;
 use cgmath::num_traits::Float;
@@ -21,17 +20,15 @@ pub struct ObjectDetectionSystem {}
 impl ObjectDetectionSystem {
     pub fn setup_detection_for_frame(
         game_state: &mut GameState,
-        ui_state: &mut UIState,
         input: &mut Input,
         frame_state: &mut FrameState,
     ) {
-        Self::find_world_object_on_cursor(game_state, ui_state, input, frame_state);
+        Self::find_world_object_on_cursor(game_state, input, frame_state);
         Self::set_nearest_object(game_state, frame_state);
     }
 
     fn find_world_object_on_cursor(
         game_state: &mut GameState,
-        ui_state: &mut UIState,
         input: &mut Input,
         frame_state: &mut FrameState,
     ) {
@@ -77,7 +74,9 @@ impl ObjectDetectionSystem {
         }
 
         let found_objects_text = frame_state.get_objects_on_cursor().join(", ");
-        ui_state.selected_text.payload = Payload::Text(found_objects_text.to_string());
+        frame_state.action_effects.push(ActionEffect::ItemSelected {
+            found_objects_text: found_objects_text.to_string(),
+        })
     }
 
     fn set_nearest_object(game_state: &GameState, frame_state: &mut FrameState) {
