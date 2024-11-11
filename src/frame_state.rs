@@ -1,4 +1,5 @@
 use crate::components::Entity;
+use crate::gui::Gui;
 
 pub struct FrameState {
     pub objects_on_cursor: Vec<Entity>,
@@ -7,6 +8,11 @@ pub struct FrameState {
     pub handled_left_click: bool,
     pub handled_right_click: bool,
     pub handled_e_click: bool,
+
+    pub gui: Gui,
+
+    pub action_requests: Vec<ActionRequest>,
+    pub action_effects: Vec<ActionEffect>,
 }
 
 impl FrameState {
@@ -17,6 +23,11 @@ impl FrameState {
             handled_left_click: false,
             handled_right_click: false,
             handled_e_click: false,
+
+            gui: Gui::new(),
+
+            action_requests: Vec::new(),
+            action_effects: Vec::new(),
         }
     }
 
@@ -35,4 +46,18 @@ impl FrameState {
     pub fn get_nearest_object_on_cursor(&self) -> Option<&Entity> {
         self.nearest_object.as_ref()
     }
+}
+
+pub enum ActionRequest {
+    ItemPlacement { entity: Entity },
+}
+
+pub enum ActionEffect {
+    PickupItemNotStorable,
+    PickupNoItemInRange,
+    PlaceItemNonPlaceable,
+    PlaceItemCollidingItem,
+    PlaceItemSucceeded,
+    ItemSelected { found_objects_text: String },
+    PickupNoInventorySpace,
 }

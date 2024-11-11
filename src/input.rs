@@ -42,6 +42,7 @@ pub struct Input {
     pub left_shift_pressed: KeyPress,
 
     pub mouse_position_ndc: Point2<f32>,
+    pub mouse_position_ui: Point2<f32>,
     pub right_mouse_clicked: KeyPress,
     pub left_mouse_clicked: KeyPress,
 
@@ -67,6 +68,7 @@ impl Input {
             left_shift_pressed: Default::default(),
 
             mouse_position_ndc: Point2::new(0.0, 0.0), // TODO what's a default position for the mouse?
+            mouse_position_ui: Point2::new(0.0, 0.0),
             right_mouse_clicked: Default::default(),
             left_mouse_clicked: Default::default(),
 
@@ -166,7 +168,11 @@ impl Input {
         self.mouse_position_ndc = Point2 {
             x: (2.0 * mouse_position.x) as f32 / window_width - 1.0,
             y: 1.0 - (2.0 * mouse_position.y) as f32 / window_height,
-        }
+        };
+        self.mouse_position_ui = Point2::new(
+            self.mouse_position_ndc.x / 2.0 + 0.5,
+            -self.mouse_position_ndc.y / 2.0 + 0.5,
+        );
     }
 
     #[allow(clippy::cast_possible_truncation)]

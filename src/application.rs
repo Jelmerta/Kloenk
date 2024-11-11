@@ -289,10 +289,11 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     &mut engine.audio_system,
                 );
 
-                match engine
-                    .renderer
-                    .render(&mut engine.game_state, &engine.ui_state)
-                {
+                match engine.renderer.render(
+                    &mut engine.game_state,
+                    &engine.ui_state,
+                    &engine.frame_state,
+                ) {
                     Ok(()) => {}
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
                         engine.renderer.resize(engine.renderer.size);
