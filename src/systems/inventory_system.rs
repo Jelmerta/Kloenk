@@ -28,6 +28,7 @@ impl InventorySystem {
         }
 
         frame_state.gui.image(
+            100,
             inventory_window.rect,
             inventory_graphics.model_id.to_string(),
         );
@@ -58,6 +59,7 @@ impl InventorySystem {
             );
 
             match frame_state.gui.image_button(
+                150,
                 Rect::new(top_left, bottom_right),
                 item_image.model_id.to_string(),
                 input,
@@ -96,37 +98,29 @@ impl InventorySystem {
         input: &Input,
         frame_state: &mut FrameState,
     ) {
-        match &ui_state.menu_state {
-            MenuState::Inventory {
-                mouse_position,
-                item,
-            } => {
-                let object_selection_rect = Rect::new(
-                    Point2::new(mouse_position.x - 0.05, mouse_position.y - 0.05),
-                    Point2::new(mouse_position.x + 0.15, mouse_position.y + 0.05),
-                );
+        if let MenuState::Inventory {
+            mouse_position,
+            item,
+        } = &ui_state.menu_state
+        {
+            let object_selection_rect = Rect::new(
+                Point2::new(mouse_position.x - 0.05, mouse_position.y - 0.05),
+                Point2::new(mouse_position.x + 0.15, mouse_position.y + 0.05),
+            );
 
-                match frame_state.gui.image_button(
-                    object_selection_rect,
-                    "sword_inventory".to_string(),
-                    input,
-                ) {
-                    UserAction::LeftClick => {
-                        if frame_state.handled_left_click {
-                            return;
-                        }
-                        ItemPlacementSystem::place_item(
-                            game_state,
-                            &mut frame_state.action_effects,
-                            &item,
-                        );
-                        ui_state.menu_state = Closed;
-                        frame_state.handled_left_click = true;
-                    }
-                    _ => (),
+            if let UserAction::LeftClick = frame_state.gui.image_button(
+                200,
+                object_selection_rect,
+                "sword_inventory".to_string(),
+                input,
+            ) {
+                if frame_state.handled_left_click {
+                    return;
                 }
+                ItemPlacementSystem::place_item(game_state, &mut frame_state.action_effects, &item);
+                ui_state.menu_state = Closed;
+                frame_state.handled_left_click = true;
             }
-            _ => (),
         }
     }
 }
