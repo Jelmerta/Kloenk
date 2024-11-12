@@ -1,6 +1,5 @@
-use crate::gui::Rect;
 use crate::resources;
-use cgmath::Point2;
+use crate::state::ui_state::Rect;
 use glyphon::{
     fontdb, Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping,
     SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
@@ -74,14 +73,19 @@ impl TextWriter {
         }
     }
 
-    pub fn prepare(&mut self, device: &Device, queue: &Queue, rect: Rect) {
-        let screen = Rect::new(Point2::new(0.0, 0.0), Point2::new(1920.0, 1080.0));
-
+    pub fn prepare(
+        &mut self,
+        device: &Device,
+        queue: &Queue,
+        screen_width: u32,
+        screen_height: u32,
+        rect: Rect,
+    ) {
         self.viewport.update(
             queue,
             Resolution {
-                width: screen.width() as u32,
-                height: screen.height() as u32,
+                width: screen_width,
+                height: screen_height,
             },
         );
 

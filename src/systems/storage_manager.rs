@@ -1,5 +1,5 @@
 use crate::components::{Entity, ItemShape, Storage};
-use crate::game_state::GameState;
+use crate::state::game_state::GameState;
 
 pub struct StorageManager {}
 

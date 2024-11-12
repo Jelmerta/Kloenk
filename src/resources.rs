@@ -1,5 +1,5 @@
 //
-use crate::{model, texture};
+use crate::render::{model, texture};
 use cfg_if::cfg_if;
 use wgpu::util::DeviceExt;
 

@@ -54,8 +54,6 @@ impl Camera {
     }
 
     pub fn update_inverse_matrix(&mut self) {
-        self.view_projection_matrix_inverted = cgmath::Matrix4::from(self.view_projection_matrix)
-            .invert()
-            .unwrap();
+        self.view_projection_matrix_inverted = self.view_projection_matrix.invert().unwrap();
     }
 }

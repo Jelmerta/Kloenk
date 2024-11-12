@@ -1,8 +1,8 @@
 use crate::components::Entity;
-use crate::frame_state::FrameState;
-use crate::game_state::GameState;
-use crate::gui::{Rect, UIState, UserAction};
 use crate::input::Input;
+use crate::state::frame_state::FrameState;
+use crate::state::game_state::GameState;
+use crate::state::ui_state::{Rect, UIState, UserAction};
 use crate::systems::item_pickup_system::ItemPickupSystem;
 use cgmath::Point2;
 
