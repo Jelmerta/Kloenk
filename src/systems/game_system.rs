@@ -1,6 +1,6 @@
-use crate::input::Input;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
+use crate::state::input::Input;
 use crate::state::ui_state::UIState;
 use crate::systems::audio_system::AudioSystem;
 use crate::systems::camera_system::CameraSystem;
@@ -26,6 +26,8 @@ impl GameSystem {
 
         InventorySystem::handle_inventory(game_state, ui_state, input, frame_state);
         ObjectSelectionSystem::handle_object_selection(game_state, ui_state, input, frame_state);
+        InventorySystem::display_inventory_item_menu(game_state, ui_state, input, frame_state);
+
         ItemPickupSystem::handle_item_pickup_keyboard(game_state, input, frame_state);
         ItemPickupSystem::handle_item_pickup_mouse(game_state, input, frame_state);
 

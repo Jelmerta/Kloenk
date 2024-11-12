@@ -1,4 +1,5 @@
 use crate::components::Entity;
+use crate::state::ui_state::MenuState::Closed;
 use cgmath::{ElementWise, Point2};
 use std::collections::HashMap;
 
@@ -64,16 +65,26 @@ impl Rect {
     }
 }
 
+pub enum MenuState {
+    Closed,
+    World {
+        mouse_position: Point2<f32>,
+        item: Entity,
+    },
+    Inventory {
+        mouse_position: Point2<f32>,
+        item: Entity,
+    },
+}
+
 pub struct UIState {
     pub window_size: WindowSize,
     pub windows: HashMap<String, UIWindow>,
-    pub selected_objects_for_object_menu: Vec<Entity>, // Probably not the right place for this. Maybe in the ui element as payload?
 
     pub action_text: String,
     pub selected_text: String,
 
-    pub object_menu_open: bool,
-    pub object_menu_mouse_position: Point2<f32>,
+    pub menu_state: MenuState,
 }
 
 impl UIState {
@@ -88,9 +99,7 @@ impl UIState {
         UIState {
             window_size: WindowSize { width, height },
             windows,
-            selected_objects_for_object_menu: Vec::new(),
-            object_menu_open: false,
-            object_menu_mouse_position: Point2::new(0.0, 0.0),
+            menu_state: Closed,
             action_text: String::new(),
             selected_text: String::new(),
         }

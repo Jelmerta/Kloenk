@@ -1,4 +1,4 @@
-use crate::input::Input;
+use crate::state::input::Input;
 use crate::state::ui_state::{Rect, RenderCommand, UIState, UserAction};
 use cgmath::Point2;
 

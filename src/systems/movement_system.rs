@@ -1,6 +1,6 @@
 use crate::components::{Entity, Hitbox};
-use crate::input::Input;
 use crate::state::game_state::GameState;
+use crate::state::input::Input;
 use crate::systems::audio_system::AudioSystem;
 use crate::systems::collision_manager::CollisionManager;
 use cgmath::{ElementWise, Point3};

@@ -1,7 +1,9 @@
-use crate::input::Input;
 use crate::state::frame_state::{ActionRequest, FrameState};
 use crate::state::game_state::GameState;
-use crate::state::ui_state::{Rect, UIState, UserAction};
+use crate::state::input::Input;
+use crate::state::ui_state::MenuState::Closed;
+use crate::state::ui_state::{MenuState, Rect, UIState, UserAction};
+use crate::systems::item_placement_system::ItemPlacementSystem;
 use cgmath::Point2;
 
 pub struct InventorySystem {}
@@ -76,10 +78,55 @@ impl InventorySystem {
                     if frame_state.handled_right_click {
                         continue;
                     }
-                    // TODO Menu for placing
+
+                    ui_state.menu_state = MenuState::Inventory {
+                        mouse_position: input.mouse_position_ui.clone(),
+                        item: entity.to_string(),
+                    };
+
                     frame_state.handled_right_click = true;
                 }
             }
+        }
+    }
+
+    pub fn display_inventory_item_menu(
+        game_state: &mut GameState,
+        ui_state: &mut UIState,
+        input: &Input,
+        frame_state: &mut FrameState,
+    ) {
+        match &ui_state.menu_state {
+            MenuState::Inventory {
+                mouse_position,
+                item,
+            } => {
+                let object_selection_rect = Rect::new(
+                    Point2::new(mouse_position.x - 0.05, mouse_position.y - 0.05),
+                    Point2::new(mouse_position.x + 0.15, mouse_position.y + 0.05),
+                );
+
+                match frame_state.gui.image_button(
+                    object_selection_rect,
+                    "sword_inventory".to_string(),
+                    input,
+                ) {
+                    UserAction::LeftClick => {
+                        if frame_state.handled_left_click {
+                            return;
+                        }
+                        ItemPlacementSystem::place_item(
+                            game_state,
+                            &mut frame_state.action_effects,
+                            &item,
+                        );
+                        ui_state.menu_state = Closed;
+                        frame_state.handled_left_click = true;
+                    }
+                    _ => (),
+                }
+            }
+            _ => (),
         }
     }
 }
