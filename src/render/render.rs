@@ -23,16 +23,15 @@ use wgpu::util::DeviceExt;
 use winit::dpi::PhysicalSize;
 use winit::window::Window;
 
-use crate::camera::Camera;
 use crate::components::{Entity, Size};
-use crate::frame_state::FrameState;
-use crate::game_state::GameState;
-use crate::gui::{Rect, RenderCommand, UIState};
-use crate::model::{self};
-use crate::model::{Model, Vertex};
-use crate::text_renderer::TextWriter;
-use crate::{resources, texture};
-use model::Draw;
+use crate::render::camera::Camera;
+use crate::render::model::{Draw, Model, Vertex};
+use crate::render::text_renderer::TextWriter;
+use crate::render::{model, texture};
+use crate::resources;
+use crate::state::frame_state::FrameState;
+use crate::state::game_state::GameState;
+use crate::state::ui_state::{Rect, RenderCommand, UIState};
 // #[wasm_bindgen(start)]
 // pub fn run() -> Result<(), JsValue> {
 //     let gltf_data = include_bytes!("../models/garfield/scene.gltf");
@@ -201,7 +200,7 @@ impl Renderer {
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(include_str!("../shader.wgsl").into()),
         });
 
         let (camera_uniform, camera_buffer, camera_bind_group, render_pipeline) =
@@ -884,6 +883,8 @@ impl Renderer {
                         self.text_writer.prepare(
                             &self.device,
                             &self.queue,
+                            ui_state.window_size.width,
+                            ui_state.window_size.height,
                             rect.scale(
                                 ui_state.window_size.width as f32,
                                 ui_state.window_size.height as f32,

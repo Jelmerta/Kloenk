@@ -1,7 +1,7 @@
-use crate::frame_state::FrameState;
-use crate::game_state::GameState;
-use crate::gui::UIState;
 use crate::input::Input;
+use crate::state::frame_state::FrameState;
+use crate::state::game_state::GameState;
+use crate::state::ui_state::UIState;
 use crate::systems::audio_system::AudioSystem;
 use crate::systems::camera_system::CameraSystem;
 use crate::systems::command_handle_system::CommandHandleSystem;

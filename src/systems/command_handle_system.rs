@@ -1,6 +1,6 @@
-use crate::frame_state::{ActionEffect, ActionRequest, FrameState};
-use crate::game_state::GameState;
-use crate::gui::UIState;
+use crate::state::frame_state::{ActionEffect, ActionRequest, FrameState};
+use crate::state::game_state::GameState;
+use crate::state::ui_state::UIState;
 use crate::systems::item_placement_system::ItemPlacementSystem;
 
 pub struct CommandHandleSystem {}

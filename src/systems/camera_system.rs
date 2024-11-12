@@ -1,7 +1,7 @@
 use crate::components::CameraTarget;
-use crate::game_state::GameState;
-use crate::gui::UIState;
 use crate::input::Input;
+use crate::state::game_state::GameState;
+use crate::state::ui_state::UIState;
 use cgmath::{InnerSpace, Point3, Vector3};
 
 pub const MIN_CAMERA_DISTANCE: f32 = 100.0;

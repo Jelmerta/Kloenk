@@ -1,11 +1,11 @@
 use cgmath::num_traits::ToPrimitive;
 
 // use std::{collections::HashMap, sync::atomic::AtomicU32};
-use crate::camera::Camera;
 use crate::components::{
     CameraTarget, Entity, Graphics2D, Graphics3D, Hitbox, InStorage, ItemShape, Size, Storable,
     Storage,
 };
+use crate::render::camera::Camera;
 use cgmath::{ElementWise, Point3};
 use std::collections::{HashMap, HashSet};
 

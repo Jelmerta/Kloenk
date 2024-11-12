@@ -1,7 +1,7 @@
-use crate::frame_state::{ActionRequest, FrameState};
-use crate::game_state::GameState;
-use crate::gui::{Rect, UIState, UserAction};
 use crate::input::Input;
+use crate::state::frame_state::{ActionRequest, FrameState};
+use crate::state::game_state::GameState;
+use crate::state::ui_state::{Rect, UIState, UserAction};
 use cgmath::Point2;
 
 pub struct InventorySystem {}

@@ -1,8 +1,8 @@
 use crate::components::{Entity, Storable};
-use crate::frame_state::{ActionEffect, FrameState};
-use crate::game_state::GameState;
 use crate::input::Input;
-use crate::storage_manager::StorageManager;
+use crate::state::frame_state::{ActionEffect, FrameState};
+use crate::state::game_state::GameState;
+use crate::systems::storage_manager::StorageManager;
 use cgmath::num_traits::ToPrimitive;
 use cgmath::Point3;
 use std::collections::HashMap;
@@ -72,9 +72,17 @@ impl ItemPickupSystem {
             return;
         }
 
+        let item_position = game_state.get_position(&near_pickup.clone());
+        if item_position.is_none() {
+            frame_state
+                .action_effects
+                .push(ActionEffect::PickupNoItemInRange);
+            return;
+        }
+
         if !Self::in_range(
             game_state.get_position(&player.clone()).unwrap(),
-            game_state.get_position(&near_pickup.clone()).unwrap(),
+            item_position.unwrap(),
         ) {
             frame_state
                 .action_effects

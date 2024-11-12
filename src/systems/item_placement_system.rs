@@ -1,7 +1,7 @@
-use crate::collision_manager::CollisionManager;
 use crate::components::{Entity, Hitbox};
-use crate::frame_state::ActionEffect;
-use crate::game_state::GameState;
+use crate::state::frame_state::ActionEffect;
+use crate::state::game_state::GameState;
+use crate::systems::collision_manager::CollisionManager;
 use cgmath::{ElementWise, Point3};
 
 pub struct ItemPlacementSystem {}
