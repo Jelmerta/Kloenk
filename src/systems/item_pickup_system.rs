@@ -1,7 +1,7 @@
 use crate::components::{Entity, Storable};
-use crate::input::Input;
 use crate::state::frame_state::{ActionEffect, FrameState};
 use crate::state::game_state::GameState;
+use crate::state::input::Input;
 use crate::systems::storage_manager::StorageManager;
 use cgmath::num_traits::ToPrimitive;
 use cgmath::Point3;

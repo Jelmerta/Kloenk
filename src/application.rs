@@ -16,7 +16,7 @@ use winit::event::ElementState;
 use winit::platform::web::WindowExtWebSys;
 
 // use anyhow::*;
-use crate::input::Input;
+use crate::state::input::Input;
 use std::sync::Arc;
 use winit::dpi::{LogicalSize, PhysicalSize};
 use winit::event_loop::ActiveEventLoop;

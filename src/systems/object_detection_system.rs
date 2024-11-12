@@ -1,7 +1,7 @@
 use crate::components::{Entity, Hitbox};
-use crate::input::Input;
 use crate::state::frame_state::{ActionEffect, FrameState};
 use crate::state::game_state::GameState;
+use crate::state::input::Input;
 use crate::systems::utility::distance_3d;
 use cgmath::num_traits::Float;
 use cgmath::{InnerSpace, Point3, Vector3, Vector4};

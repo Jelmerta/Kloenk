@@ -6,7 +6,6 @@ use winit::event_loop::EventLoop;
 mod application;
 mod components;
 mod gui;
-mod input;
 mod render;
 mod resources;
 mod state;

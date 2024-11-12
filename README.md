@@ -2,7 +2,8 @@
 
 Web Game/Engine written in Rust
 
-Application is available online at https://hatsu.tech
+Application is available online at https://hatsu.tech (probably only on chrome at the moment though, requires webgpu
+support)
 
 Currently build for web using:
 <!-- https://github.com/gfx-rs/wgpu/wiki/Running-on-the-Web-with-WebGPU-and-WebGL -->
