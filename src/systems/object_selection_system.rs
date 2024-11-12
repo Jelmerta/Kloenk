@@ -37,6 +37,7 @@ impl ObjectSelectionSystem {
 
                 // TODO Specifically show text to pickup item
                 match frame_state.gui.image_button(
+                    200,
                     object_selection_rect,
                     "sword_inventory".to_string(),
                     input,

@@ -877,9 +877,17 @@ impl Renderer {
             .gui
             .render_commands
             .iter()
+            .sorted_by_key(|render_command| match render_command {
+                RenderCommand::Image {
+                    layer,
+                    rect,
+                    image_name,
+                } => layer,
+                RenderCommand::Text { layer, rect, text } => layer,
+            })
             .for_each(|render_command| {
                 match render_command {
-                    RenderCommand::Text { rect, text } => {
+                    RenderCommand::Text { layer, rect, text } => {
                         self.text_writer.prepare(
                             &self.device,
                             &self.queue,
@@ -893,7 +901,11 @@ impl Renderer {
 
                         self.text_writer.write_text_buffer(encoder, view, text);
                     }
-                    RenderCommand::Image { rect, image_name } => {
+                    RenderCommand::Image {
+                        layer,
+                        rect,
+                        image_name,
+                    } => {
                         let mut render_pass_ui =
                             encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                                 label: Some("Render Pass UI"),

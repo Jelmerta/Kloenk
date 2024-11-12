@@ -15,8 +15,16 @@ impl UIWindow {
 }
 
 pub enum RenderCommand {
-    Image { rect: Rect, image_name: String },
-    Text { rect: Rect, text: String },
+    Image {
+        layer: u32,
+        rect: Rect,
+        image_name: String,
+    },
+    Text {
+        layer: u32,
+        rect: Rect,
+        text: String,
+    },
 }
 
 pub enum UserAction {
