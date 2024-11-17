@@ -1,5 +1,4 @@
 use std::ops::Range;
-
 // use crate::texture;
 
 pub trait Vertex {
@@ -66,22 +65,36 @@ impl Vertex for TexVertex {
 
 pub struct Model {
     pub meshes: Vec<Mesh>,
-    pub materials: Vec<Material>,
+    // pub materials: Vec<Material>, // TODO I think materials should be sharable across models right for memory efficiency and stuff
 }
 
 pub struct Mesh {
     // pub name: String,
+    pub vertex_type: VertexType,
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
     pub num_elements: u32,
     // pub material: usize,
 }
 
+pub enum VertexType {
+    Texture { material_id: String },
+    Color { color: [f32; 3] },
+}
+
+// TODO needs to be stored somewhere
 pub struct Material {
     // pub name: String,
     // pub diffuse_texture: texture::Texture,
-    pub bind_group: wgpu::BindGroup,
+    pub texture_bind_group: wgpu::BindGroup,
 }
+
+// pub enum Material {
+//     // pub name: String,
+//     // pub diffuse_texture: texture::Texture,
+//     Texture { texture_bind_group: wgpu::BindGroup },
+//     Color { color: Vector3<f32> },
+// }
 
 // sotrh decides to implement a trait on renderpass
 pub trait Draw<'a> {

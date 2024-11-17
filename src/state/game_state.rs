@@ -59,6 +59,7 @@ impl GameState {
             &mut storage_components,
         );
         Self::load_camera(&mut entities, &mut camera_components);
+        Self::load_camera_ui(&mut entities, &mut camera_components);
 
         Self::load_shield(
             &mut entities,
@@ -326,6 +327,27 @@ impl GameState {
     fn load_camera(entities: &mut Vec<Entity>, camera_components: &mut HashMap<String, Camera>) {
         let camera = "camera".to_string();
         let camera_component = Camera::new();
+        entities.push(camera.clone());
+        camera_components.insert(camera.clone(), camera_component);
+    }
+
+    fn load_camera_ui(entities: &mut Vec<Entity>, camera_components: &mut HashMap<String, Camera>) {
+        let camera = "camera_ui".to_string();
+        let mut camera_component = Camera::new();
+        camera_component.eye = Point3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        };
+
+        camera_component.target = Point3 {
+            x: 0.0,
+            y: 0.0,
+            z: -1.0,
+        };
+
+        camera_component.z_near = -1.0;
+        camera_component.z_far = 1.0;
         entities.push(camera.clone());
         camera_components.insert(camera.clone(), camera_component);
     }

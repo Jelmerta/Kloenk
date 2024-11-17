@@ -25,13 +25,15 @@ use winit::window::Window;
 
 use crate::components::{Entity, Size};
 use crate::render::camera::Camera;
-use crate::render::model::{Draw, Model, Vertex};
+use crate::render::model::VertexType::Color;
+use crate::render::model::{Draw, Material, Model, Vertex, VertexType};
 use crate::render::text_renderer::TextWriter;
 use crate::render::{model, texture};
 use crate::resources;
+use crate::resources::load_texture;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
-use crate::state::ui_state::{Rect, RenderCommand, UIState};
+use crate::state::ui_state::{Rect, RenderCommand, UIState, WindowSize};
 // #[wasm_bindgen(start)]
 // pub fn run() -> Result<(), JsValue> {
 //     let gltf_data = include_bytes!("../models/garfield/scene.gltf");
@@ -58,27 +60,28 @@ impl CameraUniform {
     }
 }
 
+pub struct RenderContext {
+    pub render_pipeline: RenderPipeline,
+    pub camera_uniform: CameraUniform,
+    pub camera_buffer: Buffer,
+    pub camera_bind_group: BindGroup,
+}
+
 pub struct Renderer {
     surface: wgpu::Surface<'static>,
     device: Device,
     queue: Queue,
     config: SurfaceConfiguration,
     pub size: PhysicalSize<u32>,
-    render_pipeline: RenderPipeline,
-    render_pipeline_ui: RenderPipeline,
-    // camera: Camera,
-    camera_uniform: CameraUniform,
-    camera_buffer: Buffer,
-    camera_bind_group: BindGroup,
-    camera_ui: Camera,
-    camera_uniform_ui: CameraUniform,
-    camera_buffer_ui: Buffer,
-    camera_bind_group_ui: BindGroup,
+
+    render_contexts: HashMap<String, RenderContext>,
+
     // models: Vec<model::Model>,
     //obj_model: model::Model,
     model_map: HashMap<String, Model>,
+    material_map: HashMap<String, Material>,
     depth_texture: texture::Depth,
-    render_groups: Vec<RenderGroup>,
+    render_groups: Vec<RenderGroup>, // TODO Probably group by mesh otherwise we cannot batch? Also maybe this is a RenderBatch?
     text_writer: TextWriter,
 }
 
@@ -198,28 +201,36 @@ impl Renderer {
 
         let texture_bind_group_layout = Self::setup_texture_layout(&device);
 
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../shader.wgsl").into()),
+        let texture_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("Texture Shader"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("../texture_shader.wgsl").into()),
         });
 
-        let (camera_uniform, camera_buffer, camera_bind_group, render_pipeline) =
-            Self::setup_pipeline(&device, &config, &texture_bind_group_layout, &shader);
-
-        let (
-            camera_ui,
-            camera_uniform_ui,
-            camera_buffer_ui,
-            camera_bind_group_ui,
-            render_pipeline_ui,
-        ) = Self::setup_ui_pipeline(
-            window_width,
-            window_height,
-            &device,
-            &config,
-            &texture_bind_group_layout,
-            &shader,
+        let mut render_contexts = HashMap::new();
+        render_contexts.insert(
+            "render_context_3d_textured".to_string(),
+            Self::setup_textured_3d_context(
+                &device,
+                &config,
+                &texture_bind_group_layout,
+                &texture_shader,
+            ),
         );
+
+        render_contexts.insert(
+            "render_context_ui_textured".to_string(),
+            Self::setup_textured_ui_context(
+                &device,
+                &config,
+                &texture_bind_group_layout,
+                &texture_shader,
+            ),
+        );
+
+        // let color_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        //     label: Some("Color Shader"),
+        //     source: wgpu::ShaderSource::Wgsl(include_str!("../color_shader.wgsl").into()),
+        // });
 
         // let vertex_buffer = device.create_buffer_init(
         //     &wgpu::util::BufferInitDescriptor {
@@ -405,7 +416,8 @@ impl Renderer {
         // };
         // // models.push(garfield);
 
-        let model_map = Self::load_models(&device, &queue, &texture_bind_group_layout).await;
+        let model_map = Self::load_models(&device).await;
+        let material_map = Self::load_materials(&device, &queue, &texture_bind_group_layout).await;
 
         let depth_texture = texture::Depth::create_depth_texture(&device, &config, "depth_texture");
         let text_writer = TextWriter::new(
@@ -423,16 +435,9 @@ impl Renderer {
             queue,
             config,
             size: PhysicalSize::new(window_width, window_height),
-            render_pipeline,
-            render_pipeline_ui,
-            camera_uniform,
-            camera_buffer,
-            camera_bind_group,
-            camera_ui,
-            camera_uniform_ui,
-            camera_buffer_ui,
-            camera_bind_group_ui,
+            render_contexts,
             model_map,
+            material_map,
             //obj_model: garfield,
             depth_texture,
             render_groups: Vec::new(),
@@ -464,14 +469,13 @@ impl Renderer {
         })
     }
 
-    fn setup_pipeline(
+    fn setup_textured_3d_context(
         device: &Device,
         config: &SurfaceConfiguration,
         texture_bind_group_layout: &BindGroupLayout,
         shader: &ShaderModule,
-    ) -> (CameraUniform, Buffer, BindGroup, RenderPipeline) {
+    ) -> RenderContext {
         let camera_uniform = CameraUniform::new();
-        // camera_uniform.update_view_projection(&camera);
 
         let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer"),
@@ -553,37 +557,31 @@ impl Renderer {
             multiview: None,
             cache: None,
         });
-        (
-            // camera,
+        RenderContext {
             camera_uniform,
             camera_buffer,
             camera_bind_group,
             render_pipeline,
-        )
+        }
     }
 
-    fn setup_ui_pipeline(
-        window_width: u32,
-        window_height: u32,
+    fn setup_textured_ui_context(
         device: &Device,
         config: &SurfaceConfiguration,
         texture_bind_group_layout: &BindGroupLayout,
-        shader: &ShaderModule,
-    ) -> (Camera, CameraUniform, Buffer, BindGroup, RenderPipeline) {
-        let mut camera_ui = Camera::new();
-        camera_ui.update_view_projection_matrix(window_width, window_height);
+        texture_shader: &ShaderModule,
+    ) -> RenderContext {
+        let camera_uniform = CameraUniform::new();
 
-        let camera_uniform_ui = CameraUniform::new();
-
-        let camera_buffer_ui = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Camera Buffer UI"),
-            contents: bytemuck::cast_slice(&[camera_uniform_ui]),
+        let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Camera Buffer"),
+            contents: bytemuck::cast_slice(&[camera_uniform]),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
-        let camera_bind_group_layout_ui =
+        let camera_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("Camera Bind Group Layout UI"),
+                label: Some("Camera Bind Group Layout"),
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
                     visibility: wgpu::ShaderStages::VERTEX,
@@ -596,27 +594,27 @@ impl Renderer {
                 }],
             });
 
-        let camera_bind_group_ui = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Camera Bind Group UI"),
-            layout: &camera_bind_group_layout_ui,
+        let camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Camera Bind Group"),
+            layout: &camera_bind_group_layout,
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
-                resource: camera_buffer_ui.as_entire_binding(),
+                resource: camera_buffer.as_entire_binding(),
             }],
         });
 
-        let render_pipeline_layout_ui =
+        let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Render Pipeline Layout UI"),
-                bind_group_layouts: &[texture_bind_group_layout, &camera_bind_group_layout_ui],
+                label: Some("Render Pipeline Layout"),
+                bind_group_layouts: &[texture_bind_group_layout, &camera_bind_group_layout],
                 push_constant_ranges: &[],
             });
 
-        let render_pipeline_ui = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Render Pipeline UI"),
-            layout: Some(&render_pipeline_layout_ui),
+        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("Render Pipeline"),
+            layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
-                module: shader,
+                module: texture_shader,
                 entry_point: Some("vs_main"),
                 buffers: &[model::TexVertex::desc(), InstanceRaw::desc()],
                 compilation_options: PipelineCompilationOptions::default(),
@@ -637,7 +635,7 @@ impl Renderer {
                 alpha_to_coverage_enabled: false,
             },
             fragment: Some(wgpu::FragmentState {
-                module: shader,
+                module: texture_shader,
                 entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
@@ -649,93 +647,124 @@ impl Renderer {
             multiview: None,
             cache: None,
         });
-        (
-            camera_ui,
-            camera_uniform_ui,
-            camera_buffer_ui,
-            camera_bind_group_ui,
-            render_pipeline_ui,
-        )
+        RenderContext {
+            camera_uniform,
+            camera_buffer,
+            camera_bind_group,
+            render_pipeline,
+        }
     }
 
-    async fn load_models(
-        device: &Device,
-        queue: &Queue,
-        texture_bind_group_layout: &BindGroupLayout,
-    ) -> HashMap<String, Model> {
+    async fn load_models(device: &Device) -> HashMap<String, Model> {
         let mut model_map: HashMap<String, Model> = HashMap::new();
-        let shield = resources::load_model(
-            "shield.jpg",
-            device,
-            queue,
-            texture_bind_group_layout,
-            "CUBE",
-        )
-        .await
-        .unwrap();
+        let shield = resources::load_model(device, "CUBE", "shield")
+            .await
+            .unwrap();
         model_map.insert("shield".to_string(), shield);
 
-        let shield_inventory = resources::load_model(
-            "shield.jpg",
-            device,
-            queue,
-            texture_bind_group_layout,
-            "SQUARE",
-        )
-        .await
-        .unwrap();
+        let shield_inventory = resources::load_model(device, "SQUARE", "shield")
+            .await
+            .unwrap();
         model_map.insert("shield_inventory".to_string(), shield_inventory);
 
-        let character = resources::load_model(
-            "character.jpg",
-            device,
-            queue,
-            texture_bind_group_layout,
-            "CUBE",
-        )
-        .await
-        .unwrap();
+        let character = resources::load_model(device, "CUBE", "character")
+            .await
+            .unwrap();
         model_map.insert("character".to_string(), character);
 
-        let sword = resources::load_model(
-            "sword.jpg",
-            device,
-            queue,
-            texture_bind_group_layout,
-            "CUBE",
-        )
-        .await
-        .unwrap();
+        let sword = resources::load_model(device, "CUBE", "sword")
+            .await
+            .unwrap();
         model_map.insert("sword".to_string(), sword);
 
-        let sword_inventory = resources::load_model(
-            "sword.jpg",
-            device,
-            queue,
-            texture_bind_group_layout,
-            "SQUARE",
-        )
-        .await
-        .unwrap();
+        let sword_inventory = resources::load_model(device, "SQUARE", "sword")
+            .await
+            .unwrap();
         model_map.insert("sword_inventory".to_string(), sword_inventory);
 
-        let grass = resources::load_model(
-            "grass.jpg",
-            device,
-            queue,
-            texture_bind_group_layout,
-            "CUBE",
-        )
-        .await
-        .unwrap();
+        let grass = resources::load_model(device, "CUBE", "grass")
+            .await
+            .unwrap();
         model_map.insert("grass".to_string(), grass);
 
-        let tree =
-            resources::load_model("tree.png", device, queue, texture_bind_group_layout, "CUBE")
-                .await
-                .unwrap();
+        let tree = resources::load_model(device, "CUBE", "tree").await.unwrap();
         model_map.insert("tree".to_string(), tree);
         model_map
+    }
+
+    async fn load_materials(
+        device: &Device,
+        queue: &Queue,
+        layout: &BindGroupLayout,
+    ) -> HashMap<String, Material> {
+        let mut materials = HashMap::new();
+        materials.insert(
+            "sword".to_string(),
+            Self::load_material(device, queue, layout, "sword.jpg")
+                .await
+                .unwrap(),
+        );
+        materials.insert(
+            "shield".to_string(),
+            Self::load_material(device, queue, layout, "shield.jpg")
+                .await
+                .unwrap(),
+        );
+        materials.insert(
+            "character".to_string(),
+            Self::load_material(device, queue, layout, "character.jpg")
+                .await
+                .unwrap(),
+        );
+        materials.insert(
+            "grass".to_string(),
+            Self::load_material(device, queue, layout, "grass.jpg")
+                .await
+                .unwrap(),
+        );
+        materials.insert(
+            "tree".to_string(),
+            Self::load_material(device, queue, layout, "tree.png")
+                .await
+                .unwrap(),
+        );
+        materials
+    }
+
+    async fn load_material(
+        device: &Device,
+        queue: &Queue,
+        layout: &BindGroupLayout,
+        file_name: &str,
+    ) -> anyhow::Result<Material> {
+        let diffuse_texture = load_texture(file_name, device, queue).await?;
+        let bind_group = Self::build_bind_group(device, layout, &diffuse_texture);
+        Ok(Material {
+            texture_bind_group: bind_group,
+        })
+    }
+
+    fn build_bind_group(
+        device: &Device,
+        texture_bind_group_layout: &BindGroupLayout,
+        diffuse_texture: &texture::Texture,
+    ) -> wgpu::BindGroup {
+        let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: texture_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
+                },
+            ],
+            label: Some("diffuse_bind_group"),
+        });
+
+        diffuse_bind_group
     }
 
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
@@ -755,16 +784,6 @@ impl Renderer {
         ui_state: &UIState,
         frame_state: &FrameState,
     ) -> Result<(), wgpu::SurfaceError> {
-        let camera = game_state.camera_components.get_mut("camera").unwrap();
-        self.camera_uniform.update_view_projection(camera);
-        self.queue.write_buffer(
-            &self.camera_buffer,
-            0,
-            bytemuck::cast_slice(&[self.camera_uniform]),
-        );
-
-        self.create_render_groups(game_state);
-
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
@@ -776,28 +795,9 @@ impl Renderer {
                 label: Some("Render Encoder"),
             });
 
-        self.render_world(&view, &mut encoder);
+        self.render_world(game_state, &view, &mut encoder);
 
-        self.render_ui(ui_state, frame_state, &view, &mut encoder);
-
-        // self.text_writer
-        //     .prepare(&self.device, &self.queue, ui_state);
-        //
-        // let selected_text = match &ui_state.selected_text.payload {
-        //     Payload::Text(text) => text,
-        //     _ => panic!("unexpected payload"),
-        // };
-        //
-        // self.text_writer
-        //     .write_selected_text_buffer(&mut encoder, &view, selected_text);
-        //
-        // let action_text = match &ui_state.action_text.payload {
-        //     Payload::Text(text) => text,
-        //     _ => panic!("unexpected payload"),
-        // };
-        //
-        // self.text_writer
-        //     .write_action_text_buffer(&mut encoder, &view, action_text);
+        self.render_ui(game_state, ui_state, frame_state, &view, &mut encoder);
 
         //use model::DrawModel;
         // let garfield = self.models.pop().unwrap();
@@ -811,7 +811,29 @@ impl Renderer {
         Ok(())
     }
 
-    fn render_world(&mut self, view: &TextureView, encoder: &mut CommandEncoder) {
+    fn render_world(
+        &mut self,
+        game_state: &mut GameState,
+        view: &TextureView,
+        encoder: &mut CommandEncoder,
+    ) {
+        self.create_render_groups(game_state);
+
+        let render_context_3d_textured = self
+            .render_contexts
+            .get_mut("render_context_3d_textured")
+            .unwrap();
+
+        let camera = game_state.camera_components.get_mut("camera").unwrap();
+        render_context_3d_textured
+            .camera_uniform
+            .update_view_projection(camera);
+        self.queue.write_buffer(
+            &render_context_3d_textured.camera_buffer,
+            0,
+            bytemuck::cast_slice(&[render_context_3d_textured.camera_uniform]),
+        );
+
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
@@ -840,25 +862,30 @@ impl Renderer {
                 timestamp_writes: None,
             });
 
-            render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
+            render_pass.set_pipeline(&render_context_3d_textured.render_pipeline);
+            render_pass.set_bind_group(1, &render_context_3d_textured.camera_bind_group, &[]);
 
             self.render_groups.iter().for_each(|render_group| {
-                render_pass.set_bind_group(
-                    0,
-                    &self
-                        .model_map
-                        .get(&render_group.model_id)
-                        .unwrap()
-                        .materials[0]
-                        .bind_group,
-                    &[],
-                );
-                render_pass.set_vertex_buffer(1, render_group.buffer.slice(..));
-                render_pass.draw_mesh_instanced(
-                    &self.model_map.get(&render_group.model_id).unwrap().meshes[0],
-                    0..render_group.instance_count,
-                );
+                let model = &self.model_map.get(&render_group.model_id).unwrap();
+                for mesh in &model.meshes {
+                    match &mesh.vertex_type {
+                        Color { color } => (),
+                        VertexType::Texture { material_id } => {
+                            log::warn!("uhmhello");
+                            log::warn!("{}", material_id);
+                            log::warn!("{:?}", self.material_map.keys());
+                            let material = self.material_map.get(material_id).unwrap();
+                            render_pass.set_bind_group(0, &material.texture_bind_group, &[]);
+                            render_pass.set_vertex_buffer(1, render_group.buffer.slice(..));
+                            render_pass.draw_mesh_instanced(
+                                // &self.model_map.get(&render_group.model_id).unwrap().meshes[0], // TODO Draw each mesh
+                                mesh,
+                                // 0..render_group.instance_count,
+                                0..1,
+                            );
+                        }
+                    }
+                }
             });
 
             drop(render_pass);
@@ -867,12 +894,15 @@ impl Renderer {
 
     fn render_ui(
         &mut self,
+        game_state: &mut GameState,
         ui_state: &UIState,
         frame_state: &FrameState,
         view: &TextureView,
         encoder: &mut CommandEncoder,
     ) {
-        self.set_camera_data_ui(ui_state);
+        let camera = game_state.camera_components.get_mut("camera_ui").unwrap();
+        self.set_camera_data_ui(camera, &ui_state.window_size);
+
         frame_state
             .gui
             .render_commands
@@ -880,14 +910,22 @@ impl Renderer {
             .sorted_by_key(|render_command| match render_command {
                 RenderCommand::Image {
                     layer,
-                    rect,
-                    image_name,
+                    rect: _rect,
+                    image_name: _image_name,
                 } => layer,
-                RenderCommand::Text { layer, rect, text } => layer,
+                RenderCommand::Text {
+                    layer,
+                    rect: _rect,
+                    text: _text,
+                } => layer,
             })
             .for_each(|render_command| {
                 match render_command {
-                    RenderCommand::Text { layer, rect, text } => {
+                    RenderCommand::Text {
+                        layer: _layer,
+                        rect,
+                        text,
+                    } => {
                         self.text_writer.prepare(
                             &self.device,
                             &self.queue,
@@ -902,10 +940,15 @@ impl Renderer {
                         self.text_writer.write_text_buffer(encoder, view, text);
                     }
                     RenderCommand::Image {
-                        layer,
+                        layer: _layer,
                         rect,
                         image_name,
                     } => {
+                        let render_context_ui_textured = self
+                            .render_contexts
+                            .get_mut("render_context_ui_textured")
+                            .unwrap();
+
                         let mut render_pass_ui =
                             encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                                 label: Some("Render Pass UI"),
@@ -922,8 +965,12 @@ impl Renderer {
                                 timestamp_writes: None,
                             });
 
-                        render_pass_ui.set_pipeline(&self.render_pipeline_ui);
-                        render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
+                        render_pass_ui.set_pipeline(&render_context_ui_textured.render_pipeline);
+                        render_pass_ui.set_bind_group(
+                            1,
+                            &render_context_ui_textured.camera_bind_group,
+                            &[],
+                        );
 
                         let element_instance = Self::create_ui_element_instance(
                             Point2::new(
@@ -1229,48 +1276,40 @@ impl Renderer {
     //     render_groups
     // }
 
-    fn set_camera_data_ui(&mut self, ui_state: &UIState) {
-        self.camera_ui.eye = Point3 {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        };
+    fn set_camera_data_ui(&mut self, camera: &mut Camera, window_size: &WindowSize) {
+        let render_context_ui_textured = self
+            .render_contexts
+            .get_mut("render_context_ui_textured")
+            .unwrap();
 
-        self.camera_ui.target = Point3 {
-            x: 0.0,
-            y: 0.0,
-            z: -1.0,
-        };
-
-        self.camera_ui.z_near = -1.0;
-        self.camera_ui.z_far = 1.0;
-
-        self.camera_ui
-            .update_view_projection_matrix(ui_state.window_size.width, ui_state.window_size.height);
-        self.camera_uniform_ui
-            .update_view_projection(&mut self.camera_ui);
+        camera.update_view_projection_matrix(window_size.width, window_size.height);
+        render_context_ui_textured
+            .camera_uniform
+            .update_view_projection(camera);
         self.queue.write_buffer(
-            &self.camera_buffer_ui,
+            &render_context_ui_textured.camera_buffer,
             0,
-            bytemuck::cast_slice(&[self.camera_uniform_ui]),
+            bytemuck::cast_slice(&[render_context_ui_textured.camera_uniform]),
         );
     }
 
     fn draw_ui<'a>(&'a self, render_pass: &mut RenderPass<'a>, render_group: &RenderGroup) {
-        render_pass.set_bind_group(
-            0,
-            &self
-                .model_map
-                .get(&render_group.model_id)
-                .unwrap()
-                .materials[0]
-                .bind_group,
-            &[],
-        );
-        render_pass.set_vertex_buffer(1, render_group.buffer.slice(..));
-        render_pass.draw_mesh_instanced(
-            &self.model_map.get(&render_group.model_id).unwrap().meshes[0],
-            0..render_group.instance_count,
-        );
+        let model = &self.model_map.get(&render_group.model_id).unwrap();
+        for mesh in &model.meshes {
+            match &mesh.vertex_type {
+                Color { color } => {}
+                VertexType::Texture { material_id } => {
+                    let material = self.material_map.get(material_id).unwrap();
+                    render_pass.set_bind_group(0, &material.texture_bind_group, &[]);
+                    render_pass.set_vertex_buffer(1, render_group.buffer.slice(..));
+                    render_pass.draw_mesh_instanced(
+                        mesh,
+                        // &self.model_map.get(&render_group.model_id).unwrap().meshes[0],
+                        // 0..render_group.instance_count,
+                        0..1,
+                    );
+                }
+            }
+        }
     }
 }

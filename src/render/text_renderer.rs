@@ -98,15 +98,15 @@ impl TextWriter {
                 &self.viewport,
                 [TextArea {
                     // buffer: &self.action_text_buffer,
-                    buffer: &self.text_buffers.get(&"action_text".to_string()).unwrap(),
+                    buffer: self.text_buffers.get("action_text").unwrap(),
                     left: rect.top_left.x,
                     top: rect.top_left.y,
                     scale: 1.0,
                     bounds: TextBounds {
-                        left: (rect.top_left.x) as i32 - 10, // Adding 10 for some padding so text is fully shown
-                        top: (rect.top_left.y) as i32 - 10,
-                        right: (rect.bottom_right.x) as i32,
-                        bottom: (rect.bottom_right.y) as i32,
+                        left: rect.top_left.x as i32 - 10, // Adding 10 for some padding so text is fully shown
+                        top: rect.top_left.y as i32 - 10,
+                        right: rect.bottom_right.x as i32,
+                        bottom: rect.bottom_right.y as i32,
                     },
                     default_color: Color::rgb(255, 255, 0),
                     custom_glyphs: &[],
