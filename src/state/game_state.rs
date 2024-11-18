@@ -119,7 +119,7 @@ impl GameState {
         entities.push(tree.clone());
 
         let tree_graphics = Graphics3D {
-            model_id: "tree".to_string(),
+            mesh_id: "tree".to_string(),
         };
         graphics_3d_components.insert(tree.clone(), tree_graphics);
 
@@ -156,7 +156,7 @@ impl GameState {
                 entities.push(plane.clone());
 
                 let plane_graphics = Graphics3D {
-                    model_id: "grass".to_string(),
+                    mesh_id: "grass".to_string(),
                 };
                 graphics_3d_components.insert(plane.clone(), plane_graphics);
 
@@ -186,12 +186,12 @@ impl GameState {
             entities.push(sword.clone());
 
             let sword_graphics = Graphics3D {
-                model_id: "sword".to_string(),
+                mesh_id: "sword".to_string(),
             };
             graphics_3d_components.insert(sword.clone(), sword_graphics);
 
             let sword_graphics_inventory = Graphics2D {
-                model_id: "sword_inventory".to_string(),
+                material_id: "sword_inventory".to_string(),
             };
             graphics_2d_components.insert(sword.clone(), sword_graphics_inventory);
 
@@ -239,12 +239,12 @@ impl GameState {
         let shield = "shield".to_string();
         entities.push(shield.clone());
         let shield_graphics = Graphics3D {
-            model_id: "shield".to_string(),
+            mesh_id: "shield".to_string(),
         };
         graphics_3d_components.insert(shield.clone(), shield_graphics);
 
         let shield_graphics_inventory = Graphics2D {
-            model_id: "shield_inventory".to_string(),
+            material_id: "shield_inventory".to_string(),
         };
         graphics_2d_components.insert(shield.clone(), shield_graphics_inventory);
 
@@ -291,7 +291,7 @@ impl GameState {
         entities.push(player.clone());
 
         let player_graphics = Graphics3D {
-            model_id: "character".to_string(),
+            mesh_id: "character".to_string(),
         };
         graphics_3d_components.insert(player.clone(), player_graphics);
 

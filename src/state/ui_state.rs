@@ -18,7 +18,7 @@ pub enum RenderCommand {
     Image {
         layer: u32,
         rect: Rect,
-        image_name: String,
+        mesh_id: String,
     },
     Text {
         layer: u32,
