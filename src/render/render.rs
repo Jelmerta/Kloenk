@@ -6,8 +6,8 @@ use std::iter;
 use std::sync::Arc;
 use wgpu::{
     BindGroup, BindGroupLayout, Buffer, CommandEncoder, Device, InstanceFlags, MemoryHints,
-    PipelineCompilationOptions, Queue, RenderPipeline, ShaderModule,
-    SurfaceConfiguration, TextureView,
+    PipelineCompilationOptions, Queue, RenderPipeline, ShaderModule, SurfaceConfiguration,
+    TextureView,
 };
 // use gltf::iter::Meshes;
 // use gltf::mesh::util::indices;
