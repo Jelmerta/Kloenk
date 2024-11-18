@@ -17,7 +17,7 @@ impl Gui {
         let image_command = RenderCommand::Image {
             layer,
             rect,
-            image_name,
+            mesh_id: image_name,
         };
         self.render_commands.push(image_command);
     }
@@ -32,7 +32,7 @@ impl Gui {
         let image_command = RenderCommand::Image {
             layer,
             rect,
-            image_name,
+            mesh_id: image_name,
         };
         self.render_commands.push(image_command);
         if rect.contains(input.mouse_position_ui) && input.left_mouse_clicked.is_toggled_on() {

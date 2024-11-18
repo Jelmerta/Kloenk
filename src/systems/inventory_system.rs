@@ -30,7 +30,7 @@ impl InventorySystem {
         frame_state.gui.image(
             100,
             inventory_window.rect,
-            inventory_graphics.model_id.to_string(),
+            inventory_graphics.material_id.to_string(),
         );
 
         let inventory_ecs = game_state.get_storage(&"player".to_string()).unwrap();
@@ -61,7 +61,7 @@ impl InventorySystem {
             match frame_state.gui.image_button(
                 150,
                 Rect::new(top_left, bottom_right),
-                item_image.model_id.to_string(),
+                item_image.material_id.to_string(),
                 input,
             ) {
                 UserAction::None => {}

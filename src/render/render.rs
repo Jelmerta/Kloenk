@@ -26,7 +26,7 @@ use winit::window::Window;
 use crate::components::{Entity, Size};
 use crate::render::camera::Camera;
 use crate::render::model::VertexType::Color;
-use crate::render::model::{Draw, Material, Model, Vertex, VertexType};
+use crate::render::model::{Draw, Material, Mesh, Vertex, VertexType};
 use crate::render::text_renderer::TextWriter;
 use crate::render::{model, texture};
 use crate::resources;
@@ -62,7 +62,7 @@ impl CameraUniform {
 
 pub struct RenderContext {
     pub render_pipeline: RenderPipeline,
-    pub camera_uniform: CameraUniform,
+    camera_uniform: CameraUniform,
     pub camera_buffer: Buffer,
     pub camera_bind_group: BindGroup,
 }
@@ -78,10 +78,10 @@ pub struct Renderer {
 
     // models: Vec<model::Model>,
     //obj_model: model::Model,
-    model_map: HashMap<String, Model>,
+    mesh_map: HashMap<String, Mesh>,
     material_map: HashMap<String, Material>,
     depth_texture: texture::Depth,
-    render_groups: Vec<RenderGroup>, // TODO Probably group by mesh otherwise we cannot batch? Also maybe this is a RenderBatch?
+    render_batches: Vec<RenderBatch>, // TODO Probably group by mesh otherwise we cannot batch? Also maybe this is a RenderBatch?
     text_writer: TextWriter,
 }
 
@@ -139,9 +139,9 @@ impl InstanceRaw {
     }
 }
 
-struct RenderGroup {
-    buffer: Buffer,
-    model_id: String,
+struct RenderBatch {
+    instance_buffer: Buffer,
+    mesh_id: String,
     instance_count: u32,
 }
 
@@ -416,7 +416,7 @@ impl Renderer {
         // };
         // // models.push(garfield);
 
-        let model_map = Self::load_models(&device).await;
+        let mesh_map = Self::load_models(&device).await;
         let material_map = Self::load_materials(&device, &queue, &texture_bind_group_layout).await;
 
         let depth_texture = texture::Depth::create_depth_texture(&device, &config, "depth_texture");
@@ -436,11 +436,11 @@ impl Renderer {
             config,
             size: PhysicalSize::new(window_width, window_height),
             render_contexts,
-            model_map,
+            mesh_map,
             material_map,
             //obj_model: garfield,
             depth_texture,
-            render_groups: Vec::new(),
+            render_batches: Vec::new(),
             text_writer,
         }
     }
@@ -655,41 +655,59 @@ impl Renderer {
         }
     }
 
-    async fn load_models(device: &Device) -> HashMap<String, Model> {
-        let mut model_map: HashMap<String, Model> = HashMap::new();
+    async fn load_models(device: &Device) -> HashMap<String, Mesh> {
+        let mut mesh_map: HashMap<String, Mesh> = HashMap::new();
         let shield = resources::load_model(device, "CUBE", "shield")
             .await
             .unwrap();
-        model_map.insert("shield".to_string(), shield);
+        mesh_map.insert(
+            "shield".to_string(),
+            shield.meshes.into_iter().next().unwrap(),
+        );
 
         let shield_inventory = resources::load_model(device, "SQUARE", "shield")
             .await
             .unwrap();
-        model_map.insert("shield_inventory".to_string(), shield_inventory);
+        mesh_map.insert(
+            "shield_inventory".to_string(),
+            shield_inventory.meshes.into_iter().next().unwrap(),
+        );
 
         let character = resources::load_model(device, "CUBE", "character")
             .await
             .unwrap();
-        model_map.insert("character".to_string(), character);
+        mesh_map.insert(
+            "character".to_string(),
+            character.meshes.into_iter().next().unwrap(),
+        );
 
         let sword = resources::load_model(device, "CUBE", "sword")
             .await
             .unwrap();
-        model_map.insert("sword".to_string(), sword);
+        mesh_map.insert(
+            "sword".to_string(),
+            sword.meshes.into_iter().next().unwrap(),
+        );
 
         let sword_inventory = resources::load_model(device, "SQUARE", "sword")
             .await
             .unwrap();
-        model_map.insert("sword_inventory".to_string(), sword_inventory);
+        mesh_map.insert(
+            "sword_inventory".to_string(),
+            sword_inventory.meshes.into_iter().next().unwrap(),
+        );
 
         let grass = resources::load_model(device, "CUBE", "grass")
             .await
             .unwrap();
-        model_map.insert("grass".to_string(), grass);
+        mesh_map.insert(
+            "grass".to_string(),
+            grass.meshes.into_iter().next().unwrap(),
+        );
 
         let tree = resources::load_model(device, "CUBE", "tree").await.unwrap();
-        model_map.insert("tree".to_string(), tree);
-        model_map
+        mesh_map.insert("tree".to_string(), tree.meshes.into_iter().next().unwrap());
+        mesh_map
     }
 
     async fn load_materials(
@@ -748,7 +766,7 @@ impl Renderer {
         device: &Device,
         texture_bind_group_layout: &BindGroupLayout,
         diffuse_texture: &texture::Texture,
-    ) -> wgpu::BindGroup {
+    ) -> BindGroup {
         let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: texture_bind_group_layout,
             entries: &[
@@ -865,25 +883,15 @@ impl Renderer {
             render_pass.set_pipeline(&render_context_3d_textured.render_pipeline);
             render_pass.set_bind_group(1, &render_context_3d_textured.camera_bind_group, &[]);
 
-            self.render_groups.iter().for_each(|render_group| {
-                let model = &self.model_map.get(&render_group.model_id).unwrap();
-                for mesh in &model.meshes {
-                    match &mesh.vertex_type {
-                        Color { color } => (),
-                        VertexType::Texture { material_id } => {
-                            log::warn!("uhmhello");
-                            log::warn!("{}", material_id);
-                            log::warn!("{:?}", self.material_map.keys());
-                            let material = self.material_map.get(material_id).unwrap();
-                            render_pass.set_bind_group(0, &material.texture_bind_group, &[]);
-                            render_pass.set_vertex_buffer(1, render_group.buffer.slice(..));
-                            render_pass.draw_mesh_instanced(
-                                // &self.model_map.get(&render_group.model_id).unwrap().meshes[0], // TODO Draw each mesh
-                                mesh,
-                                // 0..render_group.instance_count,
-                                0..1,
-                            );
-                        }
+            self.render_batches.iter().for_each(|render_group| {
+                let mesh = &self.mesh_map.get(&render_group.mesh_id).unwrap();
+                match &mesh.vertex_type {
+                    Color { color: _color } => (),
+                    VertexType::Texture { material_id } => {
+                        let material = self.material_map.get(material_id).unwrap();
+                        render_pass.set_bind_group(0, &material.texture_bind_group, &[]);
+                        render_pass.set_vertex_buffer(1, render_group.instance_buffer.slice(..));
+                        render_pass.draw_mesh_instanced(mesh, 0..render_group.instance_count);
                     }
                 }
             });
@@ -911,7 +919,7 @@ impl Renderer {
                 RenderCommand::Image {
                     layer,
                     rect: _rect,
-                    image_name: _image_name,
+                    mesh_id: _image_name,
                 } => layer,
                 RenderCommand::Text {
                     layer,
@@ -942,7 +950,7 @@ impl Renderer {
                     RenderCommand::Image {
                         layer: _layer,
                         rect,
-                        image_name,
+                        mesh_id,
                     } => {
                         let render_context_ui_textured = self
                             .render_contexts
@@ -979,10 +987,12 @@ impl Renderer {
                             ),
                             *rect,
                         );
-                        let element_render_group = RenderGroup {
-                            buffer: Self::create_instance_buffer(&self.device, &[element_instance]),
-                            // model_id: "sword_inventory".to_string(),
-                            model_id: image_name.to_string(),
+                        let element_render_group = RenderBatch {
+                            instance_buffer: Self::create_instance_buffer(
+                                &self.device,
+                                &[element_instance],
+                            ),
+                            mesh_id: mesh_id.to_string(),
                             instance_count: 1,
                         };
                         self.draw_ui(&mut render_pass_ui, &element_render_group);
@@ -991,75 +1001,6 @@ impl Renderer {
                     }
                 } // TODO or maybe call it widget?
             });
-
-        // if ui_state.inventory.is_visible {
-        //     self.set_camera_data_ui(ui_state);
-        //     let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-        //         label: Some("Render Pass UI"),
-        //         color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-        //             view,
-        //             resolve_target: None,
-        //             ops: wgpu::Operations {
-        //                 load: wgpu::LoadOp::Load,
-        //                 store: wgpu::StoreOp::Store,
-        //             },
-        //         })],
-        //         depth_stencil_attachment: None,
-        //         occlusion_query_set: None,
-        //         timestamp_writes: None,
-        //     });
-        //
-        //     render_pass_ui.set_pipeline(&self.render_pipeline_ui);
-        //     render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
-        //
-        //     let inventory_instance = Self::create_inventory_instance(ui_state);
-        //     let inventory_render_group = RenderGroup {
-        //         buffer: Self::create_instance_buffer(&self.device, &[inventory_instance]),
-        //         model_id: "sword_inventory".to_string(),
-        //         instance_count: 1,
-        //     };
-        //     self.draw_ui(&mut render_pass_ui, &inventory_render_group);
-        //
-        //     let render_groups = self.create_render_groups_ui(game_state, ui_state);
-        //     for render_group in &render_groups {
-        //         self.draw_ui(&mut render_pass_ui, render_group);
-        //     }
-        //
-        //     drop(render_pass_ui);
-        // }
-        //
-        // if let Some(object_menu) = &ui_state.object_menu {
-        //     if object_menu.is_visible {
-        //         self.set_camera_data_ui(ui_state);
-        //         let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-        //             label: Some("Render Pass UI"),
-        //             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-        //                 view,
-        //                 resolve_target: None,
-        //                 ops: wgpu::Operations {
-        //                     load: wgpu::LoadOp::Load,
-        //                     store: wgpu::StoreOp::Store,
-        //                 },
-        //             })],
-        //             depth_stencil_attachment: None,
-        //             occlusion_query_set: None,
-        //             timestamp_writes: None,
-        //         });
-        //
-        //         render_pass_ui.set_pipeline(&self.render_pipeline_ui);
-        //         render_pass_ui.set_bind_group(1, &self.camera_bind_group_ui, &[]);
-        //
-        //         let object_menu_instance = Self::create_object_menu_instance(ui_state);
-        //         let object_menu_render_group = RenderGroup {
-        //             buffer: Self::create_instance_buffer(&self.device, &[object_menu_instance]),
-        //             model_id: "sword_inventory".to_string(),
-        //             instance_count: 1,
-        //         };
-        //         self.draw_ui(&mut render_pass_ui, &object_menu_render_group);
-        //
-        //         drop(render_pass_ui);
-        //     }
-        // }
     }
 
     fn create_instance_buffer(device: &Device, instance_group: &[Instance]) -> Buffer {
@@ -1117,62 +1058,9 @@ impl Renderer {
         }
     }
 
-    // fn create_inventory_instance(ui_state: &UIState) -> Instance {
-    //     Instance {
-    //         position: Vector3 {
-    //             x: UIState::convert_clip_space_x(
-    //                 ui_state.inventory.position_top_left.x,
-    //                 ui_state.window_size.width as f32,
-    //                 ui_state.window_size.height as f32,
-    //             ),
-    //             y: UIState::convert_clip_space_y(ui_state.inventory.position_top_left.y),
-    //             z: 0.0,
-    //         },
-    //         scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-    //             UIState::convert_scale_x(
-    //                 ui_state.inventory.width,
-    //                 ui_state.window_size.width as f32,
-    //                 ui_state.window_size.height as f32,
-    //             ),
-    //             UIState::convert_scale_y(ui_state.inventory.height),
-    //             1.0,
-    //             1.0,
-    //         )),
-    //         rotation: cgmath::Quaternion::from_axis_angle(Vector3::unit_z(), cgmath::Deg(0.0)),
-    //     }
-    // }
-    //
-    // fn create_object_menu_instance(ui_state: &UIState) -> Instance {
-    //     let Some(object_menu) = &ui_state.object_menu else {
-    //         panic!("Object menu should exist at this point.")
-    //     };
-    //     Instance {
-    //         position: Vector3 {
-    //             x: UIState::convert_clip_space_x(
-    //                 object_menu.position_top_left.x,
-    //                 ui_state.window_size.width as f32,
-    //                 ui_state.window_size.height as f32,
-    //             ),
-    //             y: UIState::convert_clip_space_y(object_menu.position_top_left.y),
-    //             z: 0.0,
-    //         },
-    //         scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-    //             UIState::convert_scale_x(
-    //                 object_menu.width,
-    //                 ui_state.window_size.width as f32,
-    //                 ui_state.window_size.height as f32,
-    //             ),
-    //             UIState::convert_scale_y(object_menu.height),
-    //             1.0,
-    //             1.0,
-    //         )),
-    //         rotation: cgmath::Quaternion::from_axis_angle(Vector3::unit_z(), cgmath::Deg(0.0)),
-    //     }
-    // }
-
     #[allow(clippy::cast_possible_truncation)]
     fn create_render_groups(&mut self, game_state: &GameState) {
-        let mut render_groups: Vec<RenderGroup> = Vec::new();
+        let mut render_groups: Vec<RenderBatch> = Vec::new();
         game_state
             .entities
             .iter()
@@ -1187,11 +1075,11 @@ impl Renderer {
                 game_state
                     .get_graphics(&(*entity).to_string())
                     .unwrap()
-                    .model_id
+                    .mesh_id
                     .clone()
             })
             .into_iter()
-            .for_each(|(model_id, group)| {
+            .for_each(|(mesh_id, group)| {
                 let entity_group: Vec<&Entity> = group.collect();
                 let instance_group: Vec<Instance> = entity_group
                     .into_iter()
@@ -1203,78 +1091,16 @@ impl Renderer {
                         )
                     })
                     .collect();
-                let buffer = Self::create_instance_buffer(&self.device, &instance_group);
-                let render_group = RenderGroup {
-                    buffer,
-                    model_id,
+                let instance_buffer = Self::create_instance_buffer(&self.device, &instance_group);
+                let render_group = RenderBatch {
+                    instance_buffer,
+                    mesh_id,
                     instance_count: instance_group.len() as u32,
                 };
                 render_groups.push(render_group);
             });
-        self.render_groups = render_groups;
+        self.render_batches = render_groups;
     }
-
-    // #[allow(clippy::cast_possible_truncation)]
-    // fn create_render_groups_ui(
-    //     &self,
-    //     game_state: &GameState,
-    //     ui_state: &UIState,
-    // ) -> Vec<RenderGroup> {
-    //     let inventory = game_state.get_storage(&"player".to_string()).unwrap();
-    //     let item_picture_scale_x =
-    //         ui_state.inventory.width / f32::from(inventory.number_of_columns);
-    //     let item_picture_scale_y = ui_state.inventory.height / f32::from(inventory.number_of_rows);
-    //
-    //     let mut render_groups = Vec::new();
-    //     ui_state
-    //         .inventory
-    //         .child_elements
-    //         .iter()
-    //         .chunk_by(|entry| {
-    //             game_state
-    //                 .get_graphics_inventory((*entry).0)
-    //                 .unwrap()
-    //                 .model_id
-    //                 .clone()
-    //             // match &(*entry).1.payload {
-    //             // // Get 2d component from ECS instead TODO
-    //             // Payload::Image(image) => image,
-    //             // _ => panic!("Inventory only contains images"),
-    //         })
-    //         .into_iter()
-    //         .for_each(|(model_id, item_group)| {
-    //             let mut entity_group: Vec<&Entity> = Vec::new();
-    //             let instance_group: Vec<Instance> = item_group
-    //                 .into_iter()
-    //                 .map(|(entity, item_ui_element)| {
-    //                     // TODO I think this should depend on the image:
-    //                     // The image size should for example already be 1x2
-    //                     // instead of sizing based on shape
-    //                     let item_shape = &game_state
-    //                         .storable_components
-    //                         .get(entity.as_str())
-    //                         .unwrap()
-    //                         .shape;
-    //                     entity_group.push(entity);
-    //                     Self::convert_item_ui_element_instance(
-    //                         ui_state,
-    //                         &ui_state.inventory,
-    //                         item_ui_element,
-    //                         item_picture_scale_x * f32::from(item_shape.width),
-    //                         item_picture_scale_y * f32::from(item_shape.height),
-    //                     )
-    //                 })
-    //                 .collect();
-    //             let buffer = Self::create_instance_buffer(&self.device, &instance_group);
-    //             let render_group = RenderGroup {
-    //                 buffer,
-    //                 model_id: model_id.to_string(),
-    //                 instance_count: instance_group.len() as u32,
-    //             };
-    //             render_groups.push(render_group);
-    //         });
-    //     render_groups
-    // }
 
     fn set_camera_data_ui(&mut self, camera: &mut Camera, window_size: &WindowSize) {
         let render_context_ui_textured = self
@@ -1293,22 +1119,15 @@ impl Renderer {
         );
     }
 
-    fn draw_ui<'a>(&'a self, render_pass: &mut RenderPass<'a>, render_group: &RenderGroup) {
-        let model = &self.model_map.get(&render_group.model_id).unwrap();
-        for mesh in &model.meshes {
-            match &mesh.vertex_type {
-                Color { color } => {}
-                VertexType::Texture { material_id } => {
-                    let material = self.material_map.get(material_id).unwrap();
-                    render_pass.set_bind_group(0, &material.texture_bind_group, &[]);
-                    render_pass.set_vertex_buffer(1, render_group.buffer.slice(..));
-                    render_pass.draw_mesh_instanced(
-                        mesh,
-                        // &self.model_map.get(&render_group.model_id).unwrap().meshes[0],
-                        // 0..render_group.instance_count,
-                        0..1,
-                    );
-                }
+    fn draw_ui<'a>(&'a self, render_pass: &mut RenderPass<'a>, render_group: &RenderBatch) {
+        let mesh = &self.mesh_map.get(&render_group.mesh_id).unwrap();
+        match &mesh.vertex_type {
+            Color { color: _ } => {}
+            VertexType::Texture { material_id } => {
+                let material = self.material_map.get(material_id).unwrap();
+                render_pass.set_bind_group(0, &material.texture_bind_group, &[]);
+                render_pass.set_vertex_buffer(1, render_group.instance_buffer.slice(..));
+                render_pass.draw_mesh_instanced(mesh, 0..render_group.instance_count);
             }
         }
     }

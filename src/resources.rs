@@ -200,7 +200,6 @@ fn build_colored_meshes(
     let num_indices = indices.len() as u32;
 
     let meshes = vec![Mesh {
-        // name: file_name.to_string(),
         vertex_type: VertexType::Color {
             color: color.into(), // Currently we set all meshes of a model to the same color
         },
