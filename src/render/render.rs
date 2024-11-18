@@ -6,7 +6,7 @@ use std::iter;
 use std::sync::Arc;
 use wgpu::{
     BindGroup, BindGroupLayout, Buffer, CommandEncoder, Device, InstanceFlags, MemoryHints,
-    PipelineCompilationOptions, Queue, RenderPass, RenderPipeline, ShaderModule,
+    PipelineCompilationOptions, Queue, RenderPipeline, ShaderModule,
     SurfaceConfiguration, TextureView,
 };
 // use gltf::iter::Meshes;
@@ -952,52 +952,7 @@ impl Renderer {
                         rect,
                         mesh_id,
                     } => {
-                        let render_context_ui_textured = self
-                            .render_contexts
-                            .get_mut("render_context_ui_textured")
-                            .unwrap();
-
-                        let mut render_pass_ui =
-                            encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                                label: Some("Render Pass UI"),
-                                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                                    view,
-                                    resolve_target: None,
-                                    ops: wgpu::Operations {
-                                        load: wgpu::LoadOp::Load,
-                                        store: wgpu::StoreOp::Store,
-                                    },
-                                })],
-                                depth_stencil_attachment: None,
-                                occlusion_query_set: None,
-                                timestamp_writes: None,
-                            });
-
-                        render_pass_ui.set_pipeline(&render_context_ui_textured.render_pipeline);
-                        render_pass_ui.set_bind_group(
-                            1,
-                            &render_context_ui_textured.camera_bind_group,
-                            &[],
-                        );
-
-                        let element_instance = Self::create_ui_element_instance(
-                            Point2::new(
-                                ui_state.window_size.width as f32,
-                                ui_state.window_size.height as f32,
-                            ),
-                            *rect,
-                        );
-                        let element_render_group = RenderBatch {
-                            instance_buffer: Self::create_instance_buffer(
-                                &self.device,
-                                &[element_instance],
-                            ),
-                            mesh_id: mesh_id.to_string(),
-                            instance_count: 1,
-                        };
-                        self.draw_ui(&mut render_pass_ui, &element_render_group);
-
-                        drop(render_pass_ui);
+                        self.draw(ui_state, view, encoder, mesh_id.to_string(), rect);
                     }
                 } // TODO or maybe call it widget?
             });
@@ -1071,7 +1026,6 @@ impl Renderer {
                     .contains_key(entity.as_str())
             })
             .chunk_by(|entity| {
-                // "group_by"
                 game_state
                     .get_graphics(&(*entity).to_string())
                     .unwrap()
@@ -1119,15 +1073,62 @@ impl Renderer {
         );
     }
 
-    fn draw_ui<'a>(&'a self, render_pass: &mut RenderPass<'a>, render_group: &RenderBatch) {
-        let mesh = &self.mesh_map.get(&render_group.mesh_id).unwrap();
+    fn draw(
+        &mut self,
+        ui_state: &UIState,
+        view: &TextureView,
+        encoder: &mut CommandEncoder,
+        mesh_id: String, // &Mesh,
+        rect: &Rect,
+    ) {
+        let mesh = self.mesh_map.get_mut(&mesh_id).unwrap();
+
         match &mesh.vertex_type {
             Color { color: _ } => {}
             VertexType::Texture { material_id } => {
+                let render_context_ui_textured = self
+                    .render_contexts
+                    .get_mut("render_context_ui_textured")
+                    .unwrap();
+
+                let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("Render Pass UI"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Load,
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                    occlusion_query_set: None,
+                    timestamp_writes: None,
+                });
+
+                render_pass_ui.set_pipeline(&render_context_ui_textured.render_pipeline);
+                render_pass_ui.set_bind_group(
+                    1,
+                    &render_context_ui_textured.camera_bind_group,
+                    &[],
+                );
+
+                let element_instance = Self::create_ui_element_instance(
+                    Point2::new(
+                        ui_state.window_size.width as f32,
+                        ui_state.window_size.height as f32,
+                    ),
+                    *rect,
+                );
+                let instance_buffer =
+                    Self::create_instance_buffer(&self.device, &[element_instance]);
+                let instance_count = 1;
+
                 let material = self.material_map.get(material_id).unwrap();
-                render_pass.set_bind_group(0, &material.texture_bind_group, &[]);
-                render_pass.set_vertex_buffer(1, render_group.instance_buffer.slice(..));
-                render_pass.draw_mesh_instanced(mesh, 0..render_group.instance_count);
+                render_pass_ui.set_bind_group(0, &material.texture_bind_group, &[]);
+                render_pass_ui.set_vertex_buffer(1, instance_buffer.slice(..));
+                render_pass_ui.draw_mesh_instanced(mesh, 0..instance_count);
+                drop(render_pass_ui);
             }
         }
     }
