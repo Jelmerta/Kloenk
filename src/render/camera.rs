@@ -43,8 +43,6 @@ impl Camera {
         let isometric_projection = ortho(
             -(window_width as f32) / window_height as f32,
             window_width as f32 / window_height as f32,
-            // -1.,
-            // 1.,
             -1.,
             1.,
             self.z_near,
