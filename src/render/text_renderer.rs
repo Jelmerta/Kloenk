@@ -14,8 +14,6 @@ pub struct TextWriter {
     viewport: Viewport,
     atlas: TextAtlas,
     pub text_buffers: HashMap<String, Buffer>,
-    // selected_text_buffer: Buffer,
-    // pub action_text_buffer: Buffer,
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -97,7 +95,6 @@ impl TextWriter {
                 &mut self.atlas,
                 &self.viewport,
                 [TextArea {
-                    // buffer: &self.action_text_buffer,
                     buffer: self.text_buffers.get("action_text").unwrap(),
                     left: rect.top_left.x,
                     top: rect.top_left.y,
@@ -114,8 +111,6 @@ impl TextWriter {
                 &mut self.swash_cache,
             )
             .unwrap();
-
-        // self.action_text_buffer
     }
 
     #[allow(clippy::cast_possible_truncation)]
@@ -133,13 +128,6 @@ impl TextWriter {
             Attrs::new().family(Family::Name("Playwrite NL")),
             Shaping::Advanced,
         );
-
-        // / self.action_text_buffer.set_text(
-        //     &mut self.font_system,
-        //     text,
-        //     Attrs::new().family(Family::Name("Playwrite NL")),
-        //     Shaping::Advanced,
-        // );
 
         {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {

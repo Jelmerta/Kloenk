@@ -1,4 +1,3 @@
-// use anyhow::*;
 use cgmath::{prelude::*, Point2, Point3, Vector3};
 use itertools::Itertools;
 use std::collections::HashMap;
@@ -9,15 +8,6 @@ use wgpu::{
     PipelineCompilationOptions, Queue, RenderPipeline, ShaderModule, SurfaceConfiguration,
     TextureView,
 };
-// use gltf::iter::Meshes;
-// use gltf::mesh::util::indices;
-// use gltf::texture as gltf_texture;
-// use gltf::Gltf;
-//
-
-// #[cfg(target_arch = "wasm32")]
-// #[allow(unused_imports)]
-// use wasm_bindgen::prelude::*;
 
 use wgpu::util::DeviceExt;
 use winit::dpi::PhysicalSize;
@@ -34,13 +24,6 @@ use crate::resources::load_texture;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::{Rect, RenderCommand, UIState, WindowSize};
-// #[wasm_bindgen(start)]
-// pub fn run() -> Result<(), JsValue> {
-//     let gltf_data = include_bytes!("../models/garfield/scene.gltf");
-//     let gltf = Gltf::from_slice(gltf_data).expect("Failed to load Garfield");
-//     log::debug!("{:?}", gltf);
-//     Ok(())
-// }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -76,8 +59,6 @@ pub struct Renderer {
 
     render_contexts: HashMap<String, RenderContext>,
 
-    // models: Vec<model::Model>,
-    //obj_model: model::Model,
     mesh_map: HashMap<String, Mesh>,
     material_map: HashMap<String, Material>,
     depth_texture: texture::Depth,
@@ -227,195 +208,6 @@ impl Renderer {
             ),
         );
 
-        // let color_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-        //     label: Some("Color Shader"),
-        //     source: wgpu::ShaderSource::Wgsl(include_str!("../color_shader.wgsl").into()),
-        // });
-
-        // let vertex_buffer = device.create_buffer_init(
-        //     &wgpu::util::BufferInitDescriptor {
-        //         label: Some("Vertex Buffer"),
-        //         contents: bytemuck::cast_slice(TRIANGLE),
-        //         usage: wgpu::BufferUsages::VERTEX,
-        //     }
-        // );
-        // let num_vertices = TRIANGLE.len() as u32;
-        // let (document, buffers, images) = gltf::import("examples/Box.gltf")?;
-        // let gltf_data = include_bytes!("../models/garfield/scene.gltf");
-        // let gltf = Gltf::from_slice(gltf_data).expect("Failed to load Garfield");
-        // log::warn!("{:?}", gltf.scenes());
-        //     log::warn!("Hi?");
-        //     // let gltf = Gltf::open("models/garfield/scene.gltf").expect("Failed to load garfield kartfield");
-        //     // log::debug!("{:?}", gltf);
-        //     // for scene in gltf.scenes() {
-        //     //     for node in scene.nodes() {
-        //     //       println!(
-        //     //       "Node #{} has {} children",
-        //     //       node.index(),
-        //     //          node.children().count(),
-        //     //       );
-        //     //     }
-        //     // }
-        //     //
-
-        // let mut vertices: Vec<TexVertex> = Vec::new();
-        //     let mut buffer_data = Vec::new();
-        //     // buffer_data.push("2312".as_bytes());
-        //
-        //
-
-        // Barely know what the buffers do yet...
-        // for buffer in gltf.buffers() {
-        //     match buffer.source() {
-        //         gltf::buffer::Source::Bin => {
-        //             // if let Some(blob) = gltf.blob.as_deref() {
-        //             //     buffer_data.push(blob.into());
-        //             //     println!("Found a bin, saving");
-        //         // };
-        //         }
-        //         gltf::buffer::Source::Uri(uri) => {
-        //             let bin = load_binary(uri).await; // TODO Tutorial does "await?" instead...
-        //             // What am i missing
-        //             buffer_data.push(bin);
-        //         }
-        //     }
-        // }
-
-        // let mut buffer_data = Vec::new();
-        //     for buffer in gltf.buffers() {
-        //         match buffer.source() {
-        //             gltf::buffer::Source::Uri(uri) => {
-        //                 // let uri = percent_encoding::percent_decode_str(uri)
-        //                     // .decode_utf8()
-        //                     // .unwrap();
-        //                 // let uri = uri.as_ref();
-        //                 // let buffer_bytes = match DataUri::parse(uri) {
-        //                 //     Ok(data_uri) if VALID_MIME_TYPES.contains(&data_uri.mime_type) => {
-        //                         // data_uri.decode()?
-        //                     // }
-        //                     // Ok(_) => return Err(GltfError::BufferFormatUnsupported),
-        //                     // Err(()) => {
-        //                         // TODO: Remove this and add dep
-        //                         // let buffer_path = load_context.path().parent().unwrap().join(uri);
-        //                         // load_context.read_asset_bytes(buffer_path).await?
-        //                     // }
-        //                 // };
-        //                 // buffer_data.push();
-        //             }
-        //             gltf::buffer::Source::Bin => {
-        //                 if let Some(blob) = gltf.blob.as_deref() {
-        //                     buffer_data.push(blob.into());
-        //                 } else {
-        //                     panic!(":)");
-        //                 }
-        //             }
-        //         }
-        //     }
-
-        // let mut meshes = Vec::new();
-        // for mesh in gltf.meshes() {
-        //             // log::warn!("Mesh: {}", mesh.name().unwrap_or("Unnamed").into());
-        //     // for primitive in mesh.primitives() {
-        //         // let reader = primitive.reader(|buffer| Some(&buffer_data[buffer.index()]));
-        //         // let positions: Vec<[f32; 3]> = if let Some(positions_accessor) = primitive.get(&gltf::Semantic::Positions) { // Hard to read imo
-        //             // let reader = positions_accessor.reader();
-        // //             reader.into_f32().map(|p| [p[0], p[1], p[2]]).collect()
-        // //         } else {
-        // //             vec![]
-        // //         };
-        // //     }
-        // // }
-        //     // }
-        //     //
-        //
-        //     mesh.primitives().for_each(|primitive| {
-        //         let reader = primitive.reader(|buffer| Some(&buffer_data[buffer.index()]));
-        //     // let reader = primitive.reader(|buffer| Some(buffer_data[buffer.index()].as_slice()));
-
-        // let mut vertices = Vec::new();
-        // if let Some(vertex_attibute) = reader.read_positions() {
-        //     vertex_attibute.for_each(|vertex| {
-        //         vertices.push(TexVertex {
-        //             position: vertex,
-        //             tex_coords: Default::default(),
-        //         })
-        //     });
-        // }
-
-        // if let Some(normal_attribute) = reader.read_normals()
-
-        // if let Some(tex_coord_attribute) = reader.read_tex_coords(0).map(|tex_coord_index| tex_coord_index.into_f32()) { // We map so that
-        //     let mut tex_coord_index = 0;
-        //     tex_coord_attribute.for_each(|tex_coord| {
-        //         vertices[tex_coord_index].tex_coords = tex_coord;
-
-        //         tex_coord_index += 1; // does ++ not work?
-        //     });
-        // // we can increase the index of tex coords accordingly
-        // }
-
-        // let mut indices = Vec::new();
-        // if let Some(indices_raw) = reader.read_indices() {
-        //     indices.append(&mut indices_raw.into_u32().collect::<Vec<u32>>());
-        // }
-
-        // let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        //     label: Some("Vertex buffer"),
-        //     contents: bytemuck::cast_slice(&vertices),
-        //     usage: wgpu::BufferUsages::VERTEX,
-        // });
-
-        // let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        //     label: Some("Index buffer"),
-        //     contents: bytemuck::cast_slice(&indices),
-        //     usage: wgpu::BufferUsages::INDEX,
-        // });
-
-        //         meshes.push(model::Mesh {
-        //             name: "Garfield".to_string(),
-        //             vertex_buffer,
-        //             index_buffer,
-        //             num_elements: indices.len() as u32,
-        //             material: 0,
-        //         })
-        //     });
-        // }
-        // //
-        // // gltf.materials()
-        // // //
-        // // // let mut materials = Vec::new();
-        // // for obj_material in object_materials? {
-        //     // gltf.1
-        //
-        //     // let diffuse_texture = load_tex;
-        //     // let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        //     //     layout,
-        //     //     entries: &[
-        //     //         wgpu::BindGroupEntry {
-        //     //             binding: 0,
-        //     //             resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
-        //     //         },
-        //     //         wgpu::BindGroupEntry {
-        //     //             binding: 1,
-        //     //             resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
-        //     //         },
-        //     //     ],
-        //     //     label: None,
-        //     // });
-
-        //     materials.push((model::Material {
-        //         name: ,
-        //         diffuse_texture,
-        //         bind_group,
-        //     });
-        // }
-
-        // let garfield = model::Model {
-        //     meshes: meshes,
-        //     materials: materials,
-        // };
-        // // models.push(garfield);
-
         let mesh_map = Self::load_models(&device).await;
         let material_map = Self::load_materials(&device, &queue, &texture_bind_group_layout).await;
 
@@ -438,7 +230,6 @@ impl Renderer {
             render_contexts,
             mesh_map,
             material_map,
-            //obj_model: garfield,
             depth_texture,
             render_batches: Vec::new(),
             text_writer,
@@ -817,12 +608,6 @@ impl Renderer {
 
         self.render_ui(game_state, ui_state, frame_state, &view, &mut encoder);
 
-        //use model::DrawModel;
-        // let garfield = self.models.pop().unwrap();
-        // let mesh = &garfield.meshes[0];
-        // render_pass.draw_mesh_instanced(&garfield.meshes[0].clone(), 0..instances.len() as u32);
-        //render_pass.draw_model_instanced(&self.obj_model, 0..instances.len() as u32);
-
         self.queue.submit(iter::once(encoder.finish()));
         output.present();
 
@@ -1078,7 +863,7 @@ impl Renderer {
         ui_state: &UIState,
         view: &TextureView,
         encoder: &mut CommandEncoder,
-        mesh_id: String, // &Mesh,
+        mesh_id: String,
         rect: &Rect,
     ) {
         let mesh = self.mesh_map.get_mut(&mesh_id).unwrap();
