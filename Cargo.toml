@@ -16,7 +16,7 @@ log = "0.4"
 rodio = { version = "0.20", default-features = false, features = ["wav"] }
 wgpu = "23.0"
 pollster = "0.4"
-bytemuck = "1.19"
+bytemuck = "1.20"
 cgmath = "0.18"
 anyhow = { version = "1.0", default-features = false }
 itertools = { version = "0.13", default-features = false, features = ["use_alloc"] }

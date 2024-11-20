@@ -1,5 +1,6 @@
 use cgmath::{ortho, Matrix4, Point3, SquareMatrix, Vector3, Zero};
 
+// TODO kind of weird having all this functionality in this component. should be separated.
 #[derive(Debug)]
 pub struct Camera {
     pub target: Point3<f32>,
