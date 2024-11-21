@@ -15,7 +15,7 @@ impl UIWindow {
 }
 
 pub enum RenderCommand {
-    Image {
+    Mesh {
         layer: u32,
         rect: Rect,
         mesh_id: String,
