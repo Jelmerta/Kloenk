@@ -1,7 +1,9 @@
 pub mod camera;
 mod camera_manager;
+mod instance;
 mod material_manager;
 pub mod model;
+mod model_manager;
 pub mod render;
 mod render_context_manager;
 pub mod text_renderer;

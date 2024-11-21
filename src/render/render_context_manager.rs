@@ -1,4 +1,5 @@
 use crate::render::camera_manager::CameraManager;
+use crate::render::instance::InstanceRaw;
 use crate::render::material_manager::MaterialManager;
 use crate::render::model::Vertex;
 use crate::render::{model, texture};
@@ -35,7 +36,6 @@ impl RenderContextManager {
         camera_manager: &CameraManager,
         material_manager: &MaterialManager,
     ) -> RenderContext {
-        // Probably want a shader manager as pipelines can reuse vertex/fragment shaders and mix and match
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Texture Shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("../texture_shader.wgsl").into()),
@@ -57,10 +57,7 @@ impl RenderContextManager {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: Some("vs_main"),
-                buffers: &[
-                    model::TexVertex::desc(),
-                    crate::render::render::InstanceRaw::desc(),
-                ],
+                buffers: &[model::TexVertex::layout(), InstanceRaw::layout()],
                 compilation_options: PipelineCompilationOptions::default(),
             },
             primitive: wgpu::PrimitiveState {

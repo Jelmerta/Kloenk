@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 pub trait Vertex {
-    fn desc() -> wgpu::VertexBufferLayout<'static>;
+    fn layout() -> wgpu::VertexBufferLayout<'static>;
 }
 
 #[repr(C)] // Not sure what this effectively does here
@@ -19,13 +19,13 @@ pub struct TexVertex {
 }
 
 impl Vertex for ColoredVertex {
-    fn desc() -> wgpu::VertexBufferLayout<'static> {
+    fn layout() -> wgpu::VertexBufferLayout<'static> {
         wgpu::VertexBufferLayout {
             array_stride: size_of::<ColoredVertex>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
             attributes: &[
                 wgpu::VertexAttribute {
-                    // Vertices
+                    // position
                     format: wgpu::VertexFormat::Float32x3,
                     offset: 0,
                     shader_location: 0,
@@ -42,16 +42,18 @@ impl Vertex for ColoredVertex {
 }
 
 impl Vertex for TexVertex {
-    fn desc() -> wgpu::VertexBufferLayout<'static> {
+    fn layout() -> wgpu::VertexBufferLayout<'static> {
         wgpu::VertexBufferLayout {
             array_stride: size_of::<TexVertex>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
             attributes: &[
+                // position
                 wgpu::VertexAttribute {
                     offset: 0,
                     shader_location: 0,
                     format: wgpu::VertexFormat::Float32x3,
                 },
+                // tex coords
                 wgpu::VertexAttribute {
                     offset: size_of::<[f32; 3]>() as wgpu::BufferAddress,
                     shader_location: 1,
@@ -64,36 +66,19 @@ impl Vertex for TexVertex {
 
 pub struct Model {
     pub meshes: Vec<Mesh>,
-    // pub materials: Vec<Material>, // TODO I think materials should be sharable across models right for memory efficiency and stuff
 }
 
 pub struct Mesh {
-    // pub name: String,
     pub vertex_type: VertexType,
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
     pub num_elements: u32,
-    // pub material: usize,
 }
 
 pub enum VertexType {
-    Texture { material_id: String },
+    Material { material_id: String },
     Color { color: [f32; 3] },
 }
-
-// TODO needs to be stored somewhere
-pub struct Material {
-    // pub name: String,
-    // pub diffuse_texture: texture::Texture,
-    pub texture_bind_group: wgpu::BindGroup,
-}
-
-// pub enum Material {
-//     // pub name: String,
-//     // pub diffuse_texture: texture::Texture,
-//     Texture { texture_bind_group: wgpu::BindGroup },
-//     Color { color: Vector3<f32> },
-// }
 
 // sotrh decides to implement a trait on renderpass
 pub trait Draw<'a> {

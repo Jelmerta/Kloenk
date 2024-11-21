@@ -169,7 +169,7 @@ fn build_textured_meshes(
     let num_indices = indices.len() as u32;
 
     let meshes = vec![Mesh {
-        vertex_type: VertexType::Texture {
+        vertex_type: VertexType::Material {
             material_id: mesh_material_name.to_string(), // Currently we set all meshes of a model to the same material
         },
         vertex_buffer,

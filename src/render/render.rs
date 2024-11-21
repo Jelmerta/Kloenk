@@ -1,6 +1,5 @@
 use cgmath::{prelude::*, Point2, Point3, Vector3};
 use itertools::Itertools;
-use std::collections::HashMap;
 use std::iter;
 use std::sync::Arc;
 use wgpu::{
@@ -15,13 +14,14 @@ use winit::window::Window;
 use crate::components::{Entity, Size};
 use crate::render::camera::Camera;
 use crate::render::camera_manager::CameraManager;
+use crate::render::instance::InstanceRaw;
 use crate::render::material_manager::MaterialManager;
 use crate::render::model::VertexType::Color;
-use crate::render::model::{Draw, Mesh, VertexType};
+use crate::render::model::{Draw, VertexType};
+use crate::render::model_manager::ModelManager;
 use crate::render::render_context_manager::RenderContextManager;
 use crate::render::text_renderer::TextWriter;
 use crate::render::texture;
-use crate::resources;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::{Rect, RenderCommand, UIState, WindowSize};
@@ -33,7 +33,7 @@ pub struct Renderer {
     config: SurfaceConfiguration,
     pub size: PhysicalSize<u32>,
 
-    mesh_map: HashMap<String, Mesh>,
+    model_manager: ModelManager,
     camera_manager: CameraManager,
     material_manager: MaterialManager,
     render_context_manager: RenderContextManager,
@@ -43,58 +43,15 @@ pub struct Renderer {
     text_writer: TextWriter,
 }
 
-struct Instance {
-    position: Vector3<f32>,
-    scale: cgmath::Matrix4<f32>,
-    rotation: cgmath::Quaternion<f32>,
+pub struct Instance {
+    pub position: Vector3<f32>,
+    pub scale: cgmath::Matrix4<f32>,
+    pub rotation: cgmath::Quaternion<f32>,
 }
 
 impl Instance {
     fn to_raw(&self) -> InstanceRaw {
-        InstanceRaw {
-            model: (cgmath::Matrix4::from_translation(self.position)
-                * self.scale
-                * cgmath::Matrix4::from(self.rotation))
-            .into(),
-        }
-    }
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub(crate) struct InstanceRaw {
-    model: [[f32; 4]; 4],
-}
-
-// TODO this is definitely unique to a certain pipeline/shader and should be moved there?
-impl InstanceRaw {
-    pub fn desc() -> wgpu::VertexBufferLayout<'static> {
-        wgpu::VertexBufferLayout {
-            array_stride: size_of::<InstanceRaw>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Instance,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x4,
-                    offset: 0,
-                    shader_location: 5,
-                },
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x4,
-                    offset: size_of::<[f32; 4]>() as wgpu::BufferAddress,
-                    shader_location: 6,
-                },
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x4,
-                    offset: size_of::<[f32; 8]>() as wgpu::BufferAddress,
-                    shader_location: 7,
-                },
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x4,
-                    offset: size_of::<[f32; 12]>() as wgpu::BufferAddress,
-                    shader_location: 8,
-                },
-            ],
-        }
+        InstanceRaw::new(self)
     }
 }
 
@@ -158,7 +115,7 @@ impl Renderer {
         };
         surface.configure(&device, &config);
 
-        let mesh_map = Self::load_models(&device).await;
+        let model_manager = ModelManager::new(&device).await;
         let camera_manager = CameraManager::new(&device);
         let material_manager = MaterialManager::new(&device, &queue).await;
         let render_context_manager =
@@ -174,13 +131,14 @@ impl Renderer {
             window_height as f32,
         )
         .await;
+
         Self {
             surface,
             device,
             queue,
             config,
             size: PhysicalSize::new(window_width, window_height),
-            mesh_map,
+            model_manager,
             camera_manager,
             material_manager,
             render_context_manager,
@@ -188,61 +146,6 @@ impl Renderer {
             render_batches: Vec::new(),
             text_writer,
         }
-    }
-
-    async fn load_models(device: &Device) -> HashMap<String, Mesh> {
-        let mut mesh_map: HashMap<String, Mesh> = HashMap::new();
-        let shield = resources::load_model(device, "CUBE", "shield")
-            .await
-            .unwrap();
-        mesh_map.insert(
-            "shield".to_string(),
-            shield.meshes.into_iter().next().unwrap(),
-        );
-
-        let shield_inventory = resources::load_model(device, "SQUARE", "shield")
-            .await
-            .unwrap();
-        mesh_map.insert(
-            "shield_inventory".to_string(),
-            shield_inventory.meshes.into_iter().next().unwrap(),
-        );
-
-        let character = resources::load_model(device, "CUBE", "character")
-            .await
-            .unwrap();
-        mesh_map.insert(
-            "character".to_string(),
-            character.meshes.into_iter().next().unwrap(),
-        );
-
-        let sword = resources::load_model(device, "CUBE", "sword")
-            .await
-            .unwrap();
-        mesh_map.insert(
-            "sword".to_string(),
-            sword.meshes.into_iter().next().unwrap(),
-        );
-
-        let sword_inventory = resources::load_model(device, "SQUARE", "sword")
-            .await
-            .unwrap();
-        mesh_map.insert(
-            "sword_inventory".to_string(),
-            sword_inventory.meshes.into_iter().next().unwrap(),
-        );
-
-        let grass = resources::load_model(device, "CUBE", "grass")
-            .await
-            .unwrap();
-        mesh_map.insert(
-            "grass".to_string(),
-            grass.meshes.into_iter().next().unwrap(),
-        );
-
-        let tree = resources::load_model(device, "CUBE", "tree").await.unwrap();
-        mesh_map.insert("tree".to_string(), tree.meshes.into_iter().next().unwrap());
-        mesh_map
     }
 
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
@@ -332,14 +235,13 @@ impl Renderer {
             render_pass.set_bind_group(1, self.camera_manager.get_bind_group("camera_3d"), &[]);
 
             self.render_batches.iter().for_each(|render_group| {
-                let mesh = &self.mesh_map.get(&render_group.mesh_id).unwrap();
+                let mesh = self
+                    .model_manager
+                    .get_mesh(render_group.mesh_id.to_string());
                 match &mesh.vertex_type {
                     Color { color: _color } => (),
-                    VertexType::Texture { material_id } => {
-                        let texture_bind_group = &self
-                            .material_manager
-                            .get_material(material_id) // or just get_bind_group?
-                            .texture_bind_group;
+                    VertexType::Material { material_id } => {
+                        let texture_bind_group = self.material_manager.get_bind_group(material_id);
                         render_pass.set_bind_group(0, texture_bind_group, &[]);
                         render_pass.set_vertex_buffer(1, render_group.instance_buffer.slice(..));
                         render_pass.draw_mesh_instanced(mesh, 0..render_group.instance_count);
@@ -508,12 +410,6 @@ impl Renderer {
     }
 
     fn set_camera_data_ui(&mut self, camera: &mut Camera, window_size: &WindowSize) {
-        let render_context_textured = self
-            .render_context_manager
-            .render_contexts
-            .get_mut("textured")
-            .unwrap();
-
         camera.update_view_projection_matrix(window_size.width, window_size.height); // TODO hmm i think camera matrix is updated in systems for 3d but for ui we do it here... one place for all.
         self.camera_manager
             .update_buffer("camera_2d".to_string(), &self.queue, camera);
@@ -527,11 +423,11 @@ impl Renderer {
         mesh_id: String,
         rect: &Rect,
     ) {
-        let mesh = self.mesh_map.get_mut(&mesh_id).unwrap();
+        let mesh = self.model_manager.get_mesh(mesh_id.to_string());
 
         match &mesh.vertex_type {
             Color { color: _ } => {}
-            VertexType::Texture { material_id } => {
+            VertexType::Material { material_id } => {
                 let render_context_textured = self
                     .render_context_manager
                     .render_contexts
@@ -548,7 +444,6 @@ impl Renderer {
                             store: wgpu::StoreOp::Store,
                         },
                     })],
-                    // depth_stencil_attachment: None,
                     depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                         view: &self.depth_texture.view,
                         depth_ops: Some(wgpu::Operations {

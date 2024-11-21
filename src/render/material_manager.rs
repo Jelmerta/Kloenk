@@ -1,8 +1,11 @@
-use crate::render::model::Material;
 use crate::render::texture;
 use crate::resources::load_texture;
 use std::collections::HashMap;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue};
+
+pub struct Material {
+    pub texture_bind_group: BindGroup,
+}
 
 pub struct MaterialManager {
     pub bind_group_layout: BindGroupLayout,
@@ -21,6 +24,14 @@ impl MaterialManager {
 
     pub fn get_material(&self, material_name: &str) -> &Material {
         self.materials.get(material_name).unwrap()
+    }
+
+    pub fn get_bind_group(&self, material_name: &str) -> &BindGroup {
+        &self
+            .materials
+            .get(material_name)
+            .unwrap()
+            .texture_bind_group
     }
 
     async fn load_materials(&mut self, device: &Device, queue: &Queue) {
