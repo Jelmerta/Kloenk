@@ -300,7 +300,7 @@ impl Renderer {
 
                         self.text_writer.write_text_buffer(encoder, view, text);
                     }
-                    RenderCommand::Image {
+                    RenderCommand::Mesh {
                         layer: _layer,
                         rect,
                         mesh_id,
@@ -426,7 +426,7 @@ impl Renderer {
         let mesh = self.model_manager.get_mesh(mesh_id.to_string());
 
         match &mesh.vertex_type {
-            Color { color: _ } => {}
+            Color { color } => {}
             VertexType::Material { material_id } => {
                 let render_context_textured = self
                     .render_context_manager
