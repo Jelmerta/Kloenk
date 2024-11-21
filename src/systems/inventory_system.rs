@@ -122,12 +122,9 @@ impl InventorySystem {
                 frame_state.handled_left_click = true;
             }
 
-            log::warn!("Yep");
-            let object_selection_rect_text =
-                Rect::new(Point2::new(0.5, 0.5), Point2::new(1.0, 1.0));
             frame_state
                 .gui
-                .text(300, object_selection_rect_text, "Drop item".to_string())
+                .text(1000, object_selection_rect, "Drop item".to_string())
         }
     }
 }
