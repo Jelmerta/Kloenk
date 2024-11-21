@@ -4,20 +4,12 @@ use winit::platform::web::EventLoopExtWebSys;
 
 use winit::event_loop::EventLoop;
 mod application;
-mod audio_system;
-mod camera;
 mod components;
-mod frame_state;
-mod game_state;
-mod game_system;
 mod gui;
-mod input;
-mod model;
 mod render;
 mod resources;
-mod text_renderer;
-mod texture;
-mod utility;
+mod state;
+mod systems;
 
 fn main() {
     run();

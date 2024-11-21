@@ -16,21 +16,21 @@ use winit::event::ElementState;
 use winit::platform::web::WindowExtWebSys;
 
 // use anyhow::*;
-use crate::game_state::GameState;
-use crate::game_system::GameSystem;
-use crate::gui::UIState;
-use crate::input::Input;
-use crate::render::Renderer;
+use crate::state::input::Input;
 use std::sync::Arc;
-use winit::dpi::LogicalSize;
+use winit::dpi::{LogicalSize, PhysicalSize};
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowId};
 
 #[cfg(target_arch = "wasm32")]
-use crate::audio_system::AudioPlayer;
-use crate::audio_system::AudioSystem;
+use crate::systems::audio_system::AudioPlayer;
+use crate::systems::audio_system::AudioSystem;
 
-use crate::frame_state::FrameState;
+use crate::render::render::Renderer;
+use crate::state::frame_state::FrameState;
+use crate::state::game_state::GameState;
+use crate::state::ui_state::UIState;
+use crate::systems::game_system::GameSystem;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
 
@@ -91,8 +91,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             } // Continue
         }
 
-        let window_width = 800;
-        let window_height = 600;
+        let window_width = 1920;
+        let window_height = 1080;
 
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
@@ -101,9 +101,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
 
         #[cfg(target_arch = "wasm32")]
         {
-            use winit::dpi::PhysicalSize;
-            let _ = window.request_inner_size(PhysicalSize::new(window_width, window_height));
-
             web_sys::window()
                 .and_then(|win| win.document())
                 .and_then(|doc| {
@@ -117,11 +114,9 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     Some(())
                 })
                 .expect("Couldn't append canvas to document body.");
-            // Not sure why, but width/height not yet set... Do it again.
-            let _ = window.request_inner_size(PhysicalSize::new(window_width, window_height));
         }
 
-        let renderer_future = Renderer::new(window.clone());
+        let renderer_future = Renderer::new(window.clone(), window_width, window_height);
 
         #[cfg(target_arch = "wasm32")]
         {
@@ -177,6 +172,10 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         log::info!("Received initialization event");
 
         let game = event.0;
+        let _ = game.window.request_inner_size(PhysicalSize::new(
+            game.ui_state.window_size.width,
+            game.ui_state.window_size.height,
+        ));
         game.window.request_redraw();
         self.application_state = State::Initialized(game);
     }
@@ -239,6 +238,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             WindowEvent::MouseInput { state, button, .. } => {
                 engine.input_handler.process_mouse_button(button, state);
 
+                // Loading audio only after user has gestured
                 // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
                 #[cfg(target_arch = "wasm32")]
                 {
@@ -289,15 +289,17 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     &mut engine.audio_system,
                 );
 
-                match engine
-                    .renderer
-                    .render(&mut engine.game_state, &engine.ui_state)
-                {
+                match engine.renderer.render(
+                    &mut engine.game_state,
+                    &engine.ui_state,
+                    &engine.frame_state,
+                ) {
                     Ok(()) => {}
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
                         engine.renderer.resize(engine.renderer.size);
                     }
                     Err(wgpu::SurfaceError::OutOfMemory) => {
+                        log::error!("Out of memory");
                         event_loop.exit();
                     }
 

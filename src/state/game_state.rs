@@ -1,11 +1,11 @@
 use cgmath::num_traits::ToPrimitive;
 
 // use std::{collections::HashMap, sync::atomic::AtomicU32};
-use crate::camera::Camera;
 use crate::components::{
     CameraTarget, Entity, Graphics2D, Graphics3D, Hitbox, InStorage, ItemShape, Size, Storable,
     Storage,
 };
+use crate::render::camera::Camera;
 use cgmath::{ElementWise, Point3};
 use std::collections::{HashMap, HashSet};
 
@@ -59,6 +59,7 @@ impl GameState {
             &mut storage_components,
         );
         Self::load_camera(&mut entities, &mut camera_components);
+        Self::load_camera_ui(&mut entities, &mut camera_components);
 
         Self::load_shield(
             &mut entities,
@@ -118,7 +119,7 @@ impl GameState {
         entities.push(tree.clone());
 
         let tree_graphics = Graphics3D {
-            model_id: "tree".to_string(),
+            mesh_id: "tree".to_string(),
         };
         graphics_3d_components.insert(tree.clone(), tree_graphics);
 
@@ -155,7 +156,7 @@ impl GameState {
                 entities.push(plane.clone());
 
                 let plane_graphics = Graphics3D {
-                    model_id: "grass".to_string(),
+                    mesh_id: "grass".to_string(),
                 };
                 graphics_3d_components.insert(plane.clone(), plane_graphics);
 
@@ -185,12 +186,12 @@ impl GameState {
             entities.push(sword.clone());
 
             let sword_graphics = Graphics3D {
-                model_id: "sword".to_string(),
+                mesh_id: "sword".to_string(),
             };
             graphics_3d_components.insert(sword.clone(), sword_graphics);
 
             let sword_graphics_inventory = Graphics2D {
-                model_id: "sword_inventory".to_string(),
+                material_id: "sword_inventory".to_string(),
             };
             graphics_2d_components.insert(sword.clone(), sword_graphics_inventory);
 
@@ -238,12 +239,12 @@ impl GameState {
         let shield = "shield".to_string();
         entities.push(shield.clone());
         let shield_graphics = Graphics3D {
-            model_id: "shield".to_string(),
+            mesh_id: "shield".to_string(),
         };
         graphics_3d_components.insert(shield.clone(), shield_graphics);
 
         let shield_graphics_inventory = Graphics2D {
-            model_id: "shield_inventory".to_string(),
+            material_id: "shield_inventory".to_string(),
         };
         graphics_2d_components.insert(shield.clone(), shield_graphics_inventory);
 
@@ -290,7 +291,7 @@ impl GameState {
         entities.push(player.clone());
 
         let player_graphics = Graphics3D {
-            model_id: "character".to_string(),
+            mesh_id: "character".to_string(),
         };
         graphics_3d_components.insert(player.clone(), player_graphics);
 
@@ -326,6 +327,27 @@ impl GameState {
     fn load_camera(entities: &mut Vec<Entity>, camera_components: &mut HashMap<String, Camera>) {
         let camera = "camera".to_string();
         let camera_component = Camera::new();
+        entities.push(camera.clone());
+        camera_components.insert(camera.clone(), camera_component);
+    }
+
+    fn load_camera_ui(entities: &mut Vec<Entity>, camera_components: &mut HashMap<String, Camera>) {
+        let camera = "camera_ui".to_string();
+        let mut camera_component = Camera::new();
+        camera_component.eye = Point3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        };
+
+        camera_component.target = Point3 {
+            x: 0.0,
+            y: 0.0,
+            z: -1.0,
+        };
+
+        camera_component.z_near = -1.0;
+        camera_component.z_far = 1.0;
         entities.push(camera.clone());
         camera_components.insert(camera.clone(), camera_component);
     }
@@ -408,6 +430,7 @@ impl GameState {
         self.in_storage_components.remove(entity);
     }
 
+    #[allow(dead_code)]
     pub fn get_in_storages(&self, storage_entity: &Entity) -> HashMap<&Entity, &InStorage> {
         self.in_storage_components
             .iter()

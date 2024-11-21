@@ -72,7 +72,7 @@ impl AudioSystem {
 
     async fn load_sounds() -> HashMap<String, Sound> {
         let bonk_sound = Sound {
-            bytes: load_binary("bonk.wav").await.unwrap(),
+            bytes: load_binary("bonk.wav").await.unwrap(), // Is it really just this easy? what about other file formats? Need a decoder? https://github.com/eshaz/wasm-audio-decoders/tree/master? wav(or pcm) is raw. probably want to use flac if we want lossless compression (smaller files without fidelity loss). other formats SHOULD require decoding. though i think mp3 just worked...
         };
 
         let mut sounds = HashMap::new();
