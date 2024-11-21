@@ -22,6 +22,12 @@ impl ModelManager {
 
     async fn load_models(device: &Device) -> HashMap<String, Mesh> {
         let mut mesh_map: HashMap<String, Mesh> = HashMap::new();
+        let black = resources::load_black_square_model(device).unwrap();
+        mesh_map.insert(
+            "black".to_string(),
+            black.meshes.into_iter().next().unwrap(),
+        );
+
         let shield = resources::load_model(device, "CUBE", "shield")
             .await
             .unwrap();
