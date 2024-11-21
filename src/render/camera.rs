@@ -1,5 +1,6 @@
 use cgmath::{ortho, Matrix4, Point3, SquareMatrix, Vector3, Zero};
 
+// TODO kind of weird having all this functionality in this component. should be separated.
 #[derive(Debug)]
 pub struct Camera {
     pub target: Point3<f32>,
@@ -43,8 +44,6 @@ impl Camera {
         let isometric_projection = ortho(
             -(window_width as f32) / window_height as f32,
             window_width as f32 / window_height as f32,
-            // -1.,
-            // 1.,
             -1.,
             1.,
             self.z_near,
@@ -54,8 +53,6 @@ impl Camera {
     }
 
     pub fn update_inverse_matrix(&mut self) {
-        self.view_projection_matrix_inverted = cgmath::Matrix4::from(self.view_projection_matrix)
-            .invert()
-            .unwrap();
+        self.view_projection_matrix_inverted = self.view_projection_matrix.invert().unwrap();
     }
 }

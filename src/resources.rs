@@ -1,40 +1,43 @@
 //
-use crate::{model, texture};
+use crate::render::model::{ColoredVertex, Mesh, TexVertex, VertexType};
+use crate::render::{model, texture};
 use cfg_if::cfg_if;
+use cgmath::Vector3;
 use wgpu::util::DeviceExt;
+use wgpu::Device;
 
-const CUBE_TEX: &[model::TexVertex] = &[
+const CUBE_TEX: &[TexVertex] = &[
     // Top ccw as seen from top
-    model::TexVertex {
+    TexVertex {
         position: [0.5, 0.5, 0.5],
         tex_coords: [0.0, 1.0],
     },
-    model::TexVertex {
+    TexVertex {
         position: [0.5, 0.5, -0.5],
         tex_coords: [1.0, 1.0],
     },
-    model::TexVertex {
+    TexVertex {
         position: [-0.5, 0.5, -0.5],
         tex_coords: [1.0, 0.0],
     },
-    model::TexVertex {
+    TexVertex {
         position: [-0.5, 0.5, 0.5],
         tex_coords: [0.0, 0.0],
     },
     // Bottom ccw as seen from top
-    model::TexVertex {
+    TexVertex {
         position: [0.5, -0.5, 0.5],
         tex_coords: [0.0, 0.0],
     },
-    model::TexVertex {
+    TexVertex {
         position: [0.5, -0.5, -0.5],
         tex_coords: [0.0, 1.0],
     },
-    model::TexVertex {
+    TexVertex {
         position: [-0.5, -0.5, -0.5],
         tex_coords: [1.0, 0.0],
     },
-    model::TexVertex {
+    TexVertex {
         position: [-0.5, -0.5, 0.5],
         tex_coords: [1.0, 1.0],
     },
@@ -49,36 +52,85 @@ const CUBE_INDICES: &[u16] = &[
     2, 6, 7, 2, 7, 3,
 ];
 
-const SQUARE_TEX: &[model::TexVertex] = &[
-    model::TexVertex {
+const SQUARE_TEX: &[TexVertex] = &[
+    TexVertex {
         position: [0.0, 0.0, 0.0],
         tex_coords: [0.0, 0.0],
     },
-    model::TexVertex {
+    TexVertex {
         position: [1.0, 0.0, 0.0],
         tex_coords: [1.0, 0.0],
     },
-    model::TexVertex {
+    TexVertex {
         position: [1.0, -1.0, 0.0],
         tex_coords: [1.0, 1.0],
     },
-    model::TexVertex {
+    TexVertex {
         position: [0.0, -1.0, 0.0],
         tex_coords: [0.0, 1.0],
     },
 ];
 
+const SQUARE_BLACK: &[ColoredVertex] = &[
+    ColoredVertex {
+        position: [0.0, 0.0, 0.0],
+        color: [0.0, 0.0, 0.0],
+    },
+    ColoredVertex {
+        position: [1.0, 0.0, 0.0],
+        color: [0.0, 0.0, 0.0],
+    },
+    ColoredVertex {
+        position: [1.0, -1.0, 0.0],
+        color: [0.0, 0.0, 0.0],
+    },
+    ColoredVertex {
+        position: [0.0, -1.0, 0.0],
+        color: [0.0, 0.0, 0.0],
+    },
+];
+
 const SQUARE_INDICES: &[u16] = &[2, 1, 0, 3, 2, 0];
+
+pub fn load_black_square_model(device: &Device) -> anyhow::Result<model::Model> {
+    let model: &[ColoredVertex];
+    let indices: &[u16];
+    model = SQUARE_BLACK;
+    indices = SQUARE_INDICES;
+
+    let meshes = build_colored_meshes(device, &model, &indices, Vector3::new(0.0, 0.0, 0.0));
+
+    Ok(model::Model { meshes })
+}
+
+pub fn load_colored_square(color: Vector3<f32>) -> Vec<ColoredVertex> {
+    vec![
+        ColoredVertex {
+            position: [0.0, 0.0, 0.0],
+            color: color.into(),
+        },
+        ColoredVertex {
+            position: [1.0, 0.0, 0.0],
+            color: color.into(),
+        },
+        ColoredVertex {
+            position: [1.0, -1.0, 0.0],
+            color: color.into(),
+        },
+        ColoredVertex {
+            position: [0.0, -1.0, 0.0],
+            color: color.into(),
+        },
+    ]
+}
 
 #[allow(clippy::cast_possible_truncation)]
 pub async fn load_model(
-    file_name: &str,
-    device: &wgpu::Device,
-    queue: &wgpu::Queue,
-    layout: &wgpu::BindGroupLayout,
+    device: &Device,
     model_to_load: &str,
+    mesh_material_id: &str,
 ) -> anyhow::Result<model::Model> {
-    let model: &[model::TexVertex];
+    let model: &[TexVertex];
     let indices: &[u16];
     if model_to_load.eq("CUBE") {
         model = CUBE_TEX;
@@ -88,14 +140,21 @@ pub async fn load_model(
         indices = SQUARE_INDICES;
     }
 
-    let diffuse_texture = load_texture(file_name, device, queue).await?;
-    let bind_group = build_bind_group(device, layout, &diffuse_texture);
-
-    let materials = vec![model::Material { bind_group }];
     // Also add this to material
     // name: file_name.to_string(),
     // diffuse_texture,
 
+    let meshes = build_textured_meshes(device, &model, &indices, mesh_material_id);
+
+    Ok(model::Model { meshes })
+}
+
+fn build_textured_meshes(
+    device: &Device,
+    model: &&[TexVertex],
+    indices: &&[u16],
+    mesh_material_name: &str,
+) -> Vec<Mesh> {
     let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Vertex Buffer"),
         contents: bytemuck::cast_slice(model),
@@ -109,46 +168,54 @@ pub async fn load_model(
     });
     let num_indices = indices.len() as u32;
 
-    let meshes = vec![model::Mesh {
-        // name: file_name.to_string(),
+    let meshes = vec![Mesh {
+        vertex_type: VertexType::Material {
+            material_id: mesh_material_name.to_string(), // Currently we set all meshes of a model to the same material
+        },
         vertex_buffer,
         index_buffer,
         num_elements: num_indices,
     }];
+    meshes
+}
 
-    Ok(model::Model { meshes, materials })
+fn build_colored_meshes(
+    device: &Device,
+    model: &&[ColoredVertex],
+    indices: &&[u16],
+    color: Vector3<f32>,
+) -> Vec<Mesh> {
+    let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("Vertex Buffer"),
+        contents: bytemuck::cast_slice(model),
+        usage: wgpu::BufferUsages::VERTEX,
+    });
+
+    let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("Index Buffer"),
+        contents: bytemuck::cast_slice(indices),
+        usage: wgpu::BufferUsages::INDEX,
+    });
+    let num_indices = indices.len() as u32;
+
+    let meshes = vec![Mesh {
+        vertex_type: VertexType::Color {
+            color: color.into(), // Currently we set all meshes of a model to the same color
+        },
+        vertex_buffer,
+        index_buffer,
+        num_elements: num_indices,
+    }];
+    meshes
 }
 
 pub async fn load_texture(
     file_name: &str,
-    device: &wgpu::Device,
+    device: &Device,
     queue: &wgpu::Queue,
 ) -> anyhow::Result<texture::Texture> {
     let data = load_binary(file_name).await?;
     texture::Texture::from_bytes(device, queue, &data, file_name)
-}
-
-fn build_bind_group(
-    device: &wgpu::Device,
-    texture_bind_group_layout: &wgpu::BindGroupLayout,
-    diffuse_texture: &texture::Texture,
-) -> wgpu::BindGroup {
-    let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        layout: texture_bind_group_layout,
-        entries: &[
-            wgpu::BindGroupEntry {
-                binding: 0,
-                resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
-            },
-            wgpu::BindGroupEntry {
-                binding: 1,
-                resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
-            },
-        ],
-        label: Some("diffuse_bind_group"),
-    });
-
-    diffuse_bind_group
 }
 
 #[cfg(target_arch = "wasm32")]
