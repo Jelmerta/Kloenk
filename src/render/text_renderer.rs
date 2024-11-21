@@ -1,11 +1,32 @@
 use crate::resources;
 use crate::state::ui_state::Rect;
+use cgmath::Vector3;
 use glyphon::{
     fontdb, Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping,
     SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
 };
-use std::collections::HashMap;
-use wgpu::{Adapter, Device, Queue, Surface};
+use itertools::Itertools;
+use wgpu::{Adapter, CommandEncoder, Device, Queue, Surface, TextureView};
+
+struct TextContext {
+    buffer: Buffer,
+    rect: Rect,
+    color: Vector3<f32>, // TODO f32 is meh for this...
+}
+
+impl TextContext {
+    fn to_text_area(&self) -> TextArea {
+        TextArea {
+            buffer: &self.buffer,
+            left: self.rect.top_left.x,
+            top: self.rect.top_left.y,
+            scale: 1.0,
+            bounds: TextBounds::default(),
+            default_color: Color::rgb(self.color.x as u8, self.color.y as u8, self.color.z as u8),
+            custom_glyphs: &[],
+        }
+    }
+}
 
 pub struct TextWriter {
     text_renderer: TextRenderer,
@@ -13,7 +34,7 @@ pub struct TextWriter {
     swash_cache: SwashCache,
     viewport: Viewport,
     atlas: TextAtlas,
-    pub text_buffers: HashMap<String, Buffer>,
+    queue: Vec<TextContext>,
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -23,8 +44,6 @@ impl TextWriter {
         queue: &Queue,
         surface: &Surface<'_>,
         adapter: &Adapter,
-        window_width: f32,
-        window_height: f32,
     ) -> Self {
         let font_data = resources::load_binary("PlaywriteNL-Regular.ttf")
             .await
@@ -32,7 +51,7 @@ impl TextWriter {
 
         let mut fontdb = fontdb::Database::new();
         fontdb.load_font_data(font_data);
-        let mut font_system = FontSystem::new_with_locale_and_db("en-US".to_string(), fontdb);
+        let font_system = FontSystem::new_with_locale_and_db("en-US".to_string(), fontdb);
 
         let caps = surface.get_capabilities(adapter);
         let surface_format = caps // I see tutorial using wgpu::TextureFormat::Bgra8UnormSrgb
@@ -48,37 +67,57 @@ impl TextWriter {
         let text_renderer =
             TextRenderer::new(&mut atlas, device, wgpu::MultisampleState::default(), None);
 
-        let mut selected_text_buffer = Buffer::new(&mut font_system, Metrics::new(16.0, 20.0));
-        selected_text_buffer.set_size(&mut font_system, Some(window_width), Some(window_height));
-        selected_text_buffer.shape_until_scroll(&mut font_system, false);
-
-        let mut action_text_buffer = Buffer::new(&mut font_system, Metrics::new(16.0, 20.0));
-        action_text_buffer.set_size(&mut font_system, Some(window_width), Some(window_height));
-        action_text_buffer.shape_until_scroll(&mut font_system, false);
-
-        // TODO have not found a way yet to handle dynamic buffers correctly (so we have to pre-create buffers...)
-        let mut text_buffers = HashMap::new();
-        text_buffers.insert("selected_text".to_string(), selected_text_buffer);
-        text_buffers.insert("action_text".to_string(), action_text_buffer);
-
         TextWriter {
             text_renderer,
             font_system,
             swash_cache,
             viewport,
             atlas,
-            text_buffers,
+            queue: Vec::new(),
         }
     }
 
-    pub fn prepare(
+    pub fn reset_for_frame(&mut self) {
+        self.atlas.trim();
+        self.queue.clear();
+    }
+
+    pub fn add(&mut self, screen_width: u32, screen_height: u32, rect: Rect, text: &str) {
+        let mut buffer = Buffer::new(&mut self.font_system, Metrics::new(16.0, 20.0));
+        buffer.set_size(
+            &mut self.font_system,
+            Some(screen_width as f32),
+            Some(screen_height as f32),
+        );
+        buffer.set_text(
+            &mut self.font_system,
+            text,
+            Attrs::new().family(Family::Name("Playwrite NL")),
+            Shaping::Advanced,
+        );
+        buffer.shape_until_scroll(&mut self.font_system, false);
+
+        self.queue.push(TextContext {
+            buffer,
+            rect,
+            color: Vector3::new(255.0, 255.0, 0.0),
+        });
+    }
+
+    pub fn write(
         &mut self,
         device: &Device,
         queue: &Queue,
+        encoder: &mut CommandEncoder,
+        view: &TextureView,
         screen_width: u32,
         screen_height: u32,
-        rect: Rect,
     ) {
+        self.prepare(device, queue, screen_width, screen_height);
+        self.write_text_buffer(encoder, view);
+    }
+
+    fn prepare(&mut self, device: &Device, queue: &Queue, screen_width: u32, screen_height: u32) {
         self.viewport.update(
             queue,
             Resolution {
@@ -94,41 +133,17 @@ impl TextWriter {
                 &mut self.font_system,
                 &mut self.atlas,
                 &self.viewport,
-                [TextArea {
-                    buffer: self.text_buffers.get("action_text").unwrap(),
-                    left: rect.top_left.x,
-                    top: rect.top_left.y,
-                    scale: 1.0,
-                    bounds: TextBounds {
-                        left: rect.top_left.x as i32 - 10, // Adding 10 for some padding so text is fully shown
-                        top: rect.top_left.y as i32 - 10,
-                        right: rect.bottom_right.x as i32,
-                        bottom: rect.bottom_right.y as i32,
-                    },
-                    default_color: Color::rgb(255, 255, 0),
-                    custom_glyphs: &[],
-                }],
+                self.queue
+                    .iter()
+                    .map(|text_context| text_context.to_text_area())
+                    .collect_vec(),
                 &mut self.swash_cache,
             )
             .unwrap();
     }
 
     #[allow(clippy::cast_possible_truncation)]
-    pub fn write_text_buffer(
-        &mut self,
-        encoder: &mut wgpu::CommandEncoder,
-        view: &wgpu::TextureView,
-        text: &str,
-    ) {
-        let buffer = self.text_buffers.get_mut("action_text").unwrap();
-
-        buffer.set_text(
-            &mut self.font_system,
-            text,
-            Attrs::new().family(Family::Name("Playwrite NL")),
-            Shaping::Advanced,
-        );
-
+    fn write_text_buffer(&mut self, encoder: &mut CommandEncoder, view: &TextureView) {
         {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: None,
@@ -148,6 +163,7 @@ impl TextWriter {
             self.text_renderer
                 .render(&self.atlas, &self.viewport, &mut pass)
                 .unwrap();
+            drop(pass);
         }
     }
 }

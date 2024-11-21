@@ -122,15 +122,7 @@ impl Renderer {
             RenderContextManager::new(&device, &config, &camera_manager, &material_manager);
 
         let depth_texture = texture::Depth::create_depth_texture(&device, &config, "depth_texture");
-        let text_writer = TextWriter::new(
-            &device,
-            &queue,
-            &surface,
-            &adapter,
-            window_width as f32,
-            window_height as f32,
-        )
-        .await;
+        let text_writer = TextWriter::new(&device, &queue, &surface, &adapter).await;
 
         Self {
             surface,
@@ -181,6 +173,7 @@ impl Renderer {
 
         self.queue.submit(iter::once(encoder.finish()));
         output.present();
+        self.text_writer.reset_for_frame();
 
         Ok(())
     }
@@ -269,7 +262,7 @@ impl Renderer {
             .render_commands
             .iter()
             .sorted_by_key(|render_command| match render_command {
-                RenderCommand::Image {
+                RenderCommand::Mesh {
                     layer,
                     rect: _rect,
                     mesh_id: _image_name,
@@ -287,18 +280,15 @@ impl Renderer {
                         rect,
                         text,
                     } => {
-                        self.text_writer.prepare(
-                            &self.device,
-                            &self.queue,
+                        self.text_writer.add(
                             ui_state.window_size.width,
                             ui_state.window_size.height,
                             rect.scale(
                                 ui_state.window_size.width as f32,
                                 ui_state.window_size.height as f32,
                             ),
+                            text,
                         );
-
-                        self.text_writer.write_text_buffer(encoder, view, text);
                     }
                     RenderCommand::Mesh {
                         layer: _layer,
@@ -309,6 +299,14 @@ impl Renderer {
                     }
                 } // TODO or maybe call it widget?
             });
+        self.text_writer.write(
+            &self.device,
+            &self.queue,
+            encoder,
+            view,
+            ui_state.window_size.width,
+            ui_state.window_size.height,
+        )
     }
 
     fn create_instance_buffer(device: &Device, instance_group: &[Instance]) -> Buffer {
@@ -426,7 +424,57 @@ impl Renderer {
         let mesh = self.model_manager.get_mesh(mesh_id.to_string());
 
         match &mesh.vertex_type {
-            Color { color } => {}
+            Color { color } => {
+                let render_context_textured = self
+                    .render_context_manager
+                    .render_contexts
+                    .get_mut("colored")
+                    .unwrap();
+
+                let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("Render Pass UI"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Load,
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                        view: &self.depth_texture.view,
+                        depth_ops: Some(wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(1.0),
+                            store: wgpu::StoreOp::Store,
+                        }),
+                        stencil_ops: None,
+                    }),
+                    occlusion_query_set: None,
+                    timestamp_writes: None,
+                });
+
+                render_pass_ui.set_pipeline(&render_context_textured.render_pipeline);
+                render_pass_ui.set_bind_group(
+                    0,
+                    self.camera_manager.get_bind_group("camera_2d"),
+                    &[],
+                );
+
+                let element_instance = Self::create_ui_element_instance(
+                    Point2::new(
+                        ui_state.window_size.width as f32,
+                        ui_state.window_size.height as f32,
+                    ),
+                    *rect,
+                );
+                let instance_buffer =
+                    Self::create_instance_buffer(&self.device, &[element_instance]);
+                let instance_count = 1;
+
+                render_pass_ui.set_vertex_buffer(1, instance_buffer.slice(..));
+                render_pass_ui.draw_mesh_instanced(mesh, 0..instance_count);
+                drop(render_pass_ui);
+            }
             VertexType::Material { material_id } => {
                 let render_context_textured = self
                     .render_context_manager
