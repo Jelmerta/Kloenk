@@ -84,3 +84,17 @@ wasm-bindgen target/wasm32-unknown-unknown/debug/kloenk_bin.wasm --target web --
 mv -Force .\bg_output\kloenk_bg.wasm .\bg_output\kloenk.wasm
 cp ./bg_output/kloenk.wasm C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html\
 cp ./bg_output/kloenk.js C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html\
+
+Local development(linux+web):
+sudo systemctl start nginx
+cp ./resources/web/nginx.conf /etc/nginx/nginx.conf
+cp ./resources/web/common_headers.conf /etc/nginx/common_headers.conf
+sudo cp -r ./resources /usr/share/nginx/html
+sudo cp ./index.html /usr/share/nginx/html
+
+Every change:
+cargo build --target wasm32-unknown-unknown --target-dir target --bin kloenk_bin
+wasm-bindgen target/wasm32-unknown-unknown/debug/kloenk_bin.wasm --target web --out-dir bg_output --out-name kloenk
+mv ./bg_output/kloenk_bg.wasm ./bg_output/kloenk.wasm
+sudo cp bg_output/kloenk.wasm /usr/share/nginx/html
+sudo cp bg_output/kloenk.js /usr/share/nginx/html
