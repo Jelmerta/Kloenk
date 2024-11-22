@@ -71,39 +71,21 @@ const SQUARE_TEX: &[TexVertex] = &[
     },
 ];
 
-const SQUARE_BLACK: &[ColoredVertex] = &[
-    ColoredVertex {
-        position: [0.0, 0.0, 0.0],
-        color: [0.0, 0.0, 0.0],
-    },
-    ColoredVertex {
-        position: [1.0, 0.0, 0.0],
-        color: [0.0, 0.0, 0.0],
-    },
-    ColoredVertex {
-        position: [1.0, -1.0, 0.0],
-        color: [0.0, 0.0, 0.0],
-    },
-    ColoredVertex {
-        position: [0.0, -1.0, 0.0],
-        color: [0.0, 0.0, 0.0],
-    },
-];
-
 const SQUARE_INDICES: &[u16] = &[2, 1, 0, 3, 2, 0];
 
-pub fn load_black_square_model(device: &Device) -> anyhow::Result<model::Model> {
-    let model: &[ColoredVertex];
-    let indices: &[u16];
-    model = SQUARE_BLACK;
-    indices = SQUARE_INDICES;
+pub fn load_colored_square_model(
+    device: &Device,
+    color: Vector3<f32>,
+) -> anyhow::Result<model::Model> {
+    let model = load_colored_square(color);
+    let indices = SQUARE_INDICES;
 
-    let meshes = build_colored_meshes(device, &model, &indices, Vector3::new(0.0, 0.0, 0.0));
+    let meshes = build_colored_meshes(device, &&model[..], &indices, color);
 
     Ok(model::Model { meshes })
 }
 
-pub fn load_colored_square(color: Vector3<f32>) -> Vec<ColoredVertex> {
+fn load_colored_square(color: Vector3<f32>) -> Vec<ColoredVertex> {
     vec![
         ColoredVertex {
             position: [0.0, 0.0, 0.0],
