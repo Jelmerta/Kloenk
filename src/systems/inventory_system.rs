@@ -82,11 +82,14 @@ impl InventorySystem {
                     }
 
                     ui_state.menu_state = MenuState::Inventory {
-                        mouse_position: input.mouse_position_ui.clone(),
+                        mouse_position: input.mouse_position_ui,
                         item: entity.to_string(),
                     };
 
                     frame_state.handled_right_click = true;
+                }
+                UserAction::Hover => {
+                    continue;
                 }
             }
         }
@@ -117,14 +120,14 @@ impl InventorySystem {
                 if frame_state.handled_left_click {
                     return;
                 }
-                ItemPlacementSystem::place_item(game_state, &mut frame_state.action_effects, &item);
+                ItemPlacementSystem::place_item(game_state, &mut frame_state.action_effects, item);
                 ui_state.menu_state = Closed;
                 frame_state.handled_left_click = true;
             }
 
             frame_state
                 .gui
-                .text(1000, object_selection_rect, "Drop item".to_string())
+                .text(300, object_selection_rect, "Drop item".to_string())
         }
     }
 }

@@ -52,19 +52,42 @@ impl Gui {
         color: Vector3<f32>,
         input: &Input,
     ) -> UserAction {
+        let mouse_is_contained = rect.contains(input.mouse_position_ui);
+
+        if mouse_is_contained && input.left_mouse_clicked.is_toggled_on() {
+            let image_command = RenderCommand::Mesh {
+                layer,
+                rect,
+                mesh_id: "black".to_string(), // TODO hardcoded
+            };
+            self.render_commands.push(image_command);
+            return UserAction::LeftClick;
+        }
+        if mouse_is_contained && input.right_mouse_clicked.is_toggled_on() {
+            let image_command = RenderCommand::Mesh {
+                layer,
+                rect,
+                mesh_id: "black".to_string(), // TODO hardcoded
+            };
+            self.render_commands.push(image_command);
+            return UserAction::RightClick;
+        }
+        if mouse_is_contained {
+            let image_command = RenderCommand::Mesh {
+                layer,
+                rect,
+                mesh_id: "grey".to_string(), // TODO hardcoded
+            };
+            self.render_commands.push(image_command);
+            return UserAction::Hover;
+        }
+
         let image_command = RenderCommand::Mesh {
             layer,
             rect,
             mesh_id: "black".to_string(), // TODO hardcoded
         };
-
         self.render_commands.push(image_command);
-        if rect.contains(input.mouse_position_ui) && input.left_mouse_clicked.is_toggled_on() {
-            return UserAction::LeftClick;
-        }
-        if rect.contains(input.mouse_position_ui) && input.right_mouse_clicked.is_toggled_on() {
-            return UserAction::RightClick;
-        }
         UserAction::None
         // TODO probably on release
     }

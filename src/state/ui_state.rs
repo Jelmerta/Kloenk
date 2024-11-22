@@ -29,6 +29,7 @@ pub enum RenderCommand {
 
 pub enum UserAction {
     None,
+    Hover,
     LeftClick,
     RightClick,
 }

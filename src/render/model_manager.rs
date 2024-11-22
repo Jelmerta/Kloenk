@@ -1,5 +1,6 @@
 use crate::render::model::Mesh;
 use crate::resources;
+use cgmath::Vector3;
 use std::collections::HashMap;
 use wgpu::Device;
 
@@ -22,11 +23,16 @@ impl ModelManager {
 
     async fn load_models(device: &Device) -> HashMap<String, Mesh> {
         let mut mesh_map: HashMap<String, Mesh> = HashMap::new();
-        let black = resources::load_black_square_model(device).unwrap();
+        let black =
+            resources::load_colored_square_model(device, Vector3::new(0.0, 0.0, 0.0)).unwrap();
         mesh_map.insert(
             "black".to_string(),
             black.meshes.into_iter().next().unwrap(),
         );
+
+        let grey =
+            resources::load_colored_square_model(device, Vector3::new(0.2, 0.2, 0.2)).unwrap();
+        mesh_map.insert("grey".to_string(), grey.meshes.into_iter().next().unwrap());
 
         let shield = resources::load_model(device, "CUBE", "shield")
             .await
