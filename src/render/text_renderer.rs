@@ -118,7 +118,6 @@ impl TextWriter {
     }
 
     fn prepare(&mut self, device: &Device, queue: &Queue, screen_width: u32, screen_height: u32) {
-        log::warn!("{}", self.queue.len());
         self.viewport.update(
             queue,
             Resolution {

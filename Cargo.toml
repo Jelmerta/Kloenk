@@ -10,7 +10,7 @@ license = "GPL-3.0-or-later"
 [dependencies]
 cfg-if = "1.0"
 winit = { version = "0.30", default-features = false, features = ["rwh_06", "x11"] }
-env_logger = { version = "0.11", default-features = false }
+env_logger = { version = "0.11", default-features = false } # Only used for dev debug logging atm
 log = "0.4"
 # Rodio needs to be before wgpu at the moment. Otherwise, loads incorrect windows version for wgpu due to dumb resolution behavior
 rodio = { version = "0.20", default-features = false, features = ["wav"] }
