@@ -121,7 +121,6 @@ pub async fn load_gltf(device: &Device, model_path: &str) -> Model {
             }
             // Think this is for if we want to load gltf+bin files?
             gltf::buffer::Source::Uri(uri) => {
-                log::warn!("{}", uri);
                 let bin = load_binary(uri).await.unwrap();
                 buffer_data.push(bin);
             }
@@ -130,7 +129,6 @@ pub async fn load_gltf(device: &Device, model_path: &str) -> Model {
 
     let mut meshes = Vec::new();
     for mesh in gltf.meshes() {
-        log::warn!("{}", mesh.primitives().len());
         mesh.primitives().for_each(|primitive| {
             let reader = primitive.reader(|buffer| Some(&buffer_data[buffer.index()]));
 
@@ -196,7 +194,6 @@ pub async fn load_gltf(device: &Device, model_path: &str) -> Model {
             })
         });
     }
-    log::warn!("{:?}", meshes);
     Model { meshes }
 }
 
