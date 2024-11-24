@@ -1,8 +1,10 @@
-//
-use crate::render::model::{ColoredVertex, Mesh, TexVertex, VertexType};
+use crate::render::model::{ColoredVertex, Mesh, Model, TexVertex, VertexType};
 use crate::render::{model, texture};
 use cfg_if::cfg_if;
 use cgmath::Vector3;
+use gltf::accessor::Dimensions::Vec3;
+use gltf::mesh::util::ReadIndices;
+use gltf::Gltf;
 use wgpu::util::DeviceExt;
 use wgpu::Device;
 
@@ -73,10 +75,7 @@ const SQUARE_TEX: &[TexVertex] = &[
 
 const SQUARE_INDICES: &[u16] = &[2, 1, 0, 3, 2, 0];
 
-pub fn load_colored_square_model(
-    device: &Device,
-    color: Vector3<f32>,
-) -> anyhow::Result<model::Model> {
+pub fn load_colored_square_model(device: &Device, color: Vector3<f32>) -> anyhow::Result<Model> {
     let model = load_colored_square(color);
     let indices = SQUARE_INDICES;
 
@@ -105,6 +104,180 @@ fn load_colored_square(color: Vector3<f32>) -> Vec<ColoredVertex> {
         },
     ]
 }
+
+pub async fn load_gltf(device: &Device, model_path: &str) -> Model {
+    let data = load_binary(model_path).await.unwrap();
+    let gltf = Gltf::from_slice(data.as_slice())
+        .unwrap_or_else(|_| panic!("Failed to load gltf model {}", model_path));
+
+    let mut buffer_data = Vec::new();
+    for buffer in gltf.buffers() {
+        match buffer.source() {
+            // Think this is for if we want to load glb files?
+            gltf::buffer::Source::Bin => {
+                // if let Some(blob) = gltf.blob.as_deref() {
+                //     buffer_data.push(blob.into());
+                //     println!("Found a bin, saving");
+                // };
+            }
+            // Think this is for if we want to load gltf+bin files?
+            gltf::buffer::Source::Uri(uri) => {
+                log::warn!("{}", uri);
+                let bin = load_binary(uri).await.unwrap();
+                buffer_data.push(bin);
+            }
+        }
+    }
+
+    let mut meshes = Vec::new();
+    for mesh in gltf.meshes() {
+        mesh.primitives().for_each(|primitive| {
+            let reader = primitive.reader(|buffer| Some(&buffer_data[buffer.index()]));
+
+            let vertices = if let Some(vertex_attibute) = reader.read_positions() {
+                let mut vertices = Vec::new();
+                vertex_attibute.for_each(|vertex| {
+                    vertices.push(ColoredVertex {
+                        position: vertex,
+                        color: Vector3::new(0.7, 0.7, 0.7).into(),
+                    })
+                });
+                vertices
+            } else {
+                Vec::new()
+            };
+
+            let indices = if let Some(read_indices) = reader.read_indices() {
+                let mut indices = Vec::new();
+                // indices.append(&mut read_indices.into_u32().collect::<Vec<u32>>());
+                // indices.append(&mut read_indices.into_u32().collect::<Vec<u32>>());
+                // indices
+                match read_indices {
+                    ReadIndices::U8(iter) => {
+                        log::warn!("8");
+                    }
+                    ReadIndices::U16(iter) => {
+                        log::warn!("16");
+                        iter.for_each(|index| indices.push(index));
+                    }
+                    ReadIndices::U32(iter) => {
+                        log::warn!("32");
+                        iter.for_each(|index| indices.push(index as u16));
+                    }
+                }
+                indices
+            } else {
+                Vec::new()
+            };
+
+            let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex buffer"),
+                contents: bytemuck::cast_slice(&vertices),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
+
+            let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Index buffer"),
+                contents: bytemuck::cast_slice(&indices),
+                usage: wgpu::BufferUsages::INDEX,
+            });
+
+            // TODO Not used... Vertex buffer is already set containing the colors
+            let vertex_type = if primitive.material().index().is_some() {
+                VertexType::Color {
+                    color: primitive.material().emissive_factor(),
+                }
+            } else {
+                // No material found for the primitive, so just default to a color
+                VertexType::Color {
+                    color: Vector3::new(0.7, 0.7, 0.7).into(),
+                }
+            };
+            meshes.push(Mesh {
+                vertex_type,
+                vertex_buffer,
+                index_buffer,
+                num_elements: indices.len() as u32,
+            })
+        });
+    }
+    log::warn!("{:?}", meshes);
+    Model { meshes }
+}
+
+// let mut buffer_data = Vec::new();
+// for buffer in gltf.buffers() {
+//     match buffer.source() {
+//         // Think this is what we want if we use .gltf files
+//         gltf::buffer::Source::Uri(uri) => {
+//             // let uri = percent_encoding::percent_decode_str(uri)
+//             // .decode_utf8()
+//             // .unwrap();
+//             // let uri = uri.as_ref();
+//             // let buffer_bytes = match DataUri::parse(uri) {
+//             //     Ok(data_uri) if VALID_MIME_TYPES.contains(&data_uri.mime_type) => {
+//             // data_uri.decode()?
+//             // }
+//             // Ok(_) => return Err(GltfError::BufferFormatUnsupported),
+//             // Err(()) => {
+//             // TODO: Remove this and add dep
+//             // let buffer_path = load_context.path().parent().unwrap().join(uri);
+//             // load_context.read_asset_bytes(buffer_path).await?
+//             // }
+//             // };
+//             // buffer_data.push();
+//         }
+//         // Think this is for if we want to load glb files?
+//         gltf::buffer::Source::Bin => {
+//             if let Some(blob) = gltf.blob.as_deref() {
+//                 buffer_data.push(blob.into());
+//             } else {
+//                 panic!(":)");
+//             }
+//         }
+//     }
+// }
+
+//
+// gltf.materials()
+// //
+// // let mut materials = Vec::new();
+// for obj_material in object_materials? {
+// gltf.1
+
+// let diffuse_texture = load_tex;
+// let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+//     layout,
+//     entries: &[
+//         wgpu::BindGroupEntry {
+//             binding: 0,
+//             resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
+//         },
+//         wgpu::BindGroupEntry {
+//             binding: 1,
+//             resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
+//         },
+//     ],
+//     label: None,
+// });
+
+//         materials.push((model::Material {
+//             name: ,
+//             diffuse_texture,
+//             bind_group,
+//         });
+//     }
+//
+//     let garfield = model::Model {
+//         meshes: meshes,
+//         materials: materials,
+//     };
+//     // models.push(garfield);
+//
+//     return Model {
+//         meshes: gltf.meshes().collect(),
+//     };
+// }
 
 #[allow(clippy::cast_possible_truncation)]
 pub async fn load_model(

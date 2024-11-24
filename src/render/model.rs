@@ -68,6 +68,7 @@ pub struct Model {
     pub meshes: Vec<Mesh>,
 }
 
+#[derive(Debug)]
 pub struct Mesh {
     pub vertex_type: VertexType,
     pub vertex_buffer: wgpu::Buffer,
@@ -75,6 +76,7 @@ pub struct Mesh {
     pub num_elements: u32,
 }
 
+#[derive(Debug)]
 pub enum VertexType {
     Material { material_id: String },
     Color { color: [f32; 3] },
@@ -91,6 +93,7 @@ where
 {
     fn draw_mesh_instanced(&mut self, mesh: &'b Mesh, instances: Range<u32>) {
         self.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
+        // TODO 16 or 32
         self.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
         self.draw_indexed(0..mesh.num_elements, 0, instances);
     }

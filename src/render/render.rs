@@ -55,6 +55,7 @@ impl Instance {
     }
 }
 
+// Hmm we might be able to batch together different meshes. group models based on shadows, lighting, transparency etc
 struct RenderBatch {
     instance_buffer: Buffer,
     mesh_id: String,
@@ -186,12 +187,6 @@ impl Renderer {
     ) {
         self.create_render_groups(game_state);
 
-        let render_context_textured = self
-            .render_context_manager
-            .render_contexts
-            .get_mut("textured")
-            .unwrap();
-
         let camera = game_state.camera_components.get_mut("camera").unwrap();
         self.camera_manager
             .update_buffer("camera_3d".to_string(), &self.queue, camera);
@@ -224,22 +219,44 @@ impl Renderer {
                 timestamp_writes: None,
             });
 
-            render_pass.set_pipeline(&render_context_textured.render_pipeline);
-            render_pass.set_bind_group(1, self.camera_manager.get_bind_group("camera_3d"), &[]);
-
             self.render_batches.iter().for_each(|render_group| {
                 let mesh = self
                     .model_manager
                     .get_mesh(render_group.mesh_id.to_string());
                 match &mesh.vertex_type {
-                    Color { color: _color } => (),
+                    Color { color: _color } => {
+                        let render_context_colored = self
+                            .render_context_manager
+                            .render_contexts
+                            .get_mut("colored")
+                            .unwrap();
+                        render_pass.set_pipeline(&render_context_colored.render_pipeline);
+                        render_pass.set_vertex_buffer(1, render_group.instance_buffer.slice(..));
+                        render_pass.set_bind_group(
+                            0,
+                            self.camera_manager.get_bind_group("camera_3d"),
+                            &[],
+                        );
+                    }
                     VertexType::Material { material_id } => {
+                        let render_context_textured = self
+                            .render_context_manager
+                            .render_contexts
+                            .get_mut("textured")
+                            .unwrap();
+                        render_pass.set_pipeline(&render_context_textured.render_pipeline);
+
                         let texture_bind_group = self.material_manager.get_bind_group(material_id);
                         render_pass.set_bind_group(0, texture_bind_group, &[]);
+                        render_pass.set_bind_group(
+                            1,
+                            self.camera_manager.get_bind_group("camera_3d"),
+                            &[],
+                        );
                         render_pass.set_vertex_buffer(1, render_group.instance_buffer.slice(..));
-                        render_pass.draw_mesh_instanced(mesh, 0..render_group.instance_count);
                     }
                 }
+                render_pass.draw_mesh_instanced(mesh, 0..render_group.instance_count);
             });
 
             drop(render_pass);
@@ -441,6 +458,7 @@ impl Renderer {
                             store: wgpu::StoreOp::Store,
                         },
                     })],
+                    // TODO probably doesnt work on multiple render passes... Might need to rethink depth buffer on multi-renderpass
                     depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                         view: &self.depth_texture.view,
                         depth_ops: Some(wgpu::Operations {
