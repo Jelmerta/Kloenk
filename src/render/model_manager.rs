@@ -91,12 +91,6 @@ impl ModelManager {
             gozer.meshes.into_iter().next().unwrap(),
         );
 
-        let kubus = resources::load_gltf(device, "kubus.gltf").await;
-        mesh_map.insert(
-            "kubus".to_string(),
-            kubus.meshes.into_iter().next().unwrap(),
-        );
-
         mesh_map
     }
 }
