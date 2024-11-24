@@ -293,7 +293,6 @@ impl GameState {
         let player_graphics = Graphics3D {
             // mesh_id: "character".to_string(),
             mesh_id: "gozer".to_string(),
-            // mesh_id: "kubus".to_string(),
         };
         graphics_3d_components.insert(player.clone(), player_graphics);
 

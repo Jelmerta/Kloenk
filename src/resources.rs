@@ -1,8 +1,7 @@
 use crate::render::model::{ColoredVertex, Mesh, Model, TexVertex, VertexType};
-use crate::render::{model, texture};
+use crate::render::texture;
 use cfg_if::cfg_if;
 use cgmath::Vector3;
-use gltf::accessor::Dimensions::Vec3;
 use gltf::mesh::util::ReadIndices;
 use gltf::Gltf;
 use wgpu::util::DeviceExt;
@@ -81,7 +80,7 @@ pub fn load_colored_square_model(device: &Device, color: Vector3<f32>) -> anyhow
 
     let meshes = build_colored_meshes(device, &&model[..], &indices, color);
 
-    Ok(model::Model { meshes })
+    Ok(Model { meshes })
 }
 
 fn load_colored_square(color: Vector3<f32>) -> Vec<ColoredVertex> {
@@ -131,12 +130,13 @@ pub async fn load_gltf(device: &Device, model_path: &str) -> Model {
 
     let mut meshes = Vec::new();
     for mesh in gltf.meshes() {
+        log::warn!("{}", mesh.primitives().len());
         mesh.primitives().for_each(|primitive| {
             let reader = primitive.reader(|buffer| Some(&buffer_data[buffer.index()]));
 
-            let vertices = if let Some(vertex_attibute) = reader.read_positions() {
+            let vertices = if let Some(vertex_attribute) = reader.read_positions() {
                 let mut vertices = Vec::new();
-                vertex_attibute.for_each(|vertex| {
+                vertex_attribute.for_each(|vertex| {
                     vertices.push(ColoredVertex {
                         position: vertex,
                         color: Vector3::new(0.7, 0.7, 0.7).into(),
@@ -149,19 +149,14 @@ pub async fn load_gltf(device: &Device, model_path: &str) -> Model {
 
             let indices = if let Some(read_indices) = reader.read_indices() {
                 let mut indices = Vec::new();
-                // indices.append(&mut read_indices.into_u32().collect::<Vec<u32>>());
-                // indices.append(&mut read_indices.into_u32().collect::<Vec<u32>>());
-                // indices
                 match read_indices {
                     ReadIndices::U8(iter) => {
-                        log::warn!("8");
+                        iter.for_each(|index| indices.push(index as u16));
                     }
                     ReadIndices::U16(iter) => {
-                        log::warn!("16");
                         iter.for_each(|index| indices.push(index));
                     }
                     ReadIndices::U32(iter) => {
-                        log::warn!("32");
                         iter.for_each(|index| indices.push(index as u16));
                     }
                 }
@@ -205,86 +200,12 @@ pub async fn load_gltf(device: &Device, model_path: &str) -> Model {
     Model { meshes }
 }
 
-// let mut buffer_data = Vec::new();
-// for buffer in gltf.buffers() {
-//     match buffer.source() {
-//         // Think this is what we want if we use .gltf files
-//         gltf::buffer::Source::Uri(uri) => {
-//             // let uri = percent_encoding::percent_decode_str(uri)
-//             // .decode_utf8()
-//             // .unwrap();
-//             // let uri = uri.as_ref();
-//             // let buffer_bytes = match DataUri::parse(uri) {
-//             //     Ok(data_uri) if VALID_MIME_TYPES.contains(&data_uri.mime_type) => {
-//             // data_uri.decode()?
-//             // }
-//             // Ok(_) => return Err(GltfError::BufferFormatUnsupported),
-//             // Err(()) => {
-//             // TODO: Remove this and add dep
-//             // let buffer_path = load_context.path().parent().unwrap().join(uri);
-//             // load_context.read_asset_bytes(buffer_path).await?
-//             // }
-//             // };
-//             // buffer_data.push();
-//         }
-//         // Think this is for if we want to load glb files?
-//         gltf::buffer::Source::Bin => {
-//             if let Some(blob) = gltf.blob.as_deref() {
-//                 buffer_data.push(blob.into());
-//             } else {
-//                 panic!(":)");
-//             }
-//         }
-//     }
-// }
-
-//
-// gltf.materials()
-// //
-// // let mut materials = Vec::new();
-// for obj_material in object_materials? {
-// gltf.1
-
-// let diffuse_texture = load_tex;
-// let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-//     layout,
-//     entries: &[
-//         wgpu::BindGroupEntry {
-//             binding: 0,
-//             resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
-//         },
-//         wgpu::BindGroupEntry {
-//             binding: 1,
-//             resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
-//         },
-//     ],
-//     label: None,
-// });
-
-//         materials.push((model::Material {
-//             name: ,
-//             diffuse_texture,
-//             bind_group,
-//         });
-//     }
-//
-//     let garfield = model::Model {
-//         meshes: meshes,
-//         materials: materials,
-//     };
-//     // models.push(garfield);
-//
-//     return Model {
-//         meshes: gltf.meshes().collect(),
-//     };
-// }
-
 #[allow(clippy::cast_possible_truncation)]
 pub async fn load_model(
     device: &Device,
     model_to_load: &str,
     mesh_material_id: &str,
-) -> anyhow::Result<model::Model> {
+) -> anyhow::Result<Model> {
     let model: &[TexVertex];
     let indices: &[u16];
     if model_to_load.eq("CUBE") {
@@ -301,7 +222,7 @@ pub async fn load_model(
 
     let meshes = build_textured_meshes(device, &model, &indices, mesh_material_id);
 
-    Ok(model::Model { meshes })
+    Ok(Model { meshes })
 }
 
 fn build_textured_meshes(
