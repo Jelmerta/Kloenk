@@ -185,7 +185,7 @@ impl Renderer {
         view: &TextureView,
         encoder: &mut CommandEncoder,
     ) {
-        self.create_render_groups(game_state);
+        self.create_render_batches(game_state);
 
         let camera = game_state.camera_components.get_mut("camera").unwrap();
         self.camera_manager
@@ -382,8 +382,8 @@ impl Renderer {
     }
 
     #[allow(clippy::cast_possible_truncation)]
-    fn create_render_groups(&mut self, game_state: &GameState) {
-        let mut render_groups: Vec<RenderBatch> = Vec::new();
+    fn create_render_batches(&mut self, game_state: &GameState) {
+        let mut render_batches: Vec<RenderBatch> = Vec::new();
         game_state
             .entities
             .iter()
@@ -419,9 +419,9 @@ impl Renderer {
                     mesh_id,
                     instance_count: instance_group.len() as u32,
                 };
-                render_groups.push(render_group);
+                render_batches.push(render_group);
             });
-        self.render_batches = render_groups;
+        self.render_batches = render_batches;
     }
 
     fn set_camera_data_ui(&mut self, camera: &mut Camera, window_size: &WindowSize) {
