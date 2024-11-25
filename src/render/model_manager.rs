@@ -85,7 +85,7 @@ impl ModelManager {
         let tree = resources::load_model(device, "CUBE", "tree").await.unwrap();
         mesh_map.insert("tree".to_string(), tree.meshes.into_iter().next().unwrap());
 
-        let gozer = resources::load_gltf(device, "gozer_kleur.gltf").await;
+        let gozer = resources::load_gltf(device, "gozer.gltf").await;
         mesh_map.insert(
             "gozer".to_string(),
             gozer.meshes.into_iter().next().unwrap(),
