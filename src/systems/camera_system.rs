@@ -33,8 +33,8 @@ impl CameraSystem {
         let camera = game_state.get_camera_mut("camera").unwrap();
         camera.eye = Point3 {
             x: player_position.x + player_camera.distance * rad_y.sin() * rad_x.cos(),
-            y: player_position.z + player_camera.distance * rad_y.cos(),
-            z: player_position.y + player_camera.distance * rad_y.sin() * rad_x.sin(),
+            y: player_position.y + player_camera.distance * rad_y.cos(),
+            z: player_position.z + player_camera.distance * rad_y.sin() * rad_x.sin(),
         };
         camera.target = Point3 {
             x: player_position.x,
