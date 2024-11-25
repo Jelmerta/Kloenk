@@ -25,11 +25,11 @@ impl RenderContextManager {
         let mut render_contexts = HashMap::new();
         render_contexts.insert(
             "textured".to_string(),
-            Self::setup_textured_context(&device, &config, camera_manager, material_manager),
+            Self::setup_textured_context(device, config, camera_manager, material_manager),
         );
         render_contexts.insert(
             "colored".to_string(),
-            Self::setup_colored_context(&device, &config, camera_manager),
+            Self::setup_colored_context(device, config, camera_manager),
         );
         RenderContextManager { render_contexts }
     }
