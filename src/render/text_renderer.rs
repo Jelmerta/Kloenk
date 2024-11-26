@@ -1,6 +1,5 @@
 use crate::resources;
 use crate::state::ui_state::Rect;
-use cgmath::Vector3;
 use glyphon::{
     fontdb, Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping,
     SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
@@ -11,18 +10,24 @@ use wgpu::{Adapter, CommandEncoder, Device, Queue, Surface, TextureView};
 struct TextContext {
     buffer: Buffer,
     rect: Rect,
-    color: Vector3<f32>, // TODO f32 is meh for this...
+    color: [f32; 3],
 }
 
 impl TextContext {
     fn to_text_area(&self) -> TextArea {
+        // Hm... Kind of implicit conversion logic hidden deep...
+        let text_color = [
+            (self.color[0].clamp(0.0, 1.0) * 255.0).round() as u8,
+            (self.color[1].clamp(0.0, 1.0) * 255.0).round() as u8,
+            (self.color[2].clamp(0.0, 1.0) * 255.0).round() as u8,
+        ];
         TextArea {
             buffer: &self.buffer,
             left: self.rect.top_left.x,
             top: self.rect.top_left.y,
             scale: 1.0,
             bounds: TextBounds::default(),
-            default_color: Color::rgb(self.color.x as u8, self.color.y as u8, self.color.z as u8),
+            default_color: Color::rgb(text_color[0], text_color[1], text_color[2]),
             custom_glyphs: &[],
         }
     }
@@ -82,7 +87,14 @@ impl TextWriter {
         self.queue.clear();
     }
 
-    pub fn add(&mut self, screen_width: u32, screen_height: u32, rect: Rect, text: &str) {
+    pub fn add(
+        &mut self,
+        screen_width: u32,
+        screen_height: u32,
+        rect: Rect,
+        text: &str,
+        color: &[f32; 3],
+    ) {
         let mut buffer = Buffer::new(&mut self.font_system, Metrics::new(16.0, 20.0));
         buffer.set_size(
             &mut self.font_system,
@@ -100,7 +112,7 @@ impl TextWriter {
         self.queue.push(TextContext {
             buffer,
             rect,
-            color: Vector3::new(255.0, 255.0, 0.0),
+            color: *color,
         });
     }
 

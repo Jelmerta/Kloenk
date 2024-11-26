@@ -288,6 +288,7 @@ impl Renderer {
                     layer,
                     rect: _rect,
                     text: _text,
+                    color: _color,
                 } => layer,
             })
             .for_each(|render_command| {
@@ -296,6 +297,7 @@ impl Renderer {
                         layer: _layer,
                         rect,
                         text,
+                        color,
                     } => {
                         self.text_writer.add(
                             ui_state.window_size.width,
@@ -305,6 +307,7 @@ impl Renderer {
                                 ui_state.window_size.height as f32,
                             ),
                             text,
+                            color,
                         );
                     }
                     RenderCommand::Mesh {

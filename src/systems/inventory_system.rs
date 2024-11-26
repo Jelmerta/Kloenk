@@ -4,7 +4,7 @@ use crate::state::input::Input;
 use crate::state::ui_state::MenuState::Closed;
 use crate::state::ui_state::{MenuState, Rect, UIState, UserAction};
 use crate::systems::item_placement_system::ItemPlacementSystem;
-use cgmath::{Point2, Vector3};
+use cgmath::Point2;
 
 pub struct InventorySystem {}
 
@@ -111,23 +111,36 @@ impl InventorySystem {
                 Point2::new(mouse_position.x + 0.15, mouse_position.y + 0.05),
             );
 
-            if let UserAction::LeftClick = frame_state.gui.color_button(
-                200,
-                object_selection_rect,
-                Vector3::new(0.0, 0.0, 0.0),
-                input,
-            ) {
-                if frame_state.handled_left_click {
-                    return;
+            let mut text_color = [0.8, 0.8, 0.8];
+            match frame_state
+                .gui
+                .color_button(200, object_selection_rect, input)
+            {
+                UserAction::None => {}
+                UserAction::Hover => {
+                    text_color = [0.8, 0.8, 0.0];
                 }
-                ItemPlacementSystem::place_item(game_state, &mut frame_state.action_effects, item);
-                ui_state.menu_state = Closed;
-                frame_state.handled_left_click = true;
+                UserAction::LeftClick => {
+                    if frame_state.handled_left_click {
+                        return;
+                    }
+                    ItemPlacementSystem::place_item(
+                        game_state,
+                        &mut frame_state.action_effects,
+                        item,
+                    );
+                    ui_state.menu_state = Closed;
+                    frame_state.handled_left_click = true;
+                }
+                UserAction::RightClick => {}
             }
 
-            frame_state
-                .gui
-                .text(300, object_selection_rect, "Drop item".to_string())
+            frame_state.gui.text(
+                300,
+                object_selection_rect,
+                "Drop item".to_string(),
+                text_color,
+            )
         }
     }
 }
