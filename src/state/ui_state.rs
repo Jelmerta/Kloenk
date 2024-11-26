@@ -24,6 +24,7 @@ pub enum RenderCommand {
         layer: u32,
         rect: Rect,
         text: String,
+        color: [f32; 3],
     },
 }
 

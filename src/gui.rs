@@ -1,6 +1,6 @@
 use crate::state::input::Input;
 use crate::state::ui_state::{Rect, RenderCommand, UIState, UserAction};
-use cgmath::{Point2, Vector3};
+use cgmath::Point2;
 
 pub struct Gui {
     pub render_commands: Vec<RenderCommand>,
@@ -42,16 +42,9 @@ impl Gui {
             return UserAction::RightClick;
         }
         UserAction::None
-        // TODO probably on release
     }
 
-    pub fn color_button(
-        &mut self,
-        layer: u32,
-        rect: Rect,
-        color: Vector3<f32>,
-        input: &Input,
-    ) -> UserAction {
+    pub fn color_button(&mut self, layer: u32, rect: Rect, input: &Input) -> UserAction {
         let mouse_is_contained = rect.contains(input.mouse_position_ui);
 
         if mouse_is_contained && input.left_mouse_clicked.is_toggled_on() {
@@ -76,7 +69,7 @@ impl Gui {
             let image_command = RenderCommand::Mesh {
                 layer,
                 rect,
-                mesh_id: "grey".to_string(), // TODO hardcoded
+                mesh_id: "black".to_string(), // TODO hardcoded
             };
             self.render_commands.push(image_command);
             return UserAction::Hover;
@@ -89,11 +82,15 @@ impl Gui {
         };
         self.render_commands.push(image_command);
         UserAction::None
-        // TODO probably on release
     }
 
-    pub fn text(&mut self, layer: u32, rect: Rect, text: String) {
-        let text_command = RenderCommand::Text { layer, rect, text };
+    pub fn text(&mut self, layer: u32, rect: Rect, text: String, color: [f32; 3]) {
+        let text_command = RenderCommand::Text {
+            layer,
+            rect,
+            text,
+            color,
+        };
         self.render_commands.push(text_command);
     }
 
@@ -102,12 +99,14 @@ impl Gui {
             1000,
             Rect::new(Point2::new(0.05, 0.6), Point2::new(0.2, 0.8)),
             ui_state.action_text.clone(),
+            [0.8, 0.8, 0.0],
         );
 
         self.text(
             1000,
             Rect::new(Point2::new(0.05, 0.1), Point2::new(0.2, 0.2)),
             ui_state.selected_text.clone(),
+            [0.8, 0.8, 0.0],
         );
     }
 }
