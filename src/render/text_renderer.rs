@@ -5,6 +5,7 @@ use glyphon::{
     SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
 };
 use itertools::Itertools;
+use std::ops::Add;
 use wgpu::{Adapter, CommandEncoder, Device, Queue, Surface, TextureView};
 
 struct TextContext {
@@ -21,10 +22,13 @@ impl TextContext {
             (self.color[1].clamp(0.0, 1.0) * 255.0).round() as u8,
             (self.color[2].clamp(0.0, 1.0) * 255.0).round() as u8,
         ];
+
+        // self.buffer.layout_runs().take_while(|run| run.line_w)
+
         TextArea {
             buffer: &self.buffer,
-            left: self.rect.top_left.x,
-            top: self.rect.top_left.y,
+            left: self.rect.top_left.x.add(5.0), // Give some space on top and left for text
+            top: self.rect.top_left.y.add(5.0),
             scale: 1.0,
             bounds: TextBounds::default(),
             default_color: Color::rgb(text_color[0], text_color[1], text_color[2]),
@@ -95,7 +99,7 @@ impl TextWriter {
         text: &str,
         color: &[f32; 3],
     ) {
-        let mut buffer = Buffer::new(&mut self.font_system, Metrics::new(16.0, 20.0));
+        let mut buffer = Buffer::new(&mut self.font_system, Metrics::new(24.0, 42.0));
         buffer.set_size(
             &mut self.font_system,
             Some(screen_width as f32),

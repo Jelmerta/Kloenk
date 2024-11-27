@@ -444,7 +444,7 @@ impl Renderer {
         let mesh = self.model_manager.get_mesh(mesh_id.to_string());
 
         match &mesh.vertex_type {
-            Color { color } => {
+            Color { color: _color } => {
                 let render_context_textured = self
                     .render_context_manager
                     .render_contexts

@@ -12,7 +12,7 @@ struct VertexInput {
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
-    @location(0) color: vec3<f32>,
+    @location(0) color: vec3<f32>, // Why don't we just make this part of a bind group...? A primitive should have the same color? Or do we want flexibility and draw triangles with that have different colored vertices?
 };
 
 struct InstanceInput {

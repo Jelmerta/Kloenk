@@ -41,7 +41,7 @@ impl RenderContextManager {
     ) -> RenderContext {
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Color Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../color_shader.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(include_str!("shaders/color_shader.wgsl").into()),
         });
 
         let render_pipeline_layout =
@@ -105,7 +105,7 @@ impl RenderContextManager {
     ) -> RenderContext {
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Texture Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../texture_shader.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(include_str!("shaders/texture_shader.wgsl").into()),
         });
 
         let render_pipeline_layout =
