@@ -57,7 +57,7 @@ impl MaterialManager {
         );
         materials.insert(
             "grass".to_string(),
-            Self::load_material(device, queue, layout, "grass.jpg")
+            Self::load_material(device, queue, layout, "grass3.jpg")
                 .await
                 .unwrap(),
         );
