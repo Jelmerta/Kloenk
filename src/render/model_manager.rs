@@ -50,14 +50,6 @@ impl ModelManager {
             shield_inventory.meshes.into_iter().next().unwrap(),
         );
 
-        let character = resources::load_model(device, "CUBE", "character")
-            .await
-            .unwrap();
-        mesh_map.insert(
-            "character".to_string(),
-            character.meshes.into_iter().next().unwrap(),
-        );
-
         let sword = resources::load_model(device, "CUBE", "sword")
             .await
             .unwrap();
