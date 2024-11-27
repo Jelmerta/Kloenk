@@ -1,14 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Kloenk</title>
     <link href="/resources/favicon.ico" rel="icon" type="image/x-icon">
-    <script crossorigin="anonymous" type="module">
-        import init, * as bindings from '/kloenk.js';
 
-        const wasm = await init({module_or_path: '/kloenk.wasm'});
-        window.wasmBindings = bindings;
-    </script>
     <link href="/kloenk.js" rel="modulepreload">
     <link as="fetch" crossorigin="anonymous" href="/kloenk.wasm" rel="preload" type="application/wasm">
 
@@ -24,13 +20,17 @@
     <link as="image" crossorigin="anonymous" href="/resources/sword.jpg" rel="preload" type="image/jpg">
     <link as="image" crossorigin="anonymous" href="/resources/tree.png" rel="preload" type="image/png">
 
-    <!-- Font -->
     <link as="font" crossorigin="anonymous" href="/resources/PlaywriteNL-Regular.ttf" rel="preload" type="font/ttf">
-
 </head>
 
 
 <body id="kloenk-wasm">
+<script crossorigin="anonymous" type="module">
+    import init, * as bindings from '/kloenk.js';
+
+    const wasm = await init({module_or_path: '/kloenk.wasm'});
+    window.wasmBindings = bindings;
+</script>
 <script type="module">
     export function prevent_default_context_menu() {
         window.addEventListener('contextmenu', (e) => {
