@@ -81,15 +81,14 @@ impl Renderer {
             .await
             .unwrap();
 
-        // Useful debug log
         let backend = adapter.get_info().backend;
         match backend {
-            wgpu::Backend::Empty => log::warn!("No graphics backend"),
-            wgpu::Backend::Vulkan => log::warn!("Using Vulkan backend"),
-            wgpu::Backend::Metal => log::warn!("Using Metal backend"),
-            wgpu::Backend::Dx12 => log::warn!("Using DirectX 12 backend"),
-            wgpu::Backend::Gl => log::warn!("Using OpenGL backend (likely WebGL)"),
-            wgpu::Backend::BrowserWebGpu => log::warn!("Using Browser's WebGPU backend"),
+            wgpu::Backend::Empty => log::info!("No graphics backend"),
+            wgpu::Backend::Vulkan => log::info!("Using Vulkan backend"),
+            wgpu::Backend::Metal => log::info!("Using Metal backend"),
+            wgpu::Backend::Dx12 => log::info!("Using DirectX 12 backend"),
+            wgpu::Backend::Gl => log::info!("Using OpenGL backend (likely WebGL)"),
+            wgpu::Backend::BrowserWebGpu => log::info!("Using Browser's WebGPU backend"),
         }
 
         let (device, queue) = adapter
@@ -106,19 +105,12 @@ impl Renderer {
             .unwrap();
 
         let surface_caps = surface.get_capabilities(&adapter);
-        // Shader code in this tutorial assumes an Srgb surface texture. Using a different
-        // one will result all the colors coming out darker. If you want to support non
-        // Srgb surfaces, you'll need to account for that when drawing to the frame.
         let surface_format = surface_caps
             .formats
             .iter()
             .copied()
             .find(wgpu::TextureFormat::is_srgb)
-            // .unwrap_or(wgpu::TextureFormat::Rgba8UnormSrgb); // Is guaranteed?
             .unwrap_or(surface_caps.formats[0]);
-        // .add_srgb_suffix(); // Add srgb suffix for web
-        // TODO perhaps view not needed as we set format to srgb already?
-        // log::warn!("{:?}", surface_caps); Useful debug log
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
@@ -126,8 +118,7 @@ impl Renderer {
             height: window_height,
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
-            // view_formats: vec![], // Adding srgb for webgpu... Not entirely sure how this works but needed for web.
-            view_formats: vec![surface_format.add_srgb_suffix()], // Adding srgb for webgpu... Not entirely sure how this works but needed for web.
+            view_formats: vec![surface_format.add_srgb_suffix()], // Adding srgb view for webgpu. When using config.format we need to add_srgb_suffix() as well
             desired_maximum_frame_latency: 2,
         };
         surface.configure(&device, &config);
