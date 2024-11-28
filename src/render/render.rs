@@ -74,12 +74,23 @@ impl Renderer {
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::default(),
+                power_preference: wgpu::PowerPreference::HighPerformance,
                 compatible_surface: Some(&surface),
                 force_fallback_adapter: false,
             })
             .await
             .unwrap();
+
+        let backend = adapter.get_info().backend;
+
+        match backend {
+            wgpu::Backend::Empty => log::warn!("No graphics backend"),
+            wgpu::Backend::Vulkan => log::warn!("Using Vulkan backend"),
+            wgpu::Backend::Metal => log::warn!("Using Metal backend"),
+            wgpu::Backend::Dx12 => log::warn!("Using DirectX 12 backend"),
+            wgpu::Backend::Gl => log::warn!("Using OpenGL backend (likely WebGL)"),
+            wgpu::Backend::BrowserWebGpu => log::warn!("Using Browser's WebGPU backend"),
+        }
 
         let (device, queue) = adapter
             .request_device(
