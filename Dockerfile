@@ -1,7 +1,5 @@
-FROM rust:1.81 AS rust
+FROM rust:1.82 AS rust
 
-# without defining wasmbindgen version it downloads old version 0.2.93. does not have to be separate at some point
-# remove when 0.2.95 comes out
 RUN rustup target add wasm32-unknown-unknown \
 	&& rustup component add clippy rustfmt \
 	&& cargo install wasm-bindgen-cli cargo-audit cargo-chef wasm-opt
@@ -39,7 +37,7 @@ RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --
 && cp ./bg_output/kloenk.js output/kloenk.js \
 && cp ./bg_output/kloenk.wasm output/kloenk.wasm
 
-#nginx:alpine does not include required nginx sub_filter dependencies
+#nginx:alpine does not include required nginx sub_filter dependencies, might wanna build our own nginx version
 FROM openresty/openresty:alpine
 # Force stages to be run
 #COPY --from=checker /etc/hostname /dev/null
