@@ -6,7 +6,7 @@ use glyphon::{
 };
 use itertools::Itertools;
 use std::ops::Add;
-use wgpu::{Adapter, CommandEncoder, Device, Queue, Surface, TextureView};
+use wgpu::{CommandEncoder, Device, Queue, SurfaceConfiguration, TextureView};
 
 struct TextContext {
     buffer: Buffer,
@@ -48,12 +48,7 @@ pub struct TextWriter {
 
 #[allow(clippy::cast_possible_truncation)]
 impl TextWriter {
-    pub async fn new(
-        device: &Device,
-        queue: &Queue,
-        surface: &Surface<'_>,
-        adapter: &Adapter,
-    ) -> Self {
+    pub async fn new(device: &Device, queue: &Queue, config: &SurfaceConfiguration) -> Self {
         let font_data = resources::load_binary("PlaywriteNL-Regular.ttf")
             .await
             .unwrap();
@@ -62,17 +57,10 @@ impl TextWriter {
         fontdb.load_font_data(font_data);
         let font_system = FontSystem::new_with_locale_and_db("en-US".to_string(), fontdb);
 
-        let caps = surface.get_capabilities(adapter);
-        let surface_format = caps // I see tutorial using wgpu::TextureFormat::Bgra8UnormSrgb
-            .formats
-            .iter()
-            .copied()
-            .find(wgpu::TextureFormat::is_srgb)
-            .unwrap_or(caps.formats[0]);
         let swash_cache = SwashCache::new();
         let cache = Cache::new(device);
         let viewport = Viewport::new(device, &cache);
-        let mut atlas = TextAtlas::new(device, queue, &cache, surface_format);
+        let mut atlas = TextAtlas::new(device, queue, &cache, config.format);
         let text_renderer =
             TextRenderer::new(&mut atlas, device, wgpu::MultisampleState::default(), None);
 

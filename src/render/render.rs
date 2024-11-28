@@ -124,7 +124,7 @@ impl Renderer {
             RenderContextManager::new(&device, &config, &camera_manager, &material_manager);
 
         let depth_texture = texture::Depth::create_depth_texture(&device, &config, "depth_texture");
-        let text_writer = TextWriter::new(&device, &queue, &surface, &adapter).await;
+        let text_writer = TextWriter::new(&device, &queue, &config).await;
 
         Self {
             surface,
