@@ -1,6 +1,5 @@
 use crate::resources;
 use crate::state::ui_state::Rect;
-use glyphon::ColorMode::Web;
 use glyphon::{
     fontdb, Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping,
     SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
@@ -61,8 +60,8 @@ impl TextWriter {
         let swash_cache = SwashCache::new();
         let cache = Cache::new(device);
         let viewport = Viewport::new(device, &cache);
-        // let mut atlas = TextAtlas::new(device, queue, &cache, config.format);
-        let mut atlas = TextAtlas::with_color_mode(device, queue, &cache, config.format, Web);
+        let mut atlas = TextAtlas::new(device, queue, &cache, config.format);
+        // let mut atlas = TextAtlas::with_color_mode(device, queue, &cache, config.format, Web);
         let text_renderer =
             TextRenderer::new(&mut atlas, device, wgpu::MultisampleState::default(), None);
 
