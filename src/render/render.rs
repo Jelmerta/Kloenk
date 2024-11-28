@@ -107,6 +107,7 @@ impl Renderer {
             .unwrap_or(surface_caps.formats[0]);
         // .add_srgb_suffix(); // Add srgb suffix for web
         // TODO perhaps view not needed as we set format to srgb already?
+        log::warn!("{:?}", surface_caps);
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
