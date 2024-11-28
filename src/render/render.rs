@@ -111,7 +111,7 @@ impl Renderer {
             height: window_height,
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
-            view_formats: vec![],
+            view_formats: vec![surface_format.add_srgb_suffix()], // Adding srgb for webgpu... Not entirely sure how this works but needed for web.
             desired_maximum_frame_latency: 2,
         };
         surface.configure(&device, &config);
