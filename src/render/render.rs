@@ -160,7 +160,7 @@ impl Renderer {
     ) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor {
-            format: Some(self.config.format.add_srgb_suffix()),
+            format: Some(self.config.format.add_srgb_suffix()), // Required for web srgb
             ..Default::default()
         });
 
