@@ -81,8 +81,8 @@ impl Renderer {
             .await
             .unwrap();
 
+        // Useful debug log
         let backend = adapter.get_info().backend;
-
         match backend {
             wgpu::Backend::Empty => log::warn!("No graphics backend"),
             wgpu::Backend::Vulkan => log::warn!("Using Vulkan backend"),
@@ -118,7 +118,7 @@ impl Renderer {
             .unwrap_or(surface_caps.formats[0]);
         // .add_srgb_suffix(); // Add srgb suffix for web
         // TODO perhaps view not needed as we set format to srgb already?
-        log::warn!("{:?}", surface_caps);
+        // log::warn!("{:?}", surface_caps); Useful debug log
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
@@ -176,7 +176,7 @@ impl Renderer {
     ) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor {
-            format: Some(self.config.format),
+            format: Some(self.config.format.add_srgb_suffix()),
             ..Default::default()
         });
 
