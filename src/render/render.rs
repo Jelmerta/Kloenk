@@ -103,10 +103,10 @@ impl Renderer {
             .iter()
             .copied()
             .find(wgpu::TextureFormat::is_srgb)
-            .unwrap_or(wgpu::TextureFormat::Rgba8UnormSrgb); // Is guaranteed?
-                                                             // .unwrap_or(surface_caps.formats[0])
-                                                             // .add_srgb_suffix(); // Add srgb suffix for web
-                                                             // TODO perhaps view not needed as we set format to srgb already?
+            // .unwrap_or(wgpu::TextureFormat::Rgba8UnormSrgb); // Is guaranteed?
+            .unwrap_or(surface_caps.formats[0]);
+        // .add_srgb_suffix(); // Add srgb suffix for web
+        // TODO perhaps view not needed as we set format to srgb already?
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
@@ -114,7 +114,8 @@ impl Renderer {
             height: window_height,
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
-            view_formats: vec![surface_format.add_srgb_suffix()], // Adding srgb for webgpu... Not entirely sure how this works but needed for web.
+            view_formats: vec![], // Adding srgb for webgpu... Not entirely sure how this works but needed for web.
+            // view_formats: vec![surface_format.add_srgb_suffix()], // Adding srgb for webgpu... Not entirely sure how this works but needed for web.
             desired_maximum_frame_latency: 2,
         };
         surface.configure(&device, &config);
