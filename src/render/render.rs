@@ -115,9 +115,9 @@ impl Renderer {
             .copied()
             .find(wgpu::TextureFormat::is_srgb)
             // .unwrap_or(wgpu::TextureFormat::Rgba8UnormSrgb); // Is guaranteed?
-            .unwrap_or(surface_caps.formats[0]);
-        // .add_srgb_suffix(); // Add srgb suffix for web
-        // TODO perhaps view not needed as we set format to srgb already?
+            .unwrap_or(surface_caps.formats[0])
+            .add_srgb_suffix(); // Add srgb suffix for web
+                                // TODO perhaps view not needed as we set format to srgb already?
         log::warn!("{:?}", surface_caps);
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
