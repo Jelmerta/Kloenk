@@ -7,8 +7,8 @@ support)
 
 Currently build for web using:
 <!-- https://github.com/gfx-rs/wgpu/wiki/Running-on-the-Web-with-WebGPU-and-WebGL -->
-<!-- RUSTFLAGS=--cfg=web_sys_unstable_apis wasm-pack build --target web -->
-<!-- Locally we use trunk to serve the application on the web page: https://trunkrs.dev/ -->
+<!-- RUSTFLAGS=--cfg=web_sys_unstable_apis wasm-pack build --target nginx -->
+<!-- Locally we use trunk to serve the application on the nginx page: https://trunkrs.dev/ -->
 <!-- ``trunk serve'' will serve the application at localhost:8080 -->
 <!-- We run ``cargo run'' to run the application as a standalone client. -->
 ``https://www.rust-lang.org/tools/install``
