@@ -138,7 +138,7 @@ struct AudioResource {
     is_playing: Rc<RefCell<bool>>,
 }
 
-// Was unable to get cpal/rodio working on wasm as no devices are returned from default device. Instead going for a web-sys implementation
+// Was unable to get cpal/rodio working on wasm as no devices are returned from default device. Instead going for a nginx-sys implementation
 #[cfg(target_arch = "wasm32")]
 pub struct AudioPlayer {
     audio_resources: HashMap<String, AudioResource>,
