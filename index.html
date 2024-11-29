@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Kloenk</title>
+    <link as="fetch" crossorigin="anonymous" href="/kloenk.wasm" rel="preload" type="application/wasm">
+    <link href="/kloenk.js" rel="modulepreload">
+
     <link as="image" href="/resources/favicon.ico" rel="preload" type="image/x-icon">
     <link href="/resources/favicon.ico" rel="icon" type="image/x-icon">
-
-    <link href="/kloenk.js" rel="modulepreload">
-    <link as="fetch" crossorigin="anonymous" href="/kloenk.wasm" rel="preload" type="application/wasm">
 
     <!-- Consider dynamically prefetching (key?) resources -->
     <link href="/resources/bonk.wav" rel="prefetch" type="audio/wav">
