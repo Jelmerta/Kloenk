@@ -1,5 +1,5 @@
-name: deploy-to-nginx
-run-name: Deploying application to nginx
+name: deploy-to-web
+run-name: Deploying application to web
 on:
   push:
     branches: [ "main" ]
