@@ -294,6 +294,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     &mut engine.audio_system,
                 );
 
+                log::warn!("{:?}", engine.window.inner_size());
                 match engine.renderer.render(
                     engine.window.inner_size(),
                     &mut engine.game_state,
