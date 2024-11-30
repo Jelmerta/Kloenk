@@ -91,8 +91,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             } // Continue
         }
 
-        let window_width = 1920;
-        let window_height = 1080;
+        let window_width: u32 = 1920;
+        let window_height: u32 = 1080;
 
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
@@ -103,7 +103,9 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         {
             web_sys::window()
                 .and_then(|window| {
-                    window.resize_to(window_width, window_height).ok();
+                    window
+                        .resize_to(window_width as i32, window_height as i32)
+                        .ok();
                     Some(window)
                 })
                 .and_then(|win| win.document())
@@ -113,8 +115,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     canvas
                         .set_attribute("tabindex", "0")
                         .expect("failed to set tabindex");
-                    canvas.set_width(window_width as u32);
-                    canvas.set_height(window_height as u32);
+                    canvas.set_width(window_width);
+                    canvas.set_height(window_height);
                     dst.append_child(&canvas).ok()?;
                     canvas.focus().expect("Unable to focus on canvas");
                     Some(())
