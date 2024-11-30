@@ -65,6 +65,7 @@ impl Texture {
         );
 
         let view = texture.create_view(&wgpu::TextureViewDescriptor {
+            label: Some("Image view"),
             // format: Some(self.config.format.add_srgb_suffix()), ?
             ..Default::default()
         });
@@ -106,7 +107,10 @@ impl Depth {
         };
         let texture = device.create_texture(&descriptor);
 
-        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let view = texture.create_view(&wgpu::TextureViewDescriptor {
+            label: Some("Depth view"),
+            ..Default::default()
+        });
         Self { view }
     }
 }

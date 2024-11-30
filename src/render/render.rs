@@ -165,6 +165,7 @@ impl Renderer {
     ) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor {
+            label: Some("Render view"),
             format: Some(self.config.format.add_srgb_suffix()),
             ..Default::default()
         });
