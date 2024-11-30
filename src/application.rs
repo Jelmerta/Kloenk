@@ -91,6 +91,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             } // Continue
         }
 
+        // Note: This is more a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
+        // For example: System scale or web zoom can change this.
         let window_width: u32 = 1920;
         let window_height: u32 = 1080;
 
