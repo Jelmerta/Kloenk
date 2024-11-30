@@ -23,8 +23,6 @@ impl TextContext {
             (self.color[2].clamp(0.0, 1.0) * 255.0).round() as u8,
         ];
 
-        // self.buffer.layout_runs().take_while(|run| run.line_w)
-
         TextArea {
             buffer: &self.buffer,
             left: self.rect.top_left.x.add(5.0), // Give some space on top and left for text
@@ -61,7 +59,6 @@ impl TextWriter {
         let cache = Cache::new(device);
         let viewport = Viewport::new(device, &cache);
         let mut atlas = TextAtlas::new(device, queue, &cache, config.format.add_srgb_suffix());
-        // let mut atlas = TextAtlas::with_color_mode(device, queue, &cache, config.format, Web);
         let text_renderer =
             TextRenderer::new(&mut atlas, device, wgpu::MultisampleState::default(), None);
 
