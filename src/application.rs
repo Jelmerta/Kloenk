@@ -176,11 +176,18 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: StateInitializationEvent) {
         log::info!("Received initialization event");
 
-        let game = event.0;
-        let _ = game.window.request_inner_size(LogicalSize::new(
-            game.ui_state.window_size.width,
-            game.ui_state.window_size.height,
-        ));
+        let mut game = event.0;
+        let size = game
+            .window
+            .request_inner_size(LogicalSize::new(
+                game.ui_state.window_size.width, // TODO maybe this should be display size? smaller screens should have smaller game.
+                game.ui_state.window_size.height,
+            ))
+            .expect("Cannot change size of window");
+
+        // The physical size of the display could now have been changed. We want to draw in this physical box
+        game.ui_state.window_size.width = size.width;
+        game.ui_state.window_size.height = size.height;
 
         game.window.request_redraw();
         self.application_state = State::Initialized(game);
