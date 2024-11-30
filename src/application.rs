@@ -112,9 +112,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     canvas.set_width(window_width);
                     canvas.set_height(window_height);
                     dst.append_child(&canvas).ok()?;
-                    canvas
-                        .remove_attribute("style")
-                        .expect("Removing style because something adds it... Not sure what");
                     canvas.focus().expect("Unable to focus on canvas");
                     Some(())
                 })
@@ -177,10 +174,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         log::info!("Received initialization event");
 
         let game = event.0;
-        let _ = game.window.request_inner_size(PhysicalSize::new(
-            game.ui_state.window_size.width,
-            game.ui_state.window_size.height,
-        ));
         game.window.request_redraw();
         self.application_state = State::Initialized(game);
     }
