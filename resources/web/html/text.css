@@ -1,11 +1,12 @@
 body {
     margin: 0;
     font-family: sans-serif;
-    background-color: #121212;
-    color: #ffffff;
+    background-color: #f4f4f4;
+    color: #333;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     height: 100vh;
 }
 
@@ -21,4 +22,9 @@ h1 {
 p {
     font-size: 1.5rem;
     margin-top: 1rem;
+}
+
+canvas {
+    border: 1px solid #ccc;
+    display: block;
 }
