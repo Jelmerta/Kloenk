@@ -70,7 +70,6 @@ impl Renderer {
         });
 
         let window_size = window.inner_size();
-        log::warn!("rendernew {:?}", window_size);
         let surface = instance.create_surface(window).unwrap();
 
         let adapter = instance
@@ -115,8 +114,8 @@ impl Renderer {
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            width: window_size.width.max(1),
-            height: window_size.height.max(1),
+            width: window_size.width,
+            height: window_size.height,
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![surface_format.add_srgb_suffix()], // Adding srgb view for webgpu. When using config.format we need to add_srgb_suffix() as well
@@ -130,6 +129,7 @@ impl Renderer {
         let render_context_manager =
             RenderContextManager::new(&device, &config, &camera_manager, &material_manager);
 
+        // Meh, configure + depth texture creation also happen in resize, which is called in web before rendering.
         let depth_texture = texture::Depth::create_depth_texture(&device, &config, "depth_texture");
         let text_writer = TextWriter::new(&device, &queue, &config).await;
 
@@ -149,7 +149,6 @@ impl Renderer {
     }
 
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
-        log::warn!("resize event: {:?}", new_size);
         if new_size.width > 0 && new_size.height > 0 {
             self.config.width = new_size.width;
             self.config.height = new_size.height;

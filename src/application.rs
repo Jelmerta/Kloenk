@@ -119,13 +119,9 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 .expect("Couldn't append canvas to document body.");
 
             // For web, canvas needs to exist before it can be resized
-            let size = window
+            let _ = window
                 .request_inner_size(LogicalSize::new(window_width as f32, window_height as f32));
-            log::warn!("web {:?}", size);
         }
-        #[cfg(target_arch = "wasm32")]
-
-        log::warn!("render {:?}", window.inner_size());
         let renderer_future = Renderer::new(window.clone());
 
         #[cfg(target_arch = "wasm32")]
@@ -306,7 +302,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     &mut engine.audio_system,
                 );
 
-                log::warn!("{:?}", engine.window.inner_size());
                 match engine.renderer.render(
                     engine.window.inner_size(),
                     &mut engine.game_state,
