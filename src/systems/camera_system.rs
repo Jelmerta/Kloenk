@@ -3,6 +3,7 @@ use crate::state::game_state::GameState;
 use crate::state::input::Input;
 use crate::state::ui_state::UIState;
 use cgmath::{InnerSpace, Point3, Vector3};
+use winit::dpi::PhysicalSize;
 
 pub const MIN_CAMERA_DISTANCE: f32 = 100.0;
 pub const MAX_CAMERA_DISTANCE: f32 = 500.0;
@@ -13,12 +14,17 @@ pub const CAMERA_TOP_LIMIT: f32 = 350.0;
 pub struct CameraSystem {}
 
 impl CameraSystem {
-    pub fn update_camera(game_state: &mut GameState, ui_state: &mut UIState, input: &mut Input) {
+    pub fn update_camera(
+        window_size: PhysicalSize<u32>,
+        game_state: &mut GameState,
+        ui_state: &mut UIState,
+        input: &mut Input,
+    ) {
         Self::setup_camera_target(game_state, input);
         Self::setup_camera(game_state);
         let camera = game_state.get_camera_mut("camera").unwrap();
-        camera
-            .update_view_projection_matrix(ui_state.window_size.width, ui_state.window_size.height);
+        camera.update_view_projection_matrix(window_size.width, window_size.height);
+        // .update_view_projection_matrix(ui_state.window_size.width, ui_state.window_size.height);
         camera.update_inverse_matrix();
     }
 

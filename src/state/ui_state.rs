@@ -88,7 +88,6 @@ pub enum MenuState {
 }
 
 pub struct UIState {
-    pub window_size: WindowSize,
     pub windows: HashMap<String, UIWindow>,
 
     pub action_text: String,
@@ -98,7 +97,7 @@ pub struct UIState {
 }
 
 impl UIState {
-    pub fn new(width: u32, height: u32) -> Self {
+    pub fn new() -> Self {
         let inventory_window = UIWindow::new(
             false,
             Rect::new(Point2::new(0.6, 0.6), Point2::new(0.95, 0.95)),
@@ -107,17 +106,11 @@ impl UIState {
         let mut windows = HashMap::new();
         windows.insert("inventory".to_string(), inventory_window);
         UIState {
-            window_size: WindowSize { width, height },
             windows,
             menu_state: Closed,
             action_text: String::new(),
             selected_text: String::new(),
         }
-    }
-
-    pub fn set_window_size(&mut self, width: u32, height: u32) {
-        self.window_size.width = width;
-        self.window_size.height = height;
     }
 
     // Maps 0 (left of screen) to -800/600 (pixel values) and 1 to 800/600

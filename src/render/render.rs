@@ -31,7 +31,6 @@ pub struct Renderer {
     device: Device,
     queue: Queue,
     config: SurfaceConfiguration,
-    pub size: PhysicalSize<u32>,
 
     model_manager: ModelManager,
     camera_manager: CameraManager,
@@ -137,7 +136,6 @@ impl Renderer {
             device,
             queue,
             config,
-            size: PhysicalSize::new(window_width, window_height),
             model_manager,
             camera_manager,
             material_manager,
@@ -149,8 +147,9 @@ impl Renderer {
     }
 
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
+        log::warn!("resize event: {:?}", new_size);
         if new_size.width > 0 && new_size.height > 0 {
-            self.size = new_size;
+            // self.size = new_size; // TODO resize on application window instead of here
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
@@ -161,6 +160,7 @@ impl Renderer {
 
     pub fn render(
         &mut self,
+        physical_size: PhysicalSize<u32>,
         game_state: &mut GameState,
         ui_state: &UIState,
         frame_state: &FrameState,
@@ -178,7 +178,14 @@ impl Renderer {
             });
 
         self.render_world(game_state, &view, &mut encoder);
-        self.render_ui(game_state, ui_state, frame_state, &view, &mut encoder);
+        self.render_ui(
+            physical_size,
+            game_state,
+            ui_state,
+            frame_state,
+            &view,
+            &mut encoder,
+        );
 
         self.queue.submit(iter::once(encoder.finish()));
         output.present();
@@ -273,6 +280,7 @@ impl Renderer {
 
     fn render_ui(
         &mut self,
+        physical_size: PhysicalSize<u32>,
         game_state: &mut GameState,
         ui_state: &UIState,
         frame_state: &FrameState,
@@ -280,7 +288,7 @@ impl Renderer {
         encoder: &mut CommandEncoder,
     ) {
         let camera = game_state.camera_components.get_mut("camera_ui").unwrap();
-        self.set_camera_data_ui(camera, &ui_state.window_size);
+        self.set_camera_data_ui(camera, &physical_size);
 
         frame_state
             .gui
@@ -308,11 +316,15 @@ impl Renderer {
                         color,
                     } => {
                         self.text_writer.add(
-                            ui_state.window_size.width,
-                            ui_state.window_size.height,
+                            physical_size.width,
+                            physical_size.height,
+                            // ui_state.window_size.width,
+                            // ui_state.window_size.height,
                             rect.scale(
-                                ui_state.window_size.width as f32,
-                                ui_state.window_size.height as f32,
+                                physical_size.width as f32,
+                                physical_size.height as f32,
+                                // ui_state.window_size.width as f32,
+                                // ui_state.window_size.height as f32,
                             ),
                             text,
                             color,
@@ -323,7 +335,14 @@ impl Renderer {
                         rect,
                         mesh_id,
                     } => {
-                        self.draw(ui_state, view, encoder, mesh_id.to_string(), rect);
+                        self.draw(
+                            physical_size,
+                            ui_state,
+                            view,
+                            encoder,
+                            mesh_id.to_string(),
+                            rect,
+                        );
                     }
                 } // TODO or maybe call it widget?
             });
@@ -332,8 +351,10 @@ impl Renderer {
             &self.queue,
             encoder,
             view,
-            ui_state.window_size.width,
-            ui_state.window_size.height,
+            physical_size.width,
+            physical_size.height,
+            // ui_state.window_size.width,
+            // ui_state.window_size.height,
         )
     }
 
@@ -435,7 +456,7 @@ impl Renderer {
         self.render_batches = render_batches;
     }
 
-    fn set_camera_data_ui(&mut self, camera: &mut Camera, window_size: &WindowSize) {
+    fn set_camera_data_ui(&mut self, camera: &mut Camera, window_size: &PhysicalSize<u32>) {
         camera.update_view_projection_matrix(window_size.width, window_size.height); // TODO hmm i think camera matrix is updated in systems for 3d but for ui we do it here... one place for all.
         self.camera_manager
             .update_buffer("camera_2d".to_string(), &self.queue, camera);
@@ -443,6 +464,7 @@ impl Renderer {
 
     fn draw(
         &mut self,
+        physical_size: PhysicalSize<u32>,
         ui_state: &UIState,
         view: &TextureView,
         encoder: &mut CommandEncoder,
@@ -491,8 +513,10 @@ impl Renderer {
 
                 let element_instance = Self::create_ui_element_instance(
                     Point2::new(
-                        ui_state.window_size.width as f32,
-                        ui_state.window_size.height as f32,
+                        physical_size.width as f32,
+                        physical_size.height as f32,
+                        // ui_state.window_size.width as f32,
+                        // ui_state.window_size.height as f32,
                     ),
                     *rect,
                 );
@@ -542,8 +566,10 @@ impl Renderer {
 
                 let element_instance = Self::create_ui_element_instance(
                     Point2::new(
-                        ui_state.window_size.width as f32,
-                        ui_state.window_size.height as f32,
+                        physical_size.width as f32,
+                        physical_size.height as f32,
+                        // ui_state.window_size.width as f32,
+                        // ui_state.window_size.height as f32,
                     ),
                     *rect,
                 );
