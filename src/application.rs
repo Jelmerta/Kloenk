@@ -298,7 +298,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 ) {
                     Ok(()) => {}
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        // engine.renderer.resize(engine.renderer.size);
+                        engine.renderer.resize(engine.renderer.size);
                     }
                     Err(wgpu::SurfaceError::OutOfMemory) => {
                         log::error!("Out of memory");
