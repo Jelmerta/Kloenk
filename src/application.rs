@@ -96,7 +96,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
 
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
-            .with_inner_size(LogicalSize::new(window_width as f32, window_height as f32));
+            // .with_inner_size(LogicalSize::new(window_width as f32, window_height as f32));
+            .with_inner_size(PhysicalSize::new(window_width as f32, window_height as f32));
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
         #[cfg(target_arch = "wasm32")]
@@ -175,10 +176,10 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
 
         let game = event.0;
         log::warn!("voor {:?}", game.window.inner_size());
-        let _ = game.window.request_inner_size(PhysicalSize::new(
-            game.ui_state.window_size.width,
-            game.ui_state.window_size.height,
-        ));
+        // let _ = game.window.request_inner_size(PhysicalSize::new(
+        //     game.ui_state.window_size.width,
+        //     game.ui_state.window_size.height,
+        // ));
         log::warn!("na {:?}", game.window.inner_size());
         game.window.request_redraw();
         self.application_state = State::Initialized(game);
