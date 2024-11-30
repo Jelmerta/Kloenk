@@ -132,8 +132,3 @@ impl UIState {
         value * 2.0
     }
 }
-
-pub struct WindowSize {
-    pub width: u32,
-    pub height: u32,
-}

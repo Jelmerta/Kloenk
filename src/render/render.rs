@@ -24,7 +24,7 @@ use crate::render::text_renderer::TextWriter;
 use crate::render::texture;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
-use crate::state::ui_state::{Rect, RenderCommand, UIState, WindowSize};
+use crate::state::ui_state::{Rect, RenderCommand, UIState};
 
 pub struct Renderer {
     surface: wgpu::Surface<'static>,
@@ -149,7 +149,6 @@ impl Renderer {
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
         log::warn!("resize event: {:?}", new_size);
         if new_size.width > 0 && new_size.height > 0 {
-            // self.size = new_size; // TODO resize on application window instead of here
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
@@ -162,7 +161,6 @@ impl Renderer {
         &mut self,
         physical_size: PhysicalSize<u32>,
         game_state: &mut GameState,
-        ui_state: &UIState,
         frame_state: &FrameState,
     ) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
@@ -178,14 +176,7 @@ impl Renderer {
             });
 
         self.render_world(game_state, &view, &mut encoder);
-        self.render_ui(
-            physical_size,
-            game_state,
-            ui_state,
-            frame_state,
-            &view,
-            &mut encoder,
-        );
+        self.render_ui(physical_size, game_state, frame_state, &view, &mut encoder);
 
         self.queue.submit(iter::once(encoder.finish()));
         output.present();
@@ -282,7 +273,6 @@ impl Renderer {
         &mut self,
         physical_size: PhysicalSize<u32>,
         game_state: &mut GameState,
-        ui_state: &UIState,
         frame_state: &FrameState,
         view: &TextureView,
         encoder: &mut CommandEncoder,
@@ -318,14 +308,7 @@ impl Renderer {
                         self.text_writer.add(
                             physical_size.width,
                             physical_size.height,
-                            // ui_state.window_size.width,
-                            // ui_state.window_size.height,
-                            rect.scale(
-                                physical_size.width as f32,
-                                physical_size.height as f32,
-                                // ui_state.window_size.width as f32,
-                                // ui_state.window_size.height as f32,
-                            ),
+                            rect.scale(physical_size.width as f32, physical_size.height as f32),
                             text,
                             color,
                         );
@@ -335,14 +318,7 @@ impl Renderer {
                         rect,
                         mesh_id,
                     } => {
-                        self.draw(
-                            physical_size,
-                            ui_state,
-                            view,
-                            encoder,
-                            mesh_id.to_string(),
-                            rect,
-                        );
+                        self.draw(physical_size, view, encoder, mesh_id.to_string(), rect);
                     }
                 } // TODO or maybe call it widget?
             });
@@ -353,8 +329,6 @@ impl Renderer {
             view,
             physical_size.width,
             physical_size.height,
-            // ui_state.window_size.width,
-            // ui_state.window_size.height,
         )
     }
 
@@ -465,7 +439,6 @@ impl Renderer {
     fn draw(
         &mut self,
         physical_size: PhysicalSize<u32>,
-        ui_state: &UIState,
         view: &TextureView,
         encoder: &mut CommandEncoder,
         mesh_id: String,
