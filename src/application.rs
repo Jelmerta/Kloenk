@@ -99,9 +99,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             .with_title("Kloenk!")
             .with_inner_size(LogicalSize::new(window_width as f32, window_height as f32));
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
-        let size =
-            window.request_inner_size(LogicalSize::new(window_width as f32, window_height as f32)); // window inner size on web is not set
-        log::warn!("size: {:?}", size);
 
         #[cfg(target_arch = "wasm32")]
         {
@@ -121,6 +118,10 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 })
                 .expect("Couldn't append canvas to document body.");
         }
+
+        let size =
+            window.request_inner_size(LogicalSize::new(window_width as f32, window_height as f32)); // window inner size on web is not set
+        log::warn!("size: {:?}", size);
 
         let renderer_future = Renderer::new(
             window.clone(),
