@@ -119,7 +119,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 .expect("Couldn't append canvas to document body.");
 
             // For web, canvas needs to exist before it can be resized
-            size = window
+            let size = window
                 .request_inner_size(LogicalSize::new(window_width as f32, window_height as f32));
             log::warn!("web {:?}", size);
         }
