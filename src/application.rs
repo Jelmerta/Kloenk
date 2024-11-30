@@ -96,7 +96,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
 
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
-            // .with_inner_size(LogicalSize::new(window_width as f32, window_height as f32));
             .with_inner_size(PhysicalSize::new(window_width as f32, window_height as f32));
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
@@ -124,7 +123,9 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         #[cfg(target_arch = "wasm32")]
         {
             let event_loop_proxy = self.event_loop_proxy.clone();
+
             let audio_future = AudioSystem::new();
+
             spawn_local(async move {
                 let renderer = renderer_future.await;
                 let audio_system = audio_future.await;
@@ -151,6 +152,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         #[cfg(not(target_arch = "wasm32"))]
         {
             let renderer = pollster::block_on(renderer_future);
+
             let audio_system = pollster::block_on(AudioSystem::new());
 
             let game = Engine {
@@ -176,10 +178,12 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
 
         let game = event.0;
         log::warn!("voor {:?}", game.window.inner_size());
-        // let _ = game.window.request_inner_size(PhysicalSize::new(
-        //     game.ui_state.window_size.width,
-        //     game.ui_state.window_size.height,
-        // ));
+        log::warn!("voor {:?}", game.ui_state.window_size.width,);
+        let _ = game.window.request_inner_size(LogicalSize::new(
+            game.ui_state.window_size.width,
+            game.ui_state.window_size.height,
+        ));
+
         log::warn!("na {:?}", game.window.inner_size());
         game.window.request_redraw();
         self.application_state = State::Initialized(game);
