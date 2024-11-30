@@ -98,8 +98,12 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
 
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
-            .with_inner_size(PhysicalSize::new(window_width as f32, window_height as f32));
+            .with_inner_size(LogicalSize::new(window_width as f32, window_height as f32));
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
+        // let _ = window.request_inner_size(LogicalSize::new(
+        //     window_width, // TODO maybe this should be display size? smaller screens should have smaller game.
+        //     window_height,
+        // ));
 
         #[cfg(target_arch = "wasm32")]
         {
@@ -120,7 +124,13 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 .expect("Couldn't append canvas to document body.");
         }
 
-        let renderer_future = Renderer::new(window.clone(), window_width, window_height);
+        log::warn!("{:?}", window.inner_size());
+        let renderer_future = Renderer::new(
+            window.clone(),
+            window.inner_size().width,
+            window.inner_size().height,
+        );
+        // let renderer_future = Renderer::new(window.clone(), window_width, window_height);
 
         #[cfg(target_arch = "wasm32")]
         {
@@ -129,13 +139,15 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             let audio_future = AudioSystem::new();
 
             spawn_local(async move {
-                let renderer = renderer_future.await;
+                let mut renderer = renderer_future.await;
+                renderer.resize(window.inner_size());
+
                 let audio_system = audio_future.await;
 
                 let game = Engine {
                     renderer,
                     game_state: GameState::new(),
-                    ui_state: UIState::new(window_width, window_height),
+                    ui_state: UIState::new(),
                     input_handler: Input::new(),
                     frame_state: FrameState::new(),
                     audio_loading_state: Rc::new(RefCell::new(AudioState::NotLoaded)),
@@ -160,7 +172,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             let game = Engine {
                 renderer,
                 game_state: GameState::new(),
-                ui_state: UIState::new(window_width, window_height),
+                ui_state: UIState::new(),
+                // ui_state: UIState::new(window_width, window_height),
                 input_handler: Input::new(),
                 frame_state: FrameState::new(),
                 window,
@@ -179,10 +192,16 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         log::info!("Received initialization event");
 
         let mut game = event.0;
-        let _ = game.window.request_inner_size(LogicalSize::new(
-            game.ui_state.window_size.width, // TODO maybe this should be display size? smaller screens should have smaller game.
-            game.ui_state.window_size.height,
-        ));
+        // game.renderer.resize(game.window.inner_size());
+
+        // game.ui_state.window_size.width = game.window.inner_size().width;
+        // game.ui_state.window_size.height = game.window.inner_size().height;
+        // log::warn!("{:?}", game.ui_state.window_size.width);
+        // log::warn!("{:?}", game.ui_state.window_size.height);
+        // let _ = game.window.request_inner_size(LogicalSize::new(
+        //     game.ui_state.window_size.width, // TODO maybe this should be display size? smaller screens should have smaller game.
+        //     game.ui_state.window_size.height,
+        // ));
 
         game.window.request_redraw();
         self.application_state = State::Initialized(game);
@@ -270,11 +289,12 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 }
             }
             WindowEvent::CursorMoved { position, .. } => {
-                let window_size = &engine.ui_state.window_size;
+                // let window_size = &engine.ui_state.window_size;
                 engine.input_handler.process_mouse_movement(
                     position,
-                    window_size.width as f32,
-                    window_size.height as f32,
+                    engine.window.inner_size().width as f32,
+                    engine.window.inner_size().height as f32,
+                    // window_size.height as f32,
                 );
             }
             WindowEvent::MouseWheel { delta, .. } => {
@@ -283,14 +303,16 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             WindowEvent::Resized(physical_size) => {
                 engine.renderer.resize(physical_size);
                 log::warn!("{:?}", physical_size);
-                engine
-                    .ui_state
-                    .set_window_size(physical_size.width, physical_size.height);
+                // TODO we dont request inner size here right? cause that causes this event?
+                // engine
+                //     .ui_state
+                //     .set_window_size(physical_size.width, physical_size.height);
             }
             WindowEvent::RedrawRequested => {
                 engine.window().request_redraw();
 
                 GameSystem::update(
+                    engine.window.inner_size(),
                     &mut engine.game_state,
                     &mut engine.ui_state,
                     &mut engine.input_handler,
@@ -299,13 +321,15 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 );
 
                 match engine.renderer.render(
+                    engine.window.inner_size(),
                     &mut engine.game_state,
                     &engine.ui_state,
                     &engine.frame_state,
                 ) {
                     Ok(()) => {}
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        engine.renderer.resize(engine.renderer.size);
+                        // engine.renderer.resize(engine.renderer.size);
+                        engine.renderer.resize(engine.window.inner_size());
                     }
                     Err(wgpu::SurfaceError::OutOfMemory) => {
                         log::error!("Out of memory");
