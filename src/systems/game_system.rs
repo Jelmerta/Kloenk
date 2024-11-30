@@ -40,7 +40,7 @@ impl GameSystem {
         frame_state.gui.add_text_render_commands(ui_state);
 
         // Visual stuff (pre-render)
-        CameraSystem::update_camera(physical_size, game_state, ui_state, input);
+        CameraSystem::update_camera(physical_size, game_state, input);
 
         input.update_end_frame();
     }
