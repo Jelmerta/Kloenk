@@ -62,13 +62,15 @@ struct RenderBatch {
 }
 
 impl Renderer {
-    pub async fn new(window: Arc<Window>, window_width: u32, window_height: u32) -> Renderer {
+    pub async fn new(window: Arc<Window>) -> Renderer {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             flags: InstanceFlags::empty(), // Remove Vulkan validation layer as this leads to tons of unhelpful logging (and VK_LAYER_KHRONOS_validation does not seem to exist? not debugging this)
             ..Default::default()
         });
 
+        let window_size = window.inner_size();
+        log::warn!("rendernew {:?}", window_size);
         let surface = instance.create_surface(window).unwrap();
 
         let adapter = instance
@@ -113,8 +115,8 @@ impl Renderer {
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            width: window_width,
-            height: window_height,
+            width: window_size.width,
+            height: window_size.height,
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![surface_format.add_srgb_suffix()], // Adding srgb view for webgpu. When using config.format we need to add_srgb_suffix() as well
