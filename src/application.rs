@@ -99,6 +99,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             .with_title("Kloenk!")
             .with_inner_size(LogicalSize::new(window_width as f32, window_height as f32));
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
+        let _ =
+            window.request_inner_size(LogicalSize::new(window_width as f32, window_height as f32)); // window inner size not size on web is otherwise not set
 
         #[cfg(target_arch = "wasm32")]
         {
