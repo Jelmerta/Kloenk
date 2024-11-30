@@ -109,8 +109,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     canvas
                         .set_attribute("tabindex", "0")
                         .expect("failed to set tabindex");
-                    canvas.set_width(window_width);
-                    canvas.set_height(window_height);
+                    // canvas.set_width(window_width);
+                    // canvas.set_height(window_height);
                     dst.append_child(&canvas).ok()?;
                     canvas.focus().expect("Unable to focus on canvas");
                     Some(())
