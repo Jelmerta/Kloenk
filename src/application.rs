@@ -102,12 +102,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         #[cfg(target_arch = "wasm32")]
         {
             web_sys::window()
-                .and_then(|window| {
-                    window.set_onresize(None);
-                    // .resize_to(window_width as i32, window_height as i32)
-                    // .ok();
-                    Some(window)
-                })
                 .and_then(|win| win.document())
                 .and_then(|doc| {
                     let dst = doc.get_element_by_id("kloenk-wasm")?;
@@ -118,6 +112,9 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     canvas.set_width(window_width);
                     canvas.set_height(window_height);
                     dst.append_child(&canvas).ok()?;
+                    canvas
+                        .remove_attribute("style")
+                        .expect("Removing style because something adds it... Not sure what");
                     canvas.focus().expect("Unable to focus on canvas");
                     Some(())
                 })
