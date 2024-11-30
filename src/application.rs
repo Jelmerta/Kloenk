@@ -126,11 +126,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         #[cfg(target_arch = "wasm32")]
 
         log::warn!("render {:?}", window.inner_size());
-        let renderer_future = Renderer::new(
-            window.clone(),
-            window.inner_size().width,
-            window.inner_size().height,
-        );
+        let renderer_future = Renderer::new(window.clone());
 
         #[cfg(target_arch = "wasm32")]
         {
@@ -189,10 +185,19 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: StateInitializationEvent) {
         log::info!("Received initialization event");
 
-        let game = event.0;
-
-        game.window.request_redraw();
-        self.application_state = State::Initialized(game);
+        #[cfg(target_arch = "wasm32")]
+        {
+            let mut game = event.0;
+            game.renderer.resize(game.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
+            game.window.request_redraw();
+            self.application_state = State::Initialized(game);
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let game = event.0;
+            game.window.request_redraw();
+            self.application_state = State::Initialized(game);
+        }
     }
 
     fn window_event(
