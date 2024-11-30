@@ -174,12 +174,12 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         log::info!("Received initialization event");
 
         let game = event.0;
-        log::info!("voor {:?}", game.window.inner_size());
+        log::warn!("voor {:?}", game.window.inner_size());
         let _ = game.window.request_inner_size(PhysicalSize::new(
             game.ui_state.window_size.width,
             game.ui_state.window_size.height,
         ));
-        log::info!("na {:?}", game.window.inner_size());
+        log::warn!("na {:?}", game.window.inner_size());
         game.window.request_redraw();
         self.application_state = State::Initialized(game);
     }
@@ -277,7 +277,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 engine.input_handler.process_scroll(&delta);
             }
             WindowEvent::Resized(physical_size) => {
-                log::info!("{:?}", physical_size);
+                log::warn!("{:?}", physical_size);
                 engine.renderer.resize(physical_size);
                 engine
                     .ui_state
