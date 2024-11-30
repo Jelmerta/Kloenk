@@ -103,9 +103,9 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         {
             web_sys::window()
                 .and_then(|window| {
-                    window
-                        .resize_to(window_width as i32, window_height as i32)
-                        .ok();
+                    window.set_onresize(None);
+                    // .resize_to(window_width as i32, window_height as i32)
+                    // .ok();
                     Some(window)
                 })
                 .and_then(|win| win.document())
