@@ -117,12 +117,13 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     Some(())
                 })
                 .expect("Couldn't append canvas to document body.");
+
+            // For web, canvas needs to exist before it can be resized
+            _ = window
+                .request_inner_size(LogicalSize::new(window_width as f32, window_height as f32));
         }
 
-        let size =
-            window.request_inner_size(LogicalSize::new(window_width as f32, window_height as f32)); // window inner size on web is not set
-        log::warn!("size: {:?}", size);
-
+        log::warn!("render {:?}", window.inner_size());
         let renderer_future = Renderer::new(
             window.clone(),
             window.inner_size().width,
