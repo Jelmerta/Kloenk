@@ -102,6 +102,10 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         #[cfg(target_arch = "wasm32")]
         {
             web_sys::window()
+                .and_then(|window| {
+                    window.resize_to(window_width, window_height).ok();
+                    Some(window)
+                })
                 .and_then(|win| win.document())
                 .and_then(|doc| {
                     let dst = doc.get_element_by_id("kloenk-wasm")?;
@@ -109,8 +113,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     canvas
                         .set_attribute("tabindex", "0")
                         .expect("failed to set tabindex");
-                    // canvas.set_width(window_width);
-                    // canvas.set_height(window_height);
+                    canvas.set_width(window_width as u32);
+                    canvas.set_height(window_height as u32);
                     dst.append_child(&canvas).ok()?;
                     canvas.focus().expect("Unable to focus on canvas");
                     Some(())
