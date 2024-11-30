@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Kloenk</title>
     <link as="fetch" crossorigin="anonymous" href="/kloenk.wasm" rel="preload" type="application/wasm">
     <link href="/kloenk.js" rel="modulepreload">
@@ -21,9 +22,39 @@
     <link href="./resources/tree.png" rel="prefetch" type="image/png">
 
     <link href="./resources/PlaywriteNL-Regular.ttf" rel="prefetch" type="font/ttf">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        #content {
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin: 0;
+        }
+
+        p {
+            font-size: 1.5rem;
+            margin-top: 1rem;
+        }
+    </style>
 </head>
 
 <body id="kloenk-wasm">
+<div id="content">
+    <h1>Kloenk</h1>
+</div>
 <script crossorigin="anonymous" type="module">
     import init, * as bindings from '/kloenk.js';
 
