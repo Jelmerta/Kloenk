@@ -10,13 +10,14 @@ use crate::systems::item_pickup_system::ItemPickupSystem;
 use crate::systems::movement_system::MovementSystem;
 use crate::systems::object_detection_system::ObjectDetectionSystem;
 use crate::systems::object_selection_system::ObjectSelectionSystem;
-use winit::dpi::PhysicalSize;
+use std::sync::Arc;
+use winit::window::Window;
 
 pub struct GameSystem {}
 
 impl GameSystem {
     pub fn update(
-        physical_size: PhysicalSize<u32>,
+        window: &Arc<Window>,
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &mut Input,
@@ -40,7 +41,7 @@ impl GameSystem {
         frame_state.gui.add_text_render_commands(ui_state);
 
         // Visual stuff (pre-render)
-        CameraSystem::update_camera(physical_size, game_state, input);
+        CameraSystem::update_camera(window, game_state, input);
 
         input.update_end_frame();
     }

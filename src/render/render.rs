@@ -1,4 +1,4 @@
-use cgmath::{prelude::*, Point2, Point3, Vector3};
+use cgmath::{prelude::*, Point3, Vector3};
 use itertools::Itertools;
 use std::iter;
 use std::sync::Arc;
@@ -160,8 +160,7 @@ impl Renderer {
 
     pub fn render(
         &mut self,
-        window: Arc<Window>,
-        // physical_size: PhysicalSize<u32>,
+        window: &Arc<Window>,
         game_state: &mut GameState,
         frame_state: &FrameState,
     ) -> Result<(), wgpu::SurfaceError> {
@@ -274,14 +273,14 @@ impl Renderer {
 
     fn render_ui(
         &mut self,
-        window: Arc<Window>,
+        window: &Arc<Window>,
         game_state: &mut GameState,
         frame_state: &FrameState,
         view: &TextureView,
         encoder: &mut CommandEncoder,
     ) {
         let camera = game_state.camera_components.get_mut("camera_ui").unwrap();
-        self.set_camera_data_ui(camera, window);
+        self.set_camera_data_ui(camera, &window);
 
         frame_state
             .gui
@@ -308,7 +307,7 @@ impl Renderer {
                         text,
                         color,
                     } => {
-                        self.text_writer.add(window, rect, text, color);
+                        self.text_writer.add(&window, rect, text, color);
                     }
                     RenderCommand::Mesh {
                         layer: _layer,
@@ -357,19 +356,15 @@ impl Renderer {
         }
     }
 
-    fn create_ui_element_instance(window_dimensions: Point2<f32>, rect: Rect) -> Instance {
+    fn create_ui_element_instance(window: &Arc<Window>, rect: Rect) -> Instance {
         Instance {
             position: Vector3 {
-                x: UIState::convert_clip_space_x(
-                    rect.top_left.x,
-                    window_dimensions.x,
-                    window_dimensions.y,
-                ),
+                x: UIState::convert_clip_space_x(rect.top_left.x, window),
                 y: UIState::convert_clip_space_y(rect.top_left.y),
                 z: 0.0,
             },
             scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                UIState::convert_scale_x(rect.width(), window_dimensions.x, window_dimensions.y),
+                UIState::convert_scale_x(rect.width(), window),
                 UIState::convert_scale_y(rect.height()),
                 1.0,
                 1.0,
@@ -421,7 +416,7 @@ impl Renderer {
         self.render_batches = render_batches;
     }
 
-    fn set_camera_data_ui(&mut self, camera: &mut Camera, window: Arc<Window>) {
+    fn set_camera_data_ui(&mut self, camera: &mut Camera, window: &Arc<Window>) {
         camera.update_view_projection_matrix(window); // TODO hmm i think camera matrix is updated in systems for 3d but for ui we do it here... one place for all.
         self.camera_manager
             .update_buffer("camera_2d".to_string(), &self.queue, camera);
@@ -429,7 +424,7 @@ impl Renderer {
 
     fn draw(
         &mut self,
-        window: Arc<Window>,
+        window: &Arc<Window>,
         view: &TextureView,
         encoder: &mut CommandEncoder,
         mesh_id: String,
@@ -475,15 +470,7 @@ impl Renderer {
                     &[],
                 );
 
-                let element_instance = Self::create_ui_element_instance(
-                    Point2::new(
-                        physical_size.width as f32,
-                        physical_size.height as f32,
-                        // ui_state.window_size.width as f32,
-                        // ui_state.window_size.height as f32,
-                    ),
-                    *rect,
-                );
+                let element_instance = Self::create_ui_element_instance(window, *rect);
                 let instance_buffer =
                     Self::create_instance_buffer(&self.device, &[element_instance]);
                 let instance_count = 1;
@@ -528,15 +515,7 @@ impl Renderer {
                     &[],
                 );
 
-                let element_instance = Self::create_ui_element_instance(
-                    Point2::new(
-                        physical_size.width as f32,
-                        physical_size.height as f32,
-                        // ui_state.window_size.width as f32,
-                        // ui_state.window_size.height as f32,
-                    ),
-                    *rect,
-                );
+                let element_instance = Self::create_ui_element_instance(window, *rect);
                 let instance_buffer =
                     Self::create_instance_buffer(&self.device, &[element_instance]);
                 let instance_count = 1;

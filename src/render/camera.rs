@@ -40,7 +40,7 @@ impl Camera {
         }
     }
 
-    pub fn update_view_projection_matrix(&mut self, window: Arc<Window>) {
+    pub fn update_view_projection_matrix(&mut self, window: &Arc<Window>) {
         let view = Matrix4::look_at_rh(self.eye, self.target, self.up);
 
         let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;

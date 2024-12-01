@@ -2,6 +2,8 @@ use crate::components::Entity;
 use crate::state::ui_state::MenuState::Closed;
 use cgmath::{ElementWise, Point2};
 use std::collections::HashMap;
+use std::sync::Arc;
+use winit::window::Window;
 
 pub struct UIWindow {
     pub is_visible: bool,
@@ -64,13 +66,13 @@ impl Rect {
         self.bottom_right.y - self.top_left.y
     }
 
-    pub fn scale(&self, scale_factor: f32) -> Rect {
+    pub fn scale(&self, scale_factor_x: f32, scale_factor_y: f32) -> Rect {
         let scaled_top_left = self
             .top_left
-            .mul_element_wise(Point2::new(scale_factor, scale_factor));
+            .mul_element_wise(Point2::new(scale_factor_x, scale_factor_y));
         let scaled_bottom_right = self
             .bottom_right
-            .mul_element_wise(Point2::new(scale_factor, scale_factor));
+            .mul_element_wise(Point2::new(scale_factor_x, scale_factor_y));
         Rect::new(scaled_top_left, scaled_bottom_right)
     }
 }
@@ -114,13 +116,15 @@ impl UIState {
     }
 
     // Maps 0 (left of screen) to -800/600 (pixel values) and 1 to 800/600
-    pub fn convert_clip_space_x(value: f32, window_width: f32, window_height: f32) -> f32 {
+    pub fn convert_clip_space_x(value: f32, window: &Arc<Window>) -> f32 {
         // Would it be better to use NDC?
-        -window_width / window_height + 2.0 * (window_width / window_height) * value
+        let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
+        -resolution + 2.0 * resolution * value
     }
 
-    pub fn convert_scale_x(value: f32, window_width: f32, window_height: f32) -> f32 {
-        value * 2.0 * (window_width / window_height)
+    pub fn convert_scale_x(value: f32, window: &Arc<Window>) -> f32 {
+        let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
+        value * 2.0 * resolution
     }
 
     // Maps 0 (top of screen) to 1 and 1 to -1

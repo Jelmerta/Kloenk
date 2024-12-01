@@ -14,12 +14,7 @@ pub const CAMERA_TOP_LIMIT: f32 = 350.0;
 pub struct CameraSystem {}
 
 impl CameraSystem {
-    pub fn update_camera(
-        window: Arc<Window>,
-        // window_size: PhysicalSize<u32>,
-        game_state: &mut GameState,
-        input: &mut Input,
-    ) {
+    pub fn update_camera(window: &Arc<Window>, game_state: &mut GameState, input: &mut Input) {
         Self::setup_camera_target(game_state, input);
         Self::setup_camera(game_state);
         let camera = game_state.get_camera_mut("camera").unwrap();
