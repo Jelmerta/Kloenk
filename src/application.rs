@@ -131,7 +131,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             let audio_future = AudioSystem::new();
 
             spawn_local(async move {
-                let mut renderer = renderer_future.await;
+                let renderer = renderer_future.await;
 
                 let audio_system = audio_future.await;
 

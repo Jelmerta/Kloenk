@@ -66,14 +66,6 @@
 </script>
 <script type="module">
     export function prevent_default_context_menu() {
-        window.addEventListener('scroll', () => {
-        }, {passive: true});
-        window.addEventListener('touchmove', (e) => {
-        }, {passive: true});
-        window.addEventListener('touchstart', (e) => {
-        }, {passive: true});
-        window.addEventListener('wheel', (e) => {
-        }, {passive: true});
         window.addEventListener('contextmenu', (e) => {
             e.preventDefault();
         });
