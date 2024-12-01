@@ -294,7 +294,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 engine.window().request_redraw();
 
                 GameSystem::update(
-                    engine.window.inner_size(),
+                    &engine.window,
                     &mut engine.game_state,
                     &mut engine.ui_state,
                     &mut engine.input_handler,
@@ -303,7 +303,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 );
 
                 match engine.renderer.render(
-                    engine.window,
+                    &engine.window,
                     &mut engine.game_state,
                     &engine.frame_state,
                 ) {
