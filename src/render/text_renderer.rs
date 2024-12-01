@@ -6,7 +6,11 @@ use glyphon::{
 };
 use itertools::Itertools;
 use std::ops::Add;
+use std::sync::Arc;
 use wgpu::{CommandEncoder, Device, Queue, SurfaceConfiguration, TextureView};
+use winit::window::Window;
+
+const DEFAULT_FONT_SIZE: f32 = 24.0;
 
 struct TextContext {
     buffer: Buffer,
@@ -77,19 +81,17 @@ impl TextWriter {
         self.queue.clear();
     }
 
-    pub fn add(
-        &mut self,
-        screen_width: u32,
-        screen_height: u32,
-        rect: Rect,
-        text: &str,
-        color: &[f32; 3],
-    ) {
-        let mut buffer = Buffer::new(&mut self.font_system, Metrics::new(24.0, 42.0));
+    pub fn add(&mut self, window: Arc<Window>, rect: &Rect, text: &str, color: &[f32; 3]) {
+        let rect_scaled = rect.scale(window.scale_factor() as f32);
+        let font_size = (window.scale_factor() * DEFAULT_FONT_SIZE as f64) as f32;
+        let mut buffer = Buffer::new(
+            &mut self.font_system,
+            Metrics::new(font_size, font_size * 2.0),
+        );
         buffer.set_size(
             &mut self.font_system,
-            Some(screen_width as f32),
-            Some(screen_height as f32),
+            Some(window.inner_size().width as f32),
+            Some(window.inner_size().height as f32),
         );
         buffer.set_text(
             &mut self.font_system,
@@ -101,7 +103,7 @@ impl TextWriter {
 
         self.queue.push(TextContext {
             buffer,
-            rect,
+            rect: rect_scaled,
             color: *color,
         });
     }
@@ -112,19 +114,18 @@ impl TextWriter {
         queue: &Queue,
         encoder: &mut CommandEncoder,
         view: &TextureView,
-        screen_width: u32,
-        screen_height: u32,
+        window: Arc<Window>,
     ) {
-        self.prepare(device, queue, screen_width, screen_height);
+        self.prepare(device, queue, window);
         self.write_text_buffer(encoder, view);
     }
 
-    fn prepare(&mut self, device: &Device, queue: &Queue, screen_width: u32, screen_height: u32) {
+    fn prepare(&mut self, device: &Device, queue: &Queue, window: Arc<Window>) {
         self.viewport.update(
             queue,
             Resolution {
-                width: screen_width,
-                height: screen_height,
+                width: window.inner_size().width,
+                height: window.inner_size().height,
             },
         );
 

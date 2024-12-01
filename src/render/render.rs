@@ -160,7 +160,8 @@ impl Renderer {
 
     pub fn render(
         &mut self,
-        physical_size: PhysicalSize<u32>,
+        window: Arc<Window>,
+        // physical_size: PhysicalSize<u32>,
         game_state: &mut GameState,
         frame_state: &FrameState,
     ) -> Result<(), wgpu::SurfaceError> {
@@ -178,7 +179,7 @@ impl Renderer {
             });
 
         self.render_world(game_state, &view, &mut encoder);
-        self.render_ui(physical_size, game_state, frame_state, &view, &mut encoder);
+        self.render_ui(window, game_state, frame_state, &view, &mut encoder);
 
         self.queue.submit(iter::once(encoder.finish()));
         output.present();
@@ -273,14 +274,14 @@ impl Renderer {
 
     fn render_ui(
         &mut self,
-        physical_size: PhysicalSize<u32>,
+        window: Arc<Window>,
         game_state: &mut GameState,
         frame_state: &FrameState,
         view: &TextureView,
         encoder: &mut CommandEncoder,
     ) {
         let camera = game_state.camera_components.get_mut("camera_ui").unwrap();
-        self.set_camera_data_ui(camera, &physical_size);
+        self.set_camera_data_ui(camera, window);
 
         frame_state
             .gui
@@ -307,31 +308,19 @@ impl Renderer {
                         text,
                         color,
                     } => {
-                        self.text_writer.add(
-                            physical_size.width,
-                            physical_size.height,
-                            rect.scale(physical_size.width as f32, physical_size.height as f32),
-                            text,
-                            color,
-                        );
+                        self.text_writer.add(window, rect, text, color);
                     }
                     RenderCommand::Mesh {
                         layer: _layer,
                         rect,
                         mesh_id,
                     } => {
-                        self.draw(physical_size, view, encoder, mesh_id.to_string(), rect);
+                        self.draw(window, view, encoder, mesh_id.to_string(), rect);
                     }
                 } // TODO or maybe call it widget?
             });
-        self.text_writer.write(
-            &self.device,
-            &self.queue,
-            encoder,
-            view,
-            physical_size.width,
-            physical_size.height,
-        )
+        self.text_writer
+            .write(&self.device, &self.queue, encoder, view, window)
     }
 
     fn create_instance_buffer(device: &Device, instance_group: &[Instance]) -> Buffer {
@@ -432,15 +421,15 @@ impl Renderer {
         self.render_batches = render_batches;
     }
 
-    fn set_camera_data_ui(&mut self, camera: &mut Camera, window_size: &PhysicalSize<u32>) {
-        camera.update_view_projection_matrix(window_size.width, window_size.height); // TODO hmm i think camera matrix is updated in systems for 3d but for ui we do it here... one place for all.
+    fn set_camera_data_ui(&mut self, camera: &mut Camera, window: Arc<Window>) {
+        camera.update_view_projection_matrix(window); // TODO hmm i think camera matrix is updated in systems for 3d but for ui we do it here... one place for all.
         self.camera_manager
             .update_buffer("camera_2d".to_string(), &self.queue, camera);
     }
 
     fn draw(
         &mut self,
-        physical_size: PhysicalSize<u32>,
+        window: Arc<Window>,
         view: &TextureView,
         encoder: &mut CommandEncoder,
         mesh_id: String,
