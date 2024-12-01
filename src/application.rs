@@ -35,8 +35,8 @@ use wasm_bindgen_futures::spawn_local;
 
 // Note: This is more a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
 // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
-const INITIAL_WINDOW_WIDTH: u32 = 1080;
-const INITIAL_WINDOW_HEIGHT: u32 = 1920;
+const INITIAL_WINDOW_WIDTH: u32 = 1920;
+const INITIAL_WINDOW_HEIGHT: u32 = 1080;
 
 pub struct Engine {
     pub renderer: Renderer,
@@ -99,6 +99,15 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             State::Uninitialized => {
                 self.application_state = State::Initializing;
             } // Continue
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            let web_window = web_sys::window().expect("Window should exist");
+            let screen = web_window.screen().expect("Screen should exist");
+            let width = screen.width().expect("Width should exist");
+            let height = screen.height().expect("Height should exist");
+            log::warn!("{} {}", width, height);
         }
 
         let window_attributes = Window::default_attributes()
