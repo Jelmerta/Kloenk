@@ -86,9 +86,11 @@ impl TextWriter {
             (window.inner_size().width as f64 / window.scale_factor()) as f32,
             (window.inner_size().height as f64 / window.scale_factor()) as f32,
         );
-        log::warn!("{:?}", window);
+        log::warn!("inner {:?}", window.inner_size());
+        log::warn!("scale {:?}", window.scale_factor());
         let font_size = ((window.inner_size().width as f64 / window.scale_factor()) / 1080.0
             * DEFAULT_FONT_SIZE_AT_1080P as f64) as f32;
+        log::warn!("font {:?}", font_size);
         let mut buffer = Buffer::new(
             &mut self.font_system,
             Metrics::new(font_size, font_size * 2.0),
