@@ -33,6 +33,11 @@ use crate::systems::game_system::GameSystem;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
 
+// Note: This is more a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
+// For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
+const INITIAL_WINDOW_WIDTH: u32 = 1080;
+const INITIAL_WINDOW_HEIGHT: u32 = 1920;
+
 pub struct Engine {
     pub renderer: Renderer,
     pub game_state: GameState,
@@ -40,6 +45,7 @@ pub struct Engine {
     pub input_handler: Input,
     pub frame_state: FrameState,
     pub window: Arc<Window>,
+    // pub window_state: WindowState,
     // AudioSystem is loaded after user has used a gesture. This is to get rid of this warning in Chrome:
     // The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://goo.gl/7K7WLu
     #[cfg(target_arch = "wasm32")]
@@ -57,6 +63,11 @@ pub enum AudioState {
 impl Engine {
     pub fn window(&self) -> &Window {
         self.window.as_ref()
+    }
+
+    pub fn resize(&mut self) {
+        // self..update_size();
+        self.renderer.resize(self.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
     }
 }
 
@@ -90,14 +101,12 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             } // Continue
         }
 
-        // Note: This is more a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
-        // For example: System scale or web zoom can change this.
-        let window_width: u32 = 1920;
-        let window_height: u32 = 1080;
-
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
-            .with_inner_size(LogicalSize::new(window_width as f32, window_height as f32));
+            .with_inner_size(LogicalSize::new(
+                INITIAL_WINDOW_WIDTH as f32,
+                INITIAL_WINDOW_HEIGHT as f32,
+            ));
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
         #[cfg(target_arch = "wasm32")]
@@ -110,8 +119,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     canvas
                         .set_attribute("tabindex", "0")
                         .expect("failed to set tabindex");
-                    canvas.set_width(window_width);
-                    canvas.set_height(window_height);
+                    canvas.set_width(INITIAL_WINDOW_WIDTH);
+                    canvas.set_height(INITIAL_WINDOW_HEIGHT);
                     dst.append_child(&canvas).ok()?;
                     canvas.focus().expect("Unable to focus on canvas");
                     Some(())
@@ -119,8 +128,10 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 .expect("Couldn't append canvas to document body.");
 
             // For web, canvas needs to exist before it can be resized
-            let _ = window
-                .request_inner_size(LogicalSize::new(window_width as f32, window_height as f32));
+            let _ = window.request_inner_size(LogicalSize::new(
+                INITIAL_WINDOW_WIDTH as f32,
+                INITIAL_WINDOW_HEIGHT as f32,
+            ));
         }
         let renderer_future = Renderer::new(window.clone());
 
@@ -289,6 +300,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             }
             WindowEvent::Resized(physical_size) => {
                 log::warn!("resize event: {:?}", physical_size);
+
                 engine.renderer.resize(physical_size);
             }
             WindowEvent::RedrawRequested => {

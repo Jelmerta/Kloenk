@@ -86,6 +86,7 @@ impl TextWriter {
             (window.inner_size().width as f64 / window.scale_factor()) as f32,
             (window.inner_size().height as f64 / window.scale_factor()) as f32,
         );
+        log::warn!("scale {:?}", window.scale_factor());
         let font_size = 24.0 / window.scale_factor() as f32;
         // let font_size = ((window.inner_size().width as f64 / window.scale_factor()) / 1080.0
         //     * DEFAULT_FONT_SIZE_AT_1080P as f64) as f32;
