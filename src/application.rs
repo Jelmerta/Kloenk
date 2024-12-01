@@ -303,7 +303,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 );
 
                 match engine.renderer.render(
-                    engine.window.inner_size(),
+                    engine.window,
                     &mut engine.game_state,
                     &engine.frame_state,
                 ) {

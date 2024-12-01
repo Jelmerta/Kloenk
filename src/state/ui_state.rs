@@ -64,13 +64,13 @@ impl Rect {
         self.bottom_right.y - self.top_left.y
     }
 
-    pub fn scale(&self, scale_factor_x: f32, scale_factor_y: f32) -> Rect {
+    pub fn scale(&self, scale_factor: f32) -> Rect {
         let scaled_top_left = self
             .top_left
-            .mul_element_wise(Point2::new(scale_factor_x, scale_factor_y));
+            .mul_element_wise(Point2::new(scale_factor, scale_factor));
         let scaled_bottom_right = self
             .bottom_right
-            .mul_element_wise(Point2::new(scale_factor_x, scale_factor_y));
+            .mul_element_wise(Point2::new(scale_factor, scale_factor));
         Rect::new(scaled_top_left, scaled_bottom_right)
     }
 }
