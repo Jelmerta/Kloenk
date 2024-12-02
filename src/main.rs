@@ -1,8 +1,8 @@
+#![windows_subsystem = "windows"] // Makes sure Windows does not open terminal
 use crate::application::{Application, StateInitializationEvent};
+use winit::event_loop::EventLoop;
 #[cfg(target_arch = "wasm32")]
 use winit::platform::web::EventLoopExtWebSys;
-
-use winit::event_loop::EventLoop;
 mod application;
 mod components;
 mod gui;

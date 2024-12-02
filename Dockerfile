@@ -30,7 +30,7 @@ COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-unknown --target-dir target
 
 COPY . .
-RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk_bin \
+RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk_bin.wasm --target web --out-dir bg_output --out-name kloenk \
 && wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz --dce --strip-debug --strip-producers --inlining --coalesce-locals --simplify-locals \
 && mkdir output \
