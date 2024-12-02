@@ -17,7 +17,7 @@ use winit::platform::web::WindowExtWebSys;
 
 use crate::state::input::Input;
 use std::sync::Arc;
-use winit::dpi::{LogicalSize, PhysicalSize};
+use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Fullscreen, Window, WindowId};
 
@@ -40,7 +40,6 @@ pub struct Engine {
     pub input_handler: Input,
     pub frame_state: FrameState,
     pub window: Arc<Window>,
-    // pub window_state: WindowState,
     // AudioSystem is loaded after user has used a gesture. This is to get rid of this warning in Chrome:
     // The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://goo.gl/7K7WLu
     #[cfg(target_arch = "wasm32")]
@@ -61,8 +60,28 @@ impl Engine {
     }
 
     pub fn resize(&mut self) {
-        // self..update_size();
-        self.renderer.resize(self.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
+        #[cfg(target_arch = "wasm32")]
+        {
+            let web_window = web_sys::window().expect("Window should exist");
+
+            let width = web_window
+                .inner_width()
+                .expect("Width should exist")
+                .as_f64()
+                .unwrap()
+                - 2.0; // we are adding 1px border
+
+            let height = web_window
+                .inner_height()
+                .expect("Height should exist")
+                .as_f64()
+                .unwrap()
+                - 2.0;
+
+            let _ = self
+                .window
+                .request_inner_size(LogicalSize::new(width, height));
+        }
     }
 }
 
@@ -103,7 +122,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         #[cfg(target_arch = "wasm32")]
         {
             let web_window = web_sys::window().expect("Window should exist");
-            let dpi = web_window.device_pixel_ratio();
 
             initial_width = web_window
                 .inner_width()
@@ -324,8 +342,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 engine.input_handler.process_scroll(&delta);
             }
             WindowEvent::Resized(physical_size) => {
-                // log::warn!("resize event: {:?}", physical_size);
-
+                log::warn!("resize event: {:?}", physical_size);
+                engine.resize();
                 engine.renderer.resize(physical_size);
             }
             WindowEvent::RedrawRequested => {
