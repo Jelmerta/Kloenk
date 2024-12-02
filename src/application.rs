@@ -16,9 +16,9 @@ use winit::event::ElementState;
 use winit::platform::web::WindowExtWebSys;
 
 use crate::state::input::Input;
-use cgmath::num_traits::float::FloatCore;
-use cgmath::num_traits::Float;
 use std::sync::Arc;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::closure::Closure;
 use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Fullscreen, Window, WindowId};
@@ -69,10 +69,11 @@ impl Engine {
         {
             let web_window = web_sys::window().expect("Window should exist");
 
-            // TODO DONT USE INNER WIDTH USE VISUALVIEWPORT AS IT RETURNS AN ACTUAL FLOAT
+            // Personal reminder to probably never use window's inner width. Visual viewport returns a float
             let viewport = web_window
                 .visual_viewport()
                 .expect("Visual viewport should exist");
+            // viewport.set_onresize(|| self.) // TODO probably use this instead of resized because not everything sends resize event
             let width = viewport.width();
             let height = viewport.height();
 
@@ -134,33 +135,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
         let mut initial_width = 0.0;
         let mut initial_height = 0.0;
-        #[cfg(target_arch = "wasm32")]
-        {
-            let web_window = web_sys::window().expect("Window should exist");
 
-            //     initial_width = web_window
-            //         .inner_width()
-            //         .expect("Width should exist")
-            //         .as_f64()
-            //         .unwrap()
-            //         .ceil();
-            //     // - 2.0; // we are adding 1px border
-            //
-            //     initial_height = web_window
-            //         .inner_height()
-            //         .expect("Height should exist")
-            //         .as_f64()
-            //         .unwrap()
-            //         .ceil();
-            //     // - 2.0;
-            // }
-
-            let viewport = web_window
-                .visual_viewport()
-                .expect("Visual viewport should exist");
-            initial_width = viewport.width();
-            initial_height = viewport.height();
-        }
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
             .with_inner_size(LogicalSize::new(initial_width, initial_height));
@@ -180,7 +155,9 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
 
         #[cfg(target_arch = "wasm32")]
         {
-            web_sys::window()
+            let web_window = web_sys::window().expect("Window should exist");
+
+            web_window
                 .and_then(|win| win.document())
                 .and_then(|doc| {
                     let dst = doc.get_element_by_id("kloenk-wasm")?;
@@ -193,9 +170,29 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     Some(())
                 })
                 .expect("Couldn't append canvas to document body.");
-
             // For web, canvas needs to exist before it can be resized
             let _ = window.request_inner_size(LogicalSize::new(initial_width, initial_height));
+
+            let viewport = web_window
+                .visual_viewport()
+                .expect("Visual viewport should exist");
+            let closure = Closure::wrap(Box::new(move || {
+                let viewport_width = viewport.width();
+                let viewport_height = viewport.height();
+                let _ =
+                    window.request_inner_size(LogicalSize::new(viewport_width, viewport_height));
+
+                // TODO we forgot about engine.renderer.resize...
+                // TODO how about just throwing a resized event lol we might have duplicate resized events???
+
+                // let canvas = window.canvas().expect("Canvas should exist");
+                // canvas.set_width(viewport_width);
+                // canvas.set_height(viewport_height);
+            }) as Box<dyn Fn()>);
+            let viewport = web_window
+                .visual_viewport()
+                .expect("Visual viewport should exist");
+            viewport.set_onresize(Some(closure)); // TODO probably use this instead of resized because not everything sends resize event
         }
         let renderer_future = Renderer::new(window.clone());
 
