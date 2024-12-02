@@ -33,11 +33,6 @@ use crate::systems::game_system::GameSystem;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
 
-// Note: This is more a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
-// For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
-const INITIAL_WINDOW_WIDTH: u32 = 1920;
-const INITIAL_WINDOW_HEIGHT: u32 = 1080;
-
 pub struct Engine {
     pub renderer: Renderer,
     pub game_state: GameState,
@@ -101,6 +96,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             } // Continue
         }
 
+        // Note: This is more a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
+        // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
         let mut initial_width = 0.0;
         let mut initial_height = 0.0;
         #[cfg(target_arch = "wasm32")]
@@ -125,7 +122,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
 
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
-            .with_inner_size(PhysicalSize::new(initial_width, initial_height));
+            .with_inner_size(LogicalSize::new(initial_width, initial_height));
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
@@ -157,7 +154,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 .expect("Couldn't append canvas to document body.");
 
             // For web, canvas needs to exist before it can be resized
-            let _ = window.request_inner_size(PhysicalSize::new(initial_width, initial_height));
+            // let _ = window.request_inner_size(PhysicalSize::new(initial_width, initial_height));
         }
         let renderer_future = Renderer::new(window.clone());
 
