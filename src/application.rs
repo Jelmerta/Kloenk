@@ -126,11 +126,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     .as_f64()
                     .unwrap()
             );
-            log::warn!(
-                "height window {}",
-                screen.width().expect("Width should exist")
-            );
-
             log::warn!("width {}", screen.width().expect("Width should exist"));
             log::warn!("height {}", screen.height().expect("Width should exist"));
             initial_width = screen.width().expect("Width should exist") as f64; // / dpi;
