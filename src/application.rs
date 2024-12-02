@@ -60,6 +60,7 @@ impl Engine {
     }
 
     pub fn resize(&mut self) {
+        // We want to have ownership of the zoom level ourselves. We therefore disregard the zoom level and always render
         #[cfg(target_arch = "wasm32")]
         {
             let web_window = web_sys::window().expect("Window should exist");
@@ -69,14 +70,14 @@ impl Engine {
                 .expect("Width should exist")
                 .as_f64()
                 .unwrap()
-                - 2.0; // we are adding 1px border
+                .floor(); // Want to make sure we don't cause extra line to be drawn
 
             let height = web_window
                 .inner_height()
                 .expect("Height should exist")
                 .as_f64()
                 .unwrap()
-                - 2.0;
+                .floor(); // Want to make sure we don't cause extra line to be drawn
 
             let _ = self
                 .window
@@ -342,7 +343,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 engine.input_handler.process_scroll(&delta);
             }
             WindowEvent::Resized(physical_size) => {
-                log::warn!("resize event: {:?}", physical_size);
                 engine.resize();
                 engine.renderer.resize(physical_size);
             }
