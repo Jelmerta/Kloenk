@@ -16,6 +16,8 @@ use winit::event::ElementState;
 use winit::platform::web::WindowExtWebSys;
 
 use crate::state::input::Input;
+use cgmath::num_traits::float::FloatCore;
+use cgmath::num_traits::Float;
 use std::sync::Arc;
 use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
@@ -32,6 +34,8 @@ use crate::state::ui_state::UIState;
 use crate::systems::game_system::GameSystem;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
+#[cfg(target_arch = "wasm32")]
+use web_sys::js_sys::Math::ceil;
 
 pub struct Engine {
     pub renderer: Renderer,
@@ -69,14 +73,17 @@ impl Engine {
                 .inner_width()
                 .expect("Width should exist")
                 .as_f64()
-                .unwrap();
+                .unwrap()
+                .ceil();
             // .floor(); // Want to make sure we don't cause extra line to be drawn
 
             let height = web_window
                 .inner_height()
                 .expect("Height should exist")
                 .as_f64()
-                .unwrap();
+                .unwrap()
+                .ceil();
+
             // .floor(); // Want to make sure we don't cause extra line to be drawn
 
             let _ = self
@@ -128,14 +135,16 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 .inner_width()
                 .expect("Width should exist")
                 .as_f64()
-                .unwrap();
+                .unwrap()
+                .ceil();
             // - 2.0; // we are adding 1px border
 
             initial_height = web_window
                 .inner_height()
                 .expect("Height should exist")
                 .as_f64()
-                .unwrap();
+                .unwrap()
+                .ceil();
             // - 2.0;
         }
 
