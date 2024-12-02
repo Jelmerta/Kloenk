@@ -107,7 +107,11 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         {
             let web_window = web_sys::window().expect("Window should exist");
             let dpi = web_window.device_pixel_ratio();
+
             let screen = web_window.screen().expect("Screen should exist");
+            log::warn!("dpi {}", dpi);
+            log::warn!("width {}", screen.width().expect("Width should exist"));
+            log::warn!("height {}", screen.height().expect("Width should exist"));
             initial_width = screen.width().expect("Width should exist") as f64 / dpi;
             initial_height = screen.height().expect("Height should exist") as f64 / dpi;
         }
