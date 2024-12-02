@@ -135,13 +135,15 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 .inner_width()
                 .expect("Width should exist")
                 .as_f64()
-                .unwrap();
+                .unwrap()
+                - 2.0; // we are adding 1px border
 
             initial_height = web_window
                 .inner_height()
                 .expect("Height should exist")
                 .as_f64()
-                .unwrap();
+                .unwrap()
+                - 2.0;
         }
 
         let window_attributes = Window::default_attributes()
