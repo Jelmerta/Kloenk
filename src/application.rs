@@ -19,7 +19,7 @@ use crate::state::input::Input;
 use std::sync::Arc;
 use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
-use winit::window::{Window, WindowId};
+use winit::window::{Fullscreen, Window, WindowId};
 
 #[cfg(target_arch = "wasm32")]
 use crate::systems::audio_system::AudioPlayer;
@@ -107,7 +107,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             let screen = web_window.screen().expect("Screen should exist");
             let width = screen.width().expect("Width should exist");
             let height = screen.height().expect("Height should exist");
-            log::warn!("{} {}", width, height);
+            // log::warn!("{} {}", width, height);
         }
 
         let window_attributes = Window::default_attributes()
@@ -117,6 +117,19 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 INITIAL_WINDOW_HEIGHT as f32,
             ));
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
+        // #[cfg(not(target_arch = "wasm32"))]
+        // {
+        //     window.
+        // }
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(monitor) = window.current_monitor() {
+                let fullscreen_video_mode = monitor.video_modes().next().unwrap();
+                let _ = window.request_inner_size(fullscreen_video_mode.size());
+                window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
+            }
+        }
 
         #[cfg(target_arch = "wasm32")]
         {
@@ -308,7 +321,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 engine.input_handler.process_scroll(&delta);
             }
             WindowEvent::Resized(physical_size) => {
-                log::warn!("resize event: {:?}", physical_size);
+                // log::warn!("resize event: {:?}", physical_size);
 
                 engine.renderer.resize(physical_size);
             }

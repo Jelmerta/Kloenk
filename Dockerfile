@@ -45,5 +45,6 @@ COPY --from=auditor /etc/hostname /dev/null
 COPY --from=formatchecker /etc/hostname /dev/null
 
 COPY --from=builder /app/output /usr/share/nginx/html
-COPY resources/web/html /usr/share/nginx/html
-COPY resources/web/nginx /etc/nginx/conf.d
+COPY assets /usr/share/nginx/html/assets
+COPY web/html /usr/share/nginx/html
+COPY web/nginx /etc/nginx/conf.d
