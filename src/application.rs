@@ -69,20 +69,27 @@ impl Engine {
         {
             let web_window = web_sys::window().expect("Window should exist");
 
-            let width = web_window
-                .inner_width()
-                .expect("Width should exist")
-                .as_f64()
-                .unwrap()
-                .ceil();
-            // .floor(); // Want to make sure we don't cause extra line to be drawn
+            // TODO DONT USE INNER WIDTH USE VISUALVIEWPORT AS IT RETURNS AN ACTUAL FLOAT
+            let viewport = web_window
+                .visual_viewport()
+                .expect("Visual viewport should exist");
+            let width = viewport.width();
+            let height = viewport.height();
 
-            let height = web_window
-                .inner_height()
-                .expect("Height should exist")
-                .as_f64()
-                .unwrap()
-                .ceil();
+            // let width = web_window
+            //     .inner_width()
+            //     .expect("Width should exist")
+            //     .as_f64()
+            //     .unwrap()
+            //     .ceil(); // Does potentially cause inconsistent center but at least no white lines
+            //              // .floor(); // Want to make sure we don't cause extra line to be drawn
+
+            // let height = web_window
+            //     .inner_height()
+            //     .expect("Height should exist")
+            //     .as_f64()
+            //     .unwrap()
+            //     .ceil();
 
             // .floor(); // Want to make sure we don't cause extra line to be drawn
 
@@ -131,23 +138,29 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         {
             let web_window = web_sys::window().expect("Window should exist");
 
-            initial_width = web_window
-                .inner_width()
-                .expect("Width should exist")
-                .as_f64()
-                .unwrap()
-                .ceil();
-            // - 2.0; // we are adding 1px border
+            //     initial_width = web_window
+            //         .inner_width()
+            //         .expect("Width should exist")
+            //         .as_f64()
+            //         .unwrap()
+            //         .ceil();
+            //     // - 2.0; // we are adding 1px border
+            //
+            //     initial_height = web_window
+            //         .inner_height()
+            //         .expect("Height should exist")
+            //         .as_f64()
+            //         .unwrap()
+            //         .ceil();
+            //     // - 2.0;
+            // }
 
-            initial_height = web_window
-                .inner_height()
-                .expect("Height should exist")
-                .as_f64()
-                .unwrap()
-                .ceil();
-            // - 2.0;
+            let viewport = web_window
+                .visual_viewport()
+                .expect("Visual viewport should exist");
+            initial_width = viewport.width();
+            initial_height = viewport.height();
         }
-
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
             .with_inner_size(LogicalSize::new(initial_width, initial_height));
