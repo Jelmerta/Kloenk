@@ -110,6 +110,19 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
 
             let screen = web_window.screen().expect("Screen should exist");
             log::warn!("dpi {}", dpi);
+            log::warn!(
+                "width window {}",
+                web_window.inner_width().expect("Width should exist")
+            );
+            log::warn!(
+                "height window {}",
+                web_window.inner_height().expect("Width should exist")
+            );
+            log::warn!(
+                "height window {}",
+                screen.width().expect("Width should exist")
+            );
+
             log::warn!("width {}", screen.width().expect("Width should exist"));
             log::warn!("height {}", screen.height().expect("Width should exist"));
             initial_width = screen.width().expect("Width should exist") as f64; // / dpi;
@@ -156,10 +169,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     canvas
                         .set_attribute("tabindex", "0")
                         .expect("failed to set tabindex");
-                    canvas.set_width(INITIAL_WINDOW_WIDTH);
-                    canvas.set_height(INITIAL_WINDOW_HEIGHT);
-                    // canvas.set_width(initial_width);
-                    // canvas.set_height(initial_height);
                     dst.append_child(&canvas).ok()?;
                     canvas.focus().expect("Unable to focus on canvas");
                     Some(())
