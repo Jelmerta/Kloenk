@@ -101,15 +101,15 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             } // Continue
         }
 
-        let mut initial_width = 0;
-        let mut initial_height = 0;
+        let mut initial_width = 0.0;
+        let mut initial_height = 0.0;
         #[cfg(target_arch = "wasm32")]
         {
             let web_window = web_sys::window().expect("Window should exist");
-            // web_window.device_pixel_ratio()
+            let dpi = web_window.device_pixel_ratio();
             let screen = web_window.screen().expect("Screen should exist");
-            initial_width = screen.width().expect("Width should exist");
-            initial_height = screen.height().expect("Height should exist");
+            initial_width = screen.width().expect("Width should exist") as f64 / dpi;
+            initial_height = screen.height().expect("Height should exist") as f64 / dpi;
         }
 
         let window_attributes = Window::default_attributes()
