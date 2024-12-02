@@ -37,16 +37,16 @@
             display: block;
             margin: 0;
             padding: 0;
-            border: 1px solid black;
+            border: 1px solid grey;
             border-radius: 0;
             box-sizing: border-box;
             height: 100%;
             width: 100%;
         }
 
-        select {
-            -webkit-appearance: none;
-            -webkit-border-radius: 0px;
+        /* Make sure no corners rounded on chromium */
+        canvas:focus {
+            outline: solid black;
         }
     </style>
 </head>
