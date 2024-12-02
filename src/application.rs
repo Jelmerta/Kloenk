@@ -156,8 +156,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     canvas
                         .set_attribute("tabindex", "0")
                         .expect("failed to set tabindex");
-                    // canvas.set_width(INITIAL_WINDOW_WIDTH);
-                    // canvas.set_height(INITIAL_WINDOW_HEIGHT);
+                    canvas.set_width(INITIAL_WINDOW_WIDTH);
+                    canvas.set_height(INITIAL_WINDOW_HEIGHT);
                     // canvas.set_width(initial_width);
                     // canvas.set_height(initial_height);
                     dst.append_child(&canvas).ok()?;
