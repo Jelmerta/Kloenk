@@ -4,6 +4,8 @@ use cfg_if::cfg_if;
 use cgmath::Vector3;
 use gltf::mesh::util::ReadIndices;
 use gltf::Gltf;
+use std::env;
+use std::path::PathBuf;
 use wgpu::util::DeviceExt;
 use wgpu::Device;
 
@@ -105,7 +107,13 @@ fn load_colored_square(color: Vector3<f32>) -> Vec<ColoredVertex> {
 }
 
 pub async fn load_gltf(device: &Device, model_path: &str) -> Model {
-    let data = load_binary(model_path).await.unwrap();
+    match env::current_dir() {
+        Ok(path) => log::warn!("{}", path.display()),
+        Err(e) => log::warn!("{}", e),
+    }
+    let data = load_binary(model_path)
+        .await
+        .unwrap_or_else(|_| panic!("Path {} could not be found", model_path));
     let gltf = Gltf::from_slice(data.as_slice())
         .unwrap_or_else(|_| panic!("Failed to load gltf model {}", model_path));
 
@@ -311,14 +319,10 @@ pub async fn load_binary(file_name: &str) -> anyhow::Result<Vec<u8>> {
                 .await?
                 .to_vec();
         } else {
-            let path = std::path::Path::new(std::env::var("OUT_DIR").unwrap_or_else(|_| String::from(".")).as_str())
-                .join("resources")
-                .join(file_name);
-
-            // #[cfg(debug_assertions)] {
-                log::info!("{}", path.display());
-            // }
-
+            let path = env::var("OUT_DIR").map(|out_dir| PathBuf::from(out_dir) // target/debug or target/release
+                    .ancestors()
+                    .nth(3).unwrap().to_path_buf()).unwrap_or_else(|_| PathBuf::from(".")).join("assets")
+                        .join(file_name);
             let data = std::fs::read(path)?;
         }
     }
