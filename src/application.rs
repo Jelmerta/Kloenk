@@ -112,13 +112,14 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             log::warn!("dpi {}", dpi);
             log::warn!("width {}", screen.width().expect("Width should exist"));
             log::warn!("height {}", screen.height().expect("Width should exist"));
-            initial_width = screen.width().expect("Width should exist") as f64 / dpi;
-            initial_height = screen.height().expect("Height should exist") as f64 / dpi;
+            initial_width = screen.width().expect("Width should exist") as f64; // / dpi;
+            initial_height = screen.height().expect("Height should exist") as f64;
+            // / dpi;
         }
 
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
-            .with_inner_size(LogicalSize::new(
+            .with_inner_size(PhysicalSize::new(
                 initial_width,
                 initial_height, // INITIAL_WINDOW_WIDTH as f32,
                                 // INITIAL_WINDOW_HEIGHT as f32,
@@ -170,7 +171,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             //     INITIAL_WINDOW_WIDTH as f32,
             //     INITIAL_WINDOW_HEIGHT as f32,
             // ));
-            let _ = window.request_inner_size(LogicalSize::new(initial_width, initial_height));
+            let _ = window.request_inner_size(PhysicalSize::new(initial_width, initial_height));
         }
         let renderer_future = Renderer::new(window.clone());
 
