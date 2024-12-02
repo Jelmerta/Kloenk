@@ -101,8 +101,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             } // Continue
         }
 
-        let mut initial_width = 0.0;
-        let mut initial_height = 0.0;
+        let mut initial_width = 0;
+        let mut initial_height = 0;
         #[cfg(target_arch = "wasm32")]
         {
             let web_window = web_sys::window().expect("Window should exist");
