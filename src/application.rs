@@ -112,11 +112,19 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             log::warn!("dpi {}", dpi);
             log::warn!(
                 "width window {}",
-                web_window.inner_width().expect("Width should exist")
+                web_window
+                    .inner_width()
+                    .expect("Width should exist")
+                    .as_f64()
+                    .unwrap()
             );
             log::warn!(
                 "height window {}",
-                web_window.inner_height().expect("Width should exist")
+                web_window
+                    .inner_height()
+                    .expect("Width should exist")
+                    .as_f64()
+                    .unwrap()
             );
             log::warn!(
                 "height window {}",
