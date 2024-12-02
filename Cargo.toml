@@ -53,7 +53,7 @@ reqwest = { version = "0.12", default-features = false }
 getrandom = { version = "0.2", features = ["js"] }
 
 [[bin]]
-name = "kloenk_bin"
+name = "kloenk"
 path = "src/main.rs"
 
 [profile.dev]

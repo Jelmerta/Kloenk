@@ -107,10 +107,6 @@ fn load_colored_square(color: Vector3<f32>) -> Vec<ColoredVertex> {
 }
 
 pub async fn load_gltf(device: &Device, model_path: &str) -> Model {
-    // match env::current_dir() {
-    //     Ok(path) => log::warn!("{}", path.display()),
-    //     Err(e) => log::warn!("{}", e),
-    // }
     let data = load_binary(model_path)
         .await
         .unwrap_or_else(|_| panic!("Path {} could not be found", model_path));

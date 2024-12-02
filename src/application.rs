@@ -17,7 +17,7 @@ use winit::platform::web::WindowExtWebSys;
 
 use crate::state::input::Input;
 use std::sync::Arc;
-use winit::dpi::LogicalSize;
+use winit::dpi::{LogicalSize, PhysicalSize};
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Fullscreen, Window, WindowId};
 
@@ -101,28 +101,35 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             } // Continue
         }
 
+        let mut initial_width = 0.0;
+        let mut initial_height = 0.0;
         #[cfg(target_arch = "wasm32")]
         {
             let web_window = web_sys::window().expect("Window should exist");
             let screen = web_window.screen().expect("Screen should exist");
-            let width = screen.width().expect("Width should exist");
-            let height = screen.height().expect("Height should exist");
-            // log::warn!("{} {}", width, height);
+            let initial_width = screen.width().expect("Width should exist");
+            let initial_height = screen.height().expect("Height should exist");
         }
 
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
-            .with_inner_size(LogicalSize::new(
-                INITIAL_WINDOW_WIDTH as f32,
-                INITIAL_WINDOW_HEIGHT as f32,
+            .with_inner_size(PhysicalSize::new(
+                initial_width,
+                initial_height, // INITIAL_WINDOW_WIDTH as f32,
+                                // INITIAL_WINDOW_HEIGHT as f32,
             ));
+        // .with_inner_size(LogicalSize::new(
+        //     0.0,
+        //     0.0, // INITIAL_WINDOW_WIDTH as f32,
+        //         // INITIAL_WINDOW_HEIGHT as f32,
+        // ));
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
         // #[cfg(not(target_arch = "wasm32"))]
         // {
         //     window.
         // }
 
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(not(target_arch = "wasm32"))]
         {
             if let Some(monitor) = window.current_monitor() {
                 let fullscreen_video_mode = monitor.video_modes().next().unwrap();
@@ -141,8 +148,10 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     canvas
                         .set_attribute("tabindex", "0")
                         .expect("failed to set tabindex");
-                    canvas.set_width(INITIAL_WINDOW_WIDTH);
-                    canvas.set_height(INITIAL_WINDOW_HEIGHT);
+                    // canvas.set_width(INITIAL_WINDOW_WIDTH);
+                    // canvas.set_height(INITIAL_WINDOW_HEIGHT);
+                    // canvas.set_width(initial_width);
+                    // canvas.set_height(initial_height);
                     dst.append_child(&canvas).ok()?;
                     canvas.focus().expect("Unable to focus on canvas");
                     Some(())
@@ -150,10 +159,11 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 .expect("Couldn't append canvas to document body.");
 
             // For web, canvas needs to exist before it can be resized
-            let _ = window.request_inner_size(LogicalSize::new(
-                INITIAL_WINDOW_WIDTH as f32,
-                INITIAL_WINDOW_HEIGHT as f32,
-            ));
+            // let _ = window.request_inner_size(LogicalSize::new(
+            //     INITIAL_WINDOW_WIDTH as f32,
+            //     INITIAL_WINDOW_HEIGHT as f32,
+            // ));
+            let _ = window.request_inner_size(PhysicalSize::new(initial_width, initial_height));
         }
         let renderer_future = Renderer::new(window.clone());
 
