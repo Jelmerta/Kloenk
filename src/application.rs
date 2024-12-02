@@ -69,15 +69,15 @@ impl Engine {
                 .inner_width()
                 .expect("Width should exist")
                 .as_f64()
-                .unwrap()
-                .floor(); // Want to make sure we don't cause extra line to be drawn
+                .unwrap();
+            // .floor(); // Want to make sure we don't cause extra line to be drawn
 
             let height = web_window
                 .inner_height()
                 .expect("Height should exist")
                 .as_f64()
-                .unwrap()
-                .floor(); // Want to make sure we don't cause extra line to be drawn
+                .unwrap();
+            // .floor(); // Want to make sure we don't cause extra line to be drawn
 
             let _ = self
                 .window
@@ -128,15 +128,15 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 .inner_width()
                 .expect("Width should exist")
                 .as_f64()
-                .unwrap()
-                - 2.0; // we are adding 1px border
+                .unwrap();
+            // - 2.0; // we are adding 1px border
 
             initial_height = web_window
                 .inner_height()
                 .expect("Height should exist")
                 .as_f64()
-                .unwrap()
-                - 2.0;
+                .unwrap();
+            // - 2.0;
         }
 
         let window_attributes = Window::default_attributes()
