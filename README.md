@@ -88,8 +88,8 @@ cp ./bg_output/kloenk.js C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\htm
 
 Local development(linux+web):
 sudo systemctl start nginx
-cp ./resources/web/nginx.conf /etc/nginx/nginx.conf
-cp ./resources/web/common_headers.conf /etc/nginx/common_headers.conf
+cp ./web/nginx/nginx.conf /etc/nginx/nginx.conf
+cp ./web/nginx/common_headers.conf /etc/nginx/common_headers.conf
 sudo cp -r ./resources /usr/share/nginx/html
 sudo cp ./index.html /usr/share/nginx/html
 

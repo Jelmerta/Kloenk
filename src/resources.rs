@@ -305,7 +305,7 @@ fn format_url(file_name: &str) -> reqwest::Url {
     let location = window.location();
     let origin = location.origin().unwrap();
     let base = reqwest::Url::parse(&format!("{origin}/",)).unwrap();
-    base.join("resources/").unwrap().join(file_name).unwrap()
+    base.join("assets/").unwrap().join(file_name).unwrap()
 }
 
 #[allow(clippy::unused_async)] // Only used in wasm
