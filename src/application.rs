@@ -138,7 +138,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 .unwrap();
 
             initial_height = web_window
-                .inner_width()
+                .inner_height()
                 .expect("Height should exist")
                 .as_f64()
                 .unwrap();
