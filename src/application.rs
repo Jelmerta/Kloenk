@@ -106,6 +106,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         #[cfg(target_arch = "wasm32")]
         {
             let web_window = web_sys::window().expect("Window should exist");
+            // web_window.device_pixel_ratio()
             let screen = web_window.screen().expect("Screen should exist");
             initial_width = screen.width().expect("Width should exist");
             initial_height = screen.height().expect("Height should exist");
@@ -113,7 +114,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
 
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
-            .with_inner_size(PhysicalSize::new(
+            .with_inner_size(LogicalSize::new(
                 initial_width,
                 initial_height, // INITIAL_WINDOW_WIDTH as f32,
                                 // INITIAL_WINDOW_HEIGHT as f32,
