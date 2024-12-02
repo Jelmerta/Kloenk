@@ -107,8 +107,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         {
             let web_window = web_sys::window().expect("Window should exist");
             let screen = web_window.screen().expect("Screen should exist");
-            let initial_width = screen.width().expect("Width should exist");
-            let initial_height = screen.height().expect("Height should exist");
+            initial_width = screen.width().expect("Width should exist");
+            initial_height = screen.height().expect("Height should exist");
         }
 
         let window_attributes = Window::default_attributes()
