@@ -28,25 +28,19 @@
         html, body {
             margin: 0;
             padding: 0;
-            height: 100%;
-            width: 100%;
-            box-sizing: content-box;
         }
 
         canvas {
             display: block;
             margin: 0;
             padding: 0;
-            border: 1px solid grey;
-            border-radius: 0;
-            box-sizing: border-box;
-            height: 100%;
-            width: 100%;
+            border: 1px solid black;
         }
 
-        /*canvas:focus {*/
-        /*    outline: solid black;*/
-        /*}*/
+        /* This somehow makes it so there are no rounded corners on selection (even though they stay black). border-radius does not seem to work... */
+        canvas:focus {
+            outline: solid red;
+        }
     </style>
 </head>
 
