@@ -343,6 +343,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 engine.input_handler.process_scroll(&delta);
             }
             WindowEvent::Resized(physical_size) => {
+                log::warn!("Resize event {:?}", physical_size);
                 engine.resize();
                 engine.renderer.resize(physical_size);
             }
