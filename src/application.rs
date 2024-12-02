@@ -108,29 +108,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             let web_window = web_sys::window().expect("Window should exist");
             let dpi = web_window.device_pixel_ratio();
 
-            let screen = web_window.screen().expect("Screen should exist");
-            log::warn!("dpi {}", dpi);
-            log::warn!(
-                "width window {}",
-                web_window
-                    .inner_width()
-                    .expect("Width should exist")
-                    .as_f64()
-                    .unwrap()
-            );
-            log::warn!(
-                "height window {}",
-                web_window
-                    .inner_height()
-                    .expect("Width should exist")
-                    .as_f64()
-                    .unwrap()
-            );
-            log::warn!("width {}", screen.width().expect("Width should exist"));
-            log::warn!("height {}", screen.height().expect("Width should exist"));
-            // initial_width = screen.width().expect("Width should exist") as f64; // / dpi;
-            // initial_height = screen.height().expect("Height should exist") as f64;
-            // / dpi;
             initial_width = web_window
                 .inner_width()
                 .expect("Width should exist")
@@ -148,21 +125,9 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
 
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
-            .with_inner_size(LogicalSize::new(
-                initial_width,
-                initial_height, // INITIAL_WINDOW_WIDTH as f32,
-                                // INITIAL_WINDOW_HEIGHT as f32,
-            ));
-        // .with_inner_size(LogicalSize::new(
-        //     0.0,
-        //     0.0, // INITIAL_WINDOW_WIDTH as f32,
-        //         // INITIAL_WINDOW_HEIGHT as f32,
-        // ));
+            .with_inner_size(PhysicalSize::new(initial_width, initial_height));
+
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
-        // #[cfg(not(target_arch = "wasm32"))]
-        // {
-        //     window.
-        // }
 
         log::warn!("{}", window.scale_factor());
 
@@ -192,11 +157,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 .expect("Couldn't append canvas to document body.");
 
             // For web, canvas needs to exist before it can be resized
-            // let _ = window.request_inner_size(LogicalSize::new(
-            //     INITIAL_WINDOW_WIDTH as f32,
-            //     INITIAL_WINDOW_HEIGHT as f32,
-            // ));
-            let _ = window.request_inner_size(LogicalSize::new(initial_width, initial_height));
+            let _ = window.request_inner_size(PhysicalSize::new(initial_width, initial_height));
         }
         let renderer_future = Renderer::new(window.clone());
 
