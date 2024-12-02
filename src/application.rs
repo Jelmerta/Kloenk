@@ -129,6 +129,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         //     window.
         // }
 
+        log::warn!("{}", window.scale_factor());
+
         #[cfg(not(target_arch = "wasm32"))]
         {
             if let Some(monitor) = window.current_monitor() {
@@ -229,12 +231,14 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             let mut game = event.0;
             game.renderer.resize(game.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
             game.window.request_redraw();
+            log::warn!("{}", game.window.scale_factor());
             self.application_state = State::Initialized(game);
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
             let game = event.0;
             game.window.request_redraw();
+            log::warn!("{}", game.window.scale_factor());
             self.application_state = State::Initialized(game);
         }
     }
