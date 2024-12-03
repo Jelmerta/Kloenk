@@ -82,6 +82,29 @@ impl Application {
             event_loop_proxy: event_loop.create_proxy(),
         }
     }
+
+    fn load_audio_player(engine: &mut Engine) {
+        #[cfg(target_arch = "wasm32")]
+        {
+            let loading_state_clone = engine.audio_loading_state.clone();
+            let mut loading_state_mut = engine.audio_loading_state.borrow_mut();
+            match *loading_state_mut {
+                AudioState::NotLoaded => {
+                    *loading_state_mut = AudioState::Loading;
+                    let audio_player = engine.audio_system.audio_player.clone();
+                    let audio_binaries = engine.audio_system.sounds.clone();
+                    spawn_local(async move {
+                        let mut ref_mut = loading_state_clone.borrow_mut();
+                        let mut audio_player_mut = audio_player.borrow_mut();
+                        *audio_player_mut =
+                            Some(AudioPlayer::build_audio_player(&audio_binaries).await);
+                        *ref_mut = AudioState::Loaded;
+                    });
+                }
+                _ => (),
+            }
+        }
+    }
 }
 pub enum State {
     Uninitialized,
@@ -283,53 +306,16 @@ impl ApplicationHandler<CustomEvent> for Application {
             } => {
                 engine.input_handler.update(key, state);
 
+                // Loading audio only after user has gestured
                 // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
-                #[cfg(target_arch = "wasm32")]
-                {
-                    let loading_state_clone = engine.audio_loading_state.clone();
-                    let mut loading_state_mut = engine.audio_loading_state.borrow_mut();
-                    match *loading_state_mut {
-                        AudioState::NotLoaded => {
-                            *loading_state_mut = AudioState::Loading;
-                            let audio_player = engine.audio_system.audio_player.clone();
-                            let audio_binaries = engine.audio_system.sounds.clone();
-                            spawn_local(async move {
-                                let mut ref_mut = loading_state_clone.borrow_mut();
-                                let mut audio_player_mut = audio_player.borrow_mut();
-                                *audio_player_mut =
-                                    Some(AudioPlayer::build_audio_player(&audio_binaries).await);
-                                *ref_mut = AudioState::Loaded;
-                            });
-                        }
-                        _ => (),
-                    }
-                }
+                Self::load_audio_player(engine);
             }
             WindowEvent::MouseInput { state, button, .. } => {
                 engine.input_handler.process_mouse_button(button, state);
 
                 // Loading audio only after user has gestured
                 // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
-                #[cfg(target_arch = "wasm32")]
-                {
-                    let loading_state_clone = engine.audio_loading_state.clone();
-                    let mut loading_state_mut = engine.audio_loading_state.borrow_mut();
-                    match *loading_state_mut {
-                        AudioState::NotLoaded => {
-                            *loading_state_mut = AudioState::Loading;
-                            let audio_player = engine.audio_system.audio_player.clone();
-                            let audio_binaries = engine.audio_system.sounds.clone();
-                            spawn_local(async move {
-                                let mut ref_mut = loading_state_clone.borrow_mut();
-                                let mut audio_player_mut = audio_player.borrow_mut();
-                                *audio_player_mut =
-                                    Some(AudioPlayer::build_audio_player(&audio_binaries).await);
-                                *ref_mut = AudioState::Loaded;
-                            });
-                        }
-                        _ => (),
-                    }
-                }
+                Self::load_audio_player(engine);
             }
             WindowEvent::CursorMoved { position, .. } => {
                 engine.input_handler.process_mouse_movement(
