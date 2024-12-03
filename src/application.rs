@@ -152,8 +152,10 @@ impl ApplicationHandler<CustomEvent> for Application {
             initial_width = viewport.width();
             initial_height = viewport.height();
 
+            // does clone work?
+            let event_loop_proxy = self.event_loop_proxy.clone();
             let closure = Closure::wrap(Box::new(move || {
-                self.event_loop_proxy
+                event_loop_proxy
                     .send_event(CustomEvent::WebResizedEvent)
                     .unwrap_or_else(|_| {
                         panic!("Failed to send Web resize event");
