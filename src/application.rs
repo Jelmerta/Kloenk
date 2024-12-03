@@ -238,9 +238,10 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             //
 
             //
-            // let window_clone = game.window.clone();
-            let mut renderer = &mut game.renderer;
-            let window = &game.window;
+            let window_clone = game.window.clone();
+            // let mut renderer = &mut game.renderer;
+            let renderer_ref = Rc::new(RefCell::new(&game.renderer));
+            // let window = &game.window;
             let closure = Closure::wrap(Box::new(move || {
                 let web_window = &web_sys::window().expect("Window should exist");
                 let viewport = &web_window
@@ -250,12 +251,12 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 let viewport_width = viewport.width();
                 let viewport_height = viewport.height();
                 let logical_size = LogicalSize::new(viewport_width, viewport_height);
-                let _ = window.request_inner_size(logical_size);
+                let _ = window_clone.request_inner_size(logical_size);
 
                 // TODO make sure to disable resized event for web, cause this is how we handle resizing
                 // TODO calculate physical size from viewport size? innersize is not yet correct i think
                 let physical_size = logical_size.to_physical(web_window.device_pixel_ratio());
-                renderer.resize(physical_size);
+                renderer_ref.borrow_mut().resize(physical_size);
                 // renderer.resize(PhysicalSize::new(3, 3)); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
                 //     //
                 //     // // TODO we forgot about engine.renderer.resize...
@@ -281,8 +282,8 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             // TODO probably use this instead of resized because not everything sends resize event
 
             // game.renderer.resize(game.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
-            window.request_redraw();
-            log::warn!("{}", window.scale_factor());
+            game.window.request_redraw();
+            log::warn!("{}", game.window.scale_factor());
             self.application_state = State::Initialized(game);
         }
         #[cfg(not(target_arch = "wasm32"))]
