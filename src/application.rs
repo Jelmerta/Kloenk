@@ -21,7 +21,7 @@ use std::sync::Arc;
 use wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
-use winit::dpi::{LogicalSize, PhysicalSize};
+use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Fullscreen, Window, WindowId};
 
@@ -222,18 +222,9 @@ impl ApplicationHandler<CustomEvent> for Application {
         match event {
             CustomEvent::StateInitializationEvent(mut engine) => {
                 log::info!("Received initialization event");
-
-                #[cfg(target_arch = "wasm32")]
-                {
-                    engine.renderer.resize(engine.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
-                    engine.window.request_redraw();
-                    self.application_state = State::Initialized(engine);
-                }
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    engine.window.request_redraw();
-                    self.application_state = State::Initialized(engine);
-                }
+                engine.renderer.resize(engine.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
+                engine.window.request_redraw();
+                self.application_state = State::Initialized(engine);
             }
             CustomEvent::WebResizedEvent => {
                 #[cfg(target_arch = "wasm32")]
@@ -350,10 +341,9 @@ impl ApplicationHandler<CustomEvent> for Application {
             WindowEvent::MouseWheel { delta, .. } => {
                 engine.input_handler.process_scroll(&delta);
             }
-            // Note: On web does not resize on window resizing, only on dpi changes it seems
+            // // Web uses custom resize event as web only sends event on dpi changes
             WindowEvent::Resized(physical_size) => {
-                log::warn!("Resize event {:?}", physical_size);
-                #[cfg(not(target_arch = "wasm32"))] // Web uses custom resize event
+                #[cfg(not(target_arch = "wasm32"))]
                 {
                     engine.renderer.resize(physical_size);
                 }
