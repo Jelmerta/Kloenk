@@ -243,6 +243,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
 
             let window_clone = game.window.clone();
             let closure = Closure::wrap(Box::new(move || {
+                log::warn!("viewport resize");
                 let viewport_width = viewport.width();
                 let viewport_height = viewport.height();
                 let _ = window_clone
