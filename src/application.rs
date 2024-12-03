@@ -137,6 +137,16 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
         let mut initial_width = 0.0;
         let mut initial_height = 0.0;
+        #[cfg(target_arch = "wasm32")]
+        {
+            let web_window = web_sys::window().expect("Window should exist");
+            let viewport = &web_window
+                .visual_viewport()
+                .expect("Visual viewport should exist");
+            log::warn!("viewport resize");
+            initial_width = viewport.width();
+            initial_height = viewport.height();
+        }
 
         let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
