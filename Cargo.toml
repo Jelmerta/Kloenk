@@ -39,7 +39,6 @@ wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = [
     "Document",
     "Window",
-    "Screen",
     "VisualViewport",
     "Element",
     "Location",
