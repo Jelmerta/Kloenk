@@ -238,44 +238,44 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             //
 
             //
-            let window_clone = game.window.clone();
-            // let mut renderer = &mut game.renderer;
-            let renderer_ref = Rc::new(RefCell::new(&game.renderer));
-            // let window = &game.window;
-            let closure = Closure::wrap(Box::new(move || {
-                let web_window = &web_sys::window().expect("Window should exist");
-                let viewport = &web_window
-                    .visual_viewport()
-                    .expect("Visual viewport should exist");
-                log::warn!("viewport resize");
-                let viewport_width = viewport.width();
-                let viewport_height = viewport.height();
-                let logical_size = LogicalSize::new(viewport_width, viewport_height);
-                let _ = window_clone.request_inner_size(logical_size);
-
-                // TODO make sure to disable resized event for web, cause this is how we handle resizing
-                // TODO calculate physical size from viewport size? innersize is not yet correct i think
-                let physical_size = logical_size.to_physical(web_window.device_pixel_ratio());
-                renderer_ref.borrow_mut().resize(physical_size);
-                // renderer.resize(PhysicalSize::new(3, 3)); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
-                //     //
-                //     // // TODO we forgot about engine.renderer.resize...
-                //     // // TODO how about just throwing a resized event lol we might have duplicate resized events???
-                //     //
-                //     // // let canvas = window.canvas().expect("Canvas should exist");
-                //     // // canvas.set_width(viewport_width);
-                //     // // canvas.set_height(viewport_height);
-            }) as Box<dyn FnMut()>);
-            // let viewport = web_sys::window()
-            //     .expect("Window should exist")
+            // let window_clone = game.window.clone();
+            // // let mut renderer = &mut game.renderer;
+            // let renderer_ref = Rc::new(RefCell::new(game.renderer));
+            // // let window = &game.window;
+            // let closure = Closure::wrap(Box::new(move || {
+            //     let web_window = &web_sys::window().expect("Window should exist");
+            //     let viewport = &web_window
+            //         .visual_viewport()
+            //         .expect("Visual viewport should exist");
+            //     log::warn!("viewport resize");
+            //     let viewport_width = viewport.width();
+            //     let viewport_height = viewport.height();
+            //     let logical_size = LogicalSize::new(viewport_width, viewport_height);
+            //     let _ = window_clone.request_inner_size(logical_size);
+            //
+            //     // TODO make sure to disable resized event for web, cause this is how we handle resizing
+            //     // TODO calculate physical size from viewport size? innersize is not yet correct i think
+            //     let physical_size = logical_size.to_physical(web_window.device_pixel_ratio());
+            //     renderer_ref.borrow_mut().resize(physical_size);
+            //     // renderer.resize(PhysicalSize::new(3, 3)); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
+            //     //     //
+            //     //     // // TODO we forgot about engine.renderer.resize...
+            //     //     // // TODO how about just throwing a resized event lol we might have duplicate resized events???
+            //     //     //
+            //     //     // // let canvas = window.canvas().expect("Canvas should exist");
+            //     //     // // canvas.set_width(viewport_width);
+            //     //     // // canvas.set_height(viewport_height);
+            // }) as Box<dyn FnMut()>);
+            // // let viewport = web_sys::window()
+            // //     .expect("Window should exist")
+            // //     .visual_viewport()
+            // //     .expect("Visual viewport should exist");
+            // let web_window = &web_sys::window().expect("Window should exist");
+            // let viewport = &web_window
             //     .visual_viewport()
             //     .expect("Visual viewport should exist");
-            let web_window = &web_sys::window().expect("Window should exist");
-            let viewport = &web_window
-                .visual_viewport()
-                .expect("Visual viewport should exist");
-            viewport.set_onresize(Some(closure.as_ref().unchecked_ref()));
-            closure.forget();
+            // viewport.set_onresize(Some(closure.as_ref().unchecked_ref()));
+            // closure.forget();
 
             // game.renderer.resize(PhysicalSize::new(3, 3));
 
