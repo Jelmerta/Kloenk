@@ -103,15 +103,20 @@ impl Engine {
     }
 }
 
+pub enum CustomEvent {
+    StateInitializationEvent(Engine),
+    WebResizedEvent,
+}
 pub struct StateInitializationEvent(Engine);
+pub struct WebResizedEvent;
 
 pub struct Application {
     application_state: State,
-    event_loop_proxy: EventLoopProxy<StateInitializationEvent>,
+    event_loop_proxy: EventLoopProxy<CustomEvent>,
 }
 
 impl Application {
-    pub fn new(event_loop: &EventLoop<StateInitializationEvent>) -> Application {
+    pub fn new(event_loop: &EventLoop<CustomEvent>) -> Application {
         Application {
             application_state: State::Uninitialized,
             event_loop_proxy: event_loop.create_proxy(),
@@ -124,7 +129,7 @@ pub enum State {
     Initialized(Engine),
 }
 
-impl ApplicationHandler<StateInitializationEvent> for Application {
+impl ApplicationHandler<CustomEvent> for Application {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         match self.application_state {
             State::Initializing | State::Initialized(_) => return,
@@ -146,6 +151,55 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             log::warn!("viewport resize");
             initial_width = viewport.width();
             initial_height = viewport.height();
+
+            let closure = Closure::wrap(Box::new(move || {
+                self.event_loop_proxy
+                    .send_event(CustomEvent::WebResizedEvent)
+                    .unwrap_or_else(|_| {
+                        panic!("Failed to send Web resize event");
+                    });
+            }) as Box<dyn FnMut()>);
+
+            let web_window = &web_sys::window().expect("Window should exist");
+            let viewport = &web_window
+                .visual_viewport()
+                .expect("Visual viewport should exist");
+            viewport.set_onresize(Some(closure.as_ref().unchecked_ref()));
+            closure.forget();
+
+            //     let web_window = &web_sys::window().expect("Window should exist");
+            //     let viewport = &web_window
+            //         .visual_viewport()
+            //         .expect("Visual viewport should exist");
+            //     log::warn!("viewport resize");
+            //     let viewport_width = viewport.width();
+            //     let viewport_height = viewport.height();
+            //     let logical_size = LogicalSize::new(viewport_width, viewport_height);
+            //     let _ = window_clone.request_inner_size(logical_size);
+            //
+            //     // TODO make sure to disable resized event for web, cause this is how we handle resizing
+            //     // TODO calculate physical size from viewport size? innersize is not yet correct i think
+            //     let physical_size = logical_size.to_physical(web_window.device_pixel_ratio());
+            //     renderer_ref.borrow_mut().resize(physical_size);
+            //     // renderer.resize(PhysicalSize::new(3, 3)); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
+            //     //     //
+            //     //     // // TODO we forgot about engine.renderer.resize...
+            //     //     // // TODO how about just throwing a resized event lol we might have duplicate resized events???
+            //     //     //
+            //     //     // // let canvas = window.canvas().expect("Canvas should exist");
+            //     //     // // canvas.set_width(viewport_width);
+            //     //     // // canvas.set_height(viewport_height);
+            // }) as Box<dyn FnMut()>);
+            // // let viewport = web_sys::window()
+            // //     .expect("Window should exist")
+            // //     .visual_viewport()
+            // //     .expect("Visual viewport should exist");
+
+            // self.event_loop_proxy
+            //     .send_event(CustomEvent::WebResizedEvent)
+            //     .unwrap_or_else(|_| {
+            //         panic!("Failed to send Web resize event");
+            //     });
         }
 
         let window_attributes = Window::default_attributes()
@@ -180,8 +234,6 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                     Some(())
                 })
                 .expect("Couldn't append canvas to document body.");
-            // For web, canvas needs to exist before it can be resized
-            // let _ = window.request_inner_size(LogicalSize::new(initial_width, initial_height));
         }
         let renderer_future = Renderer::new(window.clone());
 
@@ -208,7 +260,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
                 };
 
                 event_loop_proxy
-                    .send_event(StateInitializationEvent(game))
+                    .send_event(CustomEvent::StateInitializationEvent(game))
                     .unwrap_or_else(|_| {
                         panic!("Failed to send initialization event");
                     });
@@ -232,76 +284,62 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             };
 
             self.event_loop_proxy
-                .send_event(StateInitializationEvent(game))
+                .send_event(CustomEvent::StateInitializationEvent(game))
                 .unwrap_or_else(|_| {
                     panic!("Failed to send initialization event");
                 });
         }
     }
 
-    fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: StateInitializationEvent) {
-        log::info!("Received initialization event");
+    fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: CustomEvent) {
+        match event {
+            CustomEvent::StateInitializationEvent(mut engine) => {
+                log::info!("Received initialization event");
 
-        #[cfg(target_arch = "wasm32")]
-        {
-            let mut game = event.0;
-            //
+                #[cfg(target_arch = "wasm32")]
+                {
+                    // let window_clone = game.window.clone();
+                    // // let mut renderer = &mut game.renderer;
+                    // let renderer_ref = Rc::new(RefCell::new(game.renderer));
+                    // // let window = &game.window;
 
-            //
-            // let window_clone = game.window.clone();
-            // // let mut renderer = &mut game.renderer;
-            // let renderer_ref = Rc::new(RefCell::new(game.renderer));
-            // // let window = &game.window;
-            // let closure = Closure::wrap(Box::new(move || {
-            //     let web_window = &web_sys::window().expect("Window should exist");
-            //     let viewport = &web_window
-            //         .visual_viewport()
-            //         .expect("Visual viewport should exist");
-            //     log::warn!("viewport resize");
-            //     let viewport_width = viewport.width();
-            //     let viewport_height = viewport.height();
-            //     let logical_size = LogicalSize::new(viewport_width, viewport_height);
-            //     let _ = window_clone.request_inner_size(logical_size);
-            //
-            //     // TODO make sure to disable resized event for web, cause this is how we handle resizing
-            //     // TODO calculate physical size from viewport size? innersize is not yet correct i think
-            //     let physical_size = logical_size.to_physical(web_window.device_pixel_ratio());
-            //     renderer_ref.borrow_mut().resize(physical_size);
-            //     // renderer.resize(PhysicalSize::new(3, 3)); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
-            //     //     //
-            //     //     // // TODO we forgot about engine.renderer.resize...
-            //     //     // // TODO how about just throwing a resized event lol we might have duplicate resized events???
-            //     //     //
-            //     //     // // let canvas = window.canvas().expect("Canvas should exist");
-            //     //     // // canvas.set_width(viewport_width);
-            //     //     // // canvas.set_height(viewport_height);
-            // }) as Box<dyn FnMut()>);
-            // // let viewport = web_sys::window()
-            // //     .expect("Window should exist")
-            // //     .visual_viewport()
-            // //     .expect("Visual viewport should exist");
-            // let web_window = &web_sys::window().expect("Window should exist");
-            // let viewport = &web_window
-            //     .visual_viewport()
-            //     .expect("Visual viewport should exist");
-            // viewport.set_onresize(Some(closure.as_ref().unchecked_ref()));
-            // closure.forget();
+                    // game.renderer.resize(PhysicalSize::new(3, 3));
 
-            // game.renderer.resize(PhysicalSize::new(3, 3));
+                    // TODO probably use this instead of resized because not everything sends resize event
 
-            // TODO probably use this instead of resized because not everything sends resize event
+                    engine.renderer.resize(engine.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
+                    engine.window.request_redraw();
+                    log::warn!("{}", engine.window.scale_factor());
+                    self.application_state = State::Initialized(engine);
+                }
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    engine.window.request_redraw();
+                    log::warn!("{}", engine.window.scale_factor());
+                    self.application_state = State::Initialized(engine);
+                }
+            }
+            CustomEvent::WebResizedEvent => {
+                #[cfg(target_arch = "wasm32")]
+                {
+                    let State::Initialized(ref mut engine) = self.application_state else {
+                        return;
+                    };
 
-            game.renderer.resize(game.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
-            game.window.request_redraw();
-            log::warn!("{}", game.window.scale_factor());
-            self.application_state = State::Initialized(game);
-        }
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let game = event.0;
-            game.window.request_redraw();
-            log::warn!("{}", game.window.scale_factor());
-            self.application_state = State::Initialized(game);
+                    let web_window = web_sys::window().expect("Window should exist");
+                    let viewport = &web_window
+                        .visual_viewport()
+                        .expect("Visual viewport should exist");
+                    log::warn!("viewport resize");
+                    let viewport_width = viewport.width();
+                    let viewport_height = viewport.height();
+                    let logical_size = LogicalSize::new(viewport_width, viewport_height);
+                    let _ = engine.window.request_inner_size(logical_size);
+
+                    let physical_size = logical_size.to_physical(web_window.device_pixel_ratio());
+                    engine.renderer.resize(physical_size);
+                }
+            }
         }
     }
 
@@ -396,6 +434,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             WindowEvent::MouseWheel { delta, .. } => {
                 engine.input_handler.process_scroll(&delta);
             }
+            // Note: On web does not resize on window resizing, only on dpi changes it seems
             WindowEvent::Resized(physical_size) => {
                 log::warn!("Resize event {:?}", physical_size);
                 engine.resize();
