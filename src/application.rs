@@ -236,21 +236,23 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
         {
             let mut game = event.0;
             //
-            let web_window = &web_sys::window().expect("Window should exist");
-            let viewport = &web_window
-                .visual_viewport()
-                .expect("Visual viewport should exist");
+
             //
             // let window_clone = game.window.clone();
             let mut renderer = &mut game.renderer;
             let window = &game.window;
             let closure = Closure::wrap(Box::new(move || {
+                let web_window = &web_sys::window().expect("Window should exist");
+                let viewport = &web_window
+                    .visual_viewport()
+                    .expect("Visual viewport should exist");
                 log::warn!("viewport resize");
                 let viewport_width = viewport.width();
                 let viewport_height = viewport.height();
                 let logical_size = LogicalSize::new(viewport_width, viewport_height);
                 let _ = window.request_inner_size(logical_size);
 
+                // TODO make sure to disable resized event for web, cause this is how we handle resizing
                 // TODO calculate physical size from viewport size? innersize is not yet correct i think
                 let physical_size = logical_size.to_physical(web_window.device_pixel_ratio());
                 renderer.resize(physical_size);
@@ -267,6 +269,10 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
             //     .expect("Window should exist")
             //     .visual_viewport()
             //     .expect("Visual viewport should exist");
+            let web_window = &web_sys::window().expect("Window should exist");
+            let viewport = &web_window
+                .visual_viewport()
+                .expect("Visual viewport should exist");
             viewport.set_onresize(Some(closure.as_ref().unchecked_ref()));
             closure.forget();
 
