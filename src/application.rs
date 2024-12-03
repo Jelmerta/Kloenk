@@ -260,7 +260,6 @@ impl ApplicationHandler<CustomEvent> for Application {
                     let viewport = &web_window
                         .visual_viewport()
                         .expect("Visual viewport should exist");
-                    log::warn!("viewport resize");
                     let viewport_width = viewport.width();
                     let viewport_height = viewport.height();
                     let logical_size = LogicalSize::new(viewport_width, viewport_height);
