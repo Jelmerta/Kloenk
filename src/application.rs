@@ -64,52 +64,12 @@ impl Engine {
     pub fn window(&self) -> &Window {
         self.window.as_ref()
     }
-
-    pub fn resize(&mut self) {
-        // We want to have ownership of the zoom level ourselves. We therefore disregard the zoom level and always render
-        #[cfg(target_arch = "wasm32")]
-        {
-            let web_window = web_sys::window().expect("Window should exist");
-
-            // Personal reminder to probably never use window's inner width. Visual viewport returns a float
-            let viewport = web_window
-                .visual_viewport()
-                .expect("Visual viewport should exist");
-            // viewport.set_onresize(|| self.) // TODO probably use this instead of resized because not everything sends resize event
-            let width = viewport.width();
-            let height = viewport.height();
-
-            // let width = web_window
-            //     .inner_width()
-            //     .expect("Width should exist")
-            //     .as_f64()
-            //     .unwrap()
-            //     .ceil(); // Does potentially cause inconsistent center but at least no white lines
-            //              // .floor(); // Want to make sure we don't cause extra line to be drawn
-
-            // let height = web_window
-            //     .inner_height()
-            //     .expect("Height should exist")
-            //     .as_f64()
-            //     .unwrap()
-            //     .ceil();
-
-            // .floor(); // Want to make sure we don't cause extra line to be drawn
-
-            let _ = self
-                .window
-                .request_inner_size(LogicalSize::new(width, height));
-        }
-    }
 }
 
 pub enum CustomEvent {
     StateInitializationEvent(Engine),
-    WebResizedEvent,
+    WebResizedEvent, // Only sent on web when window gets resized. Resized event only seems to send event on dpi change (browser zoom or system scale ratio) which is insufficient
 }
-pub struct StateInitializationEvent(Engine);
-pub struct WebResizedEvent;
-
 pub struct Application {
     application_state: State,
     event_loop_proxy: EventLoopProxy<CustomEvent>,
@@ -140,15 +100,16 @@ impl ApplicationHandler<CustomEvent> for Application {
 
         // Note: This is more a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
+        // We want to have ownership of the zoom level ourselves. We therefore disregard the dpi ratio and always attempt to render the same image
         let mut initial_width = 0.0;
         let mut initial_height = 0.0;
         #[cfg(target_arch = "wasm32")]
         {
             let web_window = web_sys::window().expect("Window should exist");
+            // Personal reminder to probably never use window's inner width. Visual viewport returns a float
             let viewport = &web_window
                 .visual_viewport()
                 .expect("Visual viewport should exist");
-            log::warn!("viewport resize");
             initial_width = viewport.width();
             initial_height = viewport.height();
 
@@ -168,40 +129,6 @@ impl ApplicationHandler<CustomEvent> for Application {
                 .expect("Visual viewport should exist");
             viewport.set_onresize(Some(closure.as_ref().unchecked_ref()));
             closure.forget();
-
-            //     let web_window = &web_sys::window().expect("Window should exist");
-            //     let viewport = &web_window
-            //         .visual_viewport()
-            //         .expect("Visual viewport should exist");
-            //     log::warn!("viewport resize");
-            //     let viewport_width = viewport.width();
-            //     let viewport_height = viewport.height();
-            //     let logical_size = LogicalSize::new(viewport_width, viewport_height);
-            //     let _ = window_clone.request_inner_size(logical_size);
-            //
-            //     // TODO make sure to disable resized event for web, cause this is how we handle resizing
-            //     // TODO calculate physical size from viewport size? innersize is not yet correct i think
-            //     let physical_size = logical_size.to_physical(web_window.device_pixel_ratio());
-            //     renderer_ref.borrow_mut().resize(physical_size);
-            //     // renderer.resize(PhysicalSize::new(3, 3)); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
-            //     //     //
-            //     //     // // TODO we forgot about engine.renderer.resize...
-            //     //     // // TODO how about just throwing a resized event lol we might have duplicate resized events???
-            //     //     //
-            //     //     // // let canvas = window.canvas().expect("Canvas should exist");
-            //     //     // // canvas.set_width(viewport_width);
-            //     //     // // canvas.set_height(viewport_height);
-            // }) as Box<dyn FnMut()>);
-            // // let viewport = web_sys::window()
-            // //     .expect("Window should exist")
-            // //     .visual_viewport()
-            // //     .expect("Visual viewport should exist");
-
-            // self.event_loop_proxy
-            //     .send_event(CustomEvent::WebResizedEvent)
-            //     .unwrap_or_else(|_| {
-            //         panic!("Failed to send Web resize event");
-            //     });
         }
 
         let window_attributes = Window::default_attributes()
@@ -209,8 +136,6 @@ impl ApplicationHandler<CustomEvent> for Application {
             .with_inner_size(LogicalSize::new(initial_width, initial_height));
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
-
-        log::warn!("{}", window.scale_factor());
 
         #[cfg(not(target_arch = "wasm32"))]
         {
@@ -300,24 +225,13 @@ impl ApplicationHandler<CustomEvent> for Application {
 
                 #[cfg(target_arch = "wasm32")]
                 {
-                    // let window_clone = game.window.clone();
-                    // // let mut renderer = &mut game.renderer;
-                    // let renderer_ref = Rc::new(RefCell::new(game.renderer));
-                    // // let window = &game.window;
-
-                    // game.renderer.resize(PhysicalSize::new(3, 3));
-
-                    // TODO probably use this instead of resized because not everything sends resize event
-
                     engine.renderer.resize(engine.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
                     engine.window.request_redraw();
-                    log::warn!("{}", engine.window.scale_factor());
                     self.application_state = State::Initialized(engine);
                 }
                 #[cfg(not(target_arch = "wasm32"))]
                 {
                     engine.window.request_redraw();
-                    log::warn!("{}", engine.window.scale_factor());
                     self.application_state = State::Initialized(engine);
                 }
             }
@@ -439,8 +353,10 @@ impl ApplicationHandler<CustomEvent> for Application {
             // Note: On web does not resize on window resizing, only on dpi changes it seems
             WindowEvent::Resized(physical_size) => {
                 log::warn!("Resize event {:?}", physical_size);
-                engine.resize();
-                engine.renderer.resize(physical_size);
+                #[cfg(not(target_arch = "wasm32"))] // Web uses custom resize event
+                {
+                    engine.renderer.resize(physical_size);
+                }
             }
             WindowEvent::RedrawRequested => {
                 engine.window().request_redraw();
