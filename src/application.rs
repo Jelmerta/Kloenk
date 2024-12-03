@@ -281,7 +281,7 @@ impl ApplicationHandler<StateInitializationEvent> for Application {
 
             // TODO probably use this instead of resized because not everything sends resize event
 
-            // game.renderer.resize(game.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
+            game.renderer.resize(game.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
             game.window.request_redraw();
             log::warn!("{}", game.window.scale_factor());
             self.application_state = State::Initialized(game);
