@@ -1,5 +1,5 @@
 #![windows_subsystem = "windows"] // Makes sure Windows does not open terminal
-use crate::application::{Application, StateInitializationEvent};
+use crate::application::{Application, CustomEvent};
 use winit::event_loop::EventLoop;
 #[cfg(target_arch = "wasm32")]
 use winit::platform::web::EventLoopExtWebSys;
@@ -38,9 +38,7 @@ pub fn run() {
         }
     }
 
-    let event_loop = EventLoop::<StateInitializationEvent>::with_user_event()
-        .build()
-        .unwrap();
+    let event_loop = EventLoop::<CustomEvent>::with_user_event().build().unwrap();
 
     #[cfg(target_arch = "wasm32")]
     {
