@@ -83,7 +83,6 @@ impl TextWriter {
     }
 
     pub fn add(&mut self, window: &Arc<Window>, rect: &Rect, text: &str, color: &[f32; 3]) {
-        log::warn!("{:?}", window.inner_size());
         let rect_scaled = rect.scale(
             window.inner_size().width as f32,
             window.inner_size().height as f32,
