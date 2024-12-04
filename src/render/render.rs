@@ -11,7 +11,6 @@ use wgpu::util::DeviceExt;
 use winit::dpi::PhysicalSize;
 use winit::window::Window;
 
-use crate::components::{Entity, Size};
 use crate::render::camera::Camera;
 use crate::render::camera_manager::CameraManager;
 use crate::render::instance::InstanceRaw;
@@ -22,6 +21,7 @@ use crate::render::model_manager::ModelManager;
 use crate::render::render_context_manager::RenderContextManager;
 use crate::render::text_renderer::TextWriter;
 use crate::render::texture;
+use crate::state::components::{Entity, Size};
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::{Rect, RenderCommand, UIState};

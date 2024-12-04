@@ -1,4 +1,4 @@
-use crate::components::{Entity, Hitbox};
+use crate::state::components::{Entity, Hitbox};
 use crate::state::frame_state::ActionEffect;
 use crate::state::game_state::GameState;
 use crate::systems::collision_manager::CollisionManager;

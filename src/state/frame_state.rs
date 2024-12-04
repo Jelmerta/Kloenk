@@ -1,5 +1,5 @@
-use crate::components::Entity;
 use crate::gui::Gui;
+use crate::state::components::Entity;
 
 pub struct FrameState {
     pub objects_on_cursor: Vec<Entity>,

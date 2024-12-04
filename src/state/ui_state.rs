@@ -1,4 +1,4 @@
-use crate::components::Entity;
+use crate::state::components::Entity;
 use crate::state::ui_state::MenuState::Closed;
 use cgmath::{ElementWise, Point2};
 use std::collections::HashMap;

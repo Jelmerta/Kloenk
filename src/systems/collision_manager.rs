@@ -1,4 +1,4 @@
-use crate::components::Hitbox;
+use crate::state::components::Hitbox;
 
 pub struct CollisionManager {}
 

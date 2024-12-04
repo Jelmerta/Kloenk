@@ -1,21 +1,16 @@
 use cgmath::num_traits::ToPrimitive;
 
-// use std::{collections::HashMap, sync::atomic::AtomicU32};
-use crate::components::{
+use crate::render::camera::Camera;
+use crate::state::components::{
     CameraTarget, Entity, Graphics2D, Graphics3D, Hitbox, InStorage, ItemShape, Size, Storable,
     Storage,
 };
-use crate::render::camera::Camera;
 use cgmath::{ElementWise, Point3};
 use std::collections::{HashMap, HashSet};
 
-pub const TOTAL_DISTANCE: f32 = 200_000.; // Verify naming, probably not total distance
+pub const ROUGHLY_CAMERA_DISTANCE: f32 = 200_000.;
 
 pub struct GameState {
-    // pub current_entity_id: AtomicU32,
-    // id: current_entity_id
-    // .fetch_add(1, Ordering::SeqCst)
-    // .to_string(),
     pub entities: Vec<Entity>,
     pub graphics_3d_components: HashMap<Entity, Graphics3D>,
     pub graphics_2d_components: HashMap<Entity, Graphics2D>,
@@ -34,9 +29,6 @@ impl GameState {}
 
 impl GameState {
     pub fn new() -> Self {
-        // Initialise
-        // let current_entity_id: AtomicU32 = AtomicU32::new(0);
-
         let mut entities = Vec::new();
         let mut graphics_3d_components = HashMap::new();
         let mut graphics_2d_components = HashMap::new();
@@ -93,7 +85,6 @@ impl GameState {
         );
 
         Self {
-            // current_entity_id,
             entities,
             graphics_3d_components,
             graphics_2d_components,
@@ -291,7 +282,6 @@ impl GameState {
         entities.push(player.clone());
 
         let player_graphics = Graphics3D {
-            // mesh_id: "character".to_string(),
             mesh_id: "gozer".to_string(),
         };
         graphics_3d_components.insert(player.clone(), player_graphics);
@@ -312,7 +302,7 @@ impl GameState {
         hitbox_components.insert(player.clone(), player_hitbox);
 
         let camera_target = CameraTarget {
-            distance: f32::sqrt(TOTAL_DISTANCE / 3.0),
+            distance: f32::sqrt(ROUGHLY_CAMERA_DISTANCE / 3.0),
             rotation_x_degrees: 225.0,
             rotation_y_degrees: 315.0,
         };
