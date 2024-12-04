@@ -120,8 +120,6 @@ impl ApplicationHandler<CustomEvent> for Application {
                 self.application_state = State::Initializing;
             } // Continue
         }
-        log::error!("mehtal");
-        println!("wtf");
 
         // Note: This is more a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
