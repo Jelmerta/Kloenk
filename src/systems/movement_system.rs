@@ -27,9 +27,18 @@ impl MovementSystem {
                 y: player_position.y,
                 z: player_position.z - movement_speed,
             };
+            let player_hitbox = game_state.get_hitbox(&"player".to_string()).unwrap();
             let desired_player_hitbox = Hitbox {
-                box_corner_min: desired_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51)),
-                box_corner_max: desired_position.add_element_wise(Point3::new(0.51, 0.51, 0.51)),
+                box_corner_min: player_hitbox.box_corner_min.add_element_wise(Point3::new(
+                    -movement_speed,
+                    0.0,
+                    -movement_speed,
+                )),
+                box_corner_max: player_hitbox.box_corner_max.add_element_wise(Point3::new(
+                    -movement_speed,
+                    0.0,
+                    -movement_speed,
+                )),
             };
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(&desired_player_hitbox, game_state, audio_system)
@@ -41,15 +50,24 @@ impl MovementSystem {
         }
 
         if input.s_pressed.is_pressed {
-            let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
+            let player_position = game_state.get_position(&"player".to_string()).unwrap();
             let desired_position = Point3 {
                 x: player_position.x + movement_speed,
                 y: player_position.y,
                 z: player_position.z + movement_speed,
             };
+            let player_hitbox = game_state.get_hitbox(&"player".to_string()).unwrap();
             let desired_player_hitbox = Hitbox {
-                box_corner_min: desired_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51)),
-                box_corner_max: desired_position.add_element_wise(Point3::new(0.51, 0.51, 0.51)),
+                box_corner_min: player_hitbox.box_corner_min.add_element_wise(Point3::new(
+                    movement_speed,
+                    0.0,
+                    movement_speed,
+                )),
+                box_corner_max: player_hitbox.box_corner_max.add_element_wise(Point3::new(
+                    movement_speed,
+                    0.0,
+                    movement_speed,
+                )),
             };
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(&desired_player_hitbox, game_state, audio_system)
@@ -61,15 +79,24 @@ impl MovementSystem {
         }
 
         if input.a_pressed.is_pressed {
-            let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
+            let player_position = game_state.get_position(&"player".to_string()).unwrap();
             let desired_position = Point3 {
                 x: player_position.x - movement_speed,
                 y: player_position.y,
                 z: player_position.z + movement_speed,
             };
+            let player_hitbox = game_state.get_hitbox(&"player".to_string()).unwrap();
             let desired_player_hitbox = Hitbox {
-                box_corner_min: desired_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51)),
-                box_corner_max: desired_position.add_element_wise(Point3::new(0.51, 0.51, 0.51)),
+                box_corner_min: player_hitbox.box_corner_min.add_element_wise(Point3::new(
+                    -movement_speed,
+                    0.0,
+                    movement_speed,
+                )),
+                box_corner_max: player_hitbox.box_corner_max.add_element_wise(Point3::new(
+                    -movement_speed,
+                    0.0,
+                    movement_speed,
+                )),
             };
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(&desired_player_hitbox, game_state, audio_system)
@@ -81,15 +108,24 @@ impl MovementSystem {
         }
 
         if input.d_pressed.is_pressed {
-            let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
+            let player_position = game_state.get_position(&"player".to_string()).unwrap();
             let desired_position = Point3 {
                 x: player_position.x + movement_speed,
                 y: player_position.y,
                 z: player_position.z - movement_speed,
             };
+            let player_hitbox = game_state.get_hitbox(&"player".to_string()).unwrap();
             let desired_player_hitbox = Hitbox {
-                box_corner_min: desired_position.sub_element_wise(Point3::new(0.51, 0.51, 0.51)),
-                box_corner_max: desired_position.add_element_wise(Point3::new(0.51, 0.51, 0.51)),
+                box_corner_min: player_hitbox.box_corner_min.add_element_wise(Point3::new(
+                    movement_speed,
+                    0.0,
+                    -movement_speed,
+                )),
+                box_corner_max: player_hitbox.box_corner_max.add_element_wise(Point3::new(
+                    movement_speed,
+                    0.0,
+                    -movement_speed,
+                )),
             };
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(&desired_player_hitbox, game_state, audio_system)
