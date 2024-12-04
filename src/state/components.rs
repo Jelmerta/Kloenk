@@ -48,3 +48,7 @@ pub struct Size {
     pub scale_y: f32,
     pub scale_z: f32,
 }
+
+pub struct Description {
+    pub text: String,
+}

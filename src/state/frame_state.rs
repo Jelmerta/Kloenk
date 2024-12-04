@@ -60,4 +60,5 @@ pub enum ActionEffect {
     PlaceItemSucceeded,
     ItemSelected { found_objects_text: String },
     PickupNoInventorySpace,
+    Examine { text: String },
 }

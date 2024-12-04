@@ -2,8 +2,8 @@ use cgmath::num_traits::ToPrimitive;
 
 use crate::render::camera::Camera;
 use crate::state::components::{
-    CameraTarget, Entity, Graphics2D, Graphics3D, Hitbox, InStorage, ItemShape, Size, Storable,
-    Storage,
+    CameraTarget, Description, Entity, Graphics2D, Graphics3D, Hitbox, InStorage, ItemShape, Size,
+    Storable, Storage,
 };
 use cgmath::{ElementWise, Point3};
 use std::collections::{HashMap, HashSet};
@@ -23,6 +23,7 @@ pub struct GameState {
     pub storable_components: HashMap<Entity, Storable>,
     pub storage_components: HashMap<Entity, Storage>,
     pub in_storage_components: HashMap<Entity, InStorage>,
+    pub description_components: HashMap<Entity, Description>,
 }
 
 impl GameState {}
@@ -41,6 +42,7 @@ impl GameState {
         let mut storable_components = HashMap::new();
         let mut storage_components = HashMap::new();
         let in_storage_components = HashMap::new();
+        let mut description_components = HashMap::new();
 
         Self::load_player(
             &mut entities,
@@ -49,6 +51,7 @@ impl GameState {
             &mut hitbox_components,
             &mut camera_target_components,
             &mut storage_components,
+            &mut description_components,
         );
         Self::load_camera(&mut entities, &mut camera_components);
         Self::load_camera_ui(&mut entities, &mut camera_components);
@@ -61,6 +64,7 @@ impl GameState {
             &mut size_components,
             &mut hitbox_components,
             &mut storable_components,
+            &mut description_components,
         );
         Self::load_swords(
             &mut entities,
@@ -70,6 +74,7 @@ impl GameState {
             &mut size_components,
             &mut hitbox_components,
             &mut storable_components,
+            &mut description_components,
         );
         Self::load_tiles(
             &mut entities,
@@ -82,6 +87,7 @@ impl GameState {
             &mut graphics_3d_components,
             &mut position_components,
             &mut hitbox_components,
+            &mut description_components,
         );
 
         Self {
@@ -97,6 +103,7 @@ impl GameState {
             storable_components,
             storage_components,
             in_storage_components,
+            description_components,
         }
     }
 
@@ -105,6 +112,7 @@ impl GameState {
         graphics_3d_components: &mut HashMap<String, Graphics3D>,
         position_components: &mut HashMap<String, Point3<f32>>,
         hitbox_components: &mut HashMap<String, Hitbox>,
+        description_components: &mut HashMap<String, Description>,
     ) {
         let tree = "tree".to_string();
         entities.push(tree.clone());
@@ -129,6 +137,13 @@ impl GameState {
             box_corner_max: tree_hitbox_max,
         };
         hitbox_components.insert(tree.clone(), tree_hitbox);
+
+        description_components.insert(
+            tree.clone(),
+            Description {
+                text: "Tree of life".to_string(),
+            },
+        );
     }
 
     fn load_tiles(
@@ -171,6 +186,7 @@ impl GameState {
         size_components: &mut HashMap<String, Size>,
         hitbox_components: &mut HashMap<String, Hitbox>,
         storable_components: &mut HashMap<String, Storable>,
+        description_components: &mut HashMap<String, Description>,
     ) {
         for i in 1..71 {
             let sword = "sword".to_string() + &i.to_string();
@@ -215,6 +231,12 @@ impl GameState {
                 },
             };
             storable_components.insert(sword.clone(), sword_storable);
+            description_components.insert(
+                sword.clone(),
+                Description {
+                    text: "Sword of Tungstenator".to_string(),
+                },
+            );
         }
     }
 
@@ -226,6 +248,7 @@ impl GameState {
         size_components: &mut HashMap<Entity, Size>,
         hitbox_components: &mut HashMap<Entity, Hitbox>,
         storable_components: &mut HashMap<Entity, Storable>,
+        description_components: &mut HashMap<String, Description>,
     ) {
         let shield = "shield".to_string();
         entities.push(shield.clone());
@@ -268,6 +291,12 @@ impl GameState {
             },
         };
         storable_components.insert(shield.clone(), shield_storable);
+        description_components.insert(
+            shield.clone(),
+            Description {
+                text: "Shield of Hydrogax".to_string(),
+            },
+        );
     }
 
     fn load_player(
@@ -277,6 +306,7 @@ impl GameState {
         hitbox_components: &mut HashMap<Entity, Hitbox>,
         camera_target_components: &mut HashMap<Entity, CameraTarget>,
         storage_components: &mut HashMap<Entity, Storage>,
+        description_components: &mut HashMap<String, Description>,
     ) {
         let player = "player".to_string();
         entities.push(player.clone());
@@ -313,6 +343,12 @@ impl GameState {
             number_of_columns: 8,
         };
         storage_components.insert(player.clone(), player_storage);
+        description_components.insert(
+            player.clone(),
+            Description {
+                text: "That's you!".to_string(),
+            },
+        );
     }
 
     fn load_camera(entities: &mut Vec<Entity>, camera_components: &mut HashMap<String, Camera>) {

@@ -77,6 +77,7 @@ impl Rect {
     }
 }
 
+#[derive(Clone)]
 pub enum MenuState {
     Closed,
     World {
@@ -88,6 +89,8 @@ pub enum MenuState {
         item: Entity,
     },
 }
+
+impl MenuState {}
 
 pub struct UIState {
     pub windows: HashMap<String, UIWindow>,
@@ -112,6 +115,14 @@ impl UIState {
             menu_state: Closed,
             action_text: String::new(),
             selected_text: String::new(),
+        }
+    }
+
+    pub fn transition_menu(&mut self) {
+        match self.menu_state {
+            Closed => {}
+            MenuState::World { .. } => {}
+            MenuState::Inventory { .. } => self.menu_state = Closed,
         }
     }
 
