@@ -14,7 +14,7 @@ impl ItemPlacementSystem {
         let player_position = game_state.get_position(&"player".to_string()).unwrap();
         let placed_position = Point3 {
             x: player_position.x - 1.1,
-            y: player_position.y - 0.25,
+            y: player_position.y + 0.75,
             z: player_position.z - 1.1,
         };
 
