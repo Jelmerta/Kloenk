@@ -1,4 +1,4 @@
-use crate::components::Entity;
+use crate::state::components::Entity;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::input::Input;

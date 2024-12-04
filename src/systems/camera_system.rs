@@ -1,4 +1,4 @@
-use crate::components::CameraTarget;
+use crate::state::components::CameraTarget;
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
 use cgmath::{InnerSpace, Point3, Vector3};

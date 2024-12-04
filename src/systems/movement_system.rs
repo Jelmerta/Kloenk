@@ -1,4 +1,4 @@
-use crate::components::{Entity, Hitbox};
+use crate::state::components::{Entity, Hitbox};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
 use crate::systems::audio_system::AudioSystem;

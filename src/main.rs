@@ -6,7 +6,6 @@ use winit::event_loop::EventLoop;
 #[cfg(target_arch = "wasm32")]
 use winit::platform::web::EventLoopExtWebSys;
 mod application;
-mod components;
 mod gui;
 mod render;
 mod resources;

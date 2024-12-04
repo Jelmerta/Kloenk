@@ -68,6 +68,7 @@ impl Engine {
 
 pub enum CustomEvent {
     StateInitializationEvent(Engine),
+    #[allow(dead_code)]
     WebResizedEvent, // Only sent on web when window gets resized. Resized event only seems to send event on dpi change (browser zoom or system scale ratio) which is insufficient
 }
 pub struct Application {
@@ -83,6 +84,7 @@ impl Application {
         }
     }
 
+    #[allow(unused_variables)]
     fn load_audio_player(engine: &mut Engine) {
         #[cfg(target_arch = "wasm32")]
         {
@@ -124,7 +126,9 @@ impl ApplicationHandler<CustomEvent> for Application {
         // Note: This is more a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
         // We want to have ownership of the zoom level ourselves. We therefore disregard the dpi ratio and always attempt to render the same image
+        #[allow(unused_mut)]
         let mut initial_width = 0.0;
+        #[allow(unused_mut)]
         let mut initial_height = 0.0;
         #[cfg(target_arch = "wasm32")]
         {

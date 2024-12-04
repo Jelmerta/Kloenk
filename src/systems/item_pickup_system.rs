@@ -1,4 +1,4 @@
-use crate::components::{Entity, Storable};
+use crate::state::components::{Entity, Storable};
 use crate::state::frame_state::{ActionEffect, FrameState};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
