@@ -50,6 +50,9 @@ impl CommandHandleSystem {
                 ActionEffect::ItemSelected { found_objects_text } => {
                     ui_state.selected_text = found_objects_text.to_string();
                 }
+                ActionEffect::Examine { text } => {
+                    ui_state.action_text = text.clone();
+                }
             });
     }
 }

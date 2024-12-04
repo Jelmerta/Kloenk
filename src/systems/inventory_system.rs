@@ -1,7 +1,7 @@
-use crate::state::frame_state::{ActionRequest, FrameState};
+use crate::state::frame_state::{ActionEffect, ActionRequest, FrameState};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
-use crate::state::ui_state::MenuState::Closed;
+use crate::state::ui_state::MenuState::{Closed, Inventory};
 use crate::state::ui_state::{MenuState, Rect, UIState, UserAction};
 use crate::systems::item_placement_system::ItemPlacementSystem;
 use cgmath::Point2;
@@ -81,7 +81,7 @@ impl InventorySystem {
                         continue;
                     }
 
-                    ui_state.menu_state = MenuState::Inventory {
+                    ui_state.menu_state = Inventory {
                         mouse_position: input.mouse_position_ui,
                         item: entity.to_string(),
                     };
@@ -101,46 +101,94 @@ impl InventorySystem {
         input: &Input,
         frame_state: &mut FrameState,
     ) {
-        if let MenuState::Inventory {
+        let old_menu_state = ui_state.menu_state.clone();
+        ui_state.menu_state =
+            Self::handle_inventory_menu_state(game_state, old_menu_state, input, frame_state);
+    }
+
+    fn handle_inventory_menu_state(
+        game_state: &mut GameState,
+        menu_state: MenuState,
+        input: &Input,
+        frame_state: &mut FrameState,
+    ) -> MenuState {
+        let mut new_menu_state = menu_state.clone();
+
+        if let Inventory {
             mouse_position,
             item,
-        } = &ui_state.menu_state
+        } = menu_state
         {
-            let object_selection_rect = Rect::new(
-                Point2::new(mouse_position.x - 0.05, mouse_position.y - 0.05),
-                Point2::new(mouse_position.x + 0.15, mouse_position.y + 0.05),
+            // Drop button
+            let drop_button_rect = Rect::new(
+                Point2::new(mouse_position.x - 0.05, mouse_position.y - 0.02),
+                Point2::new(mouse_position.x + 0.15, mouse_position.y + 0.04),
             );
 
             let mut text_color = [0.8, 0.8, 0.8];
-            match frame_state
-                .gui
-                .color_button(200, object_selection_rect, input)
-            {
+            match frame_state.gui.color_button(200, drop_button_rect, input) {
                 UserAction::None => {}
                 UserAction::Hover => {
                     text_color = [0.8, 0.8, 0.0];
                 }
                 UserAction::LeftClick => {
                     if frame_state.handled_left_click {
-                        return;
+                        return new_menu_state;
                     }
                     ItemPlacementSystem::place_item(
                         game_state,
                         &mut frame_state.action_effects,
-                        item,
+                        &item,
                     );
-                    ui_state.menu_state = Closed;
+                    new_menu_state = Closed;
                     frame_state.handled_left_click = true;
                 }
                 UserAction::RightClick => {}
             }
 
-            frame_state.gui.text(
-                300,
-                object_selection_rect,
-                "Drop item".to_string(),
-                text_color,
-            )
+            frame_state
+                .gui
+                .text(300, drop_button_rect, "Drop item".to_string(), text_color);
+
+            // Examine button
+            if game_state.description_components.contains_key(&item) {
+                let examine_button_rect = Rect::new(
+                    Point2::new(mouse_position.x - 0.05, mouse_position.y + 0.04),
+                    Point2::new(mouse_position.x + 0.15, mouse_position.y + 0.08),
+                );
+
+                let mut text_color = [0.8, 0.8, 0.8];
+                match frame_state
+                    .gui
+                    .color_button(200, examine_button_rect, input)
+                {
+                    UserAction::None => {}
+                    UserAction::Hover => {
+                        text_color = [0.8, 0.8, 0.0];
+                    }
+                    UserAction::LeftClick => {
+                        if frame_state.handled_left_click {
+                            return new_menu_state;
+                        }
+                        let examine_text = game_state.description_components.get(&item).unwrap();
+                        frame_state.action_effects.push(ActionEffect::Examine {
+                            text: examine_text.text.clone(),
+                        });
+
+                        new_menu_state = Closed;
+                        frame_state.handled_left_click = true;
+                    }
+                    UserAction::RightClick => {}
+                }
+
+                frame_state.gui.text(
+                    300,
+                    examine_button_rect,
+                    "Examine item".to_string(),
+                    text_color,
+                );
+            }
         }
+        new_menu_state
     }
 }
