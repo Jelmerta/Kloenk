@@ -99,3 +99,7 @@ wasm-bindgen target/wasm32-unknown-unknown/debug/kloenk_bin.wasm --target web --
 mv ./bg_output/kloenk_bg.wasm ./bg_output/kloenk.wasm
 sudo cp bg_output/kloenk.wasm /usr/share/nginx/html
 sudo cp bg_output/kloenk.js /usr/share/nginx/html
+
+Build for product owner (on windows):
+```cargo build --target x86_64-pc-windows-msvc --release```
+```Compress-Archive -Path .\target\x86_64-pc-windows-msvc\release\assets\,.\target\x86_64-pc-windows-msvc\release\kloenk.exe -DestinationPath .\kloenk.zip```
