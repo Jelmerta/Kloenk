@@ -16,7 +16,6 @@ use winit::event::ElementState;
 use winit::platform::web::WindowExtWebSys;
 
 use crate::state::input::Input;
-use log::logger;
 use std::sync::Arc;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::closure::Closure;
@@ -122,6 +121,7 @@ impl ApplicationHandler<CustomEvent> for Application {
             } // Continue
         }
         log::error!("mehtal");
+        println!("wtf");
 
         // Note: This is more a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
