@@ -106,6 +106,8 @@ impl InventorySystem {
             item,
         } = &ui_state.menu_state
         {
+            log::warn!("what");
+            log::warn!("hello {:?}", mouse_position);
             let object_selection_rect = Rect::new(
                 Point2::new(mouse_position.x - 0.05, mouse_position.y - 0.05),
                 Point2::new(mouse_position.x + 0.15, mouse_position.y + 0.05),
@@ -118,6 +120,7 @@ impl InventorySystem {
             {
                 UserAction::None => {}
                 UserAction::Hover => {
+                    log::warn!("hello?? {:?}", mouse_position);
                     text_color = [0.8, 0.8, 0.0];
                 }
                 UserAction::LeftClick => {
