@@ -10,7 +10,8 @@ use std::sync::Arc;
 use wgpu::{CommandEncoder, Device, Queue, SurfaceConfiguration, TextureView};
 use winit::window::Window;
 
-const DEFAULT_FONT_SIZE_AT_1080P: f32 = 24.0; // Relies on logical size of 1080
+const DEFAULT_FONT_SIZE: f32 = 24.0;
+const DEFAULT_FONT_RESOLUTION: f32 = 1080.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
 
 struct TextContext {
     buffer: Buffer,
@@ -82,13 +83,13 @@ impl TextWriter {
     }
 
     pub fn add(&mut self, window: &Arc<Window>, rect: &Rect, text: &str, color: &[f32; 3]) {
+        log::warn!("{:?}", window.inner_size());
         let rect_scaled = rect.scale(
-            (window.inner_size().width as f64 / window.scale_factor()) as f32,
-            (window.inner_size().height as f64 / window.scale_factor()) as f32,
+            window.inner_size().width as f32,
+            window.inner_size().height as f32,
         );
-        let font_size = 24.0 / window.scale_factor() as f32;
-        // let font_size = ((window.inner_size().width as f64 / window.scale_factor()) / 1080.0
-        //     * DEFAULT_FONT_SIZE_AT_1080P as f64) as f32;
+        let font_size =
+            DEFAULT_FONT_SIZE * (window.inner_size().height as f32 / DEFAULT_FONT_RESOLUTION);
         let mut buffer = Buffer::new(
             &mut self.font_system,
             Metrics::new(font_size, font_size * 2.0),

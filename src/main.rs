@@ -1,4 +1,6 @@
-#![windows_subsystem = "windows"] // Makes sure Windows does not open terminal
+// Makes sure Windows does not open terminal on release
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use crate::application::{Application, CustomEvent};
 use winit::event_loop::EventLoop;
 #[cfg(target_arch = "wasm32")]
