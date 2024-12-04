@@ -124,7 +124,7 @@ impl GameState {
 
         let tree_position = Point3 {
             x: 2.0,
-            y: 0.0,
+            y: 1.0,
             z: -3.0,
         };
 
@@ -168,7 +168,7 @@ impl GameState {
 
                 let plane_position = Point3 {
                     x: f32::from(x),
-                    y: -1.0,
+                    y: 0.0,
                     z: f32::from(z),
                 };
                 position_components.insert(plane.clone(), plane_position);
@@ -204,7 +204,7 @@ impl GameState {
 
             let sword_position = Point3 {
                 x: i.to_f32().unwrap() + 0.1,
-                y: -0.25,
+                y: 0.75,
                 z: i.to_f32().unwrap() + 0.1,
             };
             position_components.insert(sword.clone(), sword_position);
@@ -264,7 +264,7 @@ impl GameState {
 
         let shield_position = Point3 {
             x: -2.8,
-            y: -0.25,
+            y: 0.75,
             z: -2.7,
         };
         position_components.insert(shield.clone(), shield_position);
@@ -318,7 +318,7 @@ impl GameState {
 
         let player_position = Point3 {
             x: 0.0,
-            y: 0.0,
+            y: 0.5,
             z: 0.0,
         };
         position_components.insert(player.clone(), player_position);
