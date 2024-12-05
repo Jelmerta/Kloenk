@@ -29,12 +29,12 @@ impl GameSystem {
         ObjectDetectionSystem::setup_detection_for_frame(game_state, input, frame_state);
 
         InventorySystem::display_inventory_item_menu(game_state, ui_state, input, frame_state);
-        InventorySystem::handle_inventory(game_state, ui_state, input, frame_state);
         ObjectSelectionSystem::handle_object_selection(game_state, ui_state, input, frame_state);
+        CloseMenuSystem::check_to_close_menu(ui_state, input, frame_state);
+        InventorySystem::handle_inventory(game_state, ui_state, input, frame_state);
 
         ItemPickupSystem::handle_item_pickup_keyboard(game_state, input, frame_state);
         ItemPickupSystem::handle_item_pickup_mouse(game_state, input, frame_state);
-        CloseMenuSystem::close_menu(ui_state, input, frame_state);
 
         MovementSystem::resolve_movement(game_state, input, audio_system);
 

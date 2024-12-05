@@ -23,6 +23,7 @@ impl ObjectSelectionSystem {
                 mouse_position: input.mouse_position_ui,
                 item: selected_objects.first().unwrap().clone(),
             };
+            frame_state.handled_right_click = true;
         }
 
         let mut new_menu_state = ui_state.menu_state.clone();
@@ -86,8 +87,6 @@ impl ObjectSelectionSystem {
             );
         }
         ui_state.menu_state = new_menu_state;
-
-        frame_state.handled_right_click = true;
     }
 
     fn should_open_menu(

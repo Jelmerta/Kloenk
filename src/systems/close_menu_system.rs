@@ -6,7 +6,11 @@ use crate::state::ui_state::{MenuState, UIState};
 pub struct CloseMenuSystem {}
 
 impl CloseMenuSystem {
-    pub fn close_menu(ui_state: &mut UIState, input: &Input, frame_state: &mut FrameState) {
+    pub fn check_to_close_menu(
+        ui_state: &mut UIState,
+        input: &Input,
+        frame_state: &mut FrameState,
+    ) {
         if frame_state.handled_left_click {
             return;
         }
@@ -22,17 +26,17 @@ impl CloseMenuSystem {
                 item: _item,
             } => {
                 new_menu_state = Closed;
+                frame_state.handled_left_click = true;
             }
             MenuState::Inventory {
                 mouse_position: _mouse_position,
                 item: _item,
             } => {
                 new_menu_state = Closed;
+                frame_state.handled_left_click = true;
             }
             _ => {}
         }
         ui_state.menu_state = new_menu_state;
-
-        frame_state.handled_left_click = true;
     }
 }
