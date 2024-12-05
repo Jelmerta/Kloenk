@@ -323,8 +323,8 @@ impl GameState {
         };
         position_components.insert(player.clone(), player_position);
 
-        let player_hitbox_min = player_position.sub_element_wise(Point3::new(0.1, 0.1, 0.1));
-        let player_hitbox_max = player_position.add_element_wise(Point3::new(0.1, 0.1, 0.1));
+        let player_hitbox_min = player_position.sub_element_wise(Point3::new(0.1, 0.0, 0.1));
+        let player_hitbox_max = player_position.add_element_wise(Point3::new(0.1, 1.8, 0.1));
         let player_hitbox = Hitbox {
             box_corner_min: player_hitbox_min,
             box_corner_max: player_hitbox_max,
