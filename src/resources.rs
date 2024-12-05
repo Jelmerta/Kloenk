@@ -116,14 +116,10 @@ pub async fn load_gltf(device: &Device, model_path: &str) -> Model {
     let mut buffer_data = Vec::new();
     for buffer in gltf.buffers() {
         match buffer.source() {
-            // Think this is for if we want to load glb files?
-            gltf::buffer::Source::Bin => {
-                // if let Some(blob) = gltf.blob.as_deref() {
-                //     buffer_data.push(blob.into());
-                //     println!("Found a bin, saving");
-                // };
+            gltf::buffer::Source::Bin => { // glb (not used (yet?))
             }
-            // Think this is for if we want to load gltf+bin files?
+
+            // Gltf + bin
             gltf::buffer::Source::Uri(uri) => {
                 let bin = load_binary(uri).await.unwrap();
                 buffer_data.push(bin);
