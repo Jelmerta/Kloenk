@@ -118,14 +118,6 @@ impl UIState {
         }
     }
 
-    pub fn transition_menu(&mut self) {
-        match self.menu_state {
-            Closed => {}
-            MenuState::World { .. } => {}
-            MenuState::Inventory { .. } => self.menu_state = Closed,
-        }
-    }
-
     // Maps 0 (left of screen) to -800/600 (pixel values) and 1 to 800/600
     pub fn convert_clip_space_x(value: f32, window: &Arc<Window>) -> f32 {
         // Would it be better to use NDC?
