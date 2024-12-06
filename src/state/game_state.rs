@@ -2,8 +2,8 @@ use cgmath::num_traits::ToPrimitive;
 
 use crate::render::camera::Camera;
 use crate::state::components::{
-    CameraTarget, Description, Entity, Graphics2D, Graphics3D, Hitbox, InStorage, ItemShape, Size,
-    Storable, Storage,
+    CameraTarget, Description, Entity, Graphics2D, Graphics3D, Health, Hitbox, InStorage,
+    ItemShape, Size, Storable, Storage,
 };
 use cgmath::{ElementWise, Point3};
 use std::collections::{HashMap, HashSet};
@@ -18,6 +18,7 @@ pub struct GameState {
     pub surface_components: HashSet<Entity>,
     pub size_components: HashMap<Entity, Size>,
     pub hitbox_components: HashMap<Entity, Hitbox>,
+    pub health_components: HashMap<Entity, Health>,
     pub camera_components: HashMap<Entity, Camera>,
     pub camera_target_components: HashMap<Entity, CameraTarget>,
     pub storable_components: HashMap<Entity, Storable>,
@@ -37,6 +38,7 @@ impl GameState {
         let mut surface_components = HashSet::new();
         let mut size_components = HashMap::new();
         let mut hitbox_components = HashMap::new();
+        let mut health_components = HashMap::new();
         let mut camera_components = HashMap::new();
         let mut camera_target_components = HashMap::new();
         let mut storable_components = HashMap::new();
@@ -49,6 +51,7 @@ impl GameState {
             &mut graphics_3d_components,
             &mut position_components,
             &mut hitbox_components,
+            &mut health_components,
             &mut camera_target_components,
             &mut storage_components,
             &mut description_components,
@@ -98,6 +101,7 @@ impl GameState {
             surface_components,
             size_components,
             hitbox_components,
+            health_components,
             camera_components,
             camera_target_components,
             storable_components,
@@ -304,6 +308,7 @@ impl GameState {
         graphics_3d_components: &mut HashMap<Entity, Graphics3D>,
         position_components: &mut HashMap<Entity, Point3<f32>>,
         hitbox_components: &mut HashMap<Entity, Hitbox>,
+        health_components: &mut HashMap<Entity, Health>,
         camera_target_components: &mut HashMap<Entity, CameraTarget>,
         storage_components: &mut HashMap<Entity, Storage>,
         description_components: &mut HashMap<String, Description>,
@@ -330,6 +335,14 @@ impl GameState {
             box_corner_max: player_hitbox_max,
         };
         hitbox_components.insert(player.clone(), player_hitbox);
+
+        health_components.insert(
+            player.clone(),
+            Health {
+                hitpoints: 25,
+                max_hitpoints: 100,
+            },
+        );
 
         let camera_target = CameraTarget {
             distance: f32::sqrt(ROUGHLY_CAMERA_DISTANCE / 3.0),

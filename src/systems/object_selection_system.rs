@@ -38,7 +38,10 @@ impl ObjectSelectionSystem {
             );
 
             let mut text_color = [0.8, 0.8, 0.8];
-            match frame_state.gui.color_button(200, pickup_menu_rect, input) {
+            match frame_state
+                .gui
+                .color_button(200, pickup_menu_rect, input, "black".to_string())
+            {
                 UserAction::LeftClick => {
                     if frame_state.handled_left_click {
                         return;
@@ -63,7 +66,10 @@ impl ObjectSelectionSystem {
                 Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.10),
             );
             let mut text_color = [0.8, 0.8, 0.8];
-            match frame_state.gui.color_button(200, examine_menu_rect, input) {
+            match frame_state
+                .gui
+                .color_button(200, examine_menu_rect, input, "black".to_string())
+            {
                 UserAction::LeftClick => {
                     if frame_state.handled_left_click {
                         return;

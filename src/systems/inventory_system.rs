@@ -126,7 +126,10 @@ impl InventorySystem {
             );
 
             let mut text_color = [0.8, 0.8, 0.8];
-            match frame_state.gui.color_button(200, drop_button_rect, input) {
+            match frame_state
+                .gui
+                .color_button(200, drop_button_rect, input, "black".to_string())
+            {
                 UserAction::None => {}
                 UserAction::Hover => {
                     text_color = [0.8, 0.8, 0.0];
@@ -158,10 +161,12 @@ impl InventorySystem {
                 );
 
                 let mut text_color = [0.8, 0.8, 0.8];
-                match frame_state
-                    .gui
-                    .color_button(200, examine_button_rect, input)
-                {
+                match frame_state.gui.color_button(
+                    200,
+                    examine_button_rect,
+                    input,
+                    "black".to_string(),
+                ) {
                     UserAction::None => {}
                     UserAction::Hover => {
                         text_color = [0.8, 0.8, 0.0];

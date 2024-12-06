@@ -4,6 +4,7 @@ mod close_menu_system;
 mod collision_manager;
 mod command_handle_system;
 pub mod game_system;
+mod health_system;
 mod inventory_system;
 pub mod item_pickup_system;
 pub mod item_placement_system;

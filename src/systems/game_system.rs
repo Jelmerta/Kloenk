@@ -6,6 +6,7 @@ use crate::systems::audio_system::AudioSystem;
 use crate::systems::camera_system::CameraSystem;
 use crate::systems::close_menu_system::CloseMenuSystem;
 use crate::systems::command_handle_system::CommandHandleSystem;
+use crate::systems::health_system::HealthSystem;
 use crate::systems::inventory_system::InventorySystem;
 use crate::systems::item_pickup_system::ItemPickupSystem;
 use crate::systems::movement_system::MovementSystem;
@@ -45,6 +46,7 @@ impl GameSystem {
 
         // Visual stuff (pre-render)
         CameraSystem::update_camera(window, game_state, input);
+        HealthSystem::display_health(game_state, input, frame_state);
 
         input.update_end_frame();
     }
