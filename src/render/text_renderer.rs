@@ -89,11 +89,11 @@ impl TextWriter {
             window.inner_size().width as f32,
             window.inner_size().height as f32,
         );
-        let default_diagonal_distance: f32 =
-            (DEFAULT_FONT_WIDTH.pow(2) as f32 + DEFAULT_FONT_HEIGHT.pow(2) as f32).sqrt();
-        let current_diagonal_distance: f32 = (window.inner_size().width.pow(2) as f32
-            + window.inner_size().height.pow(2) as f32)
-            .sqrt();
+        let default_diagonal_distance =
+            f32::sqrt(DEFAULT_FONT_WIDTH.pow(2) + DEFAULT_FONT_HEIGHT.pow(2));
+        let current_diagonal_distance: f32 = f32::sqrt(
+            window.inner_size().width.pow(2) as f32 + window.inner_size().height.pow(2) as f32,
+        );
         let font_size = (current_diagonal_distance / default_diagonal_distance) * DEFAULT_FONT_SIZE;
         let mut buffer = Buffer::new(
             &mut self.font_system,
