@@ -339,7 +339,7 @@ impl GameState {
         health_components.insert(
             player.clone(),
             Health {
-                hitpoints: 25,
+                hitpoints: 100,
                 max_hitpoints: 100,
             },
         );
