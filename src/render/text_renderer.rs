@@ -95,10 +95,6 @@ impl TextWriter {
             + window.inner_size().height.pow(2) as f32)
             .sqrt();
         let font_size = (current_diagonal_distance / default_diagonal_distance) * DEFAULT_FONT_SIZE;
-        log::warn!("hi");
-        log::warn!("{}", default_diagonal_distance);
-        log::warn!("{}", current_diagonal_distance);
-        log::warn!("{}", font_size);
         let mut buffer = Buffer::new(
             &mut self.font_system,
             Metrics::new(font_size, font_size * 2.0),
