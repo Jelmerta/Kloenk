@@ -1,5 +1,6 @@
 use crate::resources;
 use crate::state::ui_state::Rect;
+use cgmath::num_traits::Pow;
 use glyphon::{
     fontdb, Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping,
     SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
@@ -11,7 +12,8 @@ use wgpu::{CommandEncoder, Device, Queue, SurfaceConfiguration, TextureView};
 use winit::window::Window;
 
 const DEFAULT_FONT_SIZE: f32 = 24.0;
-const DEFAULT_FONT_RESOLUTION: f32 = 1080.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
+const DEFAULT_FONT_HEIGHT: f32 = 1080.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
+const DEFAULT_FONT_WIDTH: f32 = 1920.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
 
 struct TextContext {
     buffer: Buffer,
@@ -87,8 +89,16 @@ impl TextWriter {
             window.inner_size().width as f32,
             window.inner_size().height as f32,
         );
-        let font_size =
-            DEFAULT_FONT_SIZE * (window.inner_size().height as f32 / DEFAULT_FONT_RESOLUTION);
+        let default_diagonal_distance: f32 =
+            (DEFAULT_FONT_WIDTH.pow(2) as f32 + DEFAULT_FONT_HEIGHT.pow(2) as f32).sqrt();
+        let current_diagonal_distance: f32 = (window.inner_size().width.pow(2) as f32
+            + window.inner_size().height.pow(2) as f32)
+            .sqrt();
+        let font_size = (current_diagonal_distance / default_diagonal_distance) * DEFAULT_FONT_SIZE;
+        log::warn!("hi");
+        log::warn!("{}", default_diagonal_distance);
+        log::warn!("{}", current_diagonal_distance);
+        log::warn!("{}", font_size);
         let mut buffer = Buffer::new(
             &mut self.font_system,
             Metrics::new(font_size, font_size * 2.0),
