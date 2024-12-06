@@ -34,6 +34,17 @@ impl ModelManager {
             resources::load_colored_square_model(device, Vector3::new(0.2, 0.2, 0.2)).unwrap();
         mesh_map.insert("grey".to_string(), grey.meshes.into_iter().next().unwrap());
 
+        // #780606
+        let blood_red = resources::load_colored_square_model(
+            device,
+            Vector3::new(0.46875, 0.0234375, 0.0234375),
+        )
+        .unwrap();
+        mesh_map.insert(
+            "blood_red".to_string(),
+            blood_red.meshes.into_iter().next().unwrap(),
+        );
+
         let shield = resources::load_model(device, "CUBE", "shield")
             .await
             .unwrap();

@@ -36,6 +36,11 @@ pub struct Hitbox {
     pub box_corner_max: Point3<f32>,
 }
 
+pub struct Health {
+    pub hitpoints: u32,
+    pub max_hitpoints: u32,
+}
+
 #[derive(Clone, Copy)]
 pub struct CameraTarget {
     pub distance: f32,

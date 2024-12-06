@@ -44,14 +44,21 @@ impl Gui {
         UserAction::None
     }
 
-    pub fn color_button(&mut self, layer: u32, rect: Rect, input: &Input) -> UserAction {
+    pub fn color_button(
+        &mut self,
+        layer: u32,
+        rect: Rect,
+        input: &Input,
+        // color: [f32; 3], // Probably want to dynamically generate meshes to draw at some time
+        color: String,
+    ) -> UserAction {
         let mouse_is_contained = rect.contains(input.mouse_position_ui);
 
         if mouse_is_contained && input.left_mouse_clicked.is_toggled_on() {
             let image_command = RenderCommand::Mesh {
                 layer,
                 rect,
-                mesh_id: "black".to_string(), // TODO hardcoded
+                mesh_id: color.to_string(), // TODO hardcoded
             };
             self.render_commands.push(image_command);
             return UserAction::LeftClick;
@@ -60,7 +67,7 @@ impl Gui {
             let image_command = RenderCommand::Mesh {
                 layer,
                 rect,
-                mesh_id: "black".to_string(), // TODO hardcoded
+                mesh_id: color.to_string(), // TODO hardcoded
             };
             self.render_commands.push(image_command);
             return UserAction::RightClick;
@@ -69,7 +76,7 @@ impl Gui {
             let image_command = RenderCommand::Mesh {
                 layer,
                 rect,
-                mesh_id: "black".to_string(), // TODO hardcoded
+                mesh_id: color.to_string(), // TODO hardcoded
             };
             self.render_commands.push(image_command);
             return UserAction::Hover;
@@ -78,7 +85,7 @@ impl Gui {
         let image_command = RenderCommand::Mesh {
             layer,
             rect,
-            mesh_id: "black".to_string(), // TODO hardcoded
+            mesh_id: color.to_string(), // TODO hardcoded
         };
         self.render_commands.push(image_command);
         UserAction::None
