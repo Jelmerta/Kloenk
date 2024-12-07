@@ -38,6 +38,8 @@ use crate::systems::game_system::GameSystem;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
 #[cfg(target_arch = "wasm32")]
+use web_sys::console;
+#[cfg(target_arch = "wasm32")]
 use web_sys::js_sys::Math::ceil;
 
 pub struct Engine {
@@ -183,10 +185,13 @@ impl ApplicationHandler<CustomEvent> for Application {
             let cursor_clone = Rc::clone(&cursor_binary);
             spawn_local(async move {
                 log::warn!("1");
+                console::log_1(&"1".into());
                 let binary = load_binary("cursor.png").await.unwrap();
                 log::warn!("{}", binary.len());
+                console::log_1(&"2".into());
                 *cursor_clone.borrow_mut() = Some(binary);
                 log::warn!("2");
+                console::log_1(&"3".into());
             });
 
             // Probably dumb and very dangerous
@@ -206,6 +211,7 @@ impl ApplicationHandler<CustomEvent> for Application {
         }
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
+        // window.set_cursor()
 
         #[cfg(not(target_arch = "wasm32"))]
         {
