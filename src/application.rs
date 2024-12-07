@@ -179,21 +179,22 @@ impl ApplicationHandler<CustomEvent> for Application {
 
         #[cfg(target_arch = "wasm32")]
         {
-            let mut custom_cursor = None;
+            let mut cursor_binary = None;
             spawn_local(async move {
-                let cursor_binary = load_binary("cursor.png").await.unwrap();
-                let cursor_rgba = image::load_from_memory(&cursor_binary)
-                    .unwrap()
-                    .to_rgba8()
-                    .into_raw();
-                let custom_cursor_source =
-                    CustomCursor::from_rgba(cursor_rgba, 122, 120, 7, 7).unwrap();
-                custom_cursor = Some(event_loop.create_custom_cursor(custom_cursor_source));
+                cursor_binary = Some(load_binary("cursor.png").await.unwrap());
             });
+
+            let cursor_rgba = image::load_from_memory(&cursor_binary.unwrap())
+                .unwrap()
+                .to_rgba8()
+                .into_raw();
+            let custom_cursor_source =
+                CustomCursor::from_rgba(cursor_rgba, 122, 120, 7, 7).unwrap();
+            let custom_cursor = event_loop.create_custom_cursor(custom_cursor_source);
             window_attributes = Window::default_attributes()
                 .with_title("Kloenk!")
                 .with_inner_size(LogicalSize::new(initial_width, initial_height))
-                .with_cursor(custom_cursor.unwrap());
+                .with_cursor(custom_cursor);
         }
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
