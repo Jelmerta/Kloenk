@@ -29,6 +29,7 @@ use winit::window::{Cursor, CustomCursor, Fullscreen, Window, WindowId};
 use crate::systems::audio_system::AudioPlayer;
 use crate::systems::audio_system::AudioSystem;
 
+use crate::cursor_manager::CursorManager;
 use crate::render::render::Renderer;
 use crate::resources::load_binary;
 use crate::state::frame_state::FrameState;
@@ -181,37 +182,12 @@ impl ApplicationHandler<CustomEvent> for Application {
 
         #[cfg(target_arch = "wasm32")]
         {
-            //     let mut cursor_binary = Rc::new(RefCell::new(None));
-            //     let cursor_clone = Rc::clone(&cursor_binary);
-            //     spawn_local(async move {
-            //         log::warn!("1");
-            //         console::log_1(&"1".into());
-            //         let binary = load_binary("cursor.png").await.unwrap();
-            //         log::warn!("{}", binary.len());
-            //         console::log_1(&"2".into());
-            //         *cursor_clone.borrow_mut() = Some(binary);
-            //         log::warn!("2");
-            //         console::log_1(&"3".into());
-            //     });
-            //
-            //     // Probably dumb and very dangerous
-            //     while cursor_binary.borrow().is_none() {}
-            //
-            //     let cursor_rgba = image::load_from_memory(&cursor_binary.borrow().as_ref().unwrap())
-            //         .unwrap()
-            //         .to_rgba8()
-            //         .into_raw();
-            //     let custom_cursor_source =
-            //         CustomCursor::from_rgba(cursor_rgba, 122, 120, 7, 7).unwrap();
-            //     let custom_cursor = event_loop.create_custom_cursor(custom_cursor_source);
             window_attributes = Window::default_attributes()
                 .with_title("Kloenk!")
                 .with_inner_size(LogicalSize::new(initial_width, initial_height))
-            // .with_cursor(custom_cursor);
         }
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
-        // window.set_cursor()
 
         #[cfg(not(target_arch = "wasm32"))]
         {
@@ -251,10 +227,12 @@ impl ApplicationHandler<CustomEvent> for Application {
 
                 let audio_system = audio_future.await;
 
+                let cursor = CursorManager::load_cursor_future().await;
+
                 let game = Engine {
                     renderer,
                     game_state: GameState::new(),
-                    ui_state: UIState::new(),
+                    ui_state: UIState::new(cursor),
                     input_handler: Input::new(),
                     frame_state: FrameState::new(),
                     audio_loading_state: Rc::new(RefCell::new(AudioState::NotLoaded)),
@@ -275,11 +253,12 @@ impl ApplicationHandler<CustomEvent> for Application {
             let renderer = pollster::block_on(renderer_future);
 
             let audio_system = pollster::block_on(AudioSystem::new());
+            let cursor = pollster::block_on(CursorManager::load_cursor_future());
 
             let game = Engine {
                 renderer,
                 game_state: GameState::new(),
-                ui_state: UIState::new(),
+                ui_state: UIState::new(cursor),
                 input_handler: Input::new(),
                 frame_state: FrameState::new(),
                 window,
@@ -294,11 +273,14 @@ impl ApplicationHandler<CustomEvent> for Application {
         }
     }
 
-    fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: CustomEvent) {
+    fn user_event(&mut self, event_loop: &ActiveEventLoop, event: CustomEvent) {
         match event {
             CustomEvent::StateInitializationEvent(mut engine) => {
                 log::info!("Received initialization event");
                 engine.renderer.resize(engine.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
+                engine.window.set_cursor(event_loop.create_custom_cursor(
+                    CursorManager::load_cursor(engine.ui_state.cursor.clone()),
+                ));
                 engine.window.request_redraw();
                 self.application_state = State::Initialized(engine);
             }

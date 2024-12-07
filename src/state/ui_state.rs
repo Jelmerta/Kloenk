@@ -99,10 +99,12 @@ pub struct UIState {
     pub selected_text: String,
 
     pub menu_state: MenuState,
+
+    pub cursor: Vec<u8>, // Not sure what a good place to store this data is
 }
 
 impl UIState {
-    pub fn new() -> Self {
+    pub fn new(cursor: Vec<u8>) -> Self {
         let inventory_window = UIWindow::new(
             false,
             Rect::new(Point2::new(0.6, 0.6), Point2::new(0.95, 0.95)),
@@ -115,6 +117,7 @@ impl UIState {
             menu_state: Closed,
             action_text: String::new(),
             selected_text: String::new(),
+            cursor,
         }
     }
 
