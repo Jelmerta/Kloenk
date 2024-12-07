@@ -179,12 +179,17 @@ impl ApplicationHandler<CustomEvent> for Application {
 
         #[cfg(target_arch = "wasm32")]
         {
-            let mut cursor_binary = None;
+            let mut cursor_binary = Rc::new(RefCell::new(None));
+            let cursor_clone = Rc::clone(&cursor_binary);
             spawn_local(async move {
-                cursor_binary = Some(load_binary("cursor.png").await.unwrap());
+                let binary = load_binary("cursor.png").await.unwrap();
+                *cursor_clone.borrow_mut() = Some(binary);
             });
 
-            let cursor_rgba = image::load_from_memory(&cursor_binary.unwrap())
+            // Probably dumb and very dangerous
+            while cursor_binary.borrow().is_none() {}
+
+            let cursor_rgba = image::load_from_memory(&cursor_binary.borrow().as_ref().unwrap())
                 .unwrap()
                 .to_rgba8()
                 .into_raw();
