@@ -23,13 +23,14 @@ use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
-use winit::window::{Fullscreen, Window, WindowId};
+use winit::window::{Cursor, CustomCursor, CustomCursorSource, Fullscreen, Window, WindowId};
 
 #[cfg(target_arch = "wasm32")]
 use crate::systems::audio_system::AudioPlayer;
 use crate::systems::audio_system::AudioSystem;
 
 use crate::render::render::Renderer;
+use crate::resources::{load_binary, load_texture};
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::UIState;
@@ -158,9 +159,30 @@ impl ApplicationHandler<CustomEvent> for Application {
             closure.forget();
         }
 
-        let window_attributes = Window::default_attributes()
-            .with_title("Kloenk!")
-            .with_inner_size(LogicalSize::new(initial_width, initial_height));
+        let window_attributes;
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let cursor_binary = pollster::block_on(load_binary("cursor.png")).unwrap();
+            let cursor_rgba = image::load_from_memory(&cursor_binary)
+                .unwrap()
+                .to_rgba8()
+                .into_raw();
+            let custom_cursor_source =
+                CustomCursor::from_rgba(cursor_rgba, 122, 120, 7, 7).unwrap();
+            let custom_cursor = event_loop.create_custom_cursor(custom_cursor_source);
+
+            window_attributes = Window::default_attributes()
+                .with_title("Kloenk!")
+                .with_inner_size(LogicalSize::new(initial_width, initial_height))
+                .with_cursor(Cursor::Custom(custom_cursor));
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            window_attributes = Window::default_attributes()
+                .with_title("Kloenk!")
+                .with_inner_size(LogicalSize::new(initial_width, initial_height));
+        }
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
