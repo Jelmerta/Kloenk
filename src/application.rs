@@ -23,7 +23,7 @@ use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
-use winit::window::{Cursor, CustomCursor, Fullscreen, Window, WindowId};
+use winit::window::{Cursor, CustomCursor, Fullscreen, Icon, Window, WindowId};
 
 #[cfg(target_arch = "wasm32")]
 use crate::systems::audio_system::AudioPlayer;
@@ -174,10 +174,19 @@ impl ApplicationHandler<CustomEvent> for Application {
                 CustomCursor::from_rgba(cursor_rgba, 122, 120, 7, 7).unwrap();
             let custom_cursor = event_loop.create_custom_cursor(custom_cursor_source);
 
+            let window_icon_binary = pollster::block_on(load_binary("kunst.png")).unwrap();
+            let window_icon_rgba = image::load_from_memory(&window_icon_binary)
+                .unwrap()
+                .to_rgba8()
+                .into_raw();
+            let window_icon = Some(Icon::from_rgba(window_icon_rgba, 64, 64).unwrap());
+
             window_attributes = Window::default_attributes()
                 .with_title("Kloenk!")
                 .with_inner_size(LogicalSize::new(initial_width, initial_height))
-                .with_cursor(Cursor::Custom(custom_cursor));
+                .with_active(true)
+                .with_cursor(Cursor::Custom(custom_cursor))
+                .with_window_icon(window_icon);
         }
 
         #[cfg(target_arch = "wasm32")]
@@ -185,6 +194,7 @@ impl ApplicationHandler<CustomEvent> for Application {
             window_attributes = Window::default_attributes()
                 .with_title("Kloenk!")
                 .with_inner_size(LogicalSize::new(initial_width, initial_height))
+                .with_active(true);
         }
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
