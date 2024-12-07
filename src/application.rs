@@ -23,14 +23,14 @@ use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
-use winit::window::{Cursor, CustomCursor, CustomCursorSource, Fullscreen, Window, WindowId};
+use winit::window::{Cursor, CustomCursor, Fullscreen, Window, WindowId};
 
 #[cfg(target_arch = "wasm32")]
 use crate::systems::audio_system::AudioPlayer;
 use crate::systems::audio_system::AudioSystem;
 
 use crate::render::render::Renderer;
-use crate::resources::{load_binary, load_texture};
+use crate::resources::load_binary;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::UIState;
@@ -124,7 +124,7 @@ impl ApplicationHandler<CustomEvent> for Application {
             } // Continue
         }
 
-        // Note: This is more a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
+        // Note: This is more of a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
         // We want to have ownership of the zoom level ourselves. We therefore disregard the dpi ratio and always attempt to render the same image
         #[allow(unused_mut)]
@@ -179,9 +179,21 @@ impl ApplicationHandler<CustomEvent> for Application {
 
         #[cfg(target_arch = "wasm32")]
         {
+            let mut custom_cursor = None;
+            spawn_local(async move {
+                let cursor_binary = load_binary("cursor.png").await.unwrap();
+                let cursor_rgba = image::load_from_memory(&cursor_binary)
+                    .unwrap()
+                    .to_rgba8()
+                    .into_raw();
+                let custom_cursor_source =
+                    CustomCursor::from_rgba(cursor_rgba, 122, 120, 7, 7).unwrap();
+                custom_cursor = Some(event_loop.create_custom_cursor(custom_cursor_source));
+            });
             window_attributes = Window::default_attributes()
                 .with_title("Kloenk!")
-                .with_inner_size(LogicalSize::new(initial_width, initial_height));
+                .with_inner_size(LogicalSize::new(initial_width, initial_height))
+                .with_cursor(custom_cursor.unwrap());
         }
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
