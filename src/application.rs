@@ -182,8 +182,11 @@ impl ApplicationHandler<CustomEvent> for Application {
             let mut cursor_binary = Rc::new(RefCell::new(None));
             let cursor_clone = Rc::clone(&cursor_binary);
             spawn_local(async move {
+                log::warn!("1");
                 let binary = load_binary("cursor.png").await.unwrap();
+                log::warn!("{}", binary.len());
                 *cursor_clone.borrow_mut() = Some(binary);
+                log::warn!("2");
             });
 
             // Probably dumb and very dangerous
