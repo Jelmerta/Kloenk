@@ -181,33 +181,33 @@ impl ApplicationHandler<CustomEvent> for Application {
 
         #[cfg(target_arch = "wasm32")]
         {
-            let mut cursor_binary = Rc::new(RefCell::new(None));
-            let cursor_clone = Rc::clone(&cursor_binary);
-            spawn_local(async move {
-                log::warn!("1");
-                console::log_1(&"1".into());
-                let binary = load_binary("cursor.png").await.unwrap();
-                log::warn!("{}", binary.len());
-                console::log_1(&"2".into());
-                *cursor_clone.borrow_mut() = Some(binary);
-                log::warn!("2");
-                console::log_1(&"3".into());
-            });
-
-            // Probably dumb and very dangerous
-            while cursor_binary.borrow().is_none() {}
-
-            let cursor_rgba = image::load_from_memory(&cursor_binary.borrow().as_ref().unwrap())
-                .unwrap()
-                .to_rgba8()
-                .into_raw();
-            let custom_cursor_source =
-                CustomCursor::from_rgba(cursor_rgba, 122, 120, 7, 7).unwrap();
-            let custom_cursor = event_loop.create_custom_cursor(custom_cursor_source);
+            //     let mut cursor_binary = Rc::new(RefCell::new(None));
+            //     let cursor_clone = Rc::clone(&cursor_binary);
+            //     spawn_local(async move {
+            //         log::warn!("1");
+            //         console::log_1(&"1".into());
+            //         let binary = load_binary("cursor.png").await.unwrap();
+            //         log::warn!("{}", binary.len());
+            //         console::log_1(&"2".into());
+            //         *cursor_clone.borrow_mut() = Some(binary);
+            //         log::warn!("2");
+            //         console::log_1(&"3".into());
+            //     });
+            //
+            //     // Probably dumb and very dangerous
+            //     while cursor_binary.borrow().is_none() {}
+            //
+            //     let cursor_rgba = image::load_from_memory(&cursor_binary.borrow().as_ref().unwrap())
+            //         .unwrap()
+            //         .to_rgba8()
+            //         .into_raw();
+            //     let custom_cursor_source =
+            //         CustomCursor::from_rgba(cursor_rgba, 122, 120, 7, 7).unwrap();
+            //     let custom_cursor = event_loop.create_custom_cursor(custom_cursor_source);
             window_attributes = Window::default_attributes()
                 .with_title("Kloenk!")
                 .with_inner_size(LogicalSize::new(initial_width, initial_height))
-                .with_cursor(custom_cursor);
+            // .with_cursor(custom_cursor);
         }
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
