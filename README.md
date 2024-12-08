@@ -96,7 +96,7 @@ sudo cp ./index.html /usr/share/nginx/html
 Every change:
 ``cargo build --target wasm32-unknown-unknown --target-dir target --bin kloenk_bin``
 ``wasm-bindgen target/wasm32-unknown-unknown/debug/kloenk_bin.wasm --target web --out-dir bg_output --out-name kloenk``
-mv ./bg_output/kloenk_bg.wasm ./bg_output/kloenk.wasm
+``mv ./bg_output/kloenk_bg.wasm ./bg_output/kloenk.wasm``
 sudo cp bg_output/kloenk.wasm /usr/share/nginx/html
 sudo cp bg_output/kloenk.js /usr/share/nginx/html
 
