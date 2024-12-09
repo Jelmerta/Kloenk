@@ -27,12 +27,6 @@ pub struct Sound {
 }
 
 pub struct AudioSystem {
-    // #[cfg(target_arch = "wasm32")]
-    // pub sounds: HashMap<String, Sound>,
-    // #[cfg(target_arch = "wasm32")]
-    // pub audio_player: Rc<RefCell<Option<AudioPlayer>>>,
-    // pub audio_player: Rc<RefCell<Option<AudioPlayer>>>,
-    // #[cfg(not(target_arch = "wasm32"))]
     audio_player: AudioPlayer,
 }
 
@@ -41,26 +35,17 @@ impl AudioSystem {
         let sounds = Self::load_sounds().await;
 
         AudioSystem {
-            // #[cfg(target_arch = "wasm32")]
-            // sounds,
-            // #[cfg(target_arch = "wasm32")]
-            // audio_player: Rc::new(RefCell::new(None)),
-            // #[cfg(not(target_arch = "wasm32"))]
             audio_player: AudioPlayer::new(sounds).await,
         }
     }
 
     #[cfg(target_arch = "wasm32")]
     pub fn play_sound(&mut self, sound: &str) {
-        // let mut audio_player_mut = self.audio_player.borrow_mut();
-        // if let Some(ref mut audio_player) = *audio_player_mut {
         if self.audio_player.is_playing(sound) {
-            log::warn!("playing");
             return;
         }
 
         self.audio_player.play_sound(sound);
-        // }
     }
 
     #[cfg(not(target_arch = "wasm32"))]
