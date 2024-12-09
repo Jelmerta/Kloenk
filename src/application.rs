@@ -359,7 +359,7 @@ impl ApplicationHandler<CustomEvent> for Application {
             } => {
                 engine.input_handler.update(key, state);
 
-                // Loading audio only after user has gestured
+                // Loading audio only after user has gestured on web
                 // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
                 if key_is_gesture(key) {
                     Self::load_audio_player(&self.event_loop_proxy, engine);
@@ -368,7 +368,7 @@ impl ApplicationHandler<CustomEvent> for Application {
             WindowEvent::MouseInput { state, button, .. } => {
                 engine.input_handler.process_mouse_button(button, state);
 
-                // Loading audio only after user has gestured
+                // Loading audio only after user has gestured on web
                 // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
                 Self::load_audio_player(&self.event_loop_proxy, engine);
             }
