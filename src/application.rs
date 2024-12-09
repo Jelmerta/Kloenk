@@ -99,7 +99,6 @@ impl Application {
             // let mut loading_state_mut = engine.audio_loading_state.borrow_mut();
             // match *loading_state_mut {
             let mut new_loading_state = None;
-            log::warn!("{:?}", engine.audio_state);
             match engine.audio_state {
                 AudioState::NotLoaded => {
                     new_loading_state = Some(AudioState::Loading);
@@ -107,7 +106,9 @@ impl Application {
                     // let audio_player = engine.audio_system.audio_player.clone();
                     // let audio_binaries = engine.audio_system.sounds.clone();
                     let event_loop_proxy_clone = event_loop_proxy.clone();
+                    log::warn!("before");
                     spawn_local(async move {
+                        log::warn!("thread");
                         // let mut ref_mut = loading_state_clone.borrow_mut();
                         // let mut audio_player_mut = audio_player.borrow_mut();
                         // *audio_player_mut =
@@ -124,6 +125,7 @@ impl Application {
                             .unwrap_or_else(|_| {
                                 panic!("Failed to send audio state event");
                             });
+                        log::warn!("sent");
                     });
                 }
                 _ => (),
