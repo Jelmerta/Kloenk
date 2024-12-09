@@ -55,7 +55,9 @@ pub struct Engine {
 // On web, AudioSystem is loaded after user has used a gesture. This is to get rid of this warning in Chrome:
 // The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://goo.gl/7K7WLu
 pub enum AudioState {
+    #[cfg(target_arch = "wasm32")]
     NotLoaded,
+    #[cfg(target_arch = "wasm32")]
     Loading,
     Loaded(AudioSystem),
 }
@@ -86,6 +88,7 @@ impl Application {
         }
     }
 
+    #[allow(unused_variables)]
     fn load_audio_player(event_loop_proxy: &EventLoopProxy<CustomEvent>, engine: &mut Engine) {
         #[cfg(target_arch = "wasm32")]
         {
@@ -338,20 +341,20 @@ impl ApplicationHandler<CustomEvent> for Application {
             WindowEvent::CloseRequested
             | WindowEvent::KeyboardInput {
                 event:
-                    KeyEvent {
-                        physical_key: PhysicalKey::Code(winit::keyboard::KeyCode::Escape),
-                        state: ElementState::Pressed,
-                        ..
-                    },
+                KeyEvent {
+                    physical_key: PhysicalKey::Code(winit::keyboard::KeyCode::Escape),
+                    state: ElementState::Pressed,
+                    ..
+                },
                 ..
             } => event_loop.exit(),
             WindowEvent::KeyboardInput {
                 event:
-                    KeyEvent {
-                        physical_key: PhysicalKey::Code(key),
-                        state,
-                        ..
-                    },
+                KeyEvent {
+                    physical_key: PhysicalKey::Code(key),
+                    state,
+                    ..
+                },
                 ..
             } => {
                 engine.input_handler.update(key, state);

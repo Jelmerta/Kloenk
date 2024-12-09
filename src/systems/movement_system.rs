@@ -169,6 +169,7 @@ impl MovementSystem {
             let entity_hitbox = game_state.get_hitbox(&entity.to_string()).unwrap();
 
             if CollisionManager::check_collision(desired_player_hitbox, entity_hitbox) {
+                #[allow(irrefutable_let_patterns)]
                 if let AudioState::Loaded(audio_system) = audio_state {
                     audio_system.play_sound("bonk")
                 } // else audio not loaded
