@@ -39,6 +39,7 @@ use wasm_bindgen_futures::spawn_local;
 use web_sys::console;
 #[cfg(target_arch = "wasm32")]
 use web_sys::js_sys::Math::ceil;
+use winit::keyboard::KeyCode;
 
 pub struct Engine {
     pub renderer: Renderer,
@@ -357,8 +358,10 @@ impl ApplicationHandler<CustomEvent> for Application {
 
                 // Loading audio only after user has gestured
                 // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
+                if key_is_gesture(key) {
                 Self::load_audio_player(&self.event_loop_proxy, engine);
             }
+        }
             WindowEvent::MouseInput { state, button, .. } => {
                 engine.input_handler.process_mouse_button(button, state);
 
@@ -416,5 +419,14 @@ impl ApplicationHandler<CustomEvent> for Application {
             }
             _ => {}
         }
+    }
+}
+
+fn key_is_gesture(key: KeyCode) -> bool {
+    match key {
+        KeyCode::AltLeft | KeyCode::AltRight | KeyCode::ControlLeft | KeyCode::ControlRight | KeyCode::CapsLock | KeyCode::ShiftLeft | KeyCode::ShiftRight | KeyCode::Fn | KeyCode::SuperLeft | KeyCode::SuperRight | KeyCode::Meta | KeyCode::Hyper => {
+            false
+        }
+        _ => true,
     }
 }
