@@ -1,3 +1,7 @@
+#[cfg(not(target_arch = "wasm32"))]
+use std::env;
+#[cfg(not(target_arch = "wasm32"))]
+use std::path::PathBuf;
 use crate::render::model::{ColoredVertex, Mesh, Model, TexVertex, VertexType};
 use crate::render::texture;
 use cfg_if::cfg_if;
