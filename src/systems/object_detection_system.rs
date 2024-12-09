@@ -18,6 +18,7 @@ struct Ray {
 pub struct ObjectDetectionSystem {}
 
 impl ObjectDetectionSystem {
+    // Perhaps data could be kept for next frame to handle
     pub fn setup_detection_for_frame(
         game_state: &mut GameState,
         input: &mut Input,
@@ -67,6 +68,7 @@ impl ObjectDetectionSystem {
             direction_inverted: ray_direction_inverted,
         };
 
+        frame_state.objects_on_cursor = Vec::new(); // Statement only needed as long as we run this method twice per frame
         for (entity, hitbox) in game_state.hitbox_components.iter() {
             if Self::intersection(&ray, hitbox) {
                 frame_state.add_object(entity.clone());

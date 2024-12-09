@@ -26,8 +26,7 @@ impl GameSystem {
         frame_state: &mut FrameState,
         audio_system: &mut AudioSystem,
     ) {
-        *frame_state = FrameState::new();
-        ObjectDetectionSystem::setup_detection_for_frame(game_state, input, frame_state);
+        *frame_state = FrameState::new_frame(frame_state);
 
         InventorySystem::display_inventory_item_menu(game_state, ui_state, input, frame_state);
         ObjectSelectionSystem::handle_object_selection(game_state, ui_state, input, frame_state);
@@ -40,12 +39,13 @@ impl GameSystem {
 
         MovementSystem::resolve_movement(game_state, input, audio_system);
 
+        // Visual stuff (pre-render)
+        CameraSystem::update_camera(window, game_state, input);
+        ObjectDetectionSystem::setup_detection_for_frame(game_state, input, frame_state);
         CommandHandleSystem::handle_action_requests(game_state, frame_state);
         CommandHandleSystem::handle_action_effects(ui_state, frame_state);
         frame_state.gui.add_text_render_commands(ui_state);
 
-        // Visual stuff (pre-render)
-        CameraSystem::update_camera(window, game_state, input);
         HealthSystem::display_health(game_state, input, frame_state);
 
         input.update_end_frame();
