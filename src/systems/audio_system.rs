@@ -27,11 +27,12 @@ pub struct Sound {
 }
 
 pub struct AudioSystem {
-    #[cfg(target_arch = "wasm32")]
-    pub sounds: HashMap<String, Sound>,
-    #[cfg(target_arch = "wasm32")]
-    pub audio_player: Rc<RefCell<Option<AudioPlayer>>>,
-    #[cfg(not(target_arch = "wasm32"))]
+    // #[cfg(target_arch = "wasm32")]
+    // pub sounds: HashMap<String, Sound>,
+    // #[cfg(target_arch = "wasm32")]
+    // pub audio_player: Rc<RefCell<Option<AudioPlayer>>>,
+    // pub audio_player: Rc<RefCell<Option<AudioPlayer>>>,
+    // #[cfg(not(target_arch = "wasm32"))]
     audio_player: AudioPlayer,
 }
 
@@ -40,11 +41,11 @@ impl AudioSystem {
         let sounds = Self::load_sounds().await;
 
         AudioSystem {
-            #[cfg(target_arch = "wasm32")]
-            sounds,
-            #[cfg(target_arch = "wasm32")]
-            audio_player: Rc::new(RefCell::new(None)),
-            #[cfg(not(target_arch = "wasm32"))]
+            // #[cfg(target_arch = "wasm32")]
+            // sounds,
+            // #[cfg(target_arch = "wasm32")]
+            // audio_player: Rc::new(RefCell::new(None)),
+            // #[cfg(not(target_arch = "wasm32"))]
             audio_player: AudioPlayer::new(sounds),
         }
     }
@@ -132,6 +133,7 @@ impl AudioPlayer {
 }
 
 #[cfg(target_arch = "wasm32")]
+#[derive(Clone)]
 struct AudioResource {
     audio_context: AudioContext,
     audio_buffer: AudioBuffer,
@@ -140,6 +142,7 @@ struct AudioResource {
 
 // Was unable to get cpal/rodio working on wasm as no devices are returned from default device. Instead going for a web-sys implementation
 #[cfg(target_arch = "wasm32")]
+#[derive(Clone)]
 pub struct AudioPlayer {
     audio_resources: HashMap<String, AudioResource>,
 }
@@ -152,14 +155,14 @@ impl AudioPlayer {
             .is_some_and(|sound| *sound.is_playing.borrow())
     }
 
-    pub async fn build_audio_player(sounds: &HashMap<String, Sound>) -> AudioPlayer {
+    pub async fn new(sounds: HashMap<String, Sound>) -> AudioPlayer {
         AudioPlayer {
             audio_resources: Self::build_audio_resources(sounds).await,
         }
     }
 
     async fn build_audio_resources(
-        sounds: &HashMap<String, Sound>,
+        sounds: HashMap<String, Sound>,
     ) -> HashMap<String, AudioResource> {
         let mut audio_resources = HashMap::new();
 

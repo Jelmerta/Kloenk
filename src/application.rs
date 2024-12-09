@@ -25,9 +25,6 @@ use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Cursor, CustomCursor, Fullscreen, Icon, Window, WindowId};
 
-#[cfg(target_arch = "wasm32")]
-use crate::systems::audio_system::AudioPlayer;
-use crate::systems::audio_system::AudioSystem;
 
 use crate::cursor_manager::CursorManager;
 use crate::render::render::Renderer;
@@ -42,6 +39,7 @@ use wasm_bindgen_futures::spawn_local;
 use web_sys::console;
 #[cfg(target_arch = "wasm32")]
 use web_sys::js_sys::Math::ceil;
+use crate::systems::audio_system::AudioSystem;
 
 pub struct Engine {
     pub renderer: Renderer,
@@ -52,16 +50,17 @@ pub struct Engine {
     pub window: Arc<Window>,
     // AudioSystem is loaded after user has used a gesture. This is to get rid of this warning in Chrome:
     // The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://goo.gl/7K7WLu
-    #[cfg(target_arch = "wasm32")]
-    pub audio_loading_state: Rc<RefCell<AudioState>>,
-    pub audio_system: AudioSystem,
+    // #[cfg(target_arch = "wasm32")]
+    // pub audio_loading_state: Rc<RefCell<AudioState>>,
+    pub audio_state: AudioState,
+    // pub audio_system: AudioSystem,
 }
 
-#[cfg(target_arch = "wasm32")]
+// #[cfg(target_arch = "wasm32")]
 pub enum AudioState {
     NotLoaded,
     Loading,
-    Loaded,
+    Loaded(AudioSystem),
 }
 
 impl Engine {
@@ -73,7 +72,11 @@ impl Engine {
 pub enum CustomEvent {
     StateInitializationEvent(Engine),
     #[allow(dead_code)]
+    #[cfg(target_arch = "wasm32")]
     WebResizedEvent, // Only sent on web when window gets resized. Resized event only seems to send event on dpi change (browser zoom or system scale ratio) which is insufficient
+    #[allow(dead_code)]
+    #[cfg(target_arch = "wasm32")]
+    AudioStateChanged(AudioState), // TODO Maybe AudioStateChanged? can also unplug audio
 }
 pub struct Application {
     application_state: State,
@@ -89,25 +92,42 @@ impl Application {
     }
 
     #[allow(unused_variables)]
-    fn load_audio_player(engine: &mut Engine) {
+    fn load_audio_player(event_loop_proxy: &EventLoopProxy<CustomEvent>, engine: &mut Engine) {
         #[cfg(target_arch = "wasm32")]
         {
-            let loading_state_clone = engine.audio_loading_state.clone();
-            let mut loading_state_mut = engine.audio_loading_state.borrow_mut();
-            match *loading_state_mut {
+            // if engine.audio_loading_state.
+            // let loading_state_clone = engine.audio_loading_state.clone();
+            // let mut loading_state_mut = engine.audio_loading_state.borrow_mut();
+            // match *loading_state_mut {
+            let mut new_loading_state = None;
+            match engine.audio_state {
                 AudioState::NotLoaded => {
-                    *loading_state_mut = AudioState::Loading;
-                    let audio_player = engine.audio_system.audio_player.clone();
-                    let audio_binaries = engine.audio_system.sounds.clone();
+                    new_loading_state = Some(AudioState::Loading);
+                    // *loading_state_mut = AudioState::Loading;
+                    // let audio_player = engine.audio_system.audio_player.clone();
+                    // let audio_binaries = engine.audio_system.sounds.clone();
                     spawn_local(async move {
-                        let mut ref_mut = loading_state_clone.borrow_mut();
-                        let mut audio_player_mut = audio_player.borrow_mut();
-                        *audio_player_mut =
-                            Some(AudioPlayer::build_audio_player(&audio_binaries).await);
-                        *ref_mut = AudioState::Loaded;
+                        // let mut ref_mut = loading_state_clone.borrow_mut();
+                        // let mut audio_player_mut = audio_player.borrow_mut();
+                        // *audio_player_mut =
+                        //     Some();
+
+                        // let audio_player = AudioPlayer::new(&audio_binaries).await;
+                        // *ref_mut = AudioState::Loaded;
+                        let audio_system = AudioSystem::new().await;
+
+                        let event_loop_proxy = event_loop_proxy.clone();
+                        event_loop_proxy
+                            .send_event(CustomEvent::AudioStateChanged(AudioState::Loaded(audio_system)))
+                            .unwrap_or_else(|_| {
+                                panic!("Failed to send audio state event");
+                            });
                     });
                 }
                 _ => (),
+            }
+            if new_loading_state.is_some() {
+                engine.audio_state = new_loading_state.unwrap();
             }
         }
     }
@@ -230,12 +250,12 @@ impl ApplicationHandler<CustomEvent> for Application {
         {
             let event_loop_proxy = self.event_loop_proxy.clone();
 
-            let audio_future = AudioSystem::new();
+            // let audio_future = AudioSystem::new();
 
             spawn_local(async move {
                 let renderer = renderer_future.await;
 
-                let audio_system = audio_future.await;
+                // let audio_system = audio_future.await;
 
                 let cursor = CursorManager::load_cursor_future().await;
 
@@ -245,8 +265,9 @@ impl ApplicationHandler<CustomEvent> for Application {
                     ui_state: UIState::new(cursor),
                     input_handler: Input::new(),
                     frame_state: FrameState::new(),
-                    audio_loading_state: Rc::new(RefCell::new(AudioState::NotLoaded)),
-                    audio_system,
+                    // audio_loading_state: Rc::new(RefCell::new(AudioState::NotLoaded)),
+                    audio_state: AudioState::NotLoaded,
+                    // audio_system,
                     window,
                 };
 
@@ -272,7 +293,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 input_handler: Input::new(),
                 frame_state: FrameState::new(),
                 window,
-                audio_system,
+                audio_state: AudioState::Loaded(audio_system),
             };
 
             self.event_loop_proxy
@@ -294,8 +315,8 @@ impl ApplicationHandler<CustomEvent> for Application {
                 engine.window.request_redraw();
                 self.application_state = State::Initialized(engine);
             }
+            #[cfg(target_arch = "wasm32")]
             CustomEvent::WebResizedEvent => {
-                #[cfg(target_arch = "wasm32")]
                 {
                     let State::Initialized(ref mut engine) = self.application_state else {
                         return;
@@ -312,6 +333,16 @@ impl ApplicationHandler<CustomEvent> for Application {
 
                     let physical_size = logical_size.to_physical(web_window.device_pixel_ratio());
                     engine.renderer.resize(physical_size);
+                }
+            }
+            #[cfg(target_arch = "wasm32")]
+            CustomEvent::AudioStateChanged(audio_state) => {
+                match self.application_state {
+                    State::Uninitialized => {panic!("Expected application to be loaded")}
+                    State::Initializing => { panic!("Expected application to be loaded")}
+                    State::Initialized(ref mut engine) => {
+                        engine.audio_state = audio_state;
+                    }
                 }
             }
         }
@@ -352,14 +383,15 @@ impl ApplicationHandler<CustomEvent> for Application {
 
                 // Loading audio only after user has gestured
                 // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
-                Self::load_audio_player(engine);
+                Self::load_audio_player(&self.event_loop_proxy, engine);
             }
             WindowEvent::MouseInput { state, button, .. } => {
+                log::warn!("{:?} {:?}", state, button);
                 engine.input_handler.process_mouse_button(button, state);
 
                 // Loading audio only after user has gestured
                 // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
-                Self::load_audio_player(engine);
+                Self::load_audio_player(&self.event_loop_proxy, engine);
             }
             WindowEvent::CursorMoved { position, .. } => {
                 engine.input_handler.process_mouse_movement(
@@ -387,7 +419,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                     &mut engine.ui_state,
                     &mut engine.input_handler,
                     &mut engine.frame_state,
-                    &mut engine.audio_system,
+                    &mut engine.audio_state,
                 );
 
                 match engine.renderer.render(

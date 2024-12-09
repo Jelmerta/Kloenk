@@ -2,7 +2,6 @@ use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
 use crate::state::ui_state::UIState;
-use crate::systems::audio_system::AudioSystem;
 use crate::systems::camera_system::CameraSystem;
 use crate::systems::close_menu_system::CloseMenuSystem;
 use crate::systems::command_handle_system::CommandHandleSystem;
@@ -14,6 +13,7 @@ use crate::systems::object_detection_system::ObjectDetectionSystem;
 use crate::systems::object_selection_system::ObjectSelectionSystem;
 use std::sync::Arc;
 use winit::window::Window;
+use crate::application::AudioState;
 
 pub struct GameSystem {}
 
@@ -24,7 +24,7 @@ impl GameSystem {
         ui_state: &mut UIState,
         input: &mut Input,
         frame_state: &mut FrameState,
-        audio_system: &mut AudioSystem,
+        audio_state: &mut AudioState,
     ) {
         *frame_state = FrameState::new_frame(frame_state);
 
@@ -37,7 +37,7 @@ impl GameSystem {
         ItemPickupSystem::handle_item_pickup_keyboard(game_state, input, frame_state);
         ItemPickupSystem::handle_item_pickup_mouse(game_state, input, frame_state);
 
-        MovementSystem::resolve_movement(game_state, input, audio_system);
+        MovementSystem::resolve_movement(game_state, input, audio_state);
 
         // Visual stuff (pre-render)
         CameraSystem::update_camera(window, game_state, input);

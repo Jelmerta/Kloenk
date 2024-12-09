@@ -1,9 +1,9 @@
 use crate::state::components::{Entity, Hitbox};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
-use crate::systems::audio_system::AudioSystem;
 use crate::systems::collision_manager::CollisionManager;
 use cgmath::{ElementWise, Point3};
+use crate::application::AudioState;
 
 pub const BASE_SPEED: f32 = 0.01;
 
@@ -13,7 +13,7 @@ impl MovementSystem {
     pub fn resolve_movement(
         game_state: &mut GameState,
         input: &Input,
-        audio_system: &mut AudioSystem,
+        audio_state: &mut AudioState,
     ) {
         let mut movement_speed: f32 = BASE_SPEED;
         if input.left_shift_pressed.is_pressed {
@@ -41,7 +41,7 @@ impl MovementSystem {
                 )),
             };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(&desired_player_hitbox, game_state, audio_system)
+                && !Self::is_colliding(&desired_player_hitbox, game_state, audio_state)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
@@ -70,7 +70,7 @@ impl MovementSystem {
                 )),
             };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(&desired_player_hitbox, game_state, audio_system)
+                && !Self::is_colliding(&desired_player_hitbox, game_state, audio_state)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
@@ -99,7 +99,7 @@ impl MovementSystem {
                 )),
             };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(&desired_player_hitbox, game_state, audio_system)
+                && !Self::is_colliding(&desired_player_hitbox, game_state, audio_state)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
@@ -128,7 +128,7 @@ impl MovementSystem {
                 )),
             };
             if Self::is_walkable(game_state, &desired_position)
-                && !Self::is_colliding(&desired_player_hitbox, game_state, audio_system)
+                && !Self::is_colliding(&desired_player_hitbox, game_state, audio_state)
             {
                 let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
                 *player_position = desired_position;
@@ -153,7 +153,7 @@ impl MovementSystem {
     fn is_colliding(
         desired_player_hitbox: &Hitbox,
         game_state: &GameState,
-        audio_system: &mut AudioSystem,
+        audio_state: &mut AudioState,
     ) -> bool {
         let interactable_entities: Vec<&Entity> = game_state
             .entities
@@ -169,7 +169,9 @@ impl MovementSystem {
             let entity_hitbox = game_state.get_hitbox(&entity.to_string()).unwrap();
 
             if CollisionManager::check_collision(desired_player_hitbox, entity_hitbox) {
-                audio_system.play_sound("bonk");
+                if let AudioState::Loaded(audio_system) = audio_state {
+                    audio_system.play_sound("bonk")
+                } // else audio not loaded
 
                 return true;
             }
