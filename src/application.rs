@@ -25,7 +25,6 @@ use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Cursor, CustomCursor, Fullscreen, Icon, Window, WindowId};
 
-
 use crate::cursor_manager::CursorManager;
 use crate::render::render::Renderer;
 use crate::resources::load_binary;
@@ -118,7 +117,9 @@ impl Application {
 
                         let event_loop_proxy = event_loop_proxy.clone();
                         event_loop_proxy
-                            .send_event(CustomEvent::AudioStateChanged(AudioState::Loaded(audio_system)))
+                            .send_event(CustomEvent::AudioStateChanged(AudioState::Loaded(
+                                audio_system,
+                            )))
                             .unwrap_or_else(|_| {
                                 panic!("Failed to send audio state event");
                             });
@@ -317,34 +318,34 @@ impl ApplicationHandler<CustomEvent> for Application {
             }
             #[cfg(target_arch = "wasm32")]
             CustomEvent::WebResizedEvent => {
-                {
-                    let State::Initialized(ref mut engine) = self.application_state else {
-                        return;
-                    };
+                let State::Initialized(ref mut engine) = self.application_state else {
+                    return;
+                };
 
-                    let web_window = web_sys::window().expect("Window should exist");
-                    let viewport = &web_window
-                        .visual_viewport()
-                        .expect("Visual viewport should exist");
-                    let viewport_width = viewport.width();
-                    let viewport_height = viewport.height();
-                    let logical_size = LogicalSize::new(viewport_width, viewport_height);
-                    let _ = engine.window.request_inner_size(logical_size);
+                let web_window = web_sys::window().expect("Window should exist");
+                let viewport = &web_window
+                    .visual_viewport()
+                    .expect("Visual viewport should exist");
+                let viewport_width = viewport.width();
+                let viewport_height = viewport.height();
+                let logical_size = LogicalSize::new(viewport_width, viewport_height);
+                let _ = engine.window.request_inner_size(logical_size);
 
-                    let physical_size = logical_size.to_physical(web_window.device_pixel_ratio());
-                    engine.renderer.resize(physical_size);
-                }
+                let physical_size = logical_size.to_physical(web_window.device_pixel_ratio());
+                engine.renderer.resize(physical_size);
             }
             #[cfg(target_arch = "wasm32")]
-            CustomEvent::AudioStateChanged(audio_state) => {
-                match self.application_state {
-                    State::Uninitialized => { panic!("Expected application to be loaded") }
-                    State::Initializing => { panic!("Expected application to be loaded") }
-                    State::Initialized(ref mut engine) => {
-                        engine.audio_state = audio_state;
-                    }
+            CustomEvent::AudioStateChanged(audio_state) => match self.application_state {
+                State::Uninitialized => {
+                    panic!("Expected application to be loaded")
                 }
-            }
+                State::Initializing => {
+                    panic!("Expected application to be loaded")
+                }
+                State::Initialized(ref mut engine) => {
+                    engine.audio_state = audio_state;
+                }
+            },
         }
     }
 
@@ -363,20 +364,20 @@ impl ApplicationHandler<CustomEvent> for Application {
             WindowEvent::CloseRequested
             | WindowEvent::KeyboardInput {
                 event:
-                KeyEvent {
-                    physical_key: PhysicalKey::Code(winit::keyboard::KeyCode::Escape),
-                    state: ElementState::Pressed,
-                    ..
-                },
+                    KeyEvent {
+                        physical_key: PhysicalKey::Code(winit::keyboard::KeyCode::Escape),
+                        state: ElementState::Pressed,
+                        ..
+                    },
                 ..
             } => event_loop.exit(),
             WindowEvent::KeyboardInput {
                 event:
-                KeyEvent {
-                    physical_key: PhysicalKey::Code(key),
-                    state,
-                    ..
-                },
+                    KeyEvent {
+                        physical_key: PhysicalKey::Code(key),
+                        state,
+                        ..
+                    },
                 ..
             } => {
                 engine.input_handler.update(key, state);

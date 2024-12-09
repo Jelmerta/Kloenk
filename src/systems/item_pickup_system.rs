@@ -130,8 +130,8 @@ impl PositionManager {
                     positions.get(entity).unwrap(),
                     positions.get(e.as_str()).unwrap(),
                 )
-                    .round()
-                    .to_u32()
+                .round()
+                .to_u32()
             })
             .cloned()
     }

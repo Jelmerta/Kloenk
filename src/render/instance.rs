@@ -12,7 +12,7 @@ impl InstanceRaw {
             model: (cgmath::Matrix4::from_translation(instance.position)
                 * instance.scale
                 * cgmath::Matrix4::from(instance.rotation))
-                .into(),
+            .into(),
         }
     }
 

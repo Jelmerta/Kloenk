@@ -179,10 +179,10 @@ impl Input {
     pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
         self.scrolled_amount = match delta {
             MouseScrollDelta::PixelDelta(PhysicalPosition {
-                                             // Used by WASM
-                                             y: scroll,
-                                             ..
-                                         }) => *scroll as f32,
+                // Used by WASM
+                y: scroll,
+                ..
+            }) => *scroll as f32,
             MouseScrollDelta::LineDelta(_, scroll) => *scroll * 100.0, // Used by standalone client
         };
     }
