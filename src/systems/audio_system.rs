@@ -59,7 +59,7 @@ impl AudioSystem {
             return;
         }
 
-        audio_player.play_sound(sound);
+        self.audio_player.play_sound(sound);
         // }
     }
 
