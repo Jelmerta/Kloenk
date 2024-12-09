@@ -55,6 +55,7 @@ impl AudioSystem {
         // let mut audio_player_mut = self.audio_player.borrow_mut();
         // if let Some(ref mut audio_player) = *audio_player_mut {
         if self.audio_player.is_playing(sound) {
+            log::warn!("playing");
             return;
         }
 
