@@ -1,9 +1,9 @@
+use crate::application::AudioState;
 use crate::state::components::{Entity, Hitbox};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
 use crate::systems::collision_manager::CollisionManager;
 use cgmath::{ElementWise, Point3};
-use crate::application::AudioState;
 
 pub const BASE_SPEED: f32 = 0.01;
 

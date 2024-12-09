@@ -1,3 +1,4 @@
+use crate::application::AudioState;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
@@ -13,7 +14,6 @@ use crate::systems::object_detection_system::ObjectDetectionSystem;
 use crate::systems::object_selection_system::ObjectSelectionSystem;
 use std::sync::Arc;
 use winit::window::Window;
-use crate::application::AudioState;
 
 pub struct GameSystem {}
 

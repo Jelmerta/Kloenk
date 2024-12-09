@@ -4,8 +4,6 @@ use cfg_if::cfg_if;
 use cgmath::Vector3;
 use gltf::mesh::util::ReadIndices;
 use gltf::Gltf;
-use std::env;
-use std::path::PathBuf;
 use wgpu::util::DeviceExt;
 use wgpu::Device;
 
@@ -296,7 +294,7 @@ fn format_url(file_name: &str) -> reqwest::Url {
     let window = web_sys::window().unwrap();
     let location = window.location();
     let origin = location.origin().unwrap();
-    let base = reqwest::Url::parse(&format!("{origin}/",)).unwrap();
+    let base = reqwest::Url::parse(&format!("{origin}/", )).unwrap();
     base.join("assets/").unwrap().join(file_name).unwrap()
 }
 

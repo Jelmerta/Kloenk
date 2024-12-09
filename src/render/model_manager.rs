@@ -39,7 +39,7 @@ impl ModelManager {
             device,
             Vector3::new(0.46875, 0.0234375, 0.0234375),
         )
-        .unwrap();
+            .unwrap();
         mesh_map.insert(
             "blood_red".to_string(),
             blood_red.meshes.into_iter().next().unwrap(),

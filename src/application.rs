@@ -32,6 +32,7 @@ use crate::resources::load_binary;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::UIState;
+use crate::systems::audio_system::AudioSystem;
 use crate::systems::game_system::GameSystem;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::spawn_local;
@@ -39,7 +40,6 @@ use wasm_bindgen_futures::spawn_local;
 use web_sys::console;
 #[cfg(target_arch = "wasm32")]
 use web_sys::js_sys::Math::ceil;
-use crate::systems::audio_system::AudioSystem;
 
 pub struct Engine {
     pub renderer: Renderer,
@@ -338,8 +338,8 @@ impl ApplicationHandler<CustomEvent> for Application {
             #[cfg(target_arch = "wasm32")]
             CustomEvent::AudioStateChanged(audio_state) => {
                 match self.application_state {
-                    State::Uninitialized => {panic!("Expected application to be loaded")}
-                    State::Initializing => { panic!("Expected application to be loaded")}
+                    State::Uninitialized => { panic!("Expected application to be loaded") }
+                    State::Initializing => { panic!("Expected application to be loaded") }
                     State::Initialized(ref mut engine) => {
                         engine.audio_state = audio_state;
                     }
@@ -363,20 +363,20 @@ impl ApplicationHandler<CustomEvent> for Application {
             WindowEvent::CloseRequested
             | WindowEvent::KeyboardInput {
                 event:
-                    KeyEvent {
-                        physical_key: PhysicalKey::Code(winit::keyboard::KeyCode::Escape),
-                        state: ElementState::Pressed,
-                        ..
-                    },
+                KeyEvent {
+                    physical_key: PhysicalKey::Code(winit::keyboard::KeyCode::Escape),
+                    state: ElementState::Pressed,
+                    ..
+                },
                 ..
             } => event_loop.exit(),
             WindowEvent::KeyboardInput {
                 event:
-                    KeyEvent {
-                        physical_key: PhysicalKey::Code(key),
-                        state,
-                        ..
-                    },
+                KeyEvent {
+                    physical_key: PhysicalKey::Code(key),
+                    state,
+                    ..
+                },
                 ..
             } => {
                 engine.input_handler.update(key, state);

@@ -5,7 +5,13 @@ pub trait Vertex {
 }
 
 #[repr(C)] // Not sure what this effectively does here
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)] // Read up more about bytemuck, to cast our VERTICES as a &[u8]
+#[derive(
+    Copy,
+    Clone,
+    Debug,
+    bytemuck::Pod,
+    bytemuck::Zeroable
+)] // Read up more about bytemuck, to cast our VERTICES as a &[u8]
 pub struct ColoredVertex {
     pub position: [f32; 3],
     pub color: [f32; 3],
