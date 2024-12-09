@@ -346,7 +346,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                     panic!("Expected application to be loaded")
                 }
                 State::Initialized(ref mut engine) => {
-                    log::warn!("event {:?}", audio_state);
+                    log::warn!("event");
                     engine.audio_state = audio_state;
                 }
             },
