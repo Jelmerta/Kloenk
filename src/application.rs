@@ -105,6 +105,7 @@ impl Application {
                     // *loading_state_mut = AudioState::Loading;
                     // let audio_player = engine.audio_system.audio_player.clone();
                     // let audio_binaries = engine.audio_system.sounds.clone();
+                    let event_loop_proxy_clone = event_loop_proxy.clone();
                     spawn_local(async move {
                         // let mut ref_mut = loading_state_clone.borrow_mut();
                         // let mut audio_player_mut = audio_player.borrow_mut();
@@ -115,8 +116,7 @@ impl Application {
                         // *ref_mut = AudioState::Loaded;
                         let audio_system = AudioSystem::new().await;
 
-                        let event_loop_proxy = event_loop_proxy.clone();
-                        event_loop_proxy
+                        event_loop_proxy_clone
                             .send_event(CustomEvent::AudioStateChanged(AudioState::Loaded(
                                 audio_system,
                             )))
