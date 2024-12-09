@@ -46,20 +46,20 @@ impl AudioSystem {
             // #[cfg(target_arch = "wasm32")]
             // audio_player: Rc::new(RefCell::new(None)),
             // #[cfg(not(target_arch = "wasm32"))]
-            audio_player: AudioPlayer::new(sounds),
+            audio_player: AudioPlayer::new(sounds).await,
         }
     }
 
     #[cfg(target_arch = "wasm32")]
     pub fn play_sound(&mut self, sound: &str) {
-        let mut audio_player_mut = self.audio_player.borrow_mut();
-        if let Some(ref mut audio_player) = *audio_player_mut {
-            if audio_player.is_playing(sound) {
+        // let mut audio_player_mut = self.audio_player.borrow_mut();
+        // if let Some(ref mut audio_player) = *audio_player_mut {
+            if self.audio_player.is_playing(sound) {
                 return;
             }
 
-            audio_player.play_sound(sound);
-        }
+            // audio_player.play_sound(sound);
+        // }
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -98,7 +98,7 @@ struct AudioPlayer {
 }
 #[cfg(not(target_arch = "wasm32"))]
 impl AudioPlayer {
-    pub fn new(sounds: HashMap<String, Sound>) -> Self {
+    pub async fn new(sounds: HashMap<String, Sound>) -> Self {
         let mut audio_streams = HashMap::new();
         for (sound_name, sound) in sounds {
             let (stream, handle) = OutputStream::try_default().unwrap();
