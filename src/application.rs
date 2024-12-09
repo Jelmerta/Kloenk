@@ -99,6 +99,7 @@ impl Application {
             // let mut loading_state_mut = engine.audio_loading_state.borrow_mut();
             // match *loading_state_mut {
             let mut new_loading_state = None;
+            log::warn!("{:?}", engine.audio_state);
             match engine.audio_state {
                 AudioState::NotLoaded => {
                     new_loading_state = Some(AudioState::Loading);
@@ -343,6 +344,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                     panic!("Expected application to be loaded")
                 }
                 State::Initialized(ref mut engine) => {
+                    log::warn!("event {:?}", audio_state);
                     engine.audio_state = audio_state;
                 }
             },
