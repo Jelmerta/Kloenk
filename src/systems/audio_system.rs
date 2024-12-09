@@ -54,11 +54,11 @@ impl AudioSystem {
     pub fn play_sound(&mut self, sound: &str) {
         // let mut audio_player_mut = self.audio_player.borrow_mut();
         // if let Some(ref mut audio_player) = *audio_player_mut {
-            if self.audio_player.is_playing(sound) {
-                return;
-            }
+        if self.audio_player.is_playing(sound) {
+            return;
+        }
 
-            // audio_player.play_sound(sound);
+        // audio_player.play_sound(sound);
         // }
     }
 
