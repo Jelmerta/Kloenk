@@ -2,7 +2,7 @@ use crate::state::components::{Entity, Hitbox};
 use crate::state::frame_state::{ActionEffect, FrameState};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
-use crate::systems::utility::distance_3d;
+use crate::systems::position_manager::PositionManager;
 use cgmath::num_traits::Float;
 use cgmath::{InnerSpace, Point3, Vector3, Vector4};
 use itertools::Itertools;
@@ -89,7 +89,7 @@ impl ObjectDetectionSystem {
             .filter(|entity| !(*entity).eq(&"player".to_string()))
             .map(|entity| {
                 let object_position = game_state.get_position(entity).unwrap();
-                let distance = distance_3d(object_position, player_position);
+                let distance = PositionManager::distance_3d(object_position, player_position);
                 (entity, distance)
             })
             .sorted_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap())

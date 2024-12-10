@@ -1,10 +1,7 @@
 use cgmath::num_traits::ToPrimitive;
 
 use crate::render::camera::Camera;
-use crate::state::components::{
-    CameraTarget, Description, Entity, Graphics2D, Graphics3D, Health, Hitbox, InStorage,
-    ItemShape, Size, Storable, Storage,
-};
+use crate::state::components::{CameraTarget, Description, Dialogue, Entity, Graphics2D, Graphics3D, Health, Hitbox, InStorage, ItemShape, Size, Storable, Storage};
 use cgmath::{ElementWise, Point3};
 use std::collections::{HashMap, HashSet};
 
@@ -25,6 +22,7 @@ pub struct GameState {
     pub storage_components: HashMap<Entity, Storage>,
     pub in_storage_components: HashMap<Entity, InStorage>,
     pub description_components: HashMap<Entity, Description>,
+    pub dialogue_components: HashMap<Entity, Dialogue>,
 }
 
 impl GameState {}
@@ -45,6 +43,7 @@ impl GameState {
         let mut storage_components = HashMap::new();
         let in_storage_components = HashMap::new();
         let mut description_components = HashMap::new();
+        let mut dialogue_components = HashMap::new();
 
         Self::load_player(
             &mut entities,
@@ -55,6 +54,14 @@ impl GameState {
             &mut camera_target_components,
             &mut storage_components,
             &mut description_components,
+        );
+        Self::load_npc(
+            &mut entities,
+            &mut graphics_3d_components,
+            &mut position_components,
+            &mut hitbox_components,
+            &mut description_components,
+            &mut dialogue_components,
         );
         Self::load_camera(&mut entities, &mut camera_components);
         Self::load_camera_ui(&mut entities, &mut camera_components);
@@ -108,6 +115,7 @@ impl GameState {
             storage_components,
             in_storage_components,
             description_components,
+            dialogue_components,
         }
     }
 
@@ -362,6 +370,49 @@ impl GameState {
                 text: "That's you!".to_string(),
             },
         );
+    }
+
+    fn load_npc(
+        entities: &mut Vec<Entity>,
+        graphics_3d_components: &mut HashMap<Entity, Graphics3D>,
+        position_components: &mut HashMap<Entity, Point3<f32>>,
+        hitbox_components: &mut HashMap<Entity, Hitbox>,
+        description_components: &mut HashMap<String, Description>,
+        dialogue_components: &mut HashMap<String, Dialogue>,
+    ) {
+        let npc = "Dennis".to_string();
+        entities.push(npc.clone());
+
+        let player_graphics = Graphics3D {
+            mesh_id: "gozer".to_string(),
+        };
+        graphics_3d_components.insert(npc.clone(), player_graphics);
+
+        let player_position = Point3 {
+            x: -3.0,
+            y: 0.5,
+            z: 2.0,
+        };
+        position_components.insert(npc.clone(), player_position);
+
+        let npc_hitbox_min = player_position.sub_element_wise(Point3::new(0.1, 0.0, 0.1));
+        let npc_hitbox_max = player_position.add_element_wise(Point3::new(0.1, 1.8, 0.1));
+        let npc_hitbox = Hitbox {
+            box_corner_min: npc_hitbox_min,
+            box_corner_max: npc_hitbox_max,
+        };
+        hitbox_components.insert(npc.clone(), npc_hitbox);
+
+        description_components.insert(
+            npc.clone(),
+            Description {
+                text: "Dennis is a menace.".to_string(),
+            },
+        );
+
+        dialogue_components.insert(npc.clone(), Dialogue {
+            dialogue_id: "dennis_intro".to_string(),
+        });
     }
 
     fn load_camera(entities: &mut Vec<Entity>, camera_components: &mut HashMap<String, Camera>) {

@@ -6,6 +6,7 @@ use crate::state::ui_state::UIState;
 use crate::systems::camera_system::CameraSystem;
 use crate::systems::close_menu_system::CloseMenuSystem;
 use crate::systems::command_handle_system::CommandHandleSystem;
+use crate::systems::dialogue_system::DialogueSystem;
 use crate::systems::health_system::HealthSystem;
 use crate::systems::inventory_system::InventorySystem;
 use crate::systems::item_pickup_system::ItemPickupSystem;
@@ -36,6 +37,8 @@ impl GameSystem {
 
         ItemPickupSystem::handle_item_pickup_keyboard(game_state, input, frame_state);
         ItemPickupSystem::handle_item_pickup_mouse(game_state, input, frame_state);
+
+        DialogueSystem::handle_talking_keyboard(game_state, input, frame_state);
 
         MovementSystem::resolve_movement(game_state, input, audio_state);
 

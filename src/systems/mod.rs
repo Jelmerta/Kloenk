@@ -13,3 +13,6 @@ pub mod object_detection_system;
 mod object_selection_system;
 mod storage_manager;
 mod utility;
+mod dialogue_manager;
+mod dialogue_system;
+mod position_manager;

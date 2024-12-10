@@ -57,3 +57,7 @@ pub struct Size {
 pub struct Description {
     pub text: String,
 }
+
+pub struct Dialogue {
+    pub dialogue_id: String,
+}

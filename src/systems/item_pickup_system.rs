@@ -1,11 +1,9 @@
-use crate::state::components::{Entity, Storable};
+use crate::state::components::Entity;
 use crate::state::frame_state::{ActionEffect, FrameState};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
+use crate::systems::position_manager::PositionManager;
 use crate::systems::storage_manager::StorageManager;
-use cgmath::num_traits::ToPrimitive;
-use cgmath::Point3;
-use std::collections::HashMap;
 
 pub const ITEM_PICKUP_RANGE: f32 = 1.5;
 
@@ -30,11 +28,12 @@ impl ItemPickupSystem {
             if near_pickup.is_none() {
                 frame_state
                     .action_effects
-                    .push(ActionEffect::PickupNoItemInRange);
+                    .push(ActionEffect::PickupNoItemInRange);  // Might not want to show this, just ignore cause there may be other actions to handle
                 return;
             }
-            Self::item_pickup(game_state, frame_state, near_pickup.unwrap());
-            frame_state.handled_e_click = true;
+            if Self::item_pickup(game_state, frame_state, near_pickup.unwrap()) {
+                frame_state.handled_e_click = true;
+            }
         }
     }
 
@@ -57,11 +56,12 @@ impl ItemPickupSystem {
         }
     }
 
+    // TODO want more errors for mouse less for keyboard
     pub fn item_pickup(
         game_state: &mut GameState,
         frame_state: &mut FrameState,
         near_pickup: Entity,
-    ) {
+    ) -> bool {
         let player = "player".to_string();
 
         let pickup = game_state.storable_components.get(&near_pickup);
@@ -69,7 +69,7 @@ impl ItemPickupSystem {
             frame_state
                 .action_effects
                 .push(ActionEffect::PickupItemNotStorable);
-            return;
+            return false;
         }
 
         let item_position = game_state.get_position(&near_pickup.clone());
@@ -77,17 +77,18 @@ impl ItemPickupSystem {
             frame_state
                 .action_effects
                 .push(ActionEffect::PickupNoItemInRange);
-            return;
+            return false;
         }
 
-        if !Self::in_range(
+        if !PositionManager::in_range(
             game_state.get_position(&player.clone()).unwrap(),
             item_position.unwrap(),
+            ITEM_PICKUP_RANGE,
         ) {
             frame_state
                 .action_effects
                 .push(ActionEffect::PickupNoItemInRange);
-            return;
+            return false;
         }
 
         let inventory = game_state.get_storage(&player).unwrap();
@@ -96,7 +97,7 @@ impl ItemPickupSystem {
             frame_state
                 .action_effects
                 .push(ActionEffect::PickupNoInventorySpace);
-            return;
+            return false;
         }
         let empty_spot =
             StorageManager::find_empty_spot(game_state, inventory, &inventory_items, &near_pickup)
@@ -105,38 +106,7 @@ impl ItemPickupSystem {
         game_state.remove_position(&near_pickup.clone());
         game_state.remove_hitbox(&near_pickup.clone());
         game_state.create_in_storage(&player, near_pickup.clone(), empty_spot);
-    }
-
-    fn in_range(position1: &Point3<f32>, position2: &Point3<f32>) -> bool {
-        PositionManager::distance_2d(position1, position2) < ITEM_PICKUP_RANGE
+        true
     }
 }
 
-struct PositionManager {}
-
-impl PositionManager {
-    pub fn find_nearest_pickup(
-        positions: &HashMap<Entity, Point3<f32>>,
-        storables: &HashMap<Entity, Storable>,
-        entities: &[Entity],
-        entity: &Entity,
-    ) -> Option<Entity> {
-        entities
-            .iter()
-            .filter(|e| storables.contains_key(e.as_str()))
-            .filter(|e| positions.contains_key(e.as_str()))
-            .min_by_key(|e| {
-                Self::distance_2d(
-                    positions.get(entity).unwrap(),
-                    positions.get(e.as_str()).unwrap(),
-                )
-                .round()
-                .to_u32()
-            })
-            .cloned()
-    }
-
-    fn distance_2d(position1: &Point3<f32>, position2: &Point3<f32>) -> f32 {
-        ((position2.x - position1.x).powi(2) + (position2.z - position1.z).powi(2)).sqrt()
-    }
-}
