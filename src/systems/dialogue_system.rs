@@ -14,7 +14,8 @@ impl DialogueSystem {
         frame_state: &mut FrameState,
     ) {
         if input.e_pressed.is_toggled_on() && !frame_state.handled_e_click {
-            if let Some(near_dialog_interactable) = PositionManager::find_nearest_dialog(game_state) {
+            if let Some(near_dialog_interactable) = PositionManager::find_nearest_dialog(game_state)
+            {
                 if !PositionManager::in_range(
                     game_state.get_position(&"player".to_string()).unwrap(),
                     game_state.get_position(&near_dialog_interactable).unwrap(),
@@ -24,9 +25,9 @@ impl DialogueSystem {
                     return;
                 }
 
-                frame_state
-                    .action_effects
-                    .push(ActionEffect::Examine { text: "nice meme dennis".to_string() });
+                frame_state.action_effects.push(ActionEffect::Examine {
+                    text: "nice meme dennis".to_string(),
+                });
             }
         }
     }

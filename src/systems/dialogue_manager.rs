@@ -14,16 +14,19 @@ pub struct DialogueManager {
 impl DialogueManager {
     pub fn new() -> DialogueManager {
         Self {
-            dialogues: Self::load_dialogues()
+            dialogues: Self::load_dialogues(),
         }
     }
 
     fn load_dialogues() -> HashMap<String, Dialogue> {
         let mut dialogues: HashMap<String, Dialogue> = HashMap::new();
 
-        dialogues.insert("dennis_intro".to_string(), Dialogue {
-            text: "Welcome to the exciting world of Kloenk!".to_string()
-        });
+        dialogues.insert(
+            "dennis_intro".to_string(),
+            Dialogue {
+                text: "Welcome to the exciting world of Kloenk!".to_string(),
+            },
+        );
 
         dialogues
     }

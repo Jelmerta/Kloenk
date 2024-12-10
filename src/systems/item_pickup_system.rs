@@ -28,7 +28,7 @@ impl ItemPickupSystem {
             if near_pickup.is_none() {
                 frame_state
                     .action_effects
-                    .push(ActionEffect::PickupNoItemInRange);  // Might not want to show this, just ignore cause there may be other actions to handle
+                    .push(ActionEffect::PickupNoItemInRange); // Might not want to show this, just ignore cause there may be other actions to handle
                 return;
             }
             if Self::item_pickup(game_state, frame_state, near_pickup.unwrap()) {
@@ -109,4 +109,3 @@ impl ItemPickupSystem {
         true
     }
 }
-

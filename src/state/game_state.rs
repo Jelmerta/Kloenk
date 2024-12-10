@@ -1,7 +1,10 @@
 use cgmath::num_traits::ToPrimitive;
 
 use crate::render::camera::Camera;
-use crate::state::components::{CameraTarget, Description, Dialogue, Entity, Graphics2D, Graphics3D, Health, Hitbox, InStorage, ItemShape, Size, Storable, Storage};
+use crate::state::components::{
+    CameraTarget, Description, Dialogue, Entity, Graphics2D, Graphics3D, Health, Hitbox, InStorage,
+    ItemShape, Size, Storable, Storage,
+};
 use cgmath::{ElementWise, Point3};
 use std::collections::{HashMap, HashSet};
 
@@ -410,9 +413,12 @@ impl GameState {
             },
         );
 
-        dialogue_components.insert(npc.clone(), Dialogue {
-            dialogue_id: "dennis_intro".to_string(),
-        });
+        dialogue_components.insert(
+            npc.clone(),
+            Dialogue {
+                dialogue_id: "dennis_intro".to_string(),
+            },
+        );
     }
 
     fn load_camera(entities: &mut Vec<Entity>, camera_components: &mut HashMap<String, Camera>) {
