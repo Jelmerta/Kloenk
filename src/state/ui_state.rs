@@ -80,6 +80,7 @@ impl Rect {
 pub enum DialogueState {
     Closed,
     Npc {
+        mouse_position: Point2<f32>,
         npc_entity_id: Entity,
         dialogue_id: String,
     },

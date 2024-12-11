@@ -61,6 +61,13 @@ impl MaterialManager {
                 .await
                 .unwrap(),
         );
+
+        materials.insert(
+            "close_button".to_string(),
+            Self::load_material(device, queue, layout, "close_button.png")
+                .await
+                .unwrap(),
+        );
     }
 
     async fn load_material(

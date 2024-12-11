@@ -45,7 +45,7 @@ impl GameSystem {
         // Visual stuff (pre-render)
         CameraSystem::update_camera(window, game_state, input);
 
-        DialogueSystem::display_dialogue(ui_state, input, frame_state);
+        DialogueSystem::display_dialogue(game_state, ui_state, input, frame_state);
 
         ObjectDetectionSystem::setup_detection_for_frame(game_state, input, frame_state);
         CommandHandleSystem::handle_action_requests(game_state, frame_state);

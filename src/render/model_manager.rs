@@ -94,6 +94,14 @@ impl ModelManager {
             gozer.meshes.into_iter().next().unwrap(),
         );
 
+        let close_button = resources::load_model(device, "SQUARE", "close_button")
+            .await
+            .unwrap();
+        mesh_map.insert(
+            "close_button".to_string(),
+            close_button.meshes.into_iter().next().unwrap(),
+        );
+
         mesh_map
     }
 }
