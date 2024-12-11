@@ -172,13 +172,8 @@ impl ApplicationHandler<CustomEvent> for Application {
         #[cfg(not(target_arch = "wasm32"))]
         {
             let cursor_binary = pollster::block_on(load_binary("cursor.png")).unwrap();
-            let cursor_rgba = image::load_from_memory(&cursor_binary)
-                .unwrap()
-                .to_rgba8()
-                .into_raw();
-            let custom_cursor_source =
-                CustomCursor::from_rgba(cursor_rgba, 122, 120, 7, 7).unwrap();
-            let custom_cursor = event_loop.create_custom_cursor(custom_cursor_source);
+            let cursor_source = CursorManager::load_cursor(cursor_binary);
+            let custom_cursor = event_loop.create_custom_cursor(cursor_source);
 
             let window_icon_binary = pollster::block_on(load_binary("kunst.png")).unwrap();
             let window_icon_rgba = image::load_from_memory(&window_icon_binary)

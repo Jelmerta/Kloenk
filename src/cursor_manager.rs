@@ -12,6 +12,6 @@ impl CursorManager {
             .unwrap()
             .to_rgba8()
             .into_raw();
-        CustomCursor::from_rgba(cursor_rgba, 122, 120, 7, 7).unwrap()
+        CustomCursor::from_rgba(cursor_rgba, 61, 60, 3, 3).unwrap()
     }
 }
