@@ -118,7 +118,10 @@ impl DialogueSystem {
                     }
                 }
                 UserAction::LeftClick => {
-                    new_dialogue_state = Some(DialogueState::Closed);
+                    if !frame_state.handled_left_click {
+                        new_dialogue_state = Some(DialogueState::Closed);
+                        frame_state.handled_left_click = true;
+                    }
                 }
                 UserAction::RightClick => {}
             }
