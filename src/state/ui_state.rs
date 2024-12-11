@@ -77,6 +77,14 @@ impl Rect {
     }
 }
 
+pub enum DialogueState {
+    Closed,
+    Npc {
+        npc_entity_id: Entity,
+        dialogue_id: String,
+    },
+}
+
 #[derive(Clone)]
 pub enum MenuState {
     Closed,
@@ -99,8 +107,9 @@ pub struct UIState {
     pub selected_text: String,
 
     pub menu_state: MenuState,
+    pub dialogue_state: DialogueState,
 
-    pub cursor: Vec<u8>, // Not sure what a good place to store this data is
+    pub cursor_bytes: Vec<u8>, // Not sure what a good place to store this data is
 }
 
 impl UIState {
@@ -115,9 +124,10 @@ impl UIState {
         UIState {
             windows,
             menu_state: Closed,
+            dialogue_state: DialogueState::Closed,
             action_text: String::new(),
             selected_text: String::new(),
-            cursor,
+            cursor_bytes: cursor,
         }
     }
 

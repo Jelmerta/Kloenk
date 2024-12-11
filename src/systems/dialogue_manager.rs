@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
+#[derive(Clone)]
 pub struct Dialogue {
-    text: String,
+    pub text: String,
 }
 
 impl Dialogue {}

@@ -38,12 +38,15 @@ impl GameSystem {
         ItemPickupSystem::handle_item_pickup_keyboard(game_state, input, frame_state);
         ItemPickupSystem::handle_item_pickup_mouse(game_state, input, frame_state);
 
-        DialogueSystem::handle_talking_keyboard(game_state, input, frame_state);
+        DialogueSystem::handle_open_dialogue_keyboard(game_state, ui_state, input, frame_state);
 
         MovementSystem::resolve_movement(game_state, input, audio_state);
 
         // Visual stuff (pre-render)
         CameraSystem::update_camera(window, game_state, input);
+
+        DialogueSystem::display_dialogue(ui_state, input, frame_state);
+
         ObjectDetectionSystem::setup_detection_for_frame(game_state, input, frame_state);
         CommandHandleSystem::handle_action_requests(game_state, frame_state);
         CommandHandleSystem::handle_action_effects(ui_state, frame_state);

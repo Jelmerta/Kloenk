@@ -288,7 +288,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 log::info!("Received initialization event");
                 engine.renderer.resize(engine.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
                 engine.window.set_cursor(event_loop.create_custom_cursor(
-                    CursorManager::load_cursor(engine.ui_state.cursor.clone()),
+                    CursorManager::load_cursor(engine.ui_state.cursor_bytes.clone()),
                 ));
                 engine.window.request_redraw();
                 self.application_state = State::Initialized(engine);
