@@ -29,7 +29,6 @@ impl DialogueSystem {
                     return;
                 }
 
-                log::warn!("Dialogue system handle_talking_keyboard 4");
                 // Open dialogue
 
                 let dialogue = game_state
