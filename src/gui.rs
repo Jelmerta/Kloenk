@@ -41,6 +41,9 @@ impl Gui {
         if rect.contains(input.mouse_position_ui) && input.right_mouse_clicked.is_toggled_on() {
             return UserAction::RightClick;
         }
+        if rect.contains(input.mouse_position_ui) {
+            return UserAction::Hover;
+        }
         UserAction::None
     }
 

@@ -102,6 +102,14 @@ impl ModelManager {
             close_button.meshes.into_iter().next().unwrap(),
         );
 
+        let close_button_hover = resources::load_model(device, "SQUARE", "close_button_hover")
+            .await
+            .unwrap();
+        mesh_map.insert(
+            "close_button_hover".to_string(),
+            close_button_hover.meshes.into_iter().next().unwrap(),
+        );
+
         mesh_map
     }
 }

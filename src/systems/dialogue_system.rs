@@ -102,7 +102,22 @@ impl DialogueSystem {
                 input,
             ) {
                 UserAction::None => {}
-                UserAction::Hover => {}
+                UserAction::Hover => {
+                    // Feels kinda silly/hacky to overlay hover image
+                    match frame_state.gui.image_button(
+                        311,
+                        close_button_rect,
+                        "close_button_hover".to_string(),
+                        input,
+                    ) {
+                        UserAction::None => {}
+                        UserAction::Hover => {}
+                        UserAction::LeftClick => {
+                            new_dialogue_state = Some(DialogueState::Closed);
+                        }
+                        UserAction::RightClick => {}
+                    }
+                }
                 UserAction::LeftClick => {
                     new_dialogue_state = Some(DialogueState::Closed);
                 }
