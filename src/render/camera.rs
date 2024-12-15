@@ -2,6 +2,8 @@ use cgmath::{ortho, Matrix4, Point3, SquareMatrix, Vector3, Zero};
 use std::sync::Arc;
 use winit::window::Window;
 
+const DEFAULT_RESOLUTION_HEIGHT: f32 = 2160.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
+
 // TODO kind of weird having all this functionality in this component. should be separated.
 #[derive(Debug)]
 pub struct Camera {
@@ -43,8 +45,11 @@ impl Camera {
     pub fn update_view_projection_matrix(&mut self, window: &Arc<Window>) {
         let view = Matrix4::look_at_rh(self.eye, self.target, self.up);
 
+        let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
         let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
-        let isometric_projection = ortho(-resolution, resolution, -1., 1., self.z_near, self.z_far);
+        let height = scale;
+        let width = scale * resolution;
+        let isometric_projection = ortho(-width, width, -height, height, self.z_near, self.z_far);
         self.view_projection_matrix = OPENGL_TO_WGPU_MATRIX * isometric_projection * view;
     }
 
