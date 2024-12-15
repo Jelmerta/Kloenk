@@ -75,6 +75,20 @@ impl Rect {
             .mul_element_wise(Point2::new(scale_factor_x, scale_factor_y));
         Rect::new(scaled_top_left, scaled_bottom_right)
     }
+
+    // Removes percentages on sides to create inner rect
+    pub fn inner_rect(&self, width_to_remove: f32, height_to_remove: f32) -> Rect {
+        Rect {
+            top_left: Point2::new(
+                self.top_left.x + width_to_remove,
+                self.top_left.y + height_to_remove,
+            ),
+            bottom_right: Point2::new(
+                self.bottom_right.x - width_to_remove,
+                self.bottom_right.y - height_to_remove,
+            ),
+        }
+    }
 }
 
 pub enum DialogueState {

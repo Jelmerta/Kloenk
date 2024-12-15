@@ -1,6 +1,5 @@
 use crate::resources;
 use crate::state::ui_state::Rect;
-use cgmath::num_traits::Pow;
 use glyphon::{
     fontdb, Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping,
     SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
@@ -89,12 +88,7 @@ impl TextWriter {
             window.inner_size().width as f32,
             window.inner_size().height as f32,
         );
-        let default_diagonal_distance =
-            f32::sqrt(DEFAULT_FONT_WIDTH.pow(2) + DEFAULT_FONT_HEIGHT.pow(2));
-        let current_diagonal_distance: f32 = f32::sqrt(
-            window.inner_size().width.pow(2) as f32 + window.inner_size().height.pow(2) as f32,
-        );
-        let font_size = (current_diagonal_distance / default_diagonal_distance) * DEFAULT_FONT_SIZE;
+        let font_size = window.inner_size().height as f32 / 1080.0 * DEFAULT_FONT_SIZE;
         let mut buffer = Buffer::new(
             &mut self.font_system,
             Metrics::new(font_size, font_size * 2.0),

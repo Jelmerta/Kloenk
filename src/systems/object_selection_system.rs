@@ -34,7 +34,7 @@ impl ObjectSelectionSystem {
         {
             let pickup_menu_rect = Rect::new(
                 Point2::new(mouse_position.x - 0.05, mouse_position.y - 0.02),
-                Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.04),
+                Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.03),
             );
 
             let mut text_color = [0.8, 0.8, 0.8];
@@ -56,14 +56,14 @@ impl ObjectSelectionSystem {
             }
             frame_state.gui.text(
                 300,
-                pickup_menu_rect,
+                pickup_menu_rect.inner_rect(0.005, 0.005),
                 "Pick up item".to_string(),
                 text_color,
             );
 
             let examine_menu_rect = Rect::new(
-                Point2::new(mouse_position.x - 0.05, mouse_position.y + 0.04),
-                Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.10),
+                Point2::new(mouse_position.x - 0.05, mouse_position.y + 0.03),
+                Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.08),
             );
             let mut text_color = [0.8, 0.8, 0.8];
             match frame_state
@@ -87,7 +87,7 @@ impl ObjectSelectionSystem {
             }
             frame_state.gui.text(
                 300,
-                examine_menu_rect,
+                examine_menu_rect.inner_rect(0.005, 0.005),
                 "Examine item".to_string(),
                 text_color,
             );

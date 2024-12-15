@@ -122,7 +122,7 @@ impl InventorySystem {
             // Drop button
             let drop_button_rect = Rect::new(
                 Point2::new(mouse_position.x - 0.05, mouse_position.y - 0.02),
-                Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.04),
+                Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.03),
             );
 
             let mut text_color = [0.8, 0.8, 0.8];
@@ -149,14 +149,17 @@ impl InventorySystem {
                 UserAction::RightClick => {}
             }
 
-            frame_state
-                .gui
-                .text(300, drop_button_rect, "Drop item".to_string(), text_color);
+            frame_state.gui.text(
+                300,
+                drop_button_rect.inner_rect(0.005, 0.005),
+                "Drop item".to_string(),
+                text_color,
+            );
 
             // Examine button
             if game_state.description_components.contains_key(&item) {
                 let examine_button_rect = Rect::new(
-                    Point2::new(mouse_position.x - 0.05, mouse_position.y + 0.04),
+                    Point2::new(mouse_position.x - 0.05, mouse_position.y + 0.03),
                     Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.08),
                 );
 
@@ -188,7 +191,7 @@ impl InventorySystem {
 
                 frame_state.gui.text(
                     300,
-                    examine_button_rect,
+                    examine_button_rect.inner_rect(0.005, 0.005),
                     "Examine item".to_string(),
                     text_color,
                 );
