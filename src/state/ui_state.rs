@@ -149,14 +149,16 @@ impl UIState {
         }
     }
 
-    // Maps 0 (left of screen) to -800/600 (pixel values) and 1 to 800/600
     pub fn convert_clip_space_x(value: f32, window: &Arc<Window>) -> f32 {
-        // Would it be better to use NDC?
         let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
         let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
-        let height = scale;
         let width = scale * resolution;
         -width + 2.0 * width * value
+    }
+
+    pub fn scale_resolution(value: f32, window: &Arc<Window>) -> f32 {
+        let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
+        value * scale
     }
 
     pub fn convert_scale_x(value: f32, window: &Arc<Window>) -> f32 {
@@ -166,7 +168,6 @@ impl UIState {
         value * 2.0 * width
     }
 
-    // Maps 0 (top of screen) to 1 and 1 to -1
     pub fn convert_clip_space_y(value: f32, window: &Arc<Window>) -> f32 {
         let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
         let height = scale;

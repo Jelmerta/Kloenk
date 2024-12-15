@@ -133,18 +133,12 @@ impl InventorySystem {
             // Drop button
             let drop_button_rect = Rect::new(
                 Point2::new(
-                    mouse_position.x
-                        - 0.05
-                            * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32)
-                            * (window.inner_size().height as f32 / DEFAULT_FONT_HEIGHT),
-                    mouse_position.y - 0.02,
+                    mouse_position.x - UIState::scale_resolution(0.05, window),
+                    mouse_position.y - UIState::scale_resolution(0.02, window),
                 ),
                 Point2::new(
-                    mouse_position.x
-                        + 0.08
-                            * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32)
-                            * (window.inner_size().height as f32 / DEFAULT_FONT_HEIGHT),
-                    mouse_position.y + 0.03,
+                    mouse_position.x + UIState::scale_resolution(0.08, window),
+                    mouse_position.y + UIState::scale_resolution(0.03, window),
                 ),
             );
 
@@ -183,18 +177,12 @@ impl InventorySystem {
             if game_state.description_components.contains_key(&item) {
                 let examine_button_rect = Rect::new(
                     Point2::new(
-                        mouse_position.x
-                            - 0.05
-                                * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32)
-                                * (window.inner_size().height as f32 / DEFAULT_FONT_HEIGHT),
-                        mouse_position.y + 0.03,
+                        mouse_position.x - UIState::scale_resolution(0.05, window),
+                        mouse_position.y + UIState::scale_resolution(0.03, window),
                     ),
                     Point2::new(
-                        mouse_position.x
-                            + 0.08
-                                * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32)
-                                * (window.inner_size().height as f32 / DEFAULT_FONT_HEIGHT),
-                        mouse_position.y + 0.08,
+                        mouse_position.x + UIState::scale_resolution(0.08, window),
+                        mouse_position.y + UIState::scale_resolution(0.08, window),
                     ),
                 );
 
