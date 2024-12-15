@@ -31,6 +31,7 @@ pub struct ItemShape {
     pub height: u8,
 }
 
+#[derive(Debug)]
 pub struct Hitbox {
     pub box_corner_min: Point3<f32>,
     pub box_corner_max: Point3<f32>,

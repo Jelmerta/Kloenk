@@ -23,7 +23,7 @@ use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
-use winit::window::{Cursor, CustomCursor, Fullscreen, Icon, Window, WindowId};
+use winit::window::{Cursor, Fullscreen, Icon, Window, WindowId};
 
 use crate::cursor_manager::CursorManager;
 use crate::render::render::Renderer;
@@ -337,7 +337,7 @@ impl ApplicationHandler<CustomEvent> for Application {
             | WindowEvent::KeyboardInput {
                 event:
                     KeyEvent {
-                        physical_key: PhysicalKey::Code(winit::keyboard::KeyCode::Escape),
+                        physical_key: PhysicalKey::Code(KeyCode::Escape),
                         state: ElementState::Pressed,
                         ..
                     },

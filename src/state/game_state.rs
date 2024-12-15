@@ -475,6 +475,7 @@ impl GameState {
         self.position_components.get(entity)
     }
 
+    #[allow(dead_code)]
     pub fn get_position_mut(&mut self, entity: &Entity) -> Option<&mut Point3<f32>> {
         self.position_components.get_mut(entity)
     }
