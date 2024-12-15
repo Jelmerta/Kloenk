@@ -10,6 +10,7 @@ use std::sync::Arc;
 use winit::window::Window;
 
 const DEFAULT_FONT_WIDTH: f32 = 1920.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
+const DEFAULT_FONT_HEIGHT: f32 = 1080.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
 
 pub struct ObjectSelectionSystem();
 
@@ -40,12 +41,16 @@ impl ObjectSelectionSystem {
             let pickup_menu_rect = Rect::new(
                 Point2::new(
                     mouse_position.x
-                        - 0.10 * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32),
+                        - 0.05
+                            * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32)
+                            * (window.inner_size().height as f32 / DEFAULT_FONT_HEIGHT),
                     mouse_position.y - 0.02,
                 ),
                 Point2::new(
                     mouse_position.x
-                        + 0.16 * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32),
+                        + 0.08
+                            * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32)
+                            * (window.inner_size().height as f32 / DEFAULT_FONT_HEIGHT),
                     mouse_position.y + 0.03,
                 ),
             );
@@ -77,12 +82,16 @@ impl ObjectSelectionSystem {
             let examine_menu_rect = Rect::new(
                 Point2::new(
                     mouse_position.x
-                        - 0.10 * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32),
+                        - 0.05
+                            * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32)
+                            * (window.inner_size().height as f32 / DEFAULT_FONT_HEIGHT),
                     mouse_position.y + 0.03,
                 ),
                 Point2::new(
                     mouse_position.x
-                        + 0.16 * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32),
+                        + 0.08
+                            * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32)
+                            * (window.inner_size().height as f32 / DEFAULT_FONT_HEIGHT),
                     mouse_position.y + 0.08,
                 ),
             );
