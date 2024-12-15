@@ -29,7 +29,13 @@ impl GameSystem {
     ) {
         *frame_state = FrameState::new_frame(frame_state);
 
-        InventorySystem::display_inventory_item_menu(game_state, ui_state, input, frame_state);
+        InventorySystem::display_inventory_item_menu(
+            window,
+            game_state,
+            ui_state,
+            input,
+            frame_state,
+        );
         ObjectSelectionSystem::handle_object_selection(game_state, ui_state, input, frame_state);
         CloseMenuSystem::check_to_close_menu(ui_state, input, frame_state);
 
