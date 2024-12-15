@@ -133,11 +133,12 @@ impl InventorySystem {
             let drop_button_rect = Rect::new(
                 Point2::new(
                     mouse_position.x
-                        - 0.025 * window.inner_size().width as f32 / DEFAULT_FONT_WIDTH,
+                        - 0.025 * (window.inner_size().width as f32 / DEFAULT_FONT_WIDTH),
                     mouse_position.y - 0.02,
                 ),
                 Point2::new(
-                    mouse_position.x + 0.04 * window.inner_size().width as f32 / DEFAULT_FONT_WIDTH,
+                    mouse_position.x
+                        + 0.04 * (window.inner_size().width as f32 / DEFAULT_FONT_WIDTH),
                     mouse_position.y + 0.03,
                 ),
             );
@@ -178,12 +179,12 @@ impl InventorySystem {
                 let examine_button_rect = Rect::new(
                     Point2::new(
                         mouse_position.x
-                            - 0.025 * window.inner_size().width as f32 / DEFAULT_FONT_WIDTH,
+                            - 0.025 * (window.inner_size().width as f32 / DEFAULT_FONT_WIDTH),
                         mouse_position.y + 0.03,
                     ),
                     Point2::new(
                         mouse_position.x
-                            + 0.04 * window.inner_size().width as f32 / DEFAULT_FONT_WIDTH,
+                            + 0.04 * (window.inner_size().width as f32 / DEFAULT_FONT_WIDTH),
                         mouse_position.y + 0.08,
                     ),
                 );
