@@ -12,7 +12,6 @@ use winit::window::Window;
 
 const DEFAULT_FONT_SIZE: f32 = 24.0;
 const DEFAULT_FONT_HEIGHT: f32 = 1080.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
-const DEFAULT_FONT_WIDTH: f32 = 1920.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
 
 struct TextContext {
     buffer: Buffer,
@@ -88,7 +87,7 @@ impl TextWriter {
             window.inner_size().width as f32,
             window.inner_size().height as f32,
         );
-        let font_size = window.inner_size().height as f32 / 1080.0 * DEFAULT_FONT_SIZE;
+        let font_size = window.inner_size().height as f32 / DEFAULT_FONT_HEIGHT * DEFAULT_FONT_SIZE;
         let mut buffer = Buffer::new(
             &mut self.font_system,
             Metrics::new(font_size, font_size * 2.0),
