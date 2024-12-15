@@ -1,11 +1,13 @@
 use crate::application::AudioState;
-use crate::state::components::{Entity, Hitbox};
+use crate::state::components::{Entity, Hitbox, Rotation};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
 use crate::systems::collision_manager::CollisionManager;
-use cgmath::{ElementWise, Point3};
+use cgmath::{ElementWise, InnerSpace, Point3, Vector2};
+use std::ops::Sub;
 
 pub const BASE_SPEED: f32 = 0.01;
+pub const CHARACTER_ROTATION_SPEED_DEGREES: f32 = 5.0;
 
 pub struct MovementSystem {}
 
@@ -43,8 +45,11 @@ impl MovementSystem {
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(&desired_player_hitbox, game_state, audio_state)
             {
-                let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
-                *player_position = desired_position;
+                Self::update_rotation(game_state, desired_position);
+                game_state.remove_position(&"player".to_string());
+                game_state
+                    .position_components
+                    .insert("player".to_string(), desired_position);
                 Self::update_hitbox(game_state, desired_player_hitbox);
             }
         }
@@ -72,8 +77,11 @@ impl MovementSystem {
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(&desired_player_hitbox, game_state, audio_state)
             {
-                let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
-                *player_position = desired_position;
+                Self::update_rotation(game_state, desired_position);
+                game_state.remove_position(&"player".to_string());
+                game_state
+                    .position_components
+                    .insert("player".to_string(), desired_position);
                 Self::update_hitbox(game_state, desired_player_hitbox);
             }
         }
@@ -101,8 +109,11 @@ impl MovementSystem {
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(&desired_player_hitbox, game_state, audio_state)
             {
-                let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
-                *player_position = desired_position;
+                Self::update_rotation(game_state, desired_position);
+                game_state.remove_position(&"player".to_string());
+                game_state
+                    .position_components
+                    .insert("player".to_string(), desired_position);
                 Self::update_hitbox(game_state, desired_player_hitbox);
             }
         }
@@ -130,8 +141,11 @@ impl MovementSystem {
             if Self::is_walkable(game_state, &desired_position)
                 && !Self::is_colliding(&desired_player_hitbox, game_state, audio_state)
             {
-                let player_position = game_state.get_position_mut(&"player".to_string()).unwrap();
-                *player_position = desired_position;
+                Self::update_rotation(game_state, desired_position);
+                game_state.remove_position(&"player".to_string());
+                game_state
+                    .position_components
+                    .insert("player".to_string(), desired_position);
                 Self::update_hitbox(game_state, desired_player_hitbox);
             }
         }
@@ -193,6 +207,55 @@ impl MovementSystem {
             && walkable_tile_position.z + tile_size >= desired_position.z;
 
         is_walkable_x && is_walkable_z
+    }
+
+    fn update_rotation(game_state: &mut GameState, desired_position: Point3<f32>) {
+        let old_rotation = game_state.get_rotation(&"player".to_string());
+        let player_position = game_state.get_position(&"player".to_string()).unwrap();
+
+        let direction_3d = desired_position.sub(player_position);
+        // Player model is aimed at z-direction?
+        let new_rotation = Self::calculate_movement_rotation_2d(
+            Vector2::new(0.0, 1.0),
+            Vector2::new(direction_3d.x, direction_3d.z),
+        );
+        let mut rotation_difference = new_rotation - old_rotation.unwrap().degrees_y;
+        if rotation_difference < 180.0 {
+            rotation_difference = rotation_difference + 360.0;
+        }
+        if rotation_difference > 180.0 {
+            rotation_difference = rotation_difference - 360.0;
+        }
+        let rotation_difference_clamped = rotation_difference.clamp(
+            -CHARACTER_ROTATION_SPEED_DEGREES,
+            CHARACTER_ROTATION_SPEED_DEGREES,
+        );
+        let used_rotation;
+        if rotation_difference_clamped < CHARACTER_ROTATION_SPEED_DEGREES
+            && rotation_difference_clamped > -CHARACTER_ROTATION_SPEED_DEGREES
+        {
+            used_rotation = new_rotation;
+        } else {
+            used_rotation = old_rotation.unwrap().degrees_y + rotation_difference_clamped;
+        }
+
+        game_state.rotation_components.remove("player");
+        game_state.rotation_components.insert(
+            "player".to_string(),
+            Rotation {
+                degrees_y: used_rotation,
+            },
+        );
+    }
+
+    // Followed: https://wumbo.net/formulas/angle-between-two-vectors-2d/
+    fn calculate_movement_rotation_2d(
+        base_direction: Vector2<f32>,
+        new_direction: Vector2<f32>,
+    ) -> f32 {
+        let angle = base_direction.dot(new_direction);
+        let determinant = base_direction.x * new_direction.y - base_direction.y * new_direction.x;
+        -f32::atan2(determinant, angle).to_degrees()
     }
 
     fn update_hitbox(game_state: &mut GameState, new_hitbox: Hitbox) {

@@ -54,6 +54,10 @@ pub struct Size {
     pub scale_z: f32,
 }
 
+pub struct Rotation {
+    pub degrees_y: f32,
+}
+
 pub struct Description {
     pub text: String,
 }

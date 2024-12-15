@@ -3,7 +3,7 @@ use cgmath::num_traits::ToPrimitive;
 use crate::render::camera::Camera;
 use crate::state::components::{
     CameraTarget, Description, Dialogue, Entity, Graphics2D, Graphics3D, Health, Hitbox, InStorage,
-    ItemShape, Size, Storable, Storage,
+    ItemShape, Rotation, Size, Storable, Storage,
 };
 use cgmath::{ElementWise, Point3};
 use std::collections::{HashMap, HashSet};
@@ -17,6 +17,7 @@ pub struct GameState {
     pub position_components: HashMap<Entity, Point3<f32>>,
     pub surface_components: HashSet<Entity>,
     pub size_components: HashMap<Entity, Size>,
+    pub rotation_components: HashMap<Entity, Rotation>,
     pub hitbox_components: HashMap<Entity, Hitbox>,
     pub health_components: HashMap<Entity, Health>,
     pub camera_components: HashMap<Entity, Camera>,
@@ -38,6 +39,7 @@ impl GameState {
         let mut position_components = HashMap::new();
         let mut surface_components = HashSet::new();
         let mut size_components = HashMap::new();
+        let mut rotation_components = HashMap::new();
         let mut hitbox_components = HashMap::new();
         let mut health_components = HashMap::new();
         let mut camera_components = HashMap::new();
@@ -52,6 +54,7 @@ impl GameState {
             &mut entities,
             &mut graphics_3d_components,
             &mut position_components,
+            &mut rotation_components,
             &mut hitbox_components,
             &mut health_components,
             &mut camera_target_components,
@@ -110,6 +113,7 @@ impl GameState {
             position_components,
             surface_components,
             size_components,
+            rotation_components,
             hitbox_components,
             health_components,
             camera_components,
@@ -318,6 +322,7 @@ impl GameState {
         entities: &mut Vec<Entity>,
         graphics_3d_components: &mut HashMap<Entity, Graphics3D>,
         position_components: &mut HashMap<Entity, Point3<f32>>,
+        rotation_components: &mut HashMap<Entity, Rotation>,
         hitbox_components: &mut HashMap<Entity, Hitbox>,
         health_components: &mut HashMap<Entity, Health>,
         camera_target_components: &mut HashMap<Entity, CameraTarget>,
@@ -338,6 +343,9 @@ impl GameState {
             z: 0.0,
         };
         position_components.insert(player.clone(), player_position);
+
+        let rotation = Rotation { degrees_y: 50.0 };
+        rotation_components.insert(player.clone(), rotation);
 
         let player_hitbox_min = player_position.sub_element_wise(Point3::new(0.1, 0.0, 0.1));
         let player_hitbox_max = player_position.add_element_wise(Point3::new(0.1, 1.8, 0.1));
@@ -478,6 +486,10 @@ impl GameState {
 
     pub fn get_size(&self, entity: &Entity) -> Option<&Size> {
         self.size_components.get(entity)
+    }
+
+    pub fn get_rotation(&self, entity: &Entity) -> Option<&Rotation> {
+        self.rotation_components.get(entity)
     }
 
     pub fn create_hitbox(&mut self, entity: Entity, hitbox: Hitbox) {

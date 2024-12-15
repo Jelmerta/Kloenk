@@ -334,7 +334,11 @@ impl Renderer {
         })
     }
 
-    fn convert_instance(position: &Point3<f32>, size: Option<&Size>) -> Instance {
+    fn convert_instance(
+        position: &Point3<f32>,
+        size: Option<&Size>,
+        rotation: Option<&crate::state::components::Rotation>,
+    ) -> Instance {
         let scale = if let Some(size_unwrap) = size {
             cgmath::Vector4::new(
                 size_unwrap.scale_x,
@@ -352,7 +356,10 @@ impl Renderer {
                 z: position.z,
             },
             scale: cgmath::Matrix4::from_diagonal(scale),
-            rotation: cgmath::Quaternion::from_axis_angle(Vector3::unit_z(), cgmath::Deg(0.0)),
+            rotation: cgmath::Quaternion::from_axis_angle(
+                Vector3::unit_y(),
+                cgmath::Deg(rotation.map(|r| r.degrees_y).unwrap_or(0.0)),
+            ),
         }
     }
 
@@ -399,9 +406,11 @@ impl Renderer {
                     .into_iter()
                     .map(|entity| {
                         let size = game_state.get_size(entity);
+                        let rotation = game_state.get_rotation(entity);
                         Self::convert_instance(
                             game_state.get_position(&entity.to_string()).unwrap(),
                             size,
+                            rotation,
                         )
                     })
                     .collect();
