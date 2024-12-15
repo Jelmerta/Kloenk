@@ -36,7 +36,13 @@ impl GameSystem {
             input,
             frame_state,
         );
-        ObjectSelectionSystem::handle_object_selection(game_state, ui_state, input, frame_state);
+        ObjectSelectionSystem::handle_object_selection(
+            window,
+            game_state,
+            ui_state,
+            input,
+            frame_state,
+        );
         CloseMenuSystem::check_to_close_menu(ui_state, input, frame_state);
 
         InventorySystem::handle_inventory(game_state, ui_state, input, frame_state);

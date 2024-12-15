@@ -6,11 +6,16 @@ use crate::state::ui_state::MenuState::Closed;
 use crate::state::ui_state::{MenuState, Rect, UIState, UserAction};
 use crate::systems::item_pickup_system::ItemPickupSystem;
 use cgmath::Point2;
+use std::sync::Arc;
+use winit::window::Window;
+
+const DEFAULT_FONT_WIDTH: f32 = 1920.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
 
 pub struct ObjectSelectionSystem();
 
 impl ObjectSelectionSystem {
     pub fn handle_object_selection(
+        window: &Arc<Window>,
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &Input,
@@ -33,8 +38,16 @@ impl ObjectSelectionSystem {
         } = &ui_state.menu_state
         {
             let pickup_menu_rect = Rect::new(
-                Point2::new(mouse_position.x - 0.05, mouse_position.y - 0.02),
-                Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.03),
+                Point2::new(
+                    mouse_position.x
+                        - 0.10 * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32),
+                    mouse_position.y - 0.02,
+                ),
+                Point2::new(
+                    mouse_position.x
+                        + 0.16 * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32),
+                    mouse_position.y + 0.03,
+                ),
             );
 
             let mut text_color = [0.8, 0.8, 0.8];
@@ -62,8 +75,16 @@ impl ObjectSelectionSystem {
             );
 
             let examine_menu_rect = Rect::new(
-                Point2::new(mouse_position.x - 0.05, mouse_position.y + 0.03),
-                Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.08),
+                Point2::new(
+                    mouse_position.x
+                        - 0.10 * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32),
+                    mouse_position.y + 0.03,
+                ),
+                Point2::new(
+                    mouse_position.x
+                        + 0.16 * (DEFAULT_FONT_WIDTH / window.inner_size().width as f32),
+                    mouse_position.y + 0.08,
+                ),
             );
             let mut text_color = [0.8, 0.8, 0.8];
             match frame_state
