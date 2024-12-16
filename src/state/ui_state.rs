@@ -148,16 +148,25 @@ impl UIState {
         }
     }
 
+    // Why does this need resolution but scale x does not...? so confused
     pub fn convert_clip_space_x(value: f32, window: &Arc<Window>) -> f32 {
         let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
-        let width = scale * (16.0 / 9.0);
+        let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
+        let width = scale * resolution;
         -width + 2.0 * width * value
     }
 
     pub fn convert_scale_x(value: f32, window: &Arc<Window>) -> f32 {
         let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
-        let width = scale * (16.0 / 9.0);
+        let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
+        let width = scale * resolution;
+        // let width = scale; // * resolution;
         value * 2.0 * width
+    }
+
+    pub fn scale_extra_for_textbox(value: f32, window: &Arc<Window>) -> f32 {
+        let resolution = window.inner_size().height as f32 / window.inner_size().width as f32;
+        value * resolution * (16.0 / 9.0)
     }
 
     pub fn convert_clip_space_y(value: f32, window: &Arc<Window>) -> f32 {
