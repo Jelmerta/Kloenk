@@ -155,10 +155,10 @@ impl UIState {
         -width + 2.0 * width * value
     }
 
+    // Honestly not sure at this point why we need this, but it works
     pub fn scale_resolution(value: f32, window: &Arc<Window>) -> f32 {
-        // let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
-        // value * scale
-        value
+        let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
+        value * scale
     }
 
     pub fn convert_scale_x(value: f32, window: &Arc<Window>) -> f32 {
