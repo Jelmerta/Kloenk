@@ -150,16 +150,14 @@ impl UIState {
 
     pub fn convert_clip_space_x(value: f32, window: &Arc<Window>) -> f32 {
         let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
-        let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
-        let width = scale * resolution;
+        let width = scale * (16.0 / 9.0);
         -width + 2.0 * width * value
     }
 
-    // Honestly not sure why there's a difference between position/scaling. not 100% sure how this works, trial and error
     pub fn convert_scale_x(value: f32, window: &Arc<Window>) -> f32 {
         let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
-        let width = scale;
-        value * 2.0 * width * (16.0 / 9.0)
+        let width = scale * (16.0 / 9.0);
+        value * 2.0 * width
     }
 
     pub fn convert_clip_space_y(value: f32, window: &Arc<Window>) -> f32 {
