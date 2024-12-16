@@ -5,8 +5,6 @@ use crate::state::ui_state::MenuState::{Closed, Inventory};
 use crate::state::ui_state::{MenuState, Rect, UIState, UserAction};
 use crate::systems::item_placement_system::ItemPlacementSystem;
 use cgmath::Point2;
-use std::sync::Arc;
-use winit::window::Window;
 
 pub struct InventorySystem {}
 
@@ -98,24 +96,17 @@ impl InventorySystem {
     }
 
     pub fn display_inventory_item_menu(
-        window: &Arc<Window>,
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &Input,
         frame_state: &mut FrameState,
     ) {
         let old_menu_state = ui_state.menu_state.clone();
-        ui_state.menu_state = Self::handle_inventory_menu_state(
-            window,
-            game_state,
-            old_menu_state,
-            input,
-            frame_state,
-        );
+        ui_state.menu_state =
+            Self::handle_inventory_menu_state(game_state, old_menu_state, input, frame_state);
     }
 
     fn handle_inventory_menu_state(
-        window: &Arc<Window>,
         game_state: &mut GameState,
         menu_state: MenuState,
         input: &Input,
@@ -130,14 +121,8 @@ impl InventorySystem {
         {
             // Drop button
             let drop_button_rect = Rect::new(
-                Point2::new(
-                    mouse_position.x - UIState::scale_resolution_ui_width(0.05, window),
-                    mouse_position.y - 0.02,
-                ),
-                Point2::new(
-                    mouse_position.x + UIState::scale_resolution_ui_width(0.08, window),
-                    mouse_position.y + 0.03,
-                ),
+                Point2::new(mouse_position.x - 0.05, mouse_position.y - 0.02),
+                Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.03),
             );
 
             let mut text_color = [0.8, 0.8, 0.8];
@@ -174,14 +159,8 @@ impl InventorySystem {
             // Examine button
             if game_state.description_components.contains_key(&item) {
                 let examine_button_rect = Rect::new(
-                    Point2::new(
-                        mouse_position.x - UIState::scale_resolution_ui_width(0.05, window),
-                        mouse_position.y + 0.03,
-                    ),
-                    Point2::new(
-                        mouse_position.x + UIState::scale_resolution_ui_width(0.08, window),
-                        mouse_position.y + 0.08,
-                    ),
+                    Point2::new(mouse_position.x - 0.05, mouse_position.y + 0.03),
+                    Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.08),
                 );
 
                 let mut text_color = [0.8, 0.8, 0.8];

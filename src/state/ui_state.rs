@@ -6,7 +6,6 @@ use std::sync::Arc;
 use winit::window::Window;
 
 const DEFAULT_RESOLUTION_HEIGHT: f32 = 2160.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
-const DEFAULT_RESOLUTION_WIDTH: f32 = 3840.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
 
 pub struct UIWindow {
     pub is_visible: bool,
@@ -156,17 +155,11 @@ impl UIState {
         -width + 2.0 * width * value
     }
 
-    // Honestly not sure at this point why we need this for scaling width and how it works. don't try to make sense of this and hopefully replace with something i can understand
-    pub fn scale_resolution_ui_width(value: f32, window: &Arc<Window>) -> f32 {
-        let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
-        value / resolution * (16.0 / 9.0)
-    }
-
+    // Honestly not sure why there's a difference between position/scaling. not 100% sure how this works, trial and error
     pub fn convert_scale_x(value: f32, window: &Arc<Window>) -> f32 {
         let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
-        let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
-        let width = scale * resolution;
-        value * 2.0 * width
+        let width = scale;
+        value * 2.0 * width * (16.0 / 9.0)
     }
 
     pub fn convert_clip_space_y(value: f32, window: &Arc<Window>) -> f32 {
