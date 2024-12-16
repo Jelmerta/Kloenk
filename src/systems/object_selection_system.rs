@@ -9,9 +9,6 @@ use cgmath::Point2;
 use std::sync::Arc;
 use winit::window::Window;
 
-const DEFAULT_FONT_WIDTH: f32 = 1920.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
-const DEFAULT_FONT_HEIGHT: f32 = 1080.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
-
 pub struct ObjectSelectionSystem();
 
 impl ObjectSelectionSystem {

@@ -6,7 +6,6 @@ use std::sync::Arc;
 use winit::window::Window;
 
 const DEFAULT_RESOLUTION_HEIGHT: f32 = 2160.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
-const DEFAULT_RESOLUTION_WIDTH: f32 = 3840.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
 
 pub struct UIWindow {
     pub is_visible: bool,
@@ -157,8 +156,9 @@ impl UIState {
     }
 
     pub fn scale_resolution(value: f32, window: &Arc<Window>) -> f32 {
-        let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
-        value * scale
+        // let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
+        // value * scale
+        value
     }
 
     pub fn convert_scale_x(value: f32, window: &Arc<Window>) -> f32 {
