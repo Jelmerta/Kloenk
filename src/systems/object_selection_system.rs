@@ -37,11 +37,11 @@ impl ObjectSelectionSystem {
         {
             let pickup_menu_rect = Rect::new(
                 Point2::new(
-                    mouse_position.x - UIState::scale_resolution(0.05, window),
+                    mouse_position.x - UIState::scale_resolution_ui_width(0.05, window),
                     mouse_position.y - 0.02,
                 ),
                 Point2::new(
-                    mouse_position.x + UIState::scale_resolution(0.08, window),
+                    mouse_position.x + UIState::scale_resolution_ui_width(0.08, window),
                     mouse_position.y + 0.03,
                 ),
             );
@@ -72,11 +72,11 @@ impl ObjectSelectionSystem {
 
             let examine_menu_rect = Rect::new(
                 Point2::new(
-                    mouse_position.x - UIState::scale_resolution(0.05, window),
+                    mouse_position.x - UIState::scale_resolution_ui_width(0.05, window),
                     mouse_position.y + 0.03,
                 ),
                 Point2::new(
-                    mouse_position.x + UIState::scale_resolution(0.08, window),
+                    mouse_position.x + UIState::scale_resolution_ui_width(0.08, window),
                     mouse_position.y + 0.08,
                 ),
             );
