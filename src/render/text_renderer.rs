@@ -1,5 +1,6 @@
+use crate::render::render::Renderer;
 use crate::resources;
-use crate::state::ui_state::Rect;
+use crate::state::ui_state::{UIElement, UIState};
 use glyphon::{
     fontdb, Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping,
     SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
@@ -14,12 +15,12 @@ const DEFAULT_FONT_HEIGHT: f32 = 1080.0; // Using a default resolution to scale 
 
 struct TextContext {
     buffer: Buffer,
-    rect: Rect,
+    ui_element: UIElement,
     color: [f32; 3],
 }
 
 impl TextContext {
-    fn to_text_area(&self) -> TextArea {
+    fn to_text_area(&self, window: &Arc<Window>) -> TextArea {
         // Hm... Kind of implicit conversion logic hidden deep...
         let text_color = [
             (self.color[0].clamp(0.0, 1.0) * 255.0).round() as u8,
@@ -27,15 +28,27 @@ impl TextContext {
             (self.color[2].clamp(0.0, 1.0) * 255.0).round() as u8,
         ];
 
+        let instance = Renderer::create_ui_element_instance(window, self.ui_element);
+
+        let x_window_space = Self::clip_space_to_window_space(window, instance.position.x);
+
         TextArea {
             buffer: &self.buffer,
-            left: self.rect.top_left.x,
-            top: self.rect.top_left.y,
+            top: self.ui_element.top_left.y * window.inner_size().height as f32,
+            left: x_window_space,
             scale: 1.0,
             bounds: TextBounds::default(),
             default_color: Color::rgb(text_color[0], text_color[1], text_color[2]),
             custom_glyphs: &[],
         }
+    }
+
+    fn clip_space_to_window_space(window: &Arc<Window>, clip_value: f32) -> f32 {
+        let window_clip_width =
+            UIState::clip_space_x_max(window) - UIState::clip_space_x_min(window);
+        let adjusted_clip = clip_value - UIState::clip_space_x_min(window);
+        let percentage = adjusted_clip / window_clip_width;
+        percentage * window.inner_size().width as f32
     }
 }
 
@@ -81,11 +94,13 @@ impl TextWriter {
         self.queue.clear();
     }
 
-    pub fn add(&mut self, window: &Arc<Window>, rect: &Rect, text: &str, color: &[f32; 3]) {
-        let rect_scaled = rect.scale(
-            window.inner_size().width as f32,
-            window.inner_size().height as f32,
-        );
+    pub fn add(
+        &mut self,
+        window: &Arc<Window>,
+        ui_element: &UIElement,
+        text: &str,
+        color: &[f32; 3],
+    ) {
         let font_size = window.inner_size().height as f32 / DEFAULT_FONT_HEIGHT * DEFAULT_FONT_SIZE;
         let mut buffer = Buffer::new(
             &mut self.font_system,
@@ -106,7 +121,7 @@ impl TextWriter {
 
         self.queue.push(TextContext {
             buffer,
-            rect: rect_scaled,
+            ui_element: *ui_element,
             color: *color,
         });
     }
@@ -141,7 +156,7 @@ impl TextWriter {
                 &self.viewport,
                 self.queue
                     .iter()
-                    .map(|text_context| text_context.to_text_area())
+                    .map(|text_context| text_context.to_text_area(window))
                     .collect_vec(),
                 &mut self.swash_cache,
             )

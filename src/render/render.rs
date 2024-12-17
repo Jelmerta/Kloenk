@@ -24,7 +24,7 @@ use crate::render::texture;
 use crate::state::components::{Entity, Size};
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
-use crate::state::ui_state::{Rect, RenderCommand, UIState};
+use crate::state::ui_state::{RenderCommand, UIElement, UIState};
 
 pub struct Renderer {
     surface: wgpu::Surface<'static>,
@@ -289,7 +289,7 @@ impl Renderer {
             .sorted_by_key(|render_command| match render_command {
                 RenderCommand::Mesh {
                     layer,
-                    rect: _rect,
+                    ui_element: _rect,
                     mesh_id: _image_name,
                 } => layer,
                 RenderCommand::Text {
@@ -311,7 +311,7 @@ impl Renderer {
                     }
                     RenderCommand::Mesh {
                         layer: _layer,
-                        rect,
+                        ui_element: rect,
                         mesh_id,
                     } => {
                         self.draw(window, view, encoder, mesh_id.to_string(), rect);
@@ -363,10 +363,10 @@ impl Renderer {
         }
     }
 
-    fn create_ui_element_instance(window: &Arc<Window>, rect: Rect) -> Instance {
+    pub fn create_ui_element_instance(window: &Arc<Window>, rect: UIElement) -> Instance {
         Instance {
             position: Vector3 {
-                x: UIState::convert_clip_space_x(rect.top_left.x, window),
+                x: UIState::convert_clip_space_x(rect, window),
                 y: UIState::convert_clip_space_y(rect.top_left.y),
                 z: 0.0,
             },
@@ -437,7 +437,7 @@ impl Renderer {
         view: &TextureView,
         encoder: &mut CommandEncoder,
         mesh_id: String,
-        rect: &Rect,
+        ui_element: &UIElement,
     ) {
         let mesh = self.model_manager.get_mesh(mesh_id.to_string());
 
@@ -479,7 +479,7 @@ impl Renderer {
                     &[],
                 );
 
-                let element_instance = Self::create_ui_element_instance(window, *rect);
+                let element_instance = Self::create_ui_element_instance(window, *ui_element);
                 let instance_buffer =
                     Self::create_instance_buffer(&self.device, &[element_instance]);
                 let instance_count = 1;
@@ -524,7 +524,7 @@ impl Renderer {
                     &[],
                 );
 
-                let element_instance = Self::create_ui_element_instance(window, *rect);
+                let element_instance = Self::create_ui_element_instance(window, *ui_element);
                 let instance_buffer =
                     Self::create_instance_buffer(&self.device, &[element_instance]);
                 let instance_count = 1;

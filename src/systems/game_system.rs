@@ -29,20 +29,8 @@ impl GameSystem {
     ) {
         *frame_state = FrameState::new_frame(frame_state);
 
-        InventorySystem::display_inventory_item_menu(
-            window,
-            game_state,
-            ui_state,
-            input,
-            frame_state,
-        );
-        ObjectSelectionSystem::handle_object_selection(
-            window,
-            game_state,
-            ui_state,
-            input,
-            frame_state,
-        );
+        InventorySystem::display_inventory_item_menu(game_state, ui_state, input, frame_state);
+        ObjectSelectionSystem::handle_object_selection(game_state, ui_state, input, frame_state);
         CloseMenuSystem::check_to_close_menu(ui_state, input, frame_state);
 
         InventorySystem::handle_inventory(game_state, ui_state, input, frame_state);
@@ -64,7 +52,7 @@ impl GameSystem {
         CommandHandleSystem::handle_action_effects(ui_state, frame_state);
         frame_state.gui.add_text_render_commands(ui_state);
 
-        HealthSystem::display_health(window, game_state, input, frame_state);
+        HealthSystem::display_health(game_state, input, frame_state);
 
         input.update_end_frame();
     }

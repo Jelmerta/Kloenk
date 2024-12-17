@@ -1,24 +1,18 @@
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
-use crate::state::ui_state::{Rect, UIState, UserAction};
+use crate::state::ui_state::{UIElement, UserAction};
 use cgmath::Point2;
-use std::sync::Arc;
-use winit::window::Window;
 
 pub struct HealthSystem {}
 
 impl HealthSystem {
-    pub fn display_health(
-        window: &Arc<Window>,
-        game_state: &GameState,
-        input: &Input,
-        frame_state: &mut FrameState,
-    ) {
+    pub fn display_health(game_state: &GameState, input: &Input, frame_state: &mut FrameState) {
         // Not really a button, but we can just re-use?
-        let health_rect_outside = Rect {
+        let health_rect_outside = UIElement {
             top_left: Point2::new(0.05, 0.85),
             bottom_right: Point2::new(0.20, 0.95),
+            parent_middle_x: None,
         };
         match frame_state
             .gui
@@ -35,12 +29,10 @@ impl HealthSystem {
         let health_bar_width = 0.13;
         let percentage_health_bar = percentage_health * health_bar_width;
 
-        let health_rect_inside = Rect {
-            top_left: Point2::new(0.05 + UIState::undo_width_scaling(0.01, window), 0.86),
-            bottom_right: Point2::new(
-                0.05 + UIState::undo_width_scaling(0.01, window) + percentage_health_bar,
-                0.94,
-            ),
+        let health_rect_inside = UIElement {
+            top_left: Point2::new(0.05 + 0.01, 0.86),
+            bottom_right: Point2::new(0.05 + 0.01 + percentage_health_bar, 0.94),
+            parent_middle_x: None,
         };
         match frame_state
             .gui

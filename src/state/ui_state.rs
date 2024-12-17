@@ -1,17 +1,17 @@
 use crate::state::components::Entity;
 use crate::state::ui_state::MenuState::Closed;
-use cgmath::{ElementWise, Point2};
+use cgmath::Point2;
 use std::collections::HashMap;
 use std::sync::Arc;
 use winit::window::Window;
 
 pub struct UIWindow {
     pub is_visible: bool,
-    pub rect: Rect,
+    pub rect: UIElement,
 }
 
 impl UIWindow {
-    pub fn new(is_visible: bool, rect: Rect) -> UIWindow {
+    pub fn new(is_visible: bool, rect: UIElement) -> UIWindow {
         Self { is_visible, rect }
     }
 }
@@ -19,12 +19,12 @@ impl UIWindow {
 pub enum RenderCommand {
     Mesh {
         layer: u32,
-        rect: Rect,
+        ui_element: UIElement,
         mesh_id: String,
     },
     Text {
         layer: u32,
-        rect: Rect,
+        rect: UIElement,
         text: String,
         color: [f32; 3],
     },
@@ -38,16 +38,22 @@ pub enum UserAction {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct Rect {
+pub struct UIElement {
+    pub parent_middle_x: Option<f32>,
     pub top_left: Point2<f32>,
     pub bottom_right: Point2<f32>,
 }
 
-impl Rect {
-    pub fn new(top_left: Point2<f32>, bottom_right: Point2<f32>) -> Rect {
+impl UIElement {
+    pub fn new(
+        top_left: Point2<f32>,
+        bottom_right: Point2<f32>,
+        parent_middle_x: Option<f32>,
+    ) -> UIElement {
         Self {
             top_left,
             bottom_right,
+            parent_middle_x,
         }
     }
 
@@ -58,6 +64,13 @@ impl Rect {
             && point.y < self.bottom_right.y
     }
 
+    pub fn middle(&self) -> Point2<f32> {
+        Point2::new(
+            (self.top_left.x + self.bottom_right.x) / 2.0,
+            (self.top_left.y + self.bottom_right.y) / 2.0,
+        )
+    }
+
     pub fn width(&self) -> f32 {
         self.bottom_right.x - self.top_left.x
     }
@@ -66,33 +79,18 @@ impl Rect {
         self.bottom_right.y - self.top_left.y
     }
 
-    pub fn scale(&self, scale_factor_x: f32, scale_factor_y: f32) -> Rect {
-        let scaled_top_left = self
-            .top_left
-            .mul_element_wise(Point2::new(scale_factor_x, scale_factor_y));
-        let scaled_bottom_right = self
-            .bottom_right
-            .mul_element_wise(Point2::new(scale_factor_x, scale_factor_y));
-        Rect::new(scaled_top_left, scaled_bottom_right)
-    }
-
     // Removes percentages on sides to create inner rect
-    pub fn inner_rect(
-        &self,
-        width_to_remove: f32,
-        height_to_remove: f32,
-        window: &Arc<Window>,
-    ) -> Rect {
-        let width = self.width() - width_to_remove * 2.0;
-        Rect {
+    pub fn inner_rect(&self, width_to_remove: f32, height_to_remove: f32) -> UIElement {
+        UIElement {
             top_left: Point2::new(
-                self.top_left.x + UIState::undo_width_scaling(width_to_remove, window),
+                self.top_left.x + width_to_remove,
                 self.top_left.y + height_to_remove,
             ),
             bottom_right: Point2::new(
-                self.bottom_right.x + UIState::undo_width_scaling(width_to_remove, window) + width, //- width_to_remove,
+                self.bottom_right.x - width_to_remove,
                 self.bottom_right.y - height_to_remove,
             ),
+            parent_middle_x: None,
         }
     }
 }
@@ -137,7 +135,7 @@ impl UIState {
     pub fn new(cursor: Vec<u8>) -> Self {
         let inventory_window = UIWindow::new(
             false,
-            Rect::new(Point2::new(0.6, 0.6), Point2::new(0.95, 0.95)),
+            UIElement::new(Point2::new(0.6, 0.6), Point2::new(0.95, 0.95), None),
         );
 
         let mut windows = HashMap::new();
@@ -152,11 +150,37 @@ impl UIState {
         }
     }
 
-    pub fn convert_clip_space_x(value: f32, window: &Arc<Window>) -> f32 {
+    pub fn clip_space_x_min(window: &Arc<Window>) -> f32 {
         let scale = 1.0;
         let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
         let width = scale * resolution;
-        -width + 2.0 * width * value
+        -width
+    }
+
+    pub fn clip_space_x_max(window: &Arc<Window>) -> f32 {
+        let scale = 1.0;
+        let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
+        let width = scale * resolution;
+        width
+    }
+
+    pub fn convert_clip_space_x(ui_element: UIElement, window: &Arc<Window>) -> f32 {
+        let scale = 1.0;
+        let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
+        let width = scale * resolution;
+
+        let middle_scaling;
+        if ui_element.parent_middle_x.is_some() {
+            middle_scaling = -width
+                + 2.0 * width * ui_element.parent_middle_x.unwrap()
+                + Self::convert_scale_x(
+                    ui_element.middle().x - ui_element.parent_middle_x.unwrap(),
+                ); // * (window.inner_size().height as f32 / window.inner_size().width as f32);
+        } else {
+            middle_scaling = -width + 2.0 * width * ui_element.middle().x;
+        }
+        let adjusted_width_scaling = UIState::convert_scale_x(ui_element.width() / 2.0);
+        middle_scaling - adjusted_width_scaling
     }
 
     pub fn convert_scale_x(value: f32) -> f32 {
@@ -164,14 +188,6 @@ impl UIState {
         let resolution = 16.0 / 9.0;
         let width = scale * resolution;
         value * 2.0 * width
-    }
-
-    // We make sure parent is scaled by convert_clip_space_x but inside parent container we should stick to 16:9
-    pub fn undo_width_scaling(value: f32, window: &Arc<Window>) -> f32 {
-        let invert_resolution =
-            window.inner_size().height as f32 / window.inner_size().width as f32;
-        let forced_ui_resolution = 16.0 / 9.0;
-        value * invert_resolution * forced_ui_resolution
     }
 
     pub fn convert_clip_space_y(value: f32) -> f32 {

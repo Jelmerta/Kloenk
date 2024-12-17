@@ -3,17 +3,14 @@ use crate::state::frame_state::{ActionEffect, FrameState};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
 use crate::state::ui_state::MenuState::Closed;
-use crate::state::ui_state::{MenuState, Rect, UIState, UserAction};
+use crate::state::ui_state::{MenuState, UIElement, UIState, UserAction};
 use crate::systems::item_pickup_system::ItemPickupSystem;
 use cgmath::Point2;
-use std::sync::Arc;
-use winit::window::Window;
 
 pub struct ObjectSelectionSystem();
 
 impl ObjectSelectionSystem {
     pub fn handle_object_selection(
-        window: &Arc<Window>,
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &Input,
@@ -35,9 +32,10 @@ impl ObjectSelectionSystem {
             item,
         } = &ui_state.menu_state
         {
-            let pickup_menu_rect = Rect::new(
+            let pickup_menu_rect = UIElement::new(
                 Point2::new(mouse_position.x - 0.05, mouse_position.y - 0.02),
                 Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.03),
+                None,
             );
 
             let mut text_color = [0.8, 0.8, 0.8];
@@ -59,14 +57,15 @@ impl ObjectSelectionSystem {
             }
             frame_state.gui.text(
                 300,
-                pickup_menu_rect.inner_rect(0.005, 0.005, window),
+                pickup_menu_rect.inner_rect(0.005, 0.005),
                 "Pick up item".to_string(),
                 text_color,
             );
 
-            let examine_menu_rect = Rect::new(
+            let examine_menu_rect = UIElement::new(
                 Point2::new(mouse_position.x - 0.05, mouse_position.y + 0.03),
                 Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.08),
+                None,
             );
             let mut text_color = [0.8, 0.8, 0.8];
             match frame_state
@@ -90,7 +89,7 @@ impl ObjectSelectionSystem {
             }
             frame_state.gui.text(
                 300,
-                examine_menu_rect.inner_rect(0.005, 0.005, window),
+                examine_menu_rect.inner_rect(0.005, 0.005),
                 "Examine item".to_string(),
                 text_color,
             );
