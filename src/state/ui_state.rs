@@ -5,8 +5,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use winit::window::Window;
 
-const DEFAULT_RESOLUTION_HEIGHT: f32 = 2160.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
-
 pub struct UIWindow {
     pub is_visible: bool,
     pub rect: Rect,
@@ -79,14 +77,20 @@ impl Rect {
     }
 
     // Removes percentages on sides to create inner rect
-    pub fn inner_rect(&self, width_to_remove: f32, height_to_remove: f32) -> Rect {
+    pub fn inner_rect(
+        &self,
+        width_to_remove: f32,
+        height_to_remove: f32,
+        window: &Arc<Window>,
+    ) -> Rect {
+        let width = self.width() - width_to_remove * 2.0;
         Rect {
             top_left: Point2::new(
-                self.top_left.x + width_to_remove,
+                self.top_left.x + UIState::undo_width_scaling(width_to_remove, window),
                 self.top_left.y + height_to_remove,
             ),
             bottom_right: Point2::new(
-                self.bottom_right.x - width_to_remove,
+                self.bottom_right.x + UIState::undo_width_scaling(width_to_remove, window) + width, //- width_to_remove,
                 self.bottom_right.y - height_to_remove,
             ),
         }
@@ -148,35 +152,36 @@ impl UIState {
         }
     }
 
-    // Why does this need resolution but scale x does not...? so confused
     pub fn convert_clip_space_x(value: f32, window: &Arc<Window>) -> f32 {
-        let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
+        let scale = 1.0;
         let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
         let width = scale * resolution;
         -width + 2.0 * width * value
     }
 
-    pub fn convert_scale_x(value: f32, window: &Arc<Window>) -> f32 {
-        let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
-        let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
+    pub fn convert_scale_x(value: f32) -> f32 {
+        let scale = 1.0;
+        let resolution = 16.0 / 9.0;
         let width = scale * resolution;
-        // let width = scale; // * resolution;
         value * 2.0 * width
     }
 
-    pub fn scale_extra_for_textbox(value: f32, window: &Arc<Window>) -> f32 {
-        let resolution = window.inner_size().height as f32 / window.inner_size().width as f32;
-        value * resolution * (16.0 / 9.0)
+    // We make sure parent is scaled by convert_clip_space_x but inside parent container we should stick to 16:9
+    pub fn undo_width_scaling(value: f32, window: &Arc<Window>) -> f32 {
+        let invert_resolution =
+            window.inner_size().height as f32 / window.inner_size().width as f32;
+        let forced_ui_resolution = 16.0 / 9.0;
+        value * invert_resolution * forced_ui_resolution
     }
 
-    pub fn convert_clip_space_y(value: f32, window: &Arc<Window>) -> f32 {
-        let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
+    pub fn convert_clip_space_y(value: f32) -> f32 {
+        let scale = 1.0;
         let height = scale;
         height - 2.0 * value * height
     }
 
-    pub fn convert_scale_y(value: f32, window: &Arc<Window>) -> f32 {
-        let scale = window.inner_size().height as f32 / DEFAULT_RESOLUTION_HEIGHT;
+    pub fn convert_scale_y(value: f32) -> f32 {
+        let scale = 1.0;
         let height = scale;
         value * height * 2.0
     }

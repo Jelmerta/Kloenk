@@ -367,12 +367,12 @@ impl Renderer {
         Instance {
             position: Vector3 {
                 x: UIState::convert_clip_space_x(rect.top_left.x, window),
-                y: UIState::convert_clip_space_y(rect.top_left.y, window),
+                y: UIState::convert_clip_space_y(rect.top_left.y),
                 z: 0.0,
             },
             scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                UIState::convert_scale_x(rect.width(), window),
-                UIState::convert_scale_y(rect.height(), window),
+                UIState::convert_scale_x(rect.width()),
+                UIState::convert_scale_y(rect.height()),
                 1.0,
                 1.0,
             )),

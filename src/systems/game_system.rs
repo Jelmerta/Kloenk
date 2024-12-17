@@ -64,7 +64,7 @@ impl GameSystem {
         CommandHandleSystem::handle_action_effects(ui_state, frame_state);
         frame_state.gui.add_text_render_commands(ui_state);
 
-        HealthSystem::display_health(game_state, input, frame_state);
+        HealthSystem::display_health(window, game_state, input, frame_state);
 
         input.update_end_frame();
     }
