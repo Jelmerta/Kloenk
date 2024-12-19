@@ -366,10 +366,8 @@ impl Renderer {
     pub fn create_ui_element_instance(window: &Arc<Window>, rect: UIElement) -> Instance {
         Instance {
             position: Vector3 {
-                x: UIState::clip_space_left(rect, window),
-                // y: UIState::convert_clip_space_y(rect.top_left().y), // TODO hm middle adjusted or top left fine right?
-                // y: UIState::convert_clip_space_y(UIState::), // TODO hm middle adjusted or top left fine right?
-                y: rect.clip_top(),
+                x: UIState::clip_space_element_position_x(rect, window),
+                y: UIState::convert_clip_space_y(rect.top()),
                 z: 0.0,
             },
             scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(

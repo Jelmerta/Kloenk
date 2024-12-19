@@ -4,13 +4,15 @@ use crate::state::input::Input;
 use crate::state::ui_state::MenuState::{Closed, Inventory};
 use crate::state::ui_state::{MenuState, UIElement, UIState, UserAction};
 use crate::systems::item_placement_system::ItemPlacementSystem;
-use cgmath::{ElementWise, Point2};
-use std::ops::Sub;
+use cgmath::Point2;
+use std::sync::Arc;
+use winit::window::Window;
 
 pub struct InventorySystem {}
 
 impl InventorySystem {
     pub fn handle_inventory(
+        window: &Arc<Window>,
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &mut Input,
@@ -35,48 +37,24 @@ impl InventorySystem {
         );
 
         let inventory_ecs = game_state.get_storage(&"player".to_string()).unwrap();
-        let inventory_width = inventory_window.rect.width();
-        let inventory_height = inventory_window.rect.height();
-        let item_picture_scale_x = inventory_width / f32::from(inventory_ecs.number_of_columns);
-        let item_picture_scale_y = inventory_height / f32::from(inventory_ecs.number_of_rows);
 
         let inventory_items = game_state.get_in_storages(&"player".to_string());
-        let top_left_inventory_middle =
-            inventory_window
-                .rect
-                .top_left()
-                .add_element_wise(Point2::new(
-                    item_picture_scale_x / 2.0,
-                    item_picture_scale_y / 2.0,
-                ));
+
         for (entity, in_storage) in inventory_items.iter() {
             let storable = game_state.storable_components.get(*entity).unwrap();
             let item_image = game_state.get_graphics_inventory(entity).unwrap();
 
-            let shape_half_dimensions = Point2::new(
-                storable.shape.width as f32 / 2.0 * item_picture_scale_x,
-                storable.shape.height as f32 / 2.0 * item_picture_scale_y,
-            );
+            let left = in_storage.position_x as f32 / inventory_ecs.number_of_columns as f32;
+            let right = left + storable.shape.width as f32 / inventory_ecs.number_of_columns as f32;
+            let top = in_storage.position_y as f32 / inventory_ecs.number_of_rows as f32;
+            let bottom = top + storable.shape.height as f32 / inventory_ecs.number_of_rows as f32;
 
-            let top_left_item_position_move = Point2::new(
-                in_storage.position_x as f32 * item_picture_scale_x,
-                in_storage.position_y as f32 * item_picture_scale_y,
-            );
-            let shape_size_middle_move = shape_half_dimensions.sub_element_wise(Point2::new(
-                0.5 * item_picture_scale_x,
-                0.5 * item_picture_scale_y,
-            ));
+            let image_element = inventory_window
+                .rect
+                .inner_rect(Point2::new(left, top), Point2::new(right, bottom));
 
-            let middle = top_left_inventory_middle
-                .add_element_wise(top_left_item_position_move)
-                .add_element_wise(shape_size_middle_move);
-
-            let image_element = UIElement::new(
-                middle,
-                shape_half_dimensions,
-                Some(middle.sub(inventory_window.rect.middle)),
-            );
             match frame_state.gui.image_button(
+                window,
                 150,
                 image_element,
                 item_image.material_id.to_string(),
@@ -114,17 +92,24 @@ impl InventorySystem {
     }
 
     pub fn display_inventory_item_menu(
+        window: &Arc<Window>,
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &Input,
         frame_state: &mut FrameState,
     ) {
         let old_menu_state = ui_state.menu_state.clone();
-        ui_state.menu_state =
-            Self::handle_inventory_menu_state(game_state, old_menu_state, input, frame_state);
+        ui_state.menu_state = Self::handle_inventory_menu_state(
+            window,
+            game_state,
+            old_menu_state,
+            input,
+            frame_state,
+        );
     }
 
     fn handle_inventory_menu_state(
+        window: &Arc<Window>,
         game_state: &mut GameState,
         menu_state: MenuState,
         input: &Input,
@@ -138,17 +123,19 @@ impl InventorySystem {
         } = menu_state
         {
             // Drop button
-            let drop_button_rect = UIElement::new(
+            let drop_button_rect = UIElement::new_rect(
                 Point2::new(mouse_position.x + 0.015, mouse_position.y + 0.005),
                 Point2::new(0.065, 0.025),
-                None,
             );
 
             let mut text_color = [0.8, 0.8, 0.8];
-            match frame_state
-                .gui
-                .color_button(200, drop_button_rect, input, "black".to_string())
-            {
+            match frame_state.gui.color_button(
+                window,
+                200,
+                drop_button_rect,
+                input,
+                "black".to_string(),
+            ) {
                 UserAction::None => {}
                 UserAction::Hover => {
                     text_color = [0.8, 0.8, 0.0];
@@ -170,21 +157,21 @@ impl InventorySystem {
 
             frame_state.gui.text(
                 300,
-                drop_button_rect.inner_rect(0.005, 0.005),
+                drop_button_rect.inner_rect(Point2::new(0.01, 0.01), Point2::new(0.99, 0.99)),
                 "Drop item".to_string(),
                 text_color,
             );
 
             // Examine button
             if game_state.description_components.contains_key(&item) {
-                let examine_button_rect = UIElement::new(
+                let examine_button_rect = UIElement::new_rect(
                     Point2::new(mouse_position.x + 0.015, mouse_position.y + 0.055),
                     Point2::new(0.065, 0.025),
-                    None,
                 );
 
                 let mut text_color = [0.8, 0.8, 0.8];
                 match frame_state.gui.color_button(
+                    window,
                     200,
                     examine_button_rect,
                     input,
@@ -211,7 +198,8 @@ impl InventorySystem {
 
                 frame_state.gui.text(
                     300,
-                    examine_button_rect.inner_rect(0.005, 0.005),
+                    examine_button_rect
+                        .inner_rect(Point2::new(0.01, 0.01), Point2::new(0.99, 0.99)),
                     "Examine item".to_string(),
                     text_color,
                 );

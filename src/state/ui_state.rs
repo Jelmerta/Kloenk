@@ -1,6 +1,6 @@
 use crate::state::components::Entity;
 use crate::state::ui_state::MenuState::Closed;
-use cgmath::{Point2, Vector2};
+use cgmath::{EuclideanSpace, Point2, Vector2};
 use std::collections::HashMap;
 use std::sync::Arc;
 use winit::window::Window;
@@ -37,220 +37,148 @@ pub enum UserAction {
     RightClick,
 }
 
-// #[derive(Copy, Clone, Debug)]
-// pub enum ElementType {
-//     Root { ui_element_coordinate_origin: Point2<f32> },
-//     Inherit { ui_element_coordinate_origin: Point2<f32>, origin_distance: Vector2<f32> },
-// }
-
-// Instead of defining top_left and bottom_right, we define an element by its middle point. This helps our rendering: we want to enforce 16:9 UI, but have a dynamic resolution. This would lead to not-so-obvious solution. We now position elements by middle point and then render the element in 16:9
-// #[derive(Copy, Clone, Debug)]
-// pub struct UIElement {
-//     pub element_type: ElementType,
-//     pub half_dimensions: Point2<f32>,
-// }
-
-// Element space is defined from -1 to 1 in both x and y, bound by top_left and bottom_right defined in UI space
 #[derive(Copy, Clone, Debug)]
 pub struct UIElement {
-    pub element_space_coordinate_origin: Point2<f32>,
-    pub top_left: Point2<f32>,
-    pub bottom_right: Point2<f32>,
+    pub ui_coordinate_origin: Point2<f32>,
+    pub top_left: Vector2<f32>,
+    pub bottom_right: Vector2<f32>,
 }
 
 impl UIElement {
+    pub fn new_rect(ui_coordinate_origin: Point2<f32>, half_dimensions: Point2<f32>) -> UIElement {
+        let half_dimensions_vec = half_dimensions.to_vec();
+        Self::new(
+            ui_coordinate_origin,
+            -half_dimensions_vec,
+            half_dimensions_vec,
+        )
+    }
+
     pub fn new(
-        element_space_coordinate_origin: Point2<f32>,
-        top_left: Point2<f32>,
-        bottom_right: Point2<f32>,
+        ui_coordinate_origin: Point2<f32>,
+        top_left: Vector2<f32>,
+        bottom_right: Vector2<f32>,
     ) -> UIElement {
         Self {
-            element_space_coordinate_origin,
+            ui_coordinate_origin,
             top_left,
             bottom_right,
         }
     }
 
-    // pub fn new_root(middle: Point2<f32>, half_dimensions: Point2<f32>) -> UIElement {
-    //     Self {
-    //         element_type: ElementType::Root { ui_element_coordinate_origin: middle },
-    //         half_dimensions,
-    //     }
-    // }
-
-    // pub fn new_child(parent: UIElement, position: Point2<f32>, half_dimensions: Point2<f32>) -> UIElement {
-    //     Self {
-    //         element_type: ElementType::Inherit {
-    //             ui_element_coordinate_origin: match parent.element_type {
-    //                 ElementType::Root { ui_element_coordinate_origin: middle } => middle,
-    //                 ElementType::Inherit { ui_element_coordinate_origin: parent_middle, .. } => parent_middle,
-    //             },
-    //             origin_distance:
-    //             match parent.element_type {
-    //                 ElementType::Root { ui_element_coordinate_origin: middle } => {
-    //                     position.sub(middle)
-    //                 }
-    //                 ElementType::Inherit { ui_element_coordinate_origin: parent_middle, origin_distance: _unusedithink } => {
-    //                     position.sub(parent_middle)
-    //                 }
-    //             },
-    //
-    //
-    //             // Vector2 {
-    //             //     x: match parent {
-    //             //         UIElement { element_type: ElementType::Root { middle }, .. } => 0.0,
-    //             //         UIElement { element_type: ElementType::Inherit { parent_middle_distance: Vector2 { x, .. }, .. }, .. } => x,
-    //             //     },
-    //             //     y: match parent {
-    //             //         UIElement { element_type: ElementType::Root { middle }, .. } => 0.0,
-    //             //         UIElement { element_type: ElementType::Inherit { parent_middle_distance: Vector2 { y, .. }, .. }, .. } => y,
-    //             //     },
-    //             // },
-    //         },
-    //         half_dimensions,
-    //     }
-    // }
-
-    // pub fn top_left(&self) -> Point2<f32> {
-    //     Point2::new(self.middle.x - self.half_dimensions.x, self.middle.y - self.half_dimensions.y)
-    // }
-    //
-    // pub fn bottom_right(&self) -> Point2<f32> {
-    //     Point2::new(self.middle.x + self.half_dimensions.x, self.middle.y + self.half_dimensions.y)
-    // }
-
-    // pub fn clip_top(&self) -> f32 {
-    //     let top_ui = self.ui_element_coordinate_origin_y() - self.half_dimensions.y;
-    //     UIState::convert_clip_space_y(top_ui)
-    // }
-    //
-    // pub fn clip_bottom(&self) -> f32 {
-    //     let bottom_ui = self.ui_element_coordinate_origin_y() + self.half_dimensions.y;
-    //     UIState::convert_clip_space_y(bottom_ui)
-    // }
-    //
-    // pub fn right(&self) -> f32 {
-    //     match self.element_type {
-    //         // todo conversions? spaces
-    //         ElementType::Root { ui_element_coordinate_origin } => { ui_element_coordinate_origin.x + self.half_dimensions.x }
-    //         ElementType::Inherit { ui_element_coordinate_origin, origin_distance } => { ui_element_coordinate_origin.x + origin_distance.x + self.half_dimensions.x }
-    //     }
-    // }
-    //
-    // pub fn ui_element_coordinate_origin_y(&self) -> f32 {
-    //     self.ui_element_coordinate_origin().y
-    // }
-    //
-    // pub fn ui_element_coordinate_origin(&self) -> Point2<f32> {
-    //     match self.element_type {
-    //         ElementType::Root { ui_element_coordinate_origin } => ui_element_coordinate_origin,
-    //         ElementType::Inherit { ui_element_coordinate_origin, .. } => ui_element_coordinate_origin,
-    //     }
-    // }
-
     pub fn contains(&self, point: Point2<f32>, window: &Arc<Window>) -> bool {
         let point_clip = UIState::ui_to_clip(point, window);
-        let left = UIState::clip_space_left(*self, window);
-        let right = UIState::clip_space_right(*self, window);
+        // log::warn!("hi");
+        // log::warn!("Point clip: {:?}", point_clip);
 
-        // let middle = UIState::clip_space_left(*self, window);
-        // let left = middle - UIState::convert_scale_x(self.half_dimensions.x);
-        // let right = middle + UIState::convert_scale_x(self.half_dimensions.x);
-        // point.x >= self.top_left().x
-        //     && point.x < self.bottom_right().x
-        // point.x >= left
-        //     && point.x < right
-        //     && point.y >= self.top_left().y
-        //     && point.y < self.bottom_right().y
+        // let left = self.ui_element.ui_coordinate_origin.x - (self.ui_element.width() / 2.0) * (16.0 / 9.0) * (window.inner_size().height as f32 / window.inner_size().width as f32);
+        // log::warn!("{:?}", self);
+        let origin_clip = UIState::ui_to_clip(self.ui_coordinate_origin, window);
+        // log::warn!("Origin clip: {:?}", origin_clip);
+        let clip_left = origin_clip.x - self.top_left.x; // UIState::convert_scale_x(self.top_left.x); // - UIState::convert_scale_x(self.width() / 2.0);
+        let clip_right = origin_clip.x + self.bottom_right.x; // + UIState::convert_scale_x(self.bottom_right.x); // + UIState::convert_scale_x(self.width() / 2.0);
+        let clip_top = origin_clip.y + self.top_left.y; //UIState::convert_scale_y(self.top_left.y); // + UIState::convert_scale_y(self.height() / 2.0);
+        let clip_bottom = origin_clip.y - self.bottom_right.y; //UIState::convert_scale_y(self.bottom_right.y); // - UIState::convert_scale_y(self.height() / 2.0);;
+                                                               // let clip_left = UIState::clip_space_element_position_x(*self, window);
+                                                               // let clip_top = UIState::convert_clip_space_y(self.ui_coordinate_origin.y) - UIState::convert_scale_y(self.height() / 2.0);
+                                                               // let clip_right = clip_left + UIState::convert_scale_x(self.width());
+                                                               // let clip_bottom = clip_top + UIState::convert_scale_y(self.height());
 
-        point_clip.x >= left
-            && point_clip.x < right
-            && point_clip.y >= self.clip_top()
-            && point_clip.y < self.clip_bottom()
+        // log::warn!("Clip left: {}, clip top: {}, clip right: {}, clip bottom: {}", clip_left, clip_top, clip_right, clip_bottom);
+
+        // log::warn!("contains: {:?}", point_clip.x >= clip_left
+        //     && point_clip.x < clip_right
+        //     && point_clip.y >= clip_bottom
+        //     && point_clip.y < clip_top);
+        point_clip.x >= clip_left
+            && point_clip.x < clip_right
+            && point_clip.y >= clip_bottom
+            && point_clip.y < clip_top
     }
-
-    // pub fn width(&self) -> f32 {
-    //     self.half_dimensions.x * 2.0
-    // }
-    //
-    // pub fn height(&self) -> f32 {
-    //     self.half_dimensions.y * 2.0
-    // }
 
     pub fn top(&self) -> f32 {
-        match self.element_type {
-            ElementType::Root {
-                ui_element_coordinate_origin,
-            } => ui_element_coordinate_origin.y - self.half_dimensions.y,
-            ElementType::Inherit {
-                ui_element_coordinate_origin,
-                origin_distance,
-            } => ui_element_coordinate_origin.y - origin_distance.y - self.half_dimensions.y,
+        self.ui_coordinate_origin.y - self.top_left.y
+    }
+
+    pub fn bottom(&self) -> f32 {
+        self.ui_coordinate_origin.y + self.bottom_right.y
+    }
+
+    pub fn left(&self) -> f32 {
+        self.ui_coordinate_origin.x - self.top_left.x
+    }
+
+    pub fn right(&self) -> f32 {
+        self.ui_coordinate_origin.x + self.bottom_right.x
+    }
+
+    pub fn width(&self) -> f32 {
+        self.bottom_right.x - self.top_left.x
+    }
+
+    pub fn height(&self) -> f32 {
+        self.bottom_right.y - self.top_left.y
+    }
+
+    // TODO probably need some method that maintains aspect ratio by just defining topleft + width or height i guess?
+    // Element space is defined from 0 to 1 in both x and y, bound by top_left and bottom_right defined in UI space (element space can also just be seen as percentages of root element's size)
+    pub fn inner_rect(
+        &self,
+        element_space_top_left: Point2<f32>,
+        element_space_bottom_right: Point2<f32>,
+    ) -> UIElement {
+        // let top_left = self.ui_coordinate_origin - element_space_top_left; //self.element_to_ui_x(element_space_top_left.x);
+        // let bottom_right = self.ui_coordinate_origin + element_space_bottom_right;
+        let ui_x_min = self.element_to_ui_x(element_space_top_left.x);
+        let ui_y_min = self.element_to_ui_y(element_space_top_left.y);
+        let ui_x_max = self.element_to_ui_x(element_space_bottom_right.x);
+        let ui_y_max = self.element_to_ui_y(element_space_bottom_right.y);
+
+        UIElement {
+            ui_coordinate_origin: self.ui_coordinate_origin,
+            // top_left: top_left.to_vec(),
+            // bottom_right: bottom_right.to_vec(),
+            top_left: Vector2 {
+                x: ui_x_min,
+                y: ui_y_min,
+            },
+            bottom_right: Vector2 {
+                x: ui_x_max,
+                y: ui_y_max,
+            },
         }
     }
 
-    // Removes percentages on sides to create inner rect
-    pub fn inner_rect(&self, width_to_remove: f32, height_to_remove: f32) -> UIElement {
-        UIElement {
-            element_type: ElementType::Inherit {
-                ui_element_coordinate_origin: self.ui_element_coordinate_origin(),
-                origin_distance: Vector2::new(0.0, 0.0),
-            },
-            half_dimensions: Point2::new(
-                self.half_dimensions.x - width_to_remove,
-                self.half_dimensions.y - height_to_remove,
-            ),
-        }
+    // TODO
+    pub fn inner_rect_maintain_ratio_x(
+        &self,
+        element_space_top_left: Point2<f32>,
+        element_width_percentage: f32,
+    ) -> UIElement {
+        let ui_x_min = self.element_to_ui_x(element_space_top_left.x);
+        let ui_y_min = self.element_to_ui_y(element_space_top_left.y);
 
-        // UIElement {
-        //     middle: Point2::new(
-        //         self.middle.x,
-        //         self.middle.y,
-        //     ),
-        //     half_dimensions: Point2::new(
-        //         self.half_dimensions.x - width_to_remove,
-        //         self.half_dimensions.y - height_to_remove,
-        //     ),
-        //     parent_middle_distance: None, // Or zero
-        // }
+        let inner_rect_width = self.width() * element_width_percentage;
+
+        UIElement {
+            ui_coordinate_origin: self.ui_coordinate_origin,
+            top_left: Vector2 {
+                x: ui_x_min,
+                y: ui_y_min,
+            },
+            bottom_right: Vector2 {
+                x: ui_x_min + inner_rect_width,
+                y: ui_y_min + inner_rect_width,
+            },
+        }
     }
 
-    pub fn inner_rect(&self, middle_x_percentage: f32, middle_y_percentage: f32) -> UIElement {
-        let ui_x_to_move = self.half_dimensions.x * middle_x_percentage;
-        let ui_y_to_move = self.half_dimensions.y * middle_y_percentage;
+    fn element_to_ui_x(&self, element_space_x: f32) -> f32 {
+        self.ui_coordinate_origin.x + self.top_left.x + element_space_x * self.width()
+    }
 
-        match self.element_type {
-            ElementType::Root {
-                ui_element_coordinate_origin,
-            } => ui_element_coordinate_origin,
-            ElementType::Inherit {
-                ui_element_coordinate_origin,
-                origin_distance,
-            } => {}
-        }
-
-        UIElement {
-            element_type: ElementType::Inherit {
-                ui_element_coordinate_origin: self.ui_element_coordinate_origin(),
-                origin_distance: Vector2::new(0.0, 0.0),
-            },
-            half_dimensions: Point2::new(
-                self.half_dimensions.x - width_to_remove,
-                self.half_dimensions.y - height_to_remove,
-            ),
-        }
-
-        // UIElement {
-        //     middle: Point2::new(
-        //         self.middle.x,
-        //         self.middle.y,
-        //     ),
-        //     half_dimensions: Point2::new(
-        //         self.half_dimensions.x - width_to_remove,
-        //         self.half_dimensions.y - height_to_remove,
-        //     ),
-        //     parent_middle_distance: None, // Or zero
-        // }
+    fn element_to_ui_y(&self, element_space_y: f32) -> f32 {
+        self.ui_coordinate_origin.y + self.top_left.y + element_space_y * self.height()
     }
 }
 
@@ -294,7 +222,7 @@ impl UIState {
     pub fn new(cursor: Vec<u8>) -> Self {
         let inventory_window = UIWindow::new(
             false,
-            UIElement::new_root(Point2::new(0.775, 0.775), Point2::new(0.175, 0.175)),
+            UIElement::new_rect(Point2::new(0.775, 0.775), Point2::new(0.175, 0.175)),
         );
 
         let mut windows = HashMap::new();
@@ -315,7 +243,7 @@ impl UIState {
         let percentage = adjusted_value / Self::clip_space_width(window);
         let x_clip = percentage * Self::clip_space_width(window);
 
-        let y_clip = -1.0 + 2.0 * point.y;
+        let y_clip = 1.0 - point.y * 2.0;
         Point2::new(x_clip, y_clip)
     }
 
@@ -337,42 +265,12 @@ impl UIState {
         width
     }
 
-    pub fn clip_space_left(ui_element: UIElement, window: &Arc<Window>) -> f32 {
-        let adjusted_width_scaling = UIState::convert_scale_x(ui_element.half_dimensions.x);
-        Self::clip_space_middle_x(ui_element, window) - adjusted_width_scaling
-    }
-
-    pub fn clip_space_right(ui_element: UIElement, window: &Arc<Window>) -> f32 {
-        let adjusted_width_scaling = UIState::convert_scale_x(ui_element.half_dimensions.x);
-        Self::clip_space_middle_x(ui_element, window) + adjusted_width_scaling
-    }
-
-    pub fn clip_space_middle_x(ui_element: UIElement, window: &Arc<Window>) -> f32 {
+    pub fn clip_space_element_position_x(ui_element: UIElement, window: &Arc<Window>) -> f32 {
         let scale = 1.0;
         let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
         let width = scale * resolution;
-
-        match ui_element.element_type {
-            ElementType::Root {
-                ui_element_coordinate_origin,
-            } => {
-                // middle_scaling = -width + 2.0 * width * ui_element.middle.x;
-                -width + 2.0 * width * ui_element_coordinate_origin.x
-            }
-            ElementType::Inherit {
-                ui_element_coordinate_origin,
-                origin_distance,
-            } => {
-                // -width + 2.0 * width * (ui_element.middle.x - ui_element.parent_middle_distance.unwrap().x) + Self::convert_scale_x(ui_element.parent_middle_distance.unwrap().x);
-                -width
-                    + 2.0 * width * (ui_element_coordinate_origin.x - origin_distance.x)
-                    + Self::convert_scale_x(ui_element_coordinate_origin.x)
-            }
-        }
-
-        // if ui_element.parent_middle_distance.is_some() {
-        //     middle_scaling = -width + 2.0 * width * (ui_element.middle.x - ui_element.parent_middle_distance.unwrap().x) + Self::convert_scale_x(ui_element.parent_middle_distance.unwrap().x);
-        // } else {}
+        let distance_left = Self::convert_scale_x(ui_element.top_left.x); // TODO not 16:9 for top_left part?
+        -width + 2.0 * width * ui_element.ui_coordinate_origin.x - distance_left
     }
 
     pub fn convert_scale_x(value: f32) -> f32 {

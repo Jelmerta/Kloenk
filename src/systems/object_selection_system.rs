@@ -6,11 +6,14 @@ use crate::state::ui_state::MenuState::Closed;
 use crate::state::ui_state::{MenuState, UIElement, UIState, UserAction};
 use crate::systems::item_pickup_system::ItemPickupSystem;
 use cgmath::Point2;
+use std::sync::Arc;
+use winit::window::Window;
 
 pub struct ObjectSelectionSystem();
 
 impl ObjectSelectionSystem {
     pub fn handle_object_selection(
+        window: &Arc<Window>,
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &Input,
@@ -32,17 +35,19 @@ impl ObjectSelectionSystem {
             item,
         } = &ui_state.menu_state
         {
-            let pickup_menu_rect = UIElement::new(
+            let pickup_menu_rect = UIElement::new_rect(
                 Point2::new(mouse_position.x + 0.015, mouse_position.y + 0.005),
                 Point2::new(0.065, 0.025),
-                None,
             );
 
             let mut text_color = [0.8, 0.8, 0.8];
-            match frame_state
-                .gui
-                .color_button(200, pickup_menu_rect, input, "black".to_string())
-            {
+            match frame_state.gui.color_button(
+                window,
+                200,
+                pickup_menu_rect,
+                input,
+                "black".to_string(),
+            ) {
                 UserAction::LeftClick => {
                     if frame_state.handled_left_click {
                         return;
@@ -57,21 +62,23 @@ impl ObjectSelectionSystem {
             }
             frame_state.gui.text(
                 300,
-                pickup_menu_rect.inner_rect(0.005, 0.005),
+                pickup_menu_rect.inner_rect(Point2::new(0.01, 0.01), Point2::new(0.99, 0.99)),
                 "Pick up item".to_string(),
                 text_color,
             );
 
-            let examine_menu_rect = UIElement::new(
+            let examine_menu_rect = UIElement::new_rect(
                 Point2::new(mouse_position.x + 0.015, mouse_position.y + 0.055),
                 Point2::new(0.065, 0.025),
-                None,
             );
             let mut text_color = [0.8, 0.8, 0.8];
-            match frame_state
-                .gui
-                .color_button(200, examine_menu_rect, input, "black".to_string())
-            {
+            match frame_state.gui.color_button(
+                window,
+                200,
+                examine_menu_rect,
+                input,
+                "black".to_string(),
+            ) {
                 UserAction::LeftClick => {
                     if frame_state.handled_left_click {
                         return;
@@ -89,7 +96,7 @@ impl ObjectSelectionSystem {
             }
             frame_state.gui.text(
                 300,
-                examine_menu_rect.inner_rect(0.005, 0.005),
+                examine_menu_rect.inner_rect(Point2::new(0.01, 0.01), Point2::new(0.99, 0.99)),
                 "Examine item".to_string(),
                 text_color,
             );

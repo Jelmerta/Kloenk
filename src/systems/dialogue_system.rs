@@ -62,15 +62,18 @@ impl DialogueSystem {
             dialogue_id,
         } = &ui_state.dialogue_state
         {
-            let dialogue_rect = UIElement::new_root(
+            let dialogue_rect = UIElement::new_rect(
                 Point2::new(mouse_position.x + 0.01, mouse_position.y + 0.05),
                 Point2::new(0.16, 0.05),
             );
 
-            match frame_state
-                .gui
-                .color_button(window, 150, dialogue_rect, input, "black".to_string())
-            {
+            match frame_state.gui.color_button(
+                window,
+                150,
+                dialogue_rect,
+                input,
+                "black".to_string(),
+            ) {
                 UserAction::None => {}
                 UserAction::Hover => {}
                 UserAction::LeftClick => {}
@@ -86,28 +89,12 @@ impl DialogueSystem {
                 dialogue_text.clone().text,
                 [0.8, 0.8, 0.0],
             );
-            let close_button_middle = Point2::new(
-                dialogue_rect.bottom_right().x - 0.02,
-                dialogue_rect.top_left().y + 0.02,
-            );
 
-            let close_button_middle = dialogue_rect.inner_rect()
+            let close_button_rect =
+                dialogue_rect.inner_rect_maintain_ratio_x(Point2::new(0.9, 0.05), 0.10);
 
-            let close_button_rect = UIElement::new_child(
-                // close_button_middle,
-                // Point2::new(
-                //     0.01,
-                //     0.01,
-                // ),
-                // Some(close_button_middle.sub(dialogue_rect.middle)),
-                dialogue_rect,
-                close_button_middle,
-                Point2::new(
-                    0.01,
-                    0.01,
-                ),
-            );
             match frame_state.gui.image_button(
+                window,
                 310,
                 close_button_rect,
                 "close_button".to_string(),
@@ -117,6 +104,7 @@ impl DialogueSystem {
                 UserAction::Hover => {
                     // Feels kinda silly/hacky to overlay hover image
                     match frame_state.gui.image_button(
+                        window,
                         311,
                         close_button_rect,
                         "close_button_hover".to_string(),

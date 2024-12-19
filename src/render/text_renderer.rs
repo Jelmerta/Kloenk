@@ -1,6 +1,5 @@
-use crate::render::render::Renderer;
 use crate::resources;
-use crate::state::ui_state::{UIElement, UIState};
+use crate::state::ui_state::UIElement;
 use glyphon::{
     fontdb, Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping,
     SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
@@ -28,30 +27,23 @@ impl TextContext {
             (self.color[2].clamp(0.0, 1.0) * 255.0).round() as u8,
         ];
 
-        let instance = Renderer::create_ui_element_instance(window, self.ui_element);
-
-        let x_window_space = Self::clip_space_to_window_space(window, instance.position.x);
-
-        let top = self.ui_element.ui_element_coordinate_origin_y();
+        // Left side is adjusted by first undoing window ratio and then scaling by 16:9
+        // TODO use vec?
+        let left = self.ui_element.ui_coordinate_origin.x
+            - (self.ui_element.width() / 2.0)
+                * (16.0 / 9.0)
+                * (window.inner_size().height as f32 / window.inner_size().width as f32);
+        let top = self.ui_element.ui_coordinate_origin.y - self.ui_element.top_left.y;
 
         TextArea {
             buffer: &self.buffer,
             top: top * window.inner_size().height as f32,
-            // top: self.ui_element.top_left().y * window.inner_size().height as f32,
-            left: x_window_space,
+            left: left * window.inner_size().width as f32,
             scale: 1.0,
             bounds: TextBounds::default(),
             default_color: Color::rgb(text_color[0], text_color[1], text_color[2]),
             custom_glyphs: &[],
         }
-    }
-
-    fn clip_space_to_window_space(window: &Arc<Window>, clip_value: f32) -> f32 {
-        let window_clip_width =
-            UIState::clip_space_x_max(window) - UIState::clip_space_x_min(window);
-        let adjusted_clip = clip_value - UIState::clip_space_x_min(window);
-        let percentage = adjusted_clip / window_clip_width;
-        percentage * window.inner_size().width as f32
     }
 }
 

@@ -38,17 +38,14 @@ impl Gui {
             mesh_id: image_name,
         };
         self.render_commands.push(image_command);
-        if ui_element.contains(input.mouse_position_ui, window)
-            && input.left_mouse_clicked.is_toggled_on()
-        {
+        let element_contains = ui_element.contains(input.mouse_position_ui, window);
+        if element_contains && input.left_mouse_clicked.is_toggled_on() {
             return UserAction::LeftClick;
         }
-        if ui_element.contains(input.mouse_position_ui, window)
-            && input.right_mouse_clicked.is_toggled_on()
-        {
+        if element_contains && input.right_mouse_clicked.is_toggled_on() {
             return UserAction::RightClick;
         }
-        if ui_element.contains(input.mouse_position_ui, window) {
+        if element_contains {
             return UserAction::Hover;
         }
         UserAction::None
@@ -115,14 +112,14 @@ impl Gui {
     pub fn add_text_render_commands(&mut self, ui_state: &UIState) {
         self.text(
             1000,
-            UIElement::new_root(Point2::new(0.125, 0.7), Point2::new(0.075, 0.1)),
+            UIElement::new_rect(Point2::new(0.125, 0.7), Point2::new(0.075, 0.1)),
             ui_state.action_text.clone(),
             [0.8, 0.8, 0.0],
         );
 
         self.text(
             1000,
-            UIElement::new_root(Point2::new(0.125, 0.15), Point2::new(0.075, 0.05)),
+            UIElement::new_rect(Point2::new(0.125, 0.15), Point2::new(0.075, 0.05)),
             ui_state.selected_text.clone(),
             [0.8, 0.8, 0.0],
         );
