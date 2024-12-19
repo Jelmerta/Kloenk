@@ -8,11 +8,10 @@ pub struct HealthSystem {}
 
 impl HealthSystem {
     pub fn display_health(game_state: &GameState, input: &Input, frame_state: &mut FrameState) {
-        // Not really a button, but we can just re-use?
         let health_rect_outside = UIElement {
-            top_left: Point2::new(0.05, 0.85),
-            bottom_right: Point2::new(0.20, 0.95),
-            parent_middle_x: None,
+            middle: Point2::new(0.125, 0.90),
+            half_dimensions: Point2::new(0.075, 0.05),
+            parent_middle_distance: None,
         };
         match frame_state
             .gui
@@ -30,9 +29,9 @@ impl HealthSystem {
         let percentage_health_bar = percentage_health * health_bar_width;
 
         let health_rect_inside = UIElement {
-            top_left: Point2::new(0.05 + 0.01, 0.86),
-            bottom_right: Point2::new(0.05 + 0.01 + percentage_health_bar, 0.94),
-            parent_middle_x: None,
+            middle: Point2::new(0.05 + 0.01 + percentage_health_bar / 2.0, 0.90),
+            half_dimensions: Point2::new(percentage_health_bar / 2.0, 0.04),
+            parent_middle_distance: None, // Zero
         };
         match frame_state
             .gui

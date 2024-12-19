@@ -5,6 +5,8 @@ use crate::state::ui_state::{DialogueState, UIElement, UIState, UserAction};
 use crate::systems::dialogue_manager::DialogueManager;
 use crate::systems::position_manager::PositionManager;
 use cgmath::Point2;
+use std::sync::Arc;
+use winit::window::Window;
 
 const DIALOGUE_RANGE: f32 = 1.5;
 
@@ -47,6 +49,7 @@ impl DialogueSystem {
     }
 
     pub fn display_dialogue(
+        window: &Arc<Window>,
         game_state: &GameState,
         ui_state: &mut UIState,
         input: &Input,
@@ -59,15 +62,14 @@ impl DialogueSystem {
             dialogue_id,
         } = &ui_state.dialogue_state
         {
-            let dialogue_rect = UIElement::new(
-                Point2::new(mouse_position.x - 0.15, mouse_position.y + 0.00),
-                Point2::new(mouse_position.x + 0.17, mouse_position.y + 0.10),
-                None,
+            let dialogue_rect = UIElement::new_root(
+                Point2::new(mouse_position.x + 0.01, mouse_position.y + 0.05),
+                Point2::new(0.16, 0.05),
             );
 
             match frame_state
                 .gui
-                .color_button(150, dialogue_rect, input, "black".to_string())
+                .color_button(window, 150, dialogue_rect, input, "black".to_string())
             {
                 UserAction::None => {}
                 UserAction::Hover => {}
@@ -84,17 +86,26 @@ impl DialogueSystem {
                 dialogue_text.clone().text,
                 [0.8, 0.8, 0.0],
             );
+            let close_button_middle = Point2::new(
+                dialogue_rect.bottom_right().x - 0.02,
+                dialogue_rect.top_left().y + 0.02,
+            );
 
-            let close_button_rect = UIElement::new(
+            let close_button_middle = dialogue_rect.inner_rect()
+
+            let close_button_rect = UIElement::new_child(
+                // close_button_middle,
+                // Point2::new(
+                //     0.01,
+                //     0.01,
+                // ),
+                // Some(close_button_middle.sub(dialogue_rect.middle)),
+                dialogue_rect,
+                close_button_middle,
                 Point2::new(
-                    dialogue_rect.bottom_right.x - 0.03,
-                    dialogue_rect.top_left.y + 0.01,
+                    0.01,
+                    0.01,
                 ),
-                Point2::new(
-                    dialogue_rect.bottom_right.x - 0.01,
-                    dialogue_rect.top_left.y + 0.03,
-                ),
-                None,
             );
             match frame_state.gui.image_button(
                 310,

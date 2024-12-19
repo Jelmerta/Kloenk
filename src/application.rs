@@ -205,7 +205,7 @@ impl ApplicationHandler<CustomEvent> for Application {
             if let Some(monitor) = window.current_monitor() {
                 let fullscreen_video_mode = monitor.video_modes().next().unwrap();
                 let _ = window.request_inner_size(fullscreen_video_mode.size());
-                window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
+                // window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
             }
         }
 

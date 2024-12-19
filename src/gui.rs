@@ -1,6 +1,8 @@
 use crate::state::input::Input;
 use crate::state::ui_state::{RenderCommand, UIElement, UIState, UserAction};
 use cgmath::Point2;
+use std::sync::Arc;
+use winit::window::Window;
 
 pub struct Gui {
     pub render_commands: Vec<RenderCommand>,
@@ -24,6 +26,7 @@ impl Gui {
 
     pub fn image_button(
         &mut self,
+        window: &Arc<Window>,
         layer: u32,
         ui_element: UIElement,
         image_name: String,
@@ -35,15 +38,17 @@ impl Gui {
             mesh_id: image_name,
         };
         self.render_commands.push(image_command);
-        if ui_element.contains(input.mouse_position_ui) && input.left_mouse_clicked.is_toggled_on()
+        if ui_element.contains(input.mouse_position_ui, window)
+            && input.left_mouse_clicked.is_toggled_on()
         {
             return UserAction::LeftClick;
         }
-        if ui_element.contains(input.mouse_position_ui) && input.right_mouse_clicked.is_toggled_on()
+        if ui_element.contains(input.mouse_position_ui, window)
+            && input.right_mouse_clicked.is_toggled_on()
         {
             return UserAction::RightClick;
         }
-        if ui_element.contains(input.mouse_position_ui) {
+        if ui_element.contains(input.mouse_position_ui, window) {
             return UserAction::Hover;
         }
         UserAction::None
@@ -51,13 +56,14 @@ impl Gui {
 
     pub fn color_button(
         &mut self,
+        window: &Arc<Window>,
         layer: u32,
         rect: UIElement,
         input: &Input,
         // color: [f32; 3], // Probably want to dynamically generate meshes to draw at some time
         color: String,
     ) -> UserAction {
-        let mouse_is_contained = rect.contains(input.mouse_position_ui);
+        let mouse_is_contained = rect.contains(input.mouse_position_ui, window);
 
         if mouse_is_contained && input.left_mouse_clicked.is_toggled_on() {
             let image_command = RenderCommand::Mesh {
@@ -109,14 +115,14 @@ impl Gui {
     pub fn add_text_render_commands(&mut self, ui_state: &UIState) {
         self.text(
             1000,
-            UIElement::new(Point2::new(0.05, 0.6), Point2::new(0.2, 0.8), None),
+            UIElement::new_root(Point2::new(0.125, 0.7), Point2::new(0.075, 0.1)),
             ui_state.action_text.clone(),
             [0.8, 0.8, 0.0],
         );
 
         self.text(
             1000,
-            UIElement::new(Point2::new(0.05, 0.1), Point2::new(0.2, 0.2), None),
+            UIElement::new_root(Point2::new(0.125, 0.15), Point2::new(0.075, 0.05)),
             ui_state.selected_text.clone(),
             [0.8, 0.8, 0.0],
         );

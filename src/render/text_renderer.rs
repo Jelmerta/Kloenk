@@ -32,9 +32,12 @@ impl TextContext {
 
         let x_window_space = Self::clip_space_to_window_space(window, instance.position.x);
 
+        let top = self.ui_element.ui_element_coordinate_origin_y();
+
         TextArea {
             buffer: &self.buffer,
-            top: self.ui_element.top_left.y * window.inner_size().height as f32,
+            top: top * window.inner_size().height as f32,
+            // top: self.ui_element.top_left().y * window.inner_size().height as f32,
             left: x_window_space,
             scale: 1.0,
             bounds: TextBounds::default(),

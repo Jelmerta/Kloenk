@@ -4,7 +4,8 @@ use crate::state::input::Input;
 use crate::state::ui_state::MenuState::{Closed, Inventory};
 use crate::state::ui_state::{MenuState, UIElement, UIState, UserAction};
 use crate::systems::item_placement_system::ItemPlacementSystem;
-use cgmath::Point2;
+use cgmath::{ElementWise, Point2};
+use std::ops::Sub;
 
 pub struct InventorySystem {}
 
@@ -34,37 +35,50 @@ impl InventorySystem {
         );
 
         let inventory_ecs = game_state.get_storage(&"player".to_string()).unwrap();
-        let inventory_width =
-            inventory_window.rect.bottom_right.x - inventory_window.rect.top_left.x;
-        let inventory_height =
-            inventory_window.rect.bottom_right.y - inventory_window.rect.top_left.y;
+        let inventory_width = inventory_window.rect.width();
+        let inventory_height = inventory_window.rect.height();
         let item_picture_scale_x = inventory_width / f32::from(inventory_ecs.number_of_columns);
         let item_picture_scale_y = inventory_height / f32::from(inventory_ecs.number_of_rows);
 
         let inventory_items = game_state.get_in_storages(&"player".to_string());
+        let top_left_inventory_middle =
+            inventory_window
+                .rect
+                .top_left()
+                .add_element_wise(Point2::new(
+                    item_picture_scale_x / 2.0,
+                    item_picture_scale_y / 2.0,
+                ));
         for (entity, in_storage) in inventory_items.iter() {
             let storable = game_state.storable_components.get(*entity).unwrap();
             let item_image = game_state.get_graphics_inventory(entity).unwrap();
-            let top_left = Point2::new(
-                inventory_window.rect.top_left.x
-                    + in_storage.position_x as f32 * item_picture_scale_x,
-                inventory_window.rect.top_left.y
-                    + in_storage.position_y as f32 * item_picture_scale_y,
-            );
-            let bottom_right = Point2::new(
-                inventory_window.rect.top_left.x
-                    + (in_storage.position_x + storable.shape.width) as f32 * item_picture_scale_x,
-                inventory_window.rect.top_left.y
-                    + (in_storage.position_y + storable.shape.height) as f32 * item_picture_scale_y,
+
+            let shape_half_dimensions = Point2::new(
+                storable.shape.width as f32 / 2.0 * item_picture_scale_x,
+                storable.shape.height as f32 / 2.0 * item_picture_scale_y,
             );
 
+            let top_left_item_position_move = Point2::new(
+                in_storage.position_x as f32 * item_picture_scale_x,
+                in_storage.position_y as f32 * item_picture_scale_y,
+            );
+            let shape_size_middle_move = shape_half_dimensions.sub_element_wise(Point2::new(
+                0.5 * item_picture_scale_x,
+                0.5 * item_picture_scale_y,
+            ));
+
+            let middle = top_left_inventory_middle
+                .add_element_wise(top_left_item_position_move)
+                .add_element_wise(shape_size_middle_move);
+
+            let image_element = UIElement::new(
+                middle,
+                shape_half_dimensions,
+                Some(middle.sub(inventory_window.rect.middle)),
+            );
             match frame_state.gui.image_button(
                 150,
-                UIElement::new(
-                    top_left,
-                    bottom_right,
-                    Some(inventory_window.rect.middle().x),
-                ),
+                image_element,
                 item_image.material_id.to_string(),
                 input,
             ) {
@@ -125,8 +139,8 @@ impl InventorySystem {
         {
             // Drop button
             let drop_button_rect = UIElement::new(
-                Point2::new(mouse_position.x - 0.05, mouse_position.y - 0.02),
-                Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.03),
+                Point2::new(mouse_position.x + 0.015, mouse_position.y + 0.005),
+                Point2::new(0.065, 0.025),
                 None,
             );
 
@@ -164,8 +178,8 @@ impl InventorySystem {
             // Examine button
             if game_state.description_components.contains_key(&item) {
                 let examine_button_rect = UIElement::new(
-                    Point2::new(mouse_position.x - 0.05, mouse_position.y + 0.03),
-                    Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.08),
+                    Point2::new(mouse_position.x + 0.015, mouse_position.y + 0.055),
+                    Point2::new(0.065, 0.025),
                     None,
                 );
 

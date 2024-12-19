@@ -33,8 +33,8 @@ impl ObjectSelectionSystem {
         } = &ui_state.menu_state
         {
             let pickup_menu_rect = UIElement::new(
-                Point2::new(mouse_position.x - 0.05, mouse_position.y - 0.02),
-                Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.03),
+                Point2::new(mouse_position.x + 0.015, mouse_position.y + 0.005),
+                Point2::new(0.065, 0.025),
                 None,
             );
 
@@ -63,8 +63,8 @@ impl ObjectSelectionSystem {
             );
 
             let examine_menu_rect = UIElement::new(
-                Point2::new(mouse_position.x - 0.05, mouse_position.y + 0.03),
-                Point2::new(mouse_position.x + 0.08, mouse_position.y + 0.08),
+                Point2::new(mouse_position.x + 0.015, mouse_position.y + 0.055),
+                Point2::new(0.065, 0.025),
                 None,
             );
             let mut text_color = [0.8, 0.8, 0.8];
