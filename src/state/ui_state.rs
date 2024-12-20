@@ -67,37 +67,14 @@ impl UIElement {
     }
 
     pub fn contains(&self, point: Point2<f32>, window: &Arc<Window>) -> bool {
-        let point_clip = UIState::ui_to_clip(point, window);
-        // log::warn!("hi");
-        // log::warn!("Point clip: {:?}", point_clip);
-
-        // let left = self.ui_element.ui_coordinate_origin.x - (self.ui_element.width() / 2.0) * (16.0 / 9.0) * (window.inner_size().height as f32 / window.inner_size().width as f32);
-        // log::warn!("{:?}", self);
-        let origin_clip = UIState::ui_to_clip(self.ui_coordinate_origin, window);
-        // log::warn!("Origin clip: {:?}", origin_clip);
-        let clip_left = origin_clip.x - self.top_left.x; // UIState::convert_scale_x(self.top_left.x); // - UIState::convert_scale_x(self.width() / 2.0);
-        let clip_right = origin_clip.x + self.bottom_right.x; // + UIState::convert_scale_x(self.bottom_right.x); // + UIState::convert_scale_x(self.width() / 2.0);
-        let clip_top = origin_clip.y + self.top_left.y; //UIState::convert_scale_y(self.top_left.y); // + UIState::convert_scale_y(self.height() / 2.0);
-        let clip_bottom = origin_clip.y - self.bottom_right.y; //UIState::convert_scale_y(self.bottom_right.y); // - UIState::convert_scale_y(self.height() / 2.0);;
-                                                               // let clip_left = UIState::clip_space_element_position_x(*self, window);
-                                                               // let clip_top = UIState::convert_clip_space_y(self.ui_coordinate_origin.y) - UIState::convert_scale_y(self.height() / 2.0);
-                                                               // let clip_right = clip_left + UIState::convert_scale_x(self.width());
-                                                               // let clip_bottom = clip_top + UIState::convert_scale_y(self.height());
-
-        // log::warn!("Clip left: {}, clip top: {}, clip right: {}, clip bottom: {}", clip_left, clip_top, clip_right, clip_bottom);
-
-        // log::warn!("contains: {:?}", point_clip.x >= clip_left
-        //     && point_clip.x < clip_right
-        //     && point_clip.y >= clip_bottom
-        //     && point_clip.y < clip_top);
-        point_clip.x >= clip_left
-            && point_clip.x < clip_right
-            && point_clip.y >= clip_bottom
-            && point_clip.y < clip_top
+        point.x < self.right_ui(window)
+            && point.x >= self.left_ui(window)
+            && point.y < self.bottom()
+            && point.y >= self.top()
     }
 
     pub fn top(&self) -> f32 {
-        self.ui_coordinate_origin.y - self.top_left.y
+        self.ui_coordinate_origin.y + self.top_left.y
     }
 
     pub fn bottom(&self) -> f32 {
@@ -105,11 +82,21 @@ impl UIElement {
     }
 
     pub fn left(&self) -> f32 {
-        self.ui_coordinate_origin.x - self.top_left.x
+        self.ui_coordinate_origin.x + self.top_left.x
     }
 
-    pub fn right(&self) -> f32 {
-        self.ui_coordinate_origin.x + self.bottom_right.x
+    pub fn left_ui(&self, window: &Arc<Window>) -> f32 {
+        self.ui_coordinate_origin.x
+            + self.top_left.x
+                * (window.inner_size().height as f32 / window.inner_size().width as f32)
+                * (16.0 / 9.0)
+    }
+
+    pub fn right_ui(&self, window: &Arc<Window>) -> f32 {
+        self.ui_coordinate_origin.x
+            + self.bottom_right.x
+                * (window.inner_size().height as f32 / window.inner_size().width as f32)
+                * (16.0 / 9.0)
     }
 
     pub fn width(&self) -> f32 {
@@ -120,65 +107,43 @@ impl UIElement {
         self.bottom_right.y - self.top_left.y
     }
 
-    // TODO probably need some method that maintains aspect ratio by just defining topleft + width or height i guess?
     // Element space is defined from 0 to 1 in both x and y, bound by top_left and bottom_right defined in UI space (element space can also just be seen as percentages of root element's size)
     pub fn inner_rect(
         &self,
         element_space_top_left: Point2<f32>,
         element_space_bottom_right: Point2<f32>,
     ) -> UIElement {
-        // let top_left = self.ui_coordinate_origin - element_space_top_left; //self.element_to_ui_x(element_space_top_left.x);
-        // let bottom_right = self.ui_coordinate_origin + element_space_bottom_right;
-        let ui_x_min = self.element_to_ui_x(element_space_top_left.x);
-        let ui_y_min = self.element_to_ui_y(element_space_top_left.y);
-        let ui_x_max = self.element_to_ui_x(element_space_bottom_right.x);
-        let ui_y_max = self.element_to_ui_y(element_space_bottom_right.y);
+        let top =
+            self.top() + element_space_top_left.y * self.height() - self.ui_coordinate_origin.y;
+        let bottom =
+            self.top() + element_space_bottom_right.y * self.height() - self.ui_coordinate_origin.y;
+        let left =
+            self.left() + element_space_top_left.x * self.width() - self.ui_coordinate_origin.x;
+        let right =
+            self.left() + element_space_bottom_right.x * self.width() - self.ui_coordinate_origin.x;
 
         UIElement {
             ui_coordinate_origin: self.ui_coordinate_origin,
-            // top_left: top_left.to_vec(),
-            // bottom_right: bottom_right.to_vec(),
-            top_left: Vector2 {
-                x: ui_x_min,
-                y: ui_y_min,
-            },
-            bottom_right: Vector2 {
-                x: ui_x_max,
-                y: ui_y_max,
-            },
+            top_left: Vector2::new(left, top),
+            bottom_right: Vector2::new(right, bottom),
         }
     }
 
-    // TODO
     pub fn inner_rect_maintain_ratio_x(
         &self,
         element_space_top_left: Point2<f32>,
         element_width_percentage: f32,
     ) -> UIElement {
-        let ui_x_min = self.element_to_ui_x(element_space_top_left.x);
-        let ui_y_min = self.element_to_ui_y(element_space_top_left.y);
-
         let inner_rect_width = self.width() * element_width_percentage;
+        let element_height_percentage = inner_rect_width / self.height();
 
-        UIElement {
-            ui_coordinate_origin: self.ui_coordinate_origin,
-            top_left: Vector2 {
-                x: ui_x_min,
-                y: ui_y_min,
-            },
-            bottom_right: Vector2 {
-                x: ui_x_min + inner_rect_width,
-                y: ui_y_min + inner_rect_width,
-            },
-        }
-    }
-
-    fn element_to_ui_x(&self, element_space_x: f32) -> f32 {
-        self.ui_coordinate_origin.x + self.top_left.x + element_space_x * self.width()
-    }
-
-    fn element_to_ui_y(&self, element_space_y: f32) -> f32 {
-        self.ui_coordinate_origin.y + self.top_left.y + element_space_y * self.height()
+        self.inner_rect(
+            element_space_top_left,
+            Point2::new(
+                element_space_top_left.x + element_width_percentage,
+                element_space_top_left.y + element_height_percentage,
+            ),
+        )
     }
 }
 
@@ -237,40 +202,12 @@ impl UIState {
         }
     }
 
-    pub fn ui_to_clip(point: Point2<f32>, window: &Arc<Window>) -> Point2<f32> {
-        let adjusted_value =
-            Self::clip_space_x_min(window) + point.x * Self::clip_space_width(window);
-        let percentage = adjusted_value / Self::clip_space_width(window);
-        let x_clip = percentage * Self::clip_space_width(window);
-
-        let y_clip = 1.0 - point.y * 2.0;
-        Point2::new(x_clip, y_clip)
-    }
-
-    pub fn clip_space_width(window: &Arc<Window>) -> f32 {
-        Self::clip_space_x_max(window) - Self::clip_space_x_min(window)
-    }
-
-    pub fn clip_space_x_min(window: &Arc<Window>) -> f32 {
-        let scale = 1.0;
-        let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
-        let width = scale * resolution;
-        -width
-    }
-
-    pub fn clip_space_x_max(window: &Arc<Window>) -> f32 {
-        let scale = 1.0;
-        let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
-        let width = scale * resolution;
-        width
-    }
-
     pub fn clip_space_element_position_x(ui_element: UIElement, window: &Arc<Window>) -> f32 {
         let scale = 1.0;
         let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
         let width = scale * resolution;
-        let distance_left = Self::convert_scale_x(ui_element.top_left.x); // TODO not 16:9 for top_left part?
-        -width + 2.0 * width * ui_element.ui_coordinate_origin.x - distance_left
+        let distance_left = Self::convert_scale_x(ui_element.top_left.x);
+        -width + 2.0 * width * ui_element.ui_coordinate_origin.x + distance_left
     }
 
     pub fn convert_scale_x(value: f32) -> f32 {

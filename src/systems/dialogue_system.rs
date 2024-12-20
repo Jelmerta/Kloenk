@@ -92,7 +92,6 @@ impl DialogueSystem {
 
             let close_button_rect =
                 dialogue_rect.inner_rect_maintain_ratio_x(Point2::new(0.9, 0.05), 0.10);
-
             match frame_state.gui.image_button(
                 window,
                 310,

@@ -28,12 +28,11 @@ impl TextContext {
         ];
 
         // Left side is adjusted by first undoing window ratio and then scaling by 16:9
-        // TODO use vec?
         let left = self.ui_element.ui_coordinate_origin.x
             - (self.ui_element.width() / 2.0)
-                * (16.0 / 9.0)
-                * (window.inner_size().height as f32 / window.inner_size().width as f32);
-        let top = self.ui_element.ui_coordinate_origin.y - self.ui_element.top_left.y;
+                * (window.inner_size().height as f32 / window.inner_size().width as f32)
+                * (16.0 / 9.0);
+        let top = self.ui_element.top();
 
         TextArea {
             buffer: &self.buffer,
