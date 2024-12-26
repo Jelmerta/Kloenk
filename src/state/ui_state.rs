@@ -88,15 +88,15 @@ impl UIElement {
     pub fn left_ui(&self, window: &Arc<Window>) -> f32 {
         self.ui_coordinate_origin.x
             + self.top_left.x
-                * (window.inner_size().height as f32 / window.inner_size().width as f32)
-                * (16.0 / 9.0)
+            * (window.inner_size().height as f32 / window.inner_size().width as f32)
+            * (16.0 / 9.0)
     }
 
     pub fn right_ui(&self, window: &Arc<Window>) -> f32 {
         self.ui_coordinate_origin.x
             + self.bottom_right.x
-                * (window.inner_size().height as f32 / window.inner_size().width as f32)
-                * (16.0 / 9.0)
+            * (window.inner_size().height as f32 / window.inner_size().width as f32)
+            * (16.0 / 9.0)
     }
 
     pub fn width(&self) -> f32 {
@@ -171,13 +171,12 @@ pub enum MenuState {
 
 impl MenuState {}
 
-// Hm should we consider an InputState?
-pub enum ChatState {
-    Closed,
-    Open,
+pub enum InputState {
+    Normal,
+    Chat,
 }
 
-impl ChatState {}
+impl InputState {}
 
 pub struct UIState {
     pub windows: HashMap<String, UIWindow>,
@@ -187,7 +186,7 @@ pub struct UIState {
 
     pub menu_state: MenuState,
     pub dialogue_state: DialogueState,
-    pub chat_state: ChatState,
+    pub input_state: InputState,
 
     pub cursor_bytes: Vec<u8>, // Not sure what a good place to store this data is
 }
@@ -212,7 +211,7 @@ impl UIState {
             windows,
             menu_state: Closed,
             dialogue_state: DialogueState::Closed,
-            chat_state: ChatState::Closed,
+            input_state: InputState::Closed,
             action_text: String::new(),
             selected_text: String::new(),
             cursor_bytes: cursor,

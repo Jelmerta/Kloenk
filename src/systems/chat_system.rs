@@ -1,22 +1,20 @@
-use cgmath::Point2;
-
 use crate::state::{
     frame_state::FrameState,
     input::Input,
-    ui_state::{ChatState, UIElement, UIState, UIWindow},
+    ui_state::{InputState, UIState},
 };
 
 pub struct ChatSystem {}
 
 impl ChatSystem {
-    pub fn display_chat(ui_state: &mut UIState, input: &Input, frame_state: &mut FrameState) {
-        let mut new_chat_state = None;
-        match ui_state.chat_state {
-            crate::state::ui_state::ChatState::Closed => {
-                new_chat_state = Some(ChatState::Open);
+    pub fn handle_chat(ui_state: &mut UIState, input: &Input, frame_state: &mut FrameState) {
+        let mut new_input_state = None;
+        match ui_state.input_state {
+            InputState::Normal => {
+                new_input_state = Some(InputState::Chat);
                 // Visible vs chatstate? hmm
             }
-            crate::state::ui_state::ChatState::Open => {
+            InputState::Chat => {
                 if input.enter_pressed.is_pressed {
                     //Self::send_message(); Should close the chat as well?
                 }
@@ -24,9 +22,11 @@ impl ChatSystem {
             }
         }
 
-        if new_chat_state.is_some() {
-            ui_state.chat_state = new_chat_state.unwrap();
+        if new_input_state.is_some() {
+            ui_state.input_state = new_input_state.unwrap();
             frame_state.handled_enter_click = true;
         }
     }
+
+    fn display_chat() {}
 }

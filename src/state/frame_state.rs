@@ -40,6 +40,7 @@ impl FrameState {
             handled_left_click: false,
             handled_right_click: false,
             handled_e_click: false,
+            handled_enter_click: false,
 
             gui: Gui::new(),
 
