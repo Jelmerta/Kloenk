@@ -136,10 +136,11 @@ impl ApplicationHandler<CustomEvent> for Application {
         // Note: This is more of a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
         // We want to have ownership of the zoom level ourselves. We therefore disregard the dpi ratio and always attempt to render the same image
+        // Note: 0.0 would lead to error on x11 so we define a minimum size of 1 by 1
         #[allow(unused_mut)]
-        let mut initial_width = 0.0;
+        let mut initial_width = 1.0;
         #[allow(unused_mut)]
-        let mut initial_height = 0.0;
+        let mut initial_height = 1.0;
         #[cfg(target_arch = "wasm32")]
         {
             let web_window = web_sys::window().expect("Window should exist");
@@ -421,20 +422,20 @@ impl ApplicationHandler<CustomEvent> for Application {
 }
 
 fn key_is_gesture(key: KeyCode) -> bool {
-    match key {
+    !matches!(
+        key,
         KeyCode::AltLeft
-        | KeyCode::AltRight
-        | KeyCode::ControlLeft
-        | KeyCode::ControlRight
-        | KeyCode::CapsLock
-        | KeyCode::ShiftLeft
-        | KeyCode::ShiftRight
-        | KeyCode::Fn
-        | KeyCode::SuperLeft
-        | KeyCode::SuperRight
-        | KeyCode::Escape
-        | KeyCode::Meta
-        | KeyCode::Hyper => false,
-        _ => true,
-    }
+            | KeyCode::AltRight
+            | KeyCode::ControlLeft
+            | KeyCode::ControlRight
+            | KeyCode::CapsLock
+            | KeyCode::ShiftLeft
+            | KeyCode::ShiftRight
+            | KeyCode::Fn
+            | KeyCode::SuperLeft
+            | KeyCode::SuperRight
+            | KeyCode::Escape
+            | KeyCode::Meta
+            | KeyCode::Hyper
+    )
 }

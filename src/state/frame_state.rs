@@ -8,6 +8,7 @@ pub struct FrameState {
     pub handled_left_click: bool,
     pub handled_right_click: bool,
     pub handled_e_click: bool,
+    pub handled_enter_click: bool,
 
     pub gui: Gui,
 
@@ -23,6 +24,7 @@ impl FrameState {
             handled_left_click: false,
             handled_right_click: false,
             handled_e_click: false,
+            handled_enter_click: false,
 
             gui: Gui::new(),
 

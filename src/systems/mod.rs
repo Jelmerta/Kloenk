@@ -1,5 +1,6 @@
 pub mod audio_system;
 pub mod camera_system;
+mod chat_system;
 mod close_menu_system;
 mod collision_manager;
 mod command_handle_system;

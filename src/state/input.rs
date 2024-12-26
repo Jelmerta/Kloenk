@@ -39,6 +39,8 @@ pub struct Input {
     pub left_pressed: KeyPress,
     pub right_pressed: KeyPress,
 
+    pub enter_pressed: KeyPress,
+
     pub left_shift_pressed: KeyPress,
 
     pub mouse_position_ndc: Point2<f32>,
@@ -64,6 +66,8 @@ impl Input {
             down_pressed: Default::default(),
             left_pressed: Default::default(),
             right_pressed: Default::default(),
+
+            enter_pressed: Default::default(),
 
             left_shift_pressed: Default::default(),
 
@@ -123,6 +127,11 @@ impl Input {
             KeyCode::ArrowRight => {
                 self.right_pressed.set_press_state(is_pressed);
             }
+
+            KeyCode::Enter => {
+                self.enter_pressed.set_press_state(is_pressed);
+            }
+
             _ => {}
         }
     }
@@ -138,6 +147,7 @@ impl Input {
         self.down_pressed.update_end_frame();
         self.left_pressed.update_end_frame();
         self.right_pressed.update_end_frame();
+        self.enter_pressed.update_end_frame();
         self.left_shift_pressed.update_end_frame();
         self.right_mouse_clicked.update_end_frame();
         self.left_mouse_clicked.update_end_frame();

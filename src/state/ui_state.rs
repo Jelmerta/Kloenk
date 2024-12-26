@@ -171,6 +171,14 @@ pub enum MenuState {
 
 impl MenuState {}
 
+// Hm should we consider an InputState?
+pub enum ChatState {
+    Closed,
+    Open,
+}
+
+impl ChatState {}
+
 pub struct UIState {
     pub windows: HashMap<String, UIWindow>,
 
@@ -179,23 +187,32 @@ pub struct UIState {
 
     pub menu_state: MenuState,
     pub dialogue_state: DialogueState,
+    pub chat_state: ChatState,
 
     pub cursor_bytes: Vec<u8>, // Not sure what a good place to store this data is
 }
 
 impl UIState {
     pub fn new(cursor: Vec<u8>) -> Self {
+        let mut windows = HashMap::new();
+
         let inventory_window = UIWindow::new(
             false,
             UIElement::new_rect(Point2::new(0.775, 0.775), Point2::new(0.175, 0.175)),
         );
-
-        let mut windows = HashMap::new();
         windows.insert("inventory".to_string(), inventory_window);
+
+        let chat_window = UIWindow::new(
+            false,
+            UIElement::new_rect(Point2::new(0.3, 0.5), Point2::new(0.5, 0.45)),
+        );
+        windows.insert("chat".to_string(), chat_window);
+
         UIState {
             windows,
             menu_state: Closed,
             dialogue_state: DialogueState::Closed,
+            chat_state: ChatState::Closed,
             action_text: String::new(),
             selected_text: String::new(),
             cursor_bytes: cursor,
