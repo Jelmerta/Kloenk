@@ -4,6 +4,7 @@ use crate::state::game_state::GameState;
 use crate::state::input::Input;
 use crate::state::ui_state::UIState;
 use crate::systems::camera_system::CameraSystem;
+use crate::systems::chat_system::ChatSystem;
 use crate::systems::close_menu_system::CloseMenuSystem;
 use crate::systems::command_handle_system::CommandHandleSystem;
 use crate::systems::dialogue_system::DialogueSystem;
@@ -58,6 +59,7 @@ impl GameSystem {
         CameraSystem::update_camera(window, game_state, input);
 
         DialogueSystem::display_dialogue(window, game_state, ui_state, input, frame_state);
+        ChatSystem::handle_chat(window, ui_state, input, frame_state);
 
         ObjectDetectionSystem::setup_detection_for_frame(game_state, input, frame_state);
         CommandHandleSystem::handle_action_requests(game_state, frame_state);

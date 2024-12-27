@@ -88,15 +88,15 @@ impl UIElement {
     pub fn left_ui(&self, window: &Arc<Window>) -> f32 {
         self.ui_coordinate_origin.x
             + self.top_left.x
-            * (window.inner_size().height as f32 / window.inner_size().width as f32)
-            * (16.0 / 9.0)
+                * (window.inner_size().height as f32 / window.inner_size().width as f32)
+                * (16.0 / 9.0)
     }
 
     pub fn right_ui(&self, window: &Arc<Window>) -> f32 {
         self.ui_coordinate_origin.x
             + self.bottom_right.x
-            * (window.inner_size().height as f32 / window.inner_size().width as f32)
-            * (16.0 / 9.0)
+                * (window.inner_size().height as f32 / window.inner_size().width as f32)
+                * (16.0 / 9.0)
     }
 
     pub fn width(&self) -> f32 {
@@ -203,7 +203,7 @@ impl UIState {
 
         let chat_window = UIWindow::new(
             false,
-            UIElement::new_rect(Point2::new(0.3, 0.5), Point2::new(0.5, 0.45)),
+            UIElement::new_rect(Point2::new(0.25, 0.7), Point2::new(0.2, 0.1)),
         );
         windows.insert("chat".to_string(), chat_window);
 
@@ -211,7 +211,7 @@ impl UIState {
             windows,
             menu_state: Closed,
             dialogue_state: DialogueState::Closed,
-            input_state: InputState::Closed,
+            input_state: InputState::Normal,
             action_text: String::new(),
             selected_text: String::new(),
             cursor_bytes: cursor,
