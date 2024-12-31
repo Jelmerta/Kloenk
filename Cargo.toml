@@ -19,7 +19,7 @@ pollster = "0.4"
 bytemuck = "1.20"
 cgmath = "0.18"
 anyhow = { version = "1.0", default-features = false }
-itertools = { version = "0.13", default-features = false, features = ["use_alloc"] }
+itertools = { version = "0.14", default-features = false, features = ["use_alloc"] }
 glyphon = "0.7"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 gltf = { version = "1.4" }
