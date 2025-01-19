@@ -14,7 +14,7 @@ env_logger = { version = "0.11", default-features = false } # Only used for dev 
 log = "0.4"
 # Rodio needs to be before wgpu at the moment. Otherwise, loads incorrect windows version for wgpu due to dumb resolution behavior
 rodio = { version = "0.20", default-features = false, features = ["wav"] }
-wgpu = "23.0"
+wgpu = "23.0" # 24.0 can be done once glyphon wgpu is upgraded
 pollster = "0.4"
 bytemuck = "1.20"
 cgmath = "0.18"
