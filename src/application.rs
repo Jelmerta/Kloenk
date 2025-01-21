@@ -414,6 +414,10 @@ impl ApplicationHandler<CustomEvent> for Application {
                     Err(wgpu::SurfaceError::Timeout) => {
                         log::warn!("Surface timeout");
                     }
+
+                    Err(wgpu::SurfaceError::Other) => {
+                        log::warn!("Other error");
+                    }
                 }
             }
             _ => {}

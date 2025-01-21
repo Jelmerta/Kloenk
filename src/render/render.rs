@@ -63,7 +63,7 @@ struct RenderBatch {
 
 impl Renderer {
     pub async fn new(window: Arc<Window>) -> Renderer {
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             flags: InstanceFlags::empty(), // Remove Vulkan validation layer as this leads to tons of unhelpful logging (and VK_LAYER_KHRONOS_validation does not seem to exist? not debugging this)
             ..Default::default()
