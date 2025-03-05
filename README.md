@@ -16,13 +16,6 @@ Currently build for web using:
 For local development, we want to use bacon with clippy instead of building every time. Clippy does not easily allow
 building of wasm though...
 
-Notes for host deployment: Make sure firewall allows access on 80/443 for http/https
-sudo ufw allow 80
-sudo ufw allow 443
-
-sudo ufw allow http
-sudo ufw allow https
-
 Useful rust tools to improve project:
 
 - ``cargo build --timings`` produces a report showing crate compile times

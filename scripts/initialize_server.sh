@@ -15,3 +15,12 @@ cat .ssh/id_ed25519.pub > .ssh/authorized_keys
 # cat .ssh/id_ed25519.pub and save the string to clipboard for next step
 
 # Perform the necessary GitHub steps, add 3 secrets and a deploy key
+
+# Make sure firewall allows access on 80/443 for http/https
+apt-get install ufw
+ufw enable
+ufw allow ssh
+ufw allow http
+ufw allow https
+
+# Move the SSL certificate and private key over (either with scp or copying the contents)
