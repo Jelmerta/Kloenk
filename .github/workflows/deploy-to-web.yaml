@@ -35,15 +35,10 @@ jobs:
       - name: Checkout project
         uses: actions/checkout@v4.2.0
 
-      - name: Install doctl (to access digital ocean api)
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-
       - name: Retrieve new container and run on server using remote ssh commands
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.ARTIFACT_HOST }}
+          username: ${{ secrets.ARTIFACT_USERNAME }}
+          key: ${{ secrets.ARTIFACT_SSH_KEY }}
           script: docker pull hydrogax/kloenk && docker rm -f kloenk && docker run -d -v /etc/ssl:/etc/ssl:ro -p 80:80 -p 443:443 --name kloenk hydrogax/kloenk
