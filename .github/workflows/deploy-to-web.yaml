@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@v4.2.0
 
       - name: Retrieve new container and run on server using remote ssh commands
-        uses: appleboy/ssh-action@v1.2.1
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.ARTIFACT_HOST }}
           username: ${{ secrets.ARTIFACT_USERNAME }}
