@@ -9,13 +9,13 @@ use std::io::Cursor;
 #[cfg(target_arch = "wasm32")]
 use std::rc::Rc;
 #[cfg(target_arch = "wasm32")]
-use wasm_bindgen::closure::Closure;
-#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 #[cfg(target_arch = "wasm32")]
-use wasm_bindgen_futures::js_sys::Uint8Array;
+use wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::JsFuture;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen_futures::js_sys::Uint8Array;
 #[cfg(target_arch = "wasm32")]
 use web_sys::AudioBuffer;
 #[cfg(target_arch = "wasm32")]
