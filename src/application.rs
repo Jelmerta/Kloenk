@@ -18,9 +18,9 @@ use winit::platform::web::WindowExtWebSys;
 use crate::state::input::Input;
 use std::sync::Arc;
 #[cfg(target_arch = "wasm32")]
-use wasm_bindgen::closure::Closure;
-#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::closure::Closure;
 use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Cursor, Fullscreen, Icon, Window, WindowId};

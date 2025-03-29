@@ -1,7 +1,7 @@
 use crate::state::components::{Entity, Storable};
 use crate::state::game_state::GameState;
-use cgmath::num_traits::ToPrimitive;
 use cgmath::Point3;
+use cgmath::num_traits::ToPrimitive;
 use std::collections::HashMap;
 
 pub struct PositionManager {}

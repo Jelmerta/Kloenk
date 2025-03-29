@@ -1,4 +1,4 @@
-use cgmath::{prelude::*, Point3, Vector3};
+use cgmath::{Point3, Vector3, prelude::*};
 use itertools::Itertools;
 use std::iter;
 use std::sync::Arc;
