@@ -1,7 +1,7 @@
 FROM rust:1.85 AS rust
 
 RUN rustup target add wasm32-unknown-unknown \
-	&& rustup component add clippy rustfmt \
+#	&& rustup component add clippy rustfmt \
 	&& cargo install wasm-bindgen-cli cargo-audit cargo-chef wasm-opt
 WORKDIR /app
 
