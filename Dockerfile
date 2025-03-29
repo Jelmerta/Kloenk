@@ -1,4 +1,4 @@
-FROM rust:1.82 AS rust
+FROM rust:1.85 AS rust
 
 RUN rustup target add wasm32-unknown-unknown \
 	&& rustup component add clippy rustfmt \
