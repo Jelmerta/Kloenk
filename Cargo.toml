@@ -2,7 +2,7 @@
 name = "kloenk"
 version = "0.1.0"
 authors = ["Jelmer Alphenaar <https://hatsu.tech>"]
-edition = "2024"
+edition = "2021"
 repository = "https://github.com/Jelmerta/Kloenk/"
 description = "Custom Rust engine targeting WASM with WebGpu (with the dream of creating a multiplayer online game)"
 license = "GPL-3.0-or-later"
