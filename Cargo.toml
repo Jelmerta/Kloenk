@@ -14,13 +14,13 @@ env_logger = { version = "0.11", default-features = false } # Only used for dev 
 log = "0.4"
 # Rodio needs to be before wgpu at the moment. Otherwise, loads incorrect windows version for wgpu due to dumb resolution behavior
 rodio = { version = "0.20", default-features = false, features = ["wav"] }
-wgpu = "24.0"
+wgpu = "25.0"
 pollster = "0.4"
 bytemuck = "1.22"
 cgmath = "0.18"
 anyhow = { version = "1.0", default-features = false }
 itertools = { version = "0.14", default-features = false, features = ["use_alloc"] }
-glyphon = "0.8"
+glyphon = "0.9"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 gltf = { version = "1.4" }
 

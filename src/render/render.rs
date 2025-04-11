@@ -3,8 +3,8 @@ use itertools::Itertools;
 use std::iter;
 use std::sync::Arc;
 use wgpu::{
-    Buffer, CommandEncoder, Device, InstanceFlags, MemoryHints, Queue, SurfaceConfiguration,
-    TextureView,
+    Backend, Buffer, CommandEncoder, Device, InstanceFlags, MemoryHints, Queue,
+    SurfaceConfiguration, TextureView,
 };
 
 use wgpu::util::DeviceExt;
@@ -83,24 +83,22 @@ impl Renderer {
 
         let backend = adapter.get_info().backend;
         match backend {
-            wgpu::Backend::Empty => log::info!("No graphics backend"),
-            wgpu::Backend::Vulkan => log::info!("Using Vulkan backend"),
-            wgpu::Backend::Metal => log::info!("Using Metal backend"),
-            wgpu::Backend::Dx12 => log::info!("Using DirectX 12 backend"),
-            wgpu::Backend::Gl => log::info!("Using OpenGL backend (likely WebGL)"),
-            wgpu::Backend::BrowserWebGpu => log::info!("Using Browser's WebGPU backend"),
+            Backend::Vulkan => log::info!("Using Vulkan backend"),
+            Backend::Metal => log::info!("Using Metal backend"),
+            Backend::Dx12 => log::info!("Using DirectX 12 backend"),
+            Backend::Gl => log::info!("Using OpenGL backend (likely WebGL)"),
+            Backend::BrowserWebGpu => log::info!("Using Browser's WebGPU backend"),
+            Backend::Noop => log::info!("No graphics backend"),
         }
 
         let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: None,
-                    required_features: wgpu::Features::empty(),
-                    required_limits: wgpu::Limits::default(),
-                    memory_hints: MemoryHints::default(),
-                },
-                None,
-            )
+            .request_device(&wgpu::DeviceDescriptor {
+                label: None,
+                required_features: wgpu::Features::empty(),
+                required_limits: wgpu::Limits::default(),
+                memory_hints: MemoryHints::default(),
+                trace: Default::default(),
+            })
             .await
             .unwrap();
 

@@ -108,7 +108,7 @@ impl TextWriter {
         buffer.set_text(
             &mut self.font_system,
             text,
-            Attrs::new().family(Family::Name("Playwrite NL")),
+            &Attrs::new().family(Family::Name("Playwrite NL")),
             Shaping::Advanced,
         );
         buffer.shape_until_scroll(&mut self.font_system, false);
