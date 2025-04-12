@@ -14,7 +14,6 @@ env_logger = { version = "0.11", default-features = false } # Only used for dev 
 log = "0.4"
 # Rodio needs to be before wgpu at the moment. Otherwise, loads incorrect windows version for wgpu due to dumb resolution behavior
 rodio = { version = "0.20", default-features = false, features = ["wav"] }
-wgpu = "25.0"
 pollster = "0.4"
 bytemuck = "1.22"
 cgmath = "0.18"
@@ -30,10 +29,12 @@ fs_extra = "1.3"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 fs_extra = "1.3"
+wgpu = { version = "25.0", default-features = false, features = ["vulkan"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1"
 console_log = "1.0"
+wgpu = { version = "25.0", default-features = false, features = ["webgpu"] }
 wasm-bindgen = { version = "0.2", default-features = false }
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = [
