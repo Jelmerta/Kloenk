@@ -24,3 +24,8 @@ ufw allow http
 ufw allow https
 
 # Move the SSL certificate and private key over (either with scp or copying the contents)
+# Or setup certbot to get certs from lets encrypt:
+# https://certbot.eff.org/instructions?ws=nginx&os=pip
+
+# Connecting to the server can be done as such:
+ssh -i ~/.ssh/id_ed25519_kloenk root@xxx.xxx.xxx.xxx

@@ -49,4 +49,4 @@ jobs:
           host: ${{ secrets.ARTIFACT_HOST }}
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          script: docker pull hydrogax/kloenk && docker rm -f kloenk && docker run -d -v /etc/ssl:/etc/ssl:ro -p 80:80 -p 443:443 --name kloenk hydrogax/kloenk
+          script: docker pull hydrogax/kloenk && docker rm -f kloenk && docker run -d -v /etc/letsencrypt/live/hatsu.tech:/etc/ssl:ro -p 80:80 -p 443:443 --name kloenk hydrogax/kloenk
