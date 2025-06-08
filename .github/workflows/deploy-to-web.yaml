@@ -35,14 +35,6 @@ jobs:
       - name: Checkout project
         uses: actions/checkout@v4.2.0
 
-      - name: ls
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.ARTIFACT_HOST }}
-          username: ${{ secrets.ARTIFACT_USERNAME }}
-          key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          script: ls -a
-
       - name: Retrieve new container and run on server using remote ssh commands
         uses: appleboy/ssh-action@v1.0.3
         with:
