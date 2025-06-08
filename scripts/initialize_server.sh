@@ -38,11 +38,6 @@ sudo /opt/certbot/bin/pip install --upgrade pip
 sudo /opt/certbot/bin/pip install certbot
 sudo ln -s /opt/certbot/bin/certbot /usr/bin/certbot
 
-# To set up a certbot, we create a new directory to add the certs to, as certbot keeps symbolic links to a different location and we want the full file to be mounted as a volume when starting the docker container
-sudo mkdir -p /etc/ssl-kloenk
-sudo cp -L /etc/letsencrypt/live/hatsu.tech/cert.pem /etc/ssl-kloenk/cert.pem
-sudo cp -L /etc/letsencrypt/live/hatsu.tech/privkey.pem /etc/ssl-kloenk/privkey.pem
-
 # setup acme challenges to refresh certs
 sudo mkdir -p /var/www/certbot-acme
 sudo chmod -R 755 /var/www/certbot-acme
@@ -54,6 +49,11 @@ sudo certbot certonly --webroot \
   --email myemailaddress@hatsu.tech \
   --non-interactive \
   --agree-tos
+
+# To set up a certbot, we create a new directory to add the certs to, as certbot keeps symbolic links to a different location and we want the full file to be mounted as a volume when starting the docker container
+sudo mkdir -p /etc/ssl-kloenk
+sudo cp -L /etc/letsencrypt/live/hatsu.tech/cert.pem /etc/ssl-kloenk/cert.pem
+sudo cp -L /etc/letsencrypt/live/hatsu.tech/privkey.pem /etc/ssl-kloenk/privkey.pem
 
 # To renew the certificates automatically, we setup a cron job
 echo "0 0,12 * * * root /opt/certbot/bin/python -c 'import random; import time; time.sleep(random.random() * 3600)' && sudo certbot renew -q --webroot -w /var/www/certbot-acme" | sudo tee -a /etc/crontab > /dev/null
