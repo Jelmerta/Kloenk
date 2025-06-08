@@ -23,13 +23,16 @@ ufw allow ssh
 ufw allow http
 ufw allow https
 
-# Move the SSL certificate and private key over (either with scp or copying the contents)
-# Or setup certbot to get certs from lets encrypt:
+# Setup certbot to get certs from lets encrypt for SSL/HTTPS:
 # https://certbot.eff.org/instructions?ws=nginx&os=pip
 # To set up a certbot, we create a new directory to add the certs to, as certbot keeps symbolic links to a different location and we want the full file to be mounted as a volume when starting the docker container
 sudo mkdir -p /etc/ssl-kloenk
 sudo cp -L /etc/letsencrypt/live/hatsu.tech/cert.pem /etc/ssl-kloenk/cert.pem
 sudo cp -L /etc/letsencrypt/live/hatsu.tech/privkey.pem /etc/ssl-kloenk/privkey.pem
+
+# setup acme challenges to refresh certs
+sudo mkdir -p /var/www/certbot-acme
+sudo chmod -R 755 /var/www/certbot-acme
 
 # Connecting to the server can be done as such:
 ssh -i ~/.ssh/id_ed25519_kloenk root@xxx.xxx.xxx.xxx
