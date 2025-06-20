@@ -48,7 +48,8 @@ web-sys = { version = "0.3", features = [
     "AudioNode",
     "AudioDestinationNode",
     "AudioBuffer",
-    "AudioBufferSourceNode"
+    "AudioBufferSourceNode",
+    "WebTransportDatagramDuplexStream"
 ] }
 reqwest = { version = "0.12", default-features = false }
 
