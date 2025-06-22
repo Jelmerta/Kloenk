@@ -106,5 +106,5 @@ COPY assets /usr/share/nginx/html/assets
 COPY web/html /usr/share/nginx/html
 COPY web/nginx /etc/nginx/conf.d
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["nginx", "-g", "daemon off; error_log /var/log/nginx/error.log debug;"]
 
