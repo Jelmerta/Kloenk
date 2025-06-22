@@ -84,9 +84,8 @@ RUN ./configure \
     --with-http_sub_module \
     --with-http_v2_module \
     --with-http_v3_module \
-    --with-openssl=/boringssl \
     --with-cc-opt="-I/boringssl/include" \
-    --with-ld-opt="-L/boringssl/build -lstdc++" \
+    --with-ld-opt="-L/boringssl/build -lssl -lcrypto -lstdc++" \
     --add-module=/ngx_devel_kit \
     --add-module=/set-misc-nginx-module && \
     make -j4 && \
