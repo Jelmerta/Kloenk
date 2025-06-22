@@ -47,7 +47,8 @@ WORKDIR /
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     git \
-    wget
+    wget \
+    ca-certificates
 
 RUN git clone "https://boringssl.googlesource.com/boringssl" \
     && cmake -B build -DCMAKE_BUILD_TYPE=Release \
