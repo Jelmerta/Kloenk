@@ -60,6 +60,8 @@ RUN git clone "https://boringssl.googlesource.com/boringssl" \
 RUN wget https://nginx.org/download/nginx-1.27.5.tar.gz && \
     tar zxf nginx-1.27.5.tar.gz
 
+WORKDIR /nginx-1.27.5
+
 #    --with-ipv6 \
 #    --with-openssl=/quiche/deps/boringssl \
 #        --with-ld-opt="-L../boringssl/build/ssl
