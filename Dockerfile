@@ -49,11 +49,12 @@ RUN apt-get update && \
     git \
     wget \
     ca-certificates \
-    cmake
+    cmake \
+    ninja-build
 
 RUN git clone "https://boringssl.googlesource.com/boringssl" \
-    && cmake -B build -DCMAKE_BUILD_TYPE=Release \
-    && make -C build
+    && cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Release \
+    && ninja -C build
 
 RUN wget https://nginx.org/download/nginx-1.27.5.tar.gz && \
     tar zxf nginx-1.27.5.tar.gz
