@@ -42,10 +42,9 @@ RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --
 FROM debian:bookworm-slim AS nginx-builder
 WORKDIR /
 
-#    apt-get install -y --no-install-recommends \
-#    build-essential \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+    gcc \
     git \
     wget \
     ca-certificates \
