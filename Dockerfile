@@ -82,7 +82,7 @@ RUN ./configure \
     --with-http_v3_module \
     --with-cc-opt="-I../boringssl/include" \
     --with-ld-opt="-L../boringssl/build -lstdc++" \
-    --add-module=/set-misc-nginx-module \
+    --add-module=/set-misc-nginx-module && \
     make && \
     make install
 
