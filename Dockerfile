@@ -1,4 +1,4 @@
-FROM rust:1.85 AS rust
+FROM rust:1.87 AS rust
 
 RUN rustup target add wasm32-unknown-unknown \
 #	&& rustup component add clippy rustfmt \
@@ -38,12 +38,51 @@ RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --
 && cp ./bg_output/kloenk.js output/kloenk.js \
 && cp ./bg_output/kloenk.wasm output/kloenk.wasm
 
+
+FROM debian:bookworm-slim as nginx-builder
+WORKDIR /
+
+RUN git clone "https://boringssl.googlesource.com/boringssl" \
+    && cmake -B build -DCMAKE_BUILD_TYPE=Release \
+    && make -C build
+
+RUN wget https://nginx.org/download/nginx-1.27.5.tar.gz && \
+    tar zxf nginx-1.27.5.tar.gz
+
+#    --with-ipv6 \
+#    --with-openssl=/quiche/deps/boringssl \
+#        --with-ld-opt="-L../boringssl/build/ssl
+#                       -L../boringssl/build/crypto"
+#    --with-quiche=/quiche \
+#    --with-cc-opt="-I../quiche/include" \
+#    --with-ld-opt="-L../quiche/target/release" && \
+
+RUN ./configure \
+    --prefix=/usr/local/nginx \
+    --sbin-path=/usr/sbin/nginx \
+    --modules-path=/usr/lib/nginx/modules \
+    --with-http_ssl_module \
+    --with-http_sub_module \
+    --with-http_v2_module \
+    --with-http_v3_module \
+    --with-set-misc-nginx-module \
+    --with-cc-opt="-I../boringssl/include" \
+    --with-ld-opt="-L../boringssl/build -lstdc++" \
+    make && \
+    make install
+
 #nginx:alpine does not include required nginx sub_filter dependencies, might wanna build our own nginx version
-FROM openresty/openresty:alpine
+#FROM openresty/openresty:alpine
+
+FROM debian:bookworm-slim
+
 # Force stages to be run
 #COPY --from=checker /etc/hostname /dev/null
 COPY --from=auditor /etc/hostname /dev/null
 #COPY --from=formatchecker /etc/hostname /dev/null
+
+COPY --from=nginx-builder /usr/sbin/nginx /usr/sbin/nginx
+COPY --from=nginx-builder /etc/nginx /etc/nginx
 
 COPY --from=builder /app/output /usr/share/nginx/html
 COPY assets /usr/share/nginx/html/assets
