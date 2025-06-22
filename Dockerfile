@@ -57,6 +57,7 @@ RUN git clone "https://boringssl.googlesource.com/boringssl" \
     && cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Wno-error=array-bounds" \
     && ninja -C build
 
+RUN git clone https://github.com/vision5/ngx_devel_kit
 RUN git clone https://github.com/openresty/set-misc-nginx-module
 
 RUN wget https://nginx.org/download/nginx-1.27.5.tar.gz && \
@@ -82,6 +83,7 @@ RUN ./configure \
     --with-http_v3_module \
     --with-cc-opt="-I../boringssl/include" \
     --with-ld-opt="-L../boringssl/build -lstdc++" \
+    --add-module=/ngx_devel_kit \
     --add-module=/set-misc-nginx-module && \
     make && \
     make install
