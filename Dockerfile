@@ -102,7 +102,8 @@ COPY --from=auditor /etc/hostname /dev/null
 #COPY --from=formatchecker /etc/hostname /dev/null
 
 COPY --from=nginx-builder /usr/sbin/nginx /usr/sbin/nginx
-COPY --from=nginx-builder /etc/nginx /etc/nginx
+COPY --from=nginx-builder /usr/local/nginx /usr/local/nginx
+RUN mkdir -p /etc/nginx
 
 COPY --from=builder /app/output /usr/share/nginx/html
 COPY assets /usr/share/nginx/html/assets
