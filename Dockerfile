@@ -83,11 +83,12 @@ RUN ./configure \
     --with-http_sub_module \
     --with-http_v2_module \
     --with-http_v3_module \
-    --with-cc-opt="-I../boringssl/include" \
-    --with-ld-opt="-L../boringssl/build -lstdc++" \
+    --with-openssl=/boringssl \
+    --with-cc-opt="-I/boringssl/include" \
+    --with-ld-opt="-L/boringssl/build -lstdc++" \
     --add-module=/ngx_devel_kit \
     --add-module=/set-misc-nginx-module && \
-    make && \
+    make -j4 && \
     make install
 
 #nginx:alpine does not include required nginx sub_filter dependencies, might wanna build our own nginx version
