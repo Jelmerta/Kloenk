@@ -51,9 +51,10 @@ RUN apt-get update && \
     cmake \
     ninja-build
 
+# Note: there are other ssl options that support quic: https://nginx.org/en/docs/quic.html Difficult to decide which to use but boringssl seems best maintained
 RUN git clone "https://boringssl.googlesource.com/boringssl" \
     && cd boringssl \
-    && cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Release \
+    && cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Wno-error=array-bounds" \
     && ninja -C build
 
 RUN wget https://nginx.org/download/nginx-1.27.5.tar.gz && \
