@@ -106,6 +106,7 @@ COPY assets /usr/share/nginx/html/assets
 COPY web/html /usr/share/nginx/html
 COPY web/nginx /etc/nginx/conf.d
 
+RUN mkdir -p /var/log/nginx
 RUN touch /var/log/nginx/error.log /var/log/nginx/access.log
 #CMD ["nginx", "-g", "daemon off; error_log /var/log/nginx/error.log debug;"]
 CMD ["nginx", "-g", "daemon off;"]
