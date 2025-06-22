@@ -30,6 +30,7 @@ FROM rust AS builder
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-unknown --target-dir target
 
+# wasm-opt options: https://manpages.debian.org/testing/binaryen/wasm-opt.1.en.html#enable~4
 COPY . .
 RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk.wasm --target web --out-dir bg_output --out-name kloenk \
@@ -42,6 +43,7 @@ RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --
 FROM debian:bookworm-slim AS nginx-builder
 WORKDIR /
 
+#pcre3 without dev needed?
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
@@ -50,7 +52,6 @@ RUN apt-get update && \
     ca-certificates \
     cmake \
     ninja-build \
-    libpcre3 \
     libpcre3-dev \
     zlib1g-dev
 
@@ -68,14 +69,7 @@ RUN wget https://nginx.org/download/nginx-1.27.5.tar.gz && \
 
 WORKDIR /nginx-1.27.5
 
-#    --with-ipv6 \
-#    --with-openssl=/quiche/deps/boringssl \
-#        --with-ld-opt="-L../boringssl/build/ssl
-#                       -L../boringssl/build/crypto"
-#    --with-quiche=/quiche \
-#    --with-cc-opt="-I../quiche/include" \
-#    --with-ld-opt="-L../quiche/target/release" && \
-
+# Is stdc++ required? crypto? --with-ipv6?
 RUN ./configure \
     --prefix=/usr/local/nginx \
     --sbin-path=/usr/sbin/nginx \
@@ -91,10 +85,11 @@ RUN ./configure \
     make -j4 && \
     make install
 
-#nginx:alpine does not include required nginx sub_filter dependencies, might wanna build our own nginx version
-#FROM openresty/openresty:alpine
-
 FROM debian:bookworm-slim
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libpcre3
 
 # Force stages to be run
 #COPY --from=checker /etc/hostname /dev/null
@@ -103,6 +98,7 @@ COPY --from=auditor /etc/hostname /dev/null
 
 COPY --from=nginx-builder /usr/sbin/nginx /usr/sbin/nginx
 COPY --from=nginx-builder /usr/local/nginx /usr/local/nginx
+# Not sure if this is needed, probably copied anyway
 RUN mkdir -p /etc/nginx
 
 COPY --from=builder /app/output /usr/share/nginx/html
