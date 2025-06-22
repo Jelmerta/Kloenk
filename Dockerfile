@@ -53,6 +53,7 @@ RUN apt-get update && \
     ninja-build
 
 RUN git clone "https://boringssl.googlesource.com/boringssl" \
+    && cd boringssl \
     && cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Release \
     && ninja -C build
 
