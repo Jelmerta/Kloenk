@@ -51,7 +51,8 @@ RUN apt-get update && \
     cmake \
     ninja-build \
     libpcre3 \
-    libpcre3-dev
+    libpcre3-dev \
+    zlib1g-dev
 
 # Note: there are other ssl options that support quic: https://nginx.org/en/docs/quic.html Difficult to decide which to use but boringssl seems best maintained
 RUN git clone "https://boringssl.googlesource.com/boringssl" \
