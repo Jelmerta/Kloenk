@@ -30,13 +30,10 @@ FROM rust AS builder
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-unknown --target-dir target
 
-# Enable bulk memory feature for Wasm
-ENV RUSTFLAGS="-C target-feature=+bulk-memory"
-
 COPY . .
 RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk.wasm --target web --out-dir bg_output --out-name kloenk \
-&& wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz --dce --strip-debug --strip-producers --inlining --coalesce-locals --simplify-locals \
+&& wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz --enable-bulk-memory --dce --strip-debug --strip-producers --inlining --coalesce-locals --simplify-locals \
 && mkdir output \
 && cp ./bg_output/kloenk.js output/kloenk.js \
 && cp ./bg_output/kloenk.wasm output/kloenk.wasm
