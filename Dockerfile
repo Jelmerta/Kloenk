@@ -105,3 +105,6 @@ COPY --from=builder /app/output /usr/share/nginx/html
 COPY assets /usr/share/nginx/html/assets
 COPY web/html /usr/share/nginx/html
 COPY web/nginx /etc/nginx/conf.d
+
+CMD ["nginx", "-g", "daemon off;"]
+
