@@ -45,6 +45,7 @@ WORKDIR /
 #    apt-get install -y --no-install-recommends \
 #    build-essential \
 RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     git \
     wget \
 
