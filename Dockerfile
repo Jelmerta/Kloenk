@@ -39,8 +39,14 @@ RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --
 && cp ./bg_output/kloenk.wasm output/kloenk.wasm
 
 
-FROM debian:bookworm-slim as nginx-builder
+FROM debian:bookworm-slim AS nginx-builder
 WORKDIR /
+
+#    apt-get install -y --no-install-recommends \
+#    build-essential \
+RUN apt-get update && \
+    git \
+    wget \
 
 RUN git clone "https://boringssl.googlesource.com/boringssl" \
     && cmake -B build -DCMAKE_BUILD_TYPE=Release \
