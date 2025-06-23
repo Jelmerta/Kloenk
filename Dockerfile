@@ -106,11 +106,5 @@ COPY assets /usr/share/nginx/html/assets
 COPY web/html /usr/share/nginx/html
 COPY web/nginx /etc/nginx/conf.d
 
-RUN mkdir -p /var/log/nginx
-RUN touch /var/log/nginx/error.log /var/log/nginx/access.log
-# not minimal... and shouldnt these just be made by nginx?
-RUN chmod 755 /var/log/nginx/error.log && chmod 755 /var/log/nginx/access.log
-#CMD ["nginx", "-g", "daemon off; error_log /var/log/nginx/error.log debug;"]
-CMD ["nginx"]
-#CMD ["nginx", "-g", "daemon off;"]
+CMD ["nginx", "-g", "daemon off;"]
 
