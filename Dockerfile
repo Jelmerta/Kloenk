@@ -64,13 +64,21 @@ RUN git clone "https://boringssl.googlesource.com/boringssl" \
 RUN git clone https://github.com/vision5/ngx_devel_kit
 RUN git clone https://github.com/openresty/set-misc-nginx-module
 
+RUN git clone --recurse-submodules -j8 https://github.com/google/ngx_brotli && \
+    cd ngx_brotli/deps/brotli && \
+    mkdir out && cd out && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_FLAGS="-Ofast -m64 -march=native -mtune=native -flto -funroll-loops -ffunction-sections -fdata-sections -Wl,--gc-sections" -DCMAKE_CXX_FLAGS="-Ofast -m64 -march=native -mtune=native -flto -funroll-loops -ffunction-sections -fdata-sections -Wl,--gc-sections" -DCMAKE_INSTALL_PREFIX=./installed .. && \
+    cmake --build . --config Release --target brotlienc
+
 RUN wget https://nginx.org/download/nginx-1.28.0.tar.gz && \
     tar zxf nginx-1.28.0.tar.gz
 
 WORKDIR /nginx-1.28.0
 
 # Is stdc++ required? crypto? --with-ipv6?
-RUN ./configure \
+RUN export CFLAGS="-m64 -march=native -mtune=native -Ofast -flto -funroll-loops -ffunction-sections -fdata-sections -Wl,--gc-sections" && \
+    export LDFLAGS="-m64 -Wl,-s -Wl,-Bsymbolic -Wl,--gc-sections" && \
+    ./configure \
     --prefix=/usr/share/nginx \
     --sbin-path=/usr/sbin/nginx \
     --modules-path=/usr/lib/nginx/modules \
@@ -86,7 +94,8 @@ RUN ./configure \
     --with-cc-opt="-I/boringssl/include" \
     --with-ld-opt="-L/boringssl/build -lssl -lcrypto -lstdc++" \
     --add-module=/ngx_devel_kit \
-    --add-module=/set-misc-nginx-module && \
+    --add-module=/set-misc-nginx-module \
+    --add-module=/ngx_brotli && \
     make -j4 && \
     make install
 
