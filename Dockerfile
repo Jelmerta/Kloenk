@@ -105,12 +105,13 @@ COPY --from=nginx-builder /usr/sbin/nginx /usr/sbin/nginx
 COPY --from=nginx-builder /usr/share/nginx /usr/share/nginx
 
 # Not sure if this is needed, probably copied anyway
-RUN mkdir -p /etc/nginx
+#RUN mkdir -p /etc/nginx
 
 COPY --from=builder /app/output /usr/share/nginx/html
 COPY assets /usr/share/nginx/html/assets
+#COPY web/nginx /etc/nginx/conf.d
+COPY web/nginx /usr/share/nginx/conf
 COPY web/html /usr/share/nginx/html
-COPY web/nginx /etc/nginx/conf.d
 
 CMD ["nginx", "-g", "daemon off;"]
 
