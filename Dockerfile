@@ -71,7 +71,7 @@ WORKDIR /nginx-1.27.5
 
 # Is stdc++ required? crypto? --with-ipv6?
 RUN ./configure \
-    --prefix=/usr/local/nginx \
+    --prefix=/usr/share/nginx \
     --sbin-path=/usr/sbin/nginx \
     --modules-path=/usr/lib/nginx/modules \
     --with-http_ssl_module \
