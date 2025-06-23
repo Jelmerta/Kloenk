@@ -54,6 +54,7 @@ sudo certbot certonly --webroot \
 sudo mkdir -p /etc/ssl-kloenk
 sudo cp -L /etc/letsencrypt/live/hatsu.tech/cert.pem /etc/ssl-kloenk/cert.pem
 sudo cp -L /etc/letsencrypt/live/hatsu.tech/privkey.pem /etc/ssl-kloenk/privkey.pem
+sudo cp -L /etc/letsencrypt/live/hatsu.tech/chain.pem /etc/ssl-kloenk/chain.pem
 
 # To renew the certificates automatically, we setup a cron job
 echo "0 0,12 * * * root /opt/certbot/bin/python -c 'import random; import time; time.sleep(random.random() * 3600)' && sudo certbot renew -q --webroot -w /var/www/certbot-acme" | sudo tee -a /etc/crontab > /dev/null
