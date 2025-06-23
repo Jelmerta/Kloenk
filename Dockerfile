@@ -97,7 +97,8 @@ COPY --from=auditor /etc/hostname /dev/null
 #COPY --from=formatchecker /etc/hostname /dev/null
 
 COPY --from=nginx-builder /usr/sbin/nginx /usr/sbin/nginx
-COPY --from=nginx-builder /usr/local/nginx /usr/local/nginx
+COPY --from=nginx-builder /usr/local/nginx /usr/share/nginx
+COPY --from=nginx-builder /usr/lib/nginx/modules /usr/lib/nginx/modules
 # Not sure if this is needed, probably copied anyway
 RUN mkdir -p /etc/nginx
 
