@@ -74,10 +74,17 @@ RUN ./configure \
     --prefix=/usr/share/nginx \
     --sbin-path=/usr/sbin/nginx \
     --modules-path=/usr/lib/nginx/modules \
+    --without-http_rds_csv_module \
+    --without-lua_rds_parser \
+    --without-mail_pop3_module \
+    --without-mail_imap_module \
+    --without-mail_smtp_module \
     --with-http_ssl_module \
     --with-http_sub_module \
     --with-http_v2_module \
     --with-http_v3_module \
+    --with-ipv6 \
+    --with-http_gzip_static_module \
     --with-cc-opt="-I/boringssl/include" \
     --with-ld-opt="-L/boringssl/build -lssl -lcrypto -lstdc++" \
     --add-module=/ngx_devel_kit \
