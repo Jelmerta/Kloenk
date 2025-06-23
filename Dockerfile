@@ -64,10 +64,10 @@ RUN git clone "https://boringssl.googlesource.com/boringssl" \
 RUN git clone https://github.com/vision5/ngx_devel_kit
 RUN git clone https://github.com/openresty/set-misc-nginx-module
 
-RUN wget https://nginx.org/download/nginx-1.27.5.tar.gz && \
-    tar zxf nginx-1.27.5.tar.gz
+RUN wget https://nginx.org/download/nginx-1.28.0.tar.gz && \
+    tar zxf nginx-1.28.0.tar.gz
 
-WORKDIR /nginx-1.27.5
+WORKDIR /nginx-1.28.0
 
 # Is stdc++ required? crypto? --with-ipv6?
 RUN ./configure \
