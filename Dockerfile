@@ -74,7 +74,6 @@ RUN ./configure \
     --prefix=/usr/share/nginx \
     --sbin-path=/usr/sbin/nginx \
     --modules-path=/usr/lib/nginx/modules \
-    --without-lua_rds_parser \
     --without-mail_pop3_module \
     --without-mail_imap_module \
     --without-mail_smtp_module \
