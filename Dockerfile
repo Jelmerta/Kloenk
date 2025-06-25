@@ -43,7 +43,6 @@ RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --
 FROM debian:bookworm-slim AS nginx-builder
 WORKDIR /
 
-#pcre3 without dev needed?
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
@@ -91,6 +90,7 @@ RUN export CFLAGS="-m64 -march=native -mtune=native -Ofast -flto -funroll-loops 
     --with-http_v3_module \
     --with-ipv6 \
     --with-http_gzip_static_module \
+    --with-http_gunzip_module \
     --with-cc-opt="-I/boringssl/include" \
     --with-ld-opt="-L/boringssl/build -lssl -lcrypto -lstdc++" \
     --add-module=/ngx_devel_kit \
