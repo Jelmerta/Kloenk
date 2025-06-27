@@ -43,7 +43,6 @@ RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-thres
 && cp ./bg_output/kloenk.js output/kloenk.js \
 && cp ./bg_output/kloenk.wasm output/kloenk.wasm
 
-
 FROM debian:bookworm-slim AS nginx-builder
 WORKDIR /
 
