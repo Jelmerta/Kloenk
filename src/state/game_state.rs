@@ -378,7 +378,7 @@ impl GameState {
         description_components.insert(
             player.clone(),
             Description {
-                text: "That's you!".to_string(),
+                text: "That's me!".to_string(),
             },
         );
     }

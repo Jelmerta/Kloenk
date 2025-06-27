@@ -28,7 +28,7 @@ RUN cargo audit
 
 FROM rust AS builder
 COPY --from=planner /app/recipe.json recipe.json
-#https://sharnoff.io/blog/why-rust-compiler-slow
+#https://sharnoff.io/blog/why-rust-compiler-slow, wondering if we even want this. yes it's slow once but then it's just cached anyway
 #-Zshare-generics?
 RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-threshold=10 -Cllvm-args=-inlinehint-threshold=10' \
     cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-unknown --target-dir target
@@ -58,7 +58,6 @@ RUN apt-get update && \
     libpcre3-dev \
     zlib1g-dev
 
-# Note: there are other ssl options that support quic: https://nginx.org/en/docs/quic.html Difficult to decide which to use but boringssl seems best maintained
 RUN git clone "https://boringssl.googlesource.com/boringssl" \
     && cd boringssl \
     && cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Wno-error=array-bounds" \
@@ -117,12 +116,8 @@ COPY --from=auditor /etc/hostname /dev/null
 COPY --from=nginx-builder /usr/sbin/nginx /usr/sbin/nginx
 COPY --from=nginx-builder /usr/share/nginx /usr/share/nginx
 
-# Not sure if this is needed, probably copied anyway
-#RUN mkdir -p /etc/nginx
-
 COPY --from=builder /app/output /usr/share/nginx/html
 COPY assets /usr/share/nginx/html/assets
-#COPY web/nginx /etc/nginx/conf.d
 COPY web/nginx /usr/share/nginx/conf
 COPY web/html /usr/share/nginx/html
 
