@@ -106,9 +106,6 @@ RUN ./configure \
     --without-http_map_module \
     --without-http_geo_module \
     --without-http_userid_module \
-    --without-http_rds_json_module \
-    --without-http_rds_csv_module \
-    --without-lua_rds_parser \
     --without-select_module \
     --without-poll_module \
     --without-mail_pop3_module \
