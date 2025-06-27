@@ -67,15 +67,13 @@ incremental = true
 [profile.release]
 opt-level = "z"
 panic = "abort"
-lto = "off"
+lto = true
 strip = true
 codegen-units = 1
 debug = "none"
 
 [profile.release.package."*"]
 opt-level = "z"
-panic = "abort"
-lto = true
 strip = true
 codegen-units = 1
 debug = "none"

@@ -73,10 +73,10 @@ RUN git clone --recurse-submodules -j8 https://github.com/google/ngx_brotli && \
     cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_FLAGS="-Ofast -m64 -march=native -mtune=native -flto -funroll-loops -ffunction-sections -fdata-sections -Wl,--gc-sections" -DCMAKE_CXX_FLAGS="-Ofast -m64 -march=native -mtune=native -flto -funroll-loops -ffunction-sections -fdata-sections -Wl,--gc-sections" -DCMAKE_INSTALL_PREFIX=./installed .. && \
     cmake --build . --config Release --target brotlienc
 
-RUN wget https://nginx.org/download/nginx-1.28.0.tar.gz && \
-    tar zxf nginx-1.28.0.tar.gz
+RUN wget https://nginx.org/download/nginx-1.29.0.tar.gz && \
+    tar zxf nginx-1.29.0.tar.gz
 
-WORKDIR /nginx-1.28.0
+WORKDIR /nginx-1.29.0
 
 # Is stdc++ required? crypto? --with-ipv6?
 RUN export CFLAGS="-m64 -march=native -mtune=native -Ofast -flto -funroll-loops -ffunction-sections -fdata-sections -Wl,--gc-sections" && \
