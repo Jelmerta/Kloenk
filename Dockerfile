@@ -1,4 +1,4 @@
-FROM rust:1.87 AS rust
+FROM rust:1.88 AS rust
 
 RUN rustup target add wasm32-unknown-unknown \
 #	&& rustup component add clippy rustfmt \
@@ -28,11 +28,15 @@ RUN cargo audit
 
 FROM rust AS builder
 COPY --from=planner /app/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-unknown --target-dir target
+#https://sharnoff.io/blog/why-rust-compiler-slow
+#-Zshare-generics?
+RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-threshold=10 -Cllvm-args=-inlinehint-threshold=10' \
+    cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-unknown --target-dir target
 
 # wasm-opt options: https://manpages.debian.org/testing/binaryen/wasm-opt.1.en.html#enable~4
 COPY . .
-RUN cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk \
+RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-threshold=10 -Cllvm-args=-inlinehint-threshold=10' \
+    cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk.wasm --target web --out-dir bg_output --out-name kloenk \
 && wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz --enable-bulk-memory --enable-nontrapping-float-to-int --dce --strip-debug --strip-producers --inlining --coalesce-locals --simplify-locals \
 && mkdir output \
