@@ -43,4 +43,4 @@ jobs:
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
           script:
-            docker pull hydrogax/kloenk-infra && (docker rm -f kloenk-infra || true) && docker run -d --mount type=volume,src=kloenk-static,dst=/usr/share/nginx/html:ro --mount type=bind,src=/etc/ssl-kloenk,dst=/etc/ssl:ro --mount type=bind,src=/var/www/certbot-acme,dst=/var/www/certbot-acme -p 80:80 -p 443:443 --name kloenk-infra hydrogax/kloenk-infra
+            docker pull hydrogax/kloenk-infra && (docker rm -f kloenk-infra || true) && docker run -d --mount type=volume,src=kloenk-static,dst=/usr/share/nginx/html,readonly --mount type=bind,src=/etc/ssl-kloenk,dst=/etc/ssl,readonly --mount type=bind,src=/var/www/certbot-acme,dst=/var/www/certbot-acme -p 80:80 -p 443:443 --name kloenk-infra hydrogax/kloenk-infra

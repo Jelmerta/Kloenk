@@ -26,15 +26,9 @@ jobs:
           host: ${{ secrets.ARTIFACT_HOST }}
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          script: docker run --rm --mount type=bind,src=/home/deploy/kloenk-web,dst=/source:ro --mount type=volume,src=kloenk-static,dst=/target alpine ls /
+          #          script: docker run --rm --mount type=bind,src=/home/deploy/kloenk-web,dst=/source,ro --mount type=volume,src=kloenk-static,dst=/target alpine ls .
+          script: docker run --rm --mount type=bind,src=/home/deploy/kloenk-web,dst=/source,readonly --mount type=volume,src=kloenk-static,dst=/target alpine cp /source/html/index.html /target/index.html
 
-      - name: Move static files to shared docker volume
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.ARTIFACT_HOST }}
-          username: ${{ secrets.ARTIFACT_USERNAME }}
-          key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          script: docker run --rm --mount type=bind,src=/home/deploy/kloenk-web,dst=/source:ro --mount type=volume,src=kloenk-static,dst=/target alpine ls .
 
 #          script: docker run --rm --mount type=bind,src=/home/deploy/kloenk-web,dst=/source:ro --mount type=volume,src=kloenk-static,dst=/target alpine cp /source/html/index.html /target/index.html
 # leaks username meh
