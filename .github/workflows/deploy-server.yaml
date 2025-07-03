@@ -1,15 +1,16 @@
-#name: deploy-server
-#run-name: Deploying server
-#on:
-#  push:
-#    branches: [ "main" ]
-#    paths: [ 'kloenk-client/**' ]
-#jobs:
-#  build:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout project
-#        uses: actions/checkout@v4.2.0
+name: deploy-server
+run-name: Deploying server
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ 'kloenk-server/**' ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4.2.0
 #
 #      - name: Set up Docker Buildx to help out with building docker image (
 #        uses: docker/setup-buildx-action@v3
