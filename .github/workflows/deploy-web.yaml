@@ -17,5 +17,5 @@ jobs:
           host: ${{ secrets.ARTIFACT_HOST }}
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          source: "kloenk-web/html/index.html"
+          source: "./kloenk-web/html/index.html"
           target: "/usr/share/nginx/html/"
