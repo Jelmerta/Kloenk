@@ -27,7 +27,7 @@ jobs:
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
           #          script: docker run --rm --mount type=bind,src=/home/deploy/kloenk-web,dst=/source,ro --mount type=volume,src=kloenk-static,dst=/target alpine ls .
-          script: docker run --rm --mount type=bind,src=/home/deploy/kloenk-web,dst=/source,readonly --mount type=volume,src=kloenk-static,dst=/target alpine cp /source/html/index.html /target/index.html
+          script: docker run --rm --mount type=bind,src=/home/deploy/kloenk-web,dst=/source,readonly --mount type=volume,src=kloenk-static,dst=/target alpine cp -f /source/html/index.html /target/index.html
 
 
 #          script: docker run --rm --mount type=bind,src=/home/deploy/kloenk-web,dst=/source:ro --mount type=volume,src=kloenk-static,dst=/target alpine cp /source/html/index.html /target/index.html
