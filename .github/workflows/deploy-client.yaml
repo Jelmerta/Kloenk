@@ -26,11 +26,15 @@ jobs:
           context: ./kloenk-client
           push: false
           tags: hydrogax/kloenk-client:latest
+          load: 'true'
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Move client outside container
-        run: docker create --name kloenk-client hydrogax/kloenk-client && docker cp kloenk-client:/app/output/ /kloenk-client/html/ && docker cp kloenk-client:/app/output/ /kloenk-client/html/assets/
+        run: |
+          docker create --name kloenk-client hydrogax/kloenk-client
+          docker cp kloenk-client:/app/output/ /output/html/
+        #          docker cp kloenk-client:/app/output/ /kloenk-client/html/assets/
 
         #        COPY --from=builder /app/output /usr/share/nginx/html
         #COPY assets /usr/share/nginx/html/assets
@@ -44,23 +48,23 @@ jobs:
         #  key: ${{ secrets.ARTIFACT_SSH_KEY }}
       #          script: docker create --name kloenk-client hydrogax/kloenk-client && docker cp kloenk-client:/app/output/ /usr/share/nginx/html && docker cp kloenk-client:/app/output/ /usr/share/nginx/html/assets/
 
-      - name: Copy client + assets to server using remote ssh commands
+      - name: Copy client to server using remote ssh commands
         uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.ARTIFACT_HOST }}
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          source: "kloenk-client/html/*"
+          source: "output/html/*"
           target: "/usr/share/nginx/html/"
 
-  #      - name: Copy assets to server using remote ssh commands
-  #        uses: appleboy/scp-action@v1
-  #        with:
-  #          host: ${{ secrets.ARTIFACT_HOST }}
-  #          username: ${{ secrets.ARTIFACT_USERNAME }}
-  #          key: ${{ secrets.ARTIFACT_SSH_KEY }}
-  #          source: "kloenk-client/html/assets/"
-  #          target: "/usr/share/nginx/html/assets/"
+      - name: Copy assets to server using remote ssh commands
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.ARTIFACT_HOST }}
+          username: ${{ secrets.ARTIFACT_USERNAME }}
+          key: ${{ secrets.ARTIFACT_SSH_KEY }}
+          source: "kloenk-client/html/assets/"
+          target: "/usr/share/nginx/html/assets/"
 
   #          TODO just build and copy the files? why not? no need to use the registry really?
   #   TODO dont need secrets if that's true...
