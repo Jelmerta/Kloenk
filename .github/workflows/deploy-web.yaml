@@ -18,4 +18,20 @@ jobs:
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
           source: "./kloenk-web/html/index.html"
-          target: "/usr/share/nginx/html/"
+          target: "~"
+
+      - name: Move static files to shared docker volume
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ARTIFACT_HOST }}
+          username: ${{ secrets.ARTIFACT_USERNAME }}
+          key: ${{ secrets.ARTIFACT_SSH_KEY }}
+          script:
+            docker create --rm --name static-client-copier -v kloenk-static:/html alpine
+            docker cp ~/index.html static-client-copier:/html/index.html
+
+#
+#
+#            kloenk-client:/app/output/ /usr/share/nginx/html && docker cp kloenk-client:/app/output/ /usr/share/nginx/html/assets/
+#
+#            docker pull hydrogax/kloenk-infra && (docker rm -f kloenk-infra || true) && docker run -d -v kloenk-static:/usr/share/nginx/html/static -v /etc/ssl-kloenk:/etc/ssl:ro -v /var/www/certbot-acme:/var/www/certbot-acme -p 80:80 -p 443:443 --name kloenk-infra hydrogax/kloenk-infra
