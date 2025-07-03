@@ -50,7 +50,7 @@ FROM debian:bookworm-slim
 COPY --from=auditor /etc/hostname /dev/null
 #COPY --from=formatchecker /etc/hostname /dev/null
 
-#COPY --from=builder /app/output /usr/share/nginx/html
+COPY --from=builder /app/output/ /app/output/
 #COPY assets /usr/share/nginx/html/assets
 
 
