@@ -103,5 +103,6 @@ COPY --from=nginx-builder /usr/sbin/nginx /usr/sbin/nginx
 COPY --from=nginx-builder /usr/share/nginx /usr/share/nginx
 
 COPY nginx /usr/share/nginx/conf
+RUN rm -rf /usr/share/nginx/html/
 
 CMD ["nginx", "-g", "daemon off;"]
