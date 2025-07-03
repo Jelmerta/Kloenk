@@ -32,9 +32,9 @@ jobs:
 
       - name: Move client outside container
         run: |
-          mkdir /output/
+          mkdir output/
           docker create --name kloenk-client hydrogax/kloenk-client
-          docker cp kloenk-client:/app/output/ /output/
+          docker cp kloenk-client:/app/output/ output/
         #          docker cp kloenk-client:/app/output/ /kloenk-client/html/assets/
 
         #        COPY --from=builder /app/output /usr/share/nginx/html
