@@ -60,7 +60,7 @@ jobs:
           host: ${{ secrets.ARTIFACT_HOST }}
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          source: "kloenk-client/output/*"
+          source: "kloenk-client/output/*, kloenk-client/assets/"
           target: "."
 
       - name: Copy client to shared volume
@@ -69,7 +69,7 @@ jobs:
           host: ${{ secrets.ARTIFACT_HOST }}
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          script: docker run --rm --mount type=bind,src=/home/deploy/kloenk-client/output,dst=/src,readonly --mount type=volume,src=kloenk-static,dst=/target alpine cp -fa /src/. /target/client
+          script: docker run --rm --mount type=bind,src=/home/deploy/kloenk-client,dst=/src,readonly --mount type=volume,src=kloenk-static,dst=/target alpine cp -fa /src/output/. /target/client && cp -far /src/assets/ /target/
       #        docker run --rm --mount type=bind,src=/home/deploy/kloenk-web,dst=/source,readonly --mount type=volume,src=kloenk-static,dst=/target alpine cp /source/html/index.html /target/index.html
       #todo leaks user, maybe pwd +/output or something
 
@@ -81,8 +81,6 @@ jobs:
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
           script: docker run --rm --mount type=volume,src=kloenk-static,dst=/target alpine ls -a /target
 
-
-  # TODO wasm and js in client directory
   #  TODO Assets directory
 
 
