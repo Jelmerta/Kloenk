@@ -78,7 +78,6 @@ RUN ./configure \
     --without-stream_upstream_random_module \
     --without-stream_upstream_zone_module \
     --with-http_ssl_module \
-    --with-http_sub_module \
     --with-http_v2_module \
     --with-http_v3_module \
     --with-ipv6 \
