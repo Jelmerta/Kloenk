@@ -26,8 +26,8 @@ jobs:
           host: ${{ secrets.ARTIFACT_HOST }}
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          script: docker run --rm --mount type=volume,src=/home/deploy/kloenk-web,dst=/source:ro --mount type=volume,src=kloenk-static,dst=/target alpine cp /source/html/index.html /target/index.html
-
+          script: docker run --rm --mount type=bind,src=kloenk-web,dst=/source:ro --mount type=volume,src=kloenk-static,dst=/target alpine cp /source/html/index.html /target/index.html
+# leaks username meh
 #"(docker rm -f static-client-copier || true) && \
 #            docker create --name static-client-copier --mount type=volume,src=kloenk-static,dst=/html alpine && \
 #            docker cp kloenk-web/index.html static-client-copier:/html/index.html"
