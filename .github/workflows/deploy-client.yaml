@@ -33,7 +33,7 @@ jobs:
       - name: Move client outside container
         run: |
           mkdir output/ && \
-          docker run --rm --mount type=bind,src=${GITHUB_WORKSPACE}/output,dst=/target hydrogax/kloenk-client cp -f /app/output/* /target
+          docker run --rm --mount type=bind,src=${GITHUB_WORKSPACE}/output,dst=/target hydrogax/kloenk-client cp -f /app/output/. /target
         #          docker run --rm --mount type=bind,src=/app/output,dst=/src,readonly --mount type=volume,src=kloenk-static,dst=/target hydrogax/kloenk-client cp -f /src/* /target
         #          docker create --name kloenk-client hydrogax/kloenk-client && \
         #          docker cp kloenk-client:/app/output/ output/
