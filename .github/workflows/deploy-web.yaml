@@ -26,12 +26,11 @@ jobs:
           host: ${{ secrets.ARTIFACT_HOST }}
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          script:
-            docker rm -f static-client-copier
-            docker create --name static-client-copier --mount type=volume,src=kloenk-static,dst=/html alpine
-            docker cp kloenk-web/index.html static-client-copier:/html/index.html
+          script: docker run --rm --mount type=volume,src=kloenk-web,dst=/kloenk-web:ro --mount type=volume,src=kloenk-static,dst=/html alpine cp kloenk-web/index.html /kloenk-web/index.html /html/index.html
 
-#
+#"(docker rm -f static-client-copier || true) && \
+#            docker create --name static-client-copier --mount type=volume,src=kloenk-static,dst=/html alpine && \
+#            docker cp kloenk-web/index.html static-client-copier:/html/index.html"
 #
 #            kloenk-client:/app/output/ /usr/share/nginx/html && docker cp kloenk-client:/app/output/ /usr/share/nginx/html/assets/
 #
