@@ -32,8 +32,9 @@ jobs:
 
       - name: Move client outside container
         run: |
+          mkdir /output/
           docker create --name kloenk-client hydrogax/kloenk-client
-          docker cp kloenk-client:/app/output/ /output/html/
+          docker cp kloenk-client:/app/output/ /output/
         #          docker cp kloenk-client:/app/output/ /kloenk-client/html/assets/
 
         #        COPY --from=builder /app/output /usr/share/nginx/html
@@ -54,7 +55,7 @@ jobs:
           host: ${{ secrets.ARTIFACT_HOST }}
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          source: "output/html/*"
+          source: "output/*"
           target: "/usr/share/nginx/html/"
 
       - name: Copy assets to server using remote ssh commands
