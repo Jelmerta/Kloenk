@@ -27,7 +27,7 @@ jobs:
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
           script:
-            docker create --rm --name static-client-copier -v kloenk-static:/html alpine
+            docker create --rm --name static-client-copier --mount kloenk-static:/html alpine
             docker cp ~/index.html static-client-copier:/html/index.html
 
 #
