@@ -3,7 +3,7 @@ run-name: Deploying infra
 on:
   push:
     branches: [ "main" ]
-    paths: [ 'kloenk-infra/**', '.github/workflows/deploy-infra.yaml.yaml' ]
+    paths: [ 'kloenk-infra/**', '.github/workflows/deploy-infra.yaml' ]
 jobs:
   build:
     runs-on: ubuntu-latest
