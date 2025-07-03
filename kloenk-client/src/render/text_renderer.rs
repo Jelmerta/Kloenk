@@ -1,8 +1,8 @@
 use crate::resources;
 use crate::state::ui_state::UIElement;
 use glyphon::{
-    Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping, SwashCache,
-    TextArea, TextAtlas, TextBounds, TextRenderer, Viewport, fontdb,
+    fontdb, Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping,
+    SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
 };
 use itertools::Itertools;
 use std::sync::Arc;

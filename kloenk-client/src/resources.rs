@@ -2,14 +2,14 @@ use crate::render::model::{ColoredVertex, Mesh, Model, TexVertex, VertexType};
 use crate::render::texture;
 use cfg_if::cfg_if;
 use cgmath::Vector3;
-use gltf::Gltf;
 use gltf::mesh::util::ReadIndices;
+use gltf::Gltf;
 #[cfg(not(target_arch = "wasm32"))]
 use std::env;
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
-use wgpu::Device;
 use wgpu::util::DeviceExt;
+use wgpu::Device;
 
 const CUBE_TEX: &[TexVertex] = &[
     // Top ccw as seen from top

@@ -1,4 +1,4 @@
-use cgmath::{Matrix4, Point3, SquareMatrix, Vector3, Zero, ortho};
+use cgmath::{ortho, Matrix4, Point3, SquareMatrix, Vector3, Zero};
 use std::sync::Arc;
 use winit::window::Window;
 

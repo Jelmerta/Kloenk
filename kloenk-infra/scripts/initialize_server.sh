@@ -59,3 +59,6 @@ sudo cp -L /etc/letsencrypt/live/hatsu.tech/fullchain.pem /etc/ssl-kloenk/fullch
 
 # To renew the certificates automatically, we setup a cron job
 echo "0 0,12 * * * root /opt/certbot/bin/python -c 'import random; import time; time.sleep(random.random() * 3600)' && sudo certbot renew -q --webroot -w /var/www/certbot-acme" | sudo tee -a /etc/crontab > /dev/null
+
+# Shared volume where static assets are built and served from
+docker volume create kloenk-static

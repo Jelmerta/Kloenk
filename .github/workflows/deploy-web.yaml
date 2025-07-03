@@ -1,0 +1,21 @@
+name: deploy-web
+run-name: Deploying web
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ 'kloenk-web/**' ]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4.2.0
+
+      - name: Copy web pages to server using remote ssh commands
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.ARTIFACT_HOST }}
+          username: ${{ secrets.ARTIFACT_USERNAME }}
+          key: ${{ secrets.ARTIFACT_SSH_KEY }}
+          source: "kloenk-web/html/index.html"
+          target: "/usr/share/nginx/html/"

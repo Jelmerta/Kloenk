@@ -1,8 +1,9 @@
-name: deploy-to-web
-run-name: Deploying application to web
+name: deploy-infra
+run-name: Deploying infra
 on:
   push:
     branches: [ "main" ]
+    paths: [ 'kloenk-infra/**' ]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,9 +23,9 @@ jobs:
       - name: Build and push Docker images
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./kloenk-infra
           push: 'true'
-          tags: hydrogax/kloenk:latest
+          tags: hydrogax/kloenk-infra:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -41,4 +42,5 @@ jobs:
           host: ${{ secrets.ARTIFACT_HOST }}
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          script: docker pull hydrogax/kloenk && (docker rm -f kloenk || true) && docker run -d -v /etc/ssl-kloenk:/etc/ssl:ro -v /var/www/certbot-acme:/var/www/certbot-acme -p 80:80 -p 443:443 --name kloenk hydrogax/kloenk
+          script:
+            docker pull hydrogax/kloenk-infra && (docker rm -f kloenk-infra || true) && docker run -d -v kloenk-static:/usr/share/nginx/html/static -v /etc/ssl-kloenk:/etc/ssl:ro -v /var/www/certbot-acme:/var/www/certbot-acme -p 80:80 -p 443:443 --name kloenk-infra hydrogax/kloenk-infra
