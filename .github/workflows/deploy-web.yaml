@@ -18,7 +18,7 @@ jobs:
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
           source: "./kloenk-web/html/index.html"
-          target: "~"
+          target: "output/"
 
       - name: Move static files to shared docker volume
         uses: appleboy/ssh-action@v1.0.3
@@ -28,8 +28,8 @@ jobs:
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
           script:
             "(docker rm -f static-client-copier || true) && \
-            docker create --name static-client-copier --mount type=volume,src=kloenk-static,dst=/html alpine && \
-            docker cp ~/index.html static-client-copier:/html/index.html"
+            docker create --name static-client-copier --mount type=volume,src=kloenk-static,dst=html alpine && \
+            docker cp output/index.html static-client-copier:html/index.html"
 
 #
 #
