@@ -60,9 +60,9 @@ jobs:
           host: ${{ secrets.ARTIFACT_HOST }}
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          script: docker run --rm --mount type=bind,src=${GITHUB_WORKSPACE}/output,dst=/src,readonly --mount type=volume,src=kloenk-static,dst=/target alpine cp -f /src/* /target
+          script: docker run --rm --mount type=bind,src=/home/deploy/output,dst=/src,readonly --mount type=volume,src=kloenk-static,dst=/target alpine cp -f /src/* /target
   #        docker run --rm --mount type=bind,src=/home/deploy/kloenk-web,dst=/source,readonly --mount type=volume,src=kloenk-static,dst=/target alpine cp /source/html/index.html /target/index.html
-
+  #todo leaks user, maybe pwd +/output or something
 
 
   #      - name: Copy client to server using remote ssh commands
