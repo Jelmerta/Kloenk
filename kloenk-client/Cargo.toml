@@ -1,3 +1,5 @@
+cargo-features = ["codegen-backend"]
+
 [package]
 name = "kloenk"
 version = "0.1.0"
@@ -22,6 +24,7 @@ itertools = { version = "0.14", default-features = false, features = ["use_alloc
 glyphon = "0.9"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 gltf = { version = "1.4" }
+cranelift = "0.121.1"
 
 [build-dependencies]
 anyhow = "1.0"
@@ -63,6 +66,7 @@ codegen-units = 256
 debug = 1
 strip = "none"
 incremental = true
+codegen-backend = "cranelift"
 
 [profile.release]
 opt-level = "z"
