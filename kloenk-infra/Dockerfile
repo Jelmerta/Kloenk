@@ -9,7 +9,7 @@ RUN apt-get update && \
     ca-certificates \
     cmake \
     ninja-build \
-    libpcre3 \
+    libpcre3-dev \
     zlib1g
 
 RUN git clone "https://boringssl.googlesource.com/boringssl" \
