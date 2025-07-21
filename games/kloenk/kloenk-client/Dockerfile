@@ -9,7 +9,7 @@ FROM rust AS planner
 # src folder invalidates all next cache layers. We do not gain speed to remove resulting folders such as audits advisory db or clippy's target folder
 # Clippy is being very annoying by running a different rust command and not producing the resulting binary, otherwise we would use this for building as well, related: https://github.com/rust-lang/cargo/issues/8716
 # Consider running clippy only on desktop client target
-COPY ../../.. .
+COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
 #Disable for now to speed up iterations without complaints
@@ -18,7 +18,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 #RUN cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -W clippy::pedantic -W clippy::all -Dwarnings
 
 FROM rust AS auditor
-COPY ../../.. .
+COPY . .
 RUN cargo audit
 
 #Temporarily disabled, pipeline has minor difference? Should be checked out
@@ -34,7 +34,7 @@ RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-thres
     cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-unknown --target-dir target
 
 # wasm-opt options: https://manpages.debian.org/testing/binaryen/wasm-opt.1.en.html#enable~4
-COPY ../../.. .
+COPY . .
 RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-threshold=10 -Cllvm-args=-inlinehint-threshold=10' \
     cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk.wasm --target web --out-dir bg_output --out-name kloenk \

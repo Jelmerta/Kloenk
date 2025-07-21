@@ -3,7 +3,7 @@ use glyphon::{
     fontdb, Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping,
     SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
 };
-use hydro_utils::load_binary;
+use hydrox::load_binary;
 use itertools::Itertools;
 use std::sync::Arc;
 use wgpu::{CommandEncoder, Device, Queue, SurfaceConfiguration, TextureView};

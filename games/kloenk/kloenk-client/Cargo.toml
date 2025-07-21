@@ -30,8 +30,7 @@ woff2-patched = "0.4"# idk if woff2 is worth pulling in all these dependencies..
 #brotli = "8.0"
 #allsorts way too much extra stuff
 #ttf-parser = { version = "0.25", default-features = true }
-hydro-utils = { path = "../../../hydro-engine/hydro-utils" }
-hydro-audio = { path = "../../../hydro-engine/hydro-audio" }
+hydrox = { git = "https://github.com/Jelmerta/Hydrox.git" }
 
 [build-dependencies]
 anyhow = "1.0"

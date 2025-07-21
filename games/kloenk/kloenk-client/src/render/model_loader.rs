@@ -3,7 +3,7 @@ use crate::render::texture;
 use cgmath::Vector3;
 use gltf::mesh::util::ReadIndices;
 use gltf::Gltf;
-use hydro_utils::load_binary;
+use hydrox::load_binary;
 use wgpu::util::DeviceExt;
 use wgpu::Device;
 

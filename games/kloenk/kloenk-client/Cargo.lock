@@ -1008,10 +1008,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6dbf3de79e51f3d586ab4cb9d5c3e2c14aa28ed23d180cf89b4df0454a69cc87"
 
 [[package]]
-name = "hydro-audio"
+name = "hydrox"
 version = "0.1.0"
+source = "git+https://github.com/Jelmerta/Hydrox.git#a3b6c7e7687cc909393f447fc0551563c50ee719"
 dependencies = [
- "hydro-utils",
+ "hydrox-audio",
+ "hydrox-core",
+ "hydrox-ecs",
+ "hydrox-graphics",
+ "hydrox-input",
+ "hydrox-ui",
+ "hydrox-utils",
+]
+
+[[package]]
+name = "hydrox-audio"
+version = "0.1.0"
+source = "git+https://github.com/Jelmerta/Hydrox.git#a3b6c7e7687cc909393f447fc0551563c50ee719"
+dependencies = [
+ "hydrox-utils",
  "pollster",
  "rodio",
  "wasm-bindgen",
@@ -1019,8 +1034,34 @@ dependencies = [
 ]
 
 [[package]]
-name = "hydro-utils"
+name = "hydrox-core"
 version = "0.1.0"
+source = "git+https://github.com/Jelmerta/Hydrox.git#a3b6c7e7687cc909393f447fc0551563c50ee719"
+
+[[package]]
+name = "hydrox-ecs"
+version = "0.1.0"
+source = "git+https://github.com/Jelmerta/Hydrox.git#a3b6c7e7687cc909393f447fc0551563c50ee719"
+
+[[package]]
+name = "hydrox-graphics"
+version = "0.1.0"
+source = "git+https://github.com/Jelmerta/Hydrox.git#a3b6c7e7687cc909393f447fc0551563c50ee719"
+
+[[package]]
+name = "hydrox-input"
+version = "0.1.0"
+source = "git+https://github.com/Jelmerta/Hydrox.git#a3b6c7e7687cc909393f447fc0551563c50ee719"
+
+[[package]]
+name = "hydrox-ui"
+version = "0.1.0"
+source = "git+https://github.com/Jelmerta/Hydrox.git#a3b6c7e7687cc909393f447fc0551563c50ee719"
+
+[[package]]
+name = "hydrox-utils"
+version = "0.1.0"
+source = "git+https://github.com/Jelmerta/Hydrox.git#a3b6c7e7687cc909393f447fc0551563c50ee719"
 dependencies = [
  "anyhow",
  "reqwest",
@@ -1348,8 +1389,7 @@ dependencies = [
  "fs_extra",
  "gltf",
  "glyphon",
- "hydro-audio",
- "hydro-utils",
+ "hydrox",
  "image",
  "itertools",
  "log",

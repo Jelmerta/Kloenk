@@ -18,8 +18,9 @@ use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::UIState;
 use crate::systems::game_system::GameSystem;
-use hydro_audio::AudioSystem;
 use winit::keyboard::KeyCode;
+
+use hydrox::{load_binary, AudioSystem};
 
 pub struct Engine {
     pub renderer: Renderer,
@@ -70,11 +71,11 @@ impl ApplicationHandler for Application {
         let mut initial_height = 1.0;
 
         let window_attributes;
-        let cursor_binary = pollster::block_on(hydro_utils::load_binary("cursor.webp")).unwrap();
+        let cursor_binary = pollster::block_on(load_binary("cursor.webp")).unwrap();
         let cursor_source = CursorManager::load_cursor(cursor_binary.clone());
         let custom_cursor = event_loop.create_custom_cursor(cursor_source);
 
-        let window_icon_binary = pollster::block_on(hydro_utils::load_binary("kunst.webp")).unwrap();
+        let window_icon_binary = pollster::block_on(load_binary("kunst.webp")).unwrap();
         let window_icon_rgba = image::load_from_memory(&window_icon_binary)
             .unwrap()
             .to_rgba8()
