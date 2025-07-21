@@ -26,8 +26,8 @@ jobs:
 
       - name: Move client outside container
         run: |
-          mkdir kloenk-client/output && \
-          docker run --rm --mount type=bind,src=${GITHUB_WORKSPACE}/kloenk-client/output,dst=/target hydrogax/kloenk-client cp -fa /app/output/. /target
+          mkdir games/kloenk/kloenk-client/output && \
+          docker run --rm --mount type=bind,src=${GITHUB_WORKSPACE}/games/kloenk/kloenk-client/output,dst=/target hydrogax/kloenk-client cp -fa /app/output/. /target
 
       - name: Copy client to server using remote ssh commands
         uses: appleboy/scp-action@v1
