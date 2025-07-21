@@ -3,7 +3,7 @@ run-name: Deploying infra
 on:
   push:
     branches: [ "main" ]
-    paths: [ '../../hatsu-infra/**', '.github/workflows/deploy-infra.yaml' ]
+    paths: [ 'hatsu-infra/**', '.github/workflows/deploy-infra.yaml' ]
 jobs:
   build:
     runs-on: ubuntu-latest

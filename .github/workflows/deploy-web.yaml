@@ -3,7 +3,7 @@ run-name: Deploying web
 on:
   push:
     branches: [ "main" ]
-    paths: [ '../../kloenk/kloenk-web/**', '.github/workflows/deploy-web.yaml' ]
+    paths: [ 'games/kloenk/kloenk-web/**', '.github/workflows/deploy-web.yaml' ]
 jobs:
   deploy:
     runs-on: ubuntu-latest
