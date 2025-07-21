@@ -4,15 +4,11 @@ version = "0.1.0"
 authors = ["Jelmer Alphenaar <https://hatsu.tech>"]
 edition = "2024"
 repository = "https://github.com/Jelmerta/Kloenk/"
-description = "Pong implemented with custom Hydro game engine"
+description = "Pong implemented with custom Hydrox game engine"
 license = "GPL-3.0-or-later"
 
 [dependencies]
-hydro-graphics = { path = "../../../hatsu-infra" }
-hydro-audio = 0.1.0
-hydro-input = 0.1.0
-hydro-ui = 0.1.0
-hydro-ecs = 0.1.0
+hydrox = { git = "https://github.com/Jelmerta/Hydrox.git" }
 
 [[bin]]
 name = "pong"

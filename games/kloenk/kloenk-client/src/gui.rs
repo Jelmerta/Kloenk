@@ -84,7 +84,7 @@ impl Gui {
             let image_command = RenderCommand::Mesh {
                 layer,
                 ui_element: rect,
-                mesh_id: color.to_string(), // TODO hardcoded
+                mesh_id: color.to_string(), // TODO hardcode
             };
             self.render_commands.push(image_command);
             return UserAction::Hover;
