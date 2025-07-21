@@ -144,16 +144,16 @@ impl RenderContextManager {
                 bias: wgpu::DepthBiasState::default(),
             }),
             multisample: wgpu::MultisampleState {
-                count: 4,
+                count: 1,
                 mask: !0,
-                alpha_to_coverage_enabled: true, // Seems to be necessary for webp to correctly show transparency? on desktop i did not need count 2, on web getting error without count 2. not fully understanding this yet. i suppose if we do not use webp we do not need this. could make specific pipeline for webp who knows
+                alpha_to_coverage_enabled: false, // Seems to be necessary for webp to correctly show transparency? on desktop i did not need count 2, on web getting error without count 2. not fully understanding this yet. i suppose if we do not use webp we do not need this. could make specific pipeline for webp who knows
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
                 entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format.add_srgb_suffix(), // required for web srgb otherwise shows bland colours could add this only if wasm32
-                    blend: Some(wgpu::BlendState::REPLACE),
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
                 compilation_options: PipelineCompilationOptions::default(),
