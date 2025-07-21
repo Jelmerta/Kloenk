@@ -5,9 +5,11 @@ use winit::{event::{KeyEvent, WindowEvent}, keyboard::PhysicalKey};
 use winit::platform::web::{CustomCursorExtWebSys, WindowExtWebSys};
 
 use crate::state::input::Input;
+use hydrox::AudioSystem;
 use std::sync::Arc;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::spawn_local;
 use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{CustomCursor, Window, WindowId};
@@ -17,8 +19,6 @@ use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::UIState;
 use crate::systems::game_system::GameSystem;
-use hydro_audio::AudioSystem;
-use wasm_bindgen_futures::spawn_local;
 use winit::keyboard::KeyCode;
 
 pub struct Engine {
