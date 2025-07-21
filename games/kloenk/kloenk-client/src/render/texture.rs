@@ -1,5 +1,5 @@
 use anyhow::{Ok, Result};
-use image::GenericImageView;
+use image::{DynamicImage, GenericImageView, ImageResult};
 
 pub struct Texture {
     pub view: wgpu::TextureView,
@@ -12,20 +12,27 @@ pub struct Depth {
 }
 
 impl Texture {
-    pub fn from_bytes(
+    pub async fn from_bytes(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         bytes: &[u8],
         label: &str,
     ) -> Result<Self> {
-        let diffuse_image = image::load_from_memory(bytes)?;
+        // Decoding takes a bit of time. We do not want to block on this task.
+        let diffuse_image = Self::decode_image(bytes).await?;
         Self::from_image(device, queue, &diffuse_image, Some(label))
+    }
+
+    fn decode_image(image_bytes: &[u8]) -> impl Future<Output=ImageResult<DynamicImage>> {
+        async move {
+            image::load_from_memory(image_bytes)
+        }
     }
 
     pub fn from_image(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        diffuse_image: &image::DynamicImage,
+        diffuse_image: &DynamicImage,
         label: Option<&str>,
     ) -> Result<Self> {
         let diffuse_rgba = diffuse_image.to_rgba8();
