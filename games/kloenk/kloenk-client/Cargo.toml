@@ -86,4 +86,5 @@ debug = true
 opt-level = "z"
 strip = true
 codegen-units = 1
-debug = "none"
+#debug = "none"
+debug = true
