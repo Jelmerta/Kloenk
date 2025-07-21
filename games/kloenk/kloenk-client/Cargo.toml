@@ -14,7 +14,6 @@ cfg-if = "1.0"
 winit = { version = "0.30", default-features = false, features = ["rwh_06", "x11"] }
 env_logger = { version = "0.11", default-features = false } # Only used for dev debug logging atm
 log = "0.4"
-pollster = "0.4"# TODO needed in wasm?
 bytemuck = "1.23"
 cgmath = "0.18"
 anyhow = { version = "1.0", default-features = false }
@@ -40,6 +39,7 @@ fs_extra = "1.3"
 fs_extra = "1.3"
 #wgpu = { version = "26.0", default-features = false, features = ["vulkan"] }
 wgpu = { version = "25.0", default-features = false, features = ["vulkan"] }
+pollster = "0.4"# TODO needed in wasm?
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1"
@@ -75,9 +75,12 @@ incremental = true
 opt-level = "z"
 panic = "abort"
 lto = true
-strip = true
+strip = false
 codegen-units = 1
-debug = "none"
+debug = true
+#lto = false
+#strip = true
+#debug = "none"
 
 [profile.release.package."*"]
 opt-level = "z"
