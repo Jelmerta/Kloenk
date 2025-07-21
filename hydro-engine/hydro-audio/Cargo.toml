@@ -1,0 +1,52 @@
+[package]
+name = "hydro-audio"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# Rodio needs to be before wgpu at the moment. Otherwise, loads incorrect windows version for wgpu due to dumb resolution behavior
+# Wonder if we could just use cpal directly, as we use a custom wasm implementation anyway...
+#rodio = { version = "0.21", default-features = false, features = ["wav", "playback"] }
+# would like to use opus, but no good rust-native library yet. decoding with bindings is also not so trivial
+#rodio = { version = "0.21", default-features = false, features = ["hound", "playback"] } # less dependencies , wav->symphony uses old version of bitflags as well. symphonia is supposed to be faster?
+#rodio = { version = "0.21", default-features = false, features = ["playback"] }
+hydro-utils = { path = "../hydro-utils" }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rodio = { version = "0.21", default-features = false, features = ["lewton", "playback"] } # less dependencies , wav->symphony uses old version of bitflags as well. symphonia is supposed to be faster?
+pollster = "0.4"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = { version = "0.2", default-features = false }
+wasm-bindgen-futures = "0.4"
+rodio = { version = "0.21", default-features = false, features = ["lewton", "playback", "wasm-bindgen"] } # less dependencies , wav->symphony uses old version of bitflags as well. symphonia is supposed to be faster?
+#web-sys = { version = "0.3", features = [
+#    "AudioContext",
+#    "AudioNode",
+#    "AudioDestinationNode",
+#    "AudioBuffer",
+#    "AudioBufferSourceNode",
+#] }
+
+[profile.dev]
+opt-level = 0
+lto = false
+codegen-units = 256
+debug = 1
+strip = "none"
+incremental = true
+#codegen-backend = "cranelift"
+
+[profile.release]
+opt-level = "z"
+panic = "abort"
+lto = true
+strip = true
+codegen-units = 1
+debug = "none"
+
+[profile.release.package."*"]
+opt-level = "z"
+strip = true
+codegen-units = 1
+debug = "none"
