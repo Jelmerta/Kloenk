@@ -144,7 +144,7 @@ impl ApplicationHandler<CustomEvent> for Application {
             .with_title("Kloenk!")
             .with_inner_size(LogicalSize::new(initial_width, initial_height))
             .with_active(true)
-            .with_cursor(event_loop.create_custom_cursor(CustomCursor::from_url(String::from("cursor.png"), 3, 3)));
+            .with_cursor(event_loop.create_custom_cursor(CustomCursor::from_url(String::from("cursor.webp"), 3, 3)));
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
