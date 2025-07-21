@@ -44,7 +44,7 @@ jobs:
           host: ${{ secrets.ARTIFACT_HOST }}
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          script: docker run --rm --mount type=bind,src=/home/deploy/kloenk-client,dst=/src,readonly --mount type=volume,src=kloenk-static,dst=/target alpine cp -fa /src/output/. /target/client
+          script: docker run --rm --mount type=bind,src=/home/deploy/games/kloenk/kloenk-client,dst=/src,readonly --mount type=volume,src=kloenk-static,dst=/target alpine cp -fa /src/output/. /target/client
 
       - name: Copy assets to shared volume
         uses: appleboy/ssh-action@v1.0.3
@@ -52,4 +52,4 @@ jobs:
           host: ${{ secrets.ARTIFACT_HOST }}
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          script: docker run --rm --mount type=bind,src=/home/deploy/kloenk-client,dst=/src,readonly --mount type=volume,src=kloenk-static,dst=/target alpine cp -far /src/assets/ /target/
+          script: docker run --rm --mount type=bind,src=/home/deploy/games/kloenk/kloenk-client,dst=/src,readonly --mount type=volume,src=kloenk-static,dst=/target alpine cp -far /src/assets/ /target/
