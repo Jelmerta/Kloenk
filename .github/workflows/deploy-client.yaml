@@ -35,7 +35,7 @@ jobs:
           host: ${{ secrets.ARTIFACT_HOST }}
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
-          source: "kloenk-client/output/*, kloenk-client/assets/"
+          source: "games/kloenk/kloenk-client/output/*, games/kloenk/kloenk-client/assets/"
           target: "."
 
       - name: Copy client to shared volume
