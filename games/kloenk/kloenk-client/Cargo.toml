@@ -24,6 +24,7 @@ glyphon = "0.9"
 image = { version = "0.25", default-features = false, features = ["webp"] }
 gltf = { version = "1.4", default-features = false, features = ["utils"] }
 woff2-patched = "0.4"# idk if woff2 is worth pulling in all these dependencies...
+
 #woff = "0.6"
 
 #brotli = "8.0"
