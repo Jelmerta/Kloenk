@@ -67,17 +67,19 @@ cargo run --target x86_64-pc-windows-msvc
 Local development(windows+web):
 Once:
 Run nginx
-cp -Force .\resources\web\nginx.conf C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\conf
-cp -Force .\resources\web\common_headers.conf C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\conf
-cp -r -Force .\resources\ C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html\
-cp .\index.html C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html
+In top level:
+cp -Force .\hatsu-infra\nginx\nginx.conf C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\conf
+cp -Force .\hatsu-infra\nginx\common_headers.conf C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\conf
+cp -r -Force .\games\kloenk\kloenk-client\assets\ C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html\assets\
+cp .\games\kloenk\kloenk-web\html\index.html C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html
 
 Every change:
-cargo build --target wasm32-unknown-unknown --target-dir target --frozen --bin kloenk_bin
-wasm-bindgen target/wasm32-unknown-unknown/debug/kloenk_bin.wasm --target web --out-dir bg_output --out-name kloenk
+In client:
+cargo build --target wasm32-unknown-unknown --target-dir target --frozen --bin kloenk
+wasm-bindgen target/wasm32-unknown-unknown/debug/kloenk.wasm --target web --out-dir bg_output --out-name kloenk
 mv -Force .\bg_output\kloenk_bg.wasm .\bg_output\kloenk.wasm
-cp ./bg_output/kloenk.wasm C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html\
-cp ./bg_output/kloenk.js C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html\
+mv ./bg_output/kloenk.wasm C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html\
+mv ./bg_output/kloenk.js C:\Users\Jelmer\Downloads\nginx-1.27.2\nginx-1.27.2\html\
 
 Local development(linux+web):
 sudo systemctl start nginx

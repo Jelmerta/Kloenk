@@ -3,7 +3,7 @@ run-name: Deploying client
 on:
   push:
     branches: [ "main" ]
-    paths: [ 'kloenk-client/**', '.github/workflows/deploy-client.yaml' ]
+    paths: [ '../../kloenk/kloenk-client/**', '.github/workflows/deploy-client.yaml' ]
 jobs:
   build:
     runs-on: ubuntu-latest

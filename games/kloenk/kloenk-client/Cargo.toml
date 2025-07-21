@@ -1,0 +1,86 @@
+#cargo-features = ["codegen-backend"]
+
+[package]
+name = "kloenk"
+version = "0.1.0"
+authors = ["Jelmer Alphenaar <https://hatsu.tech>"]
+edition = "2024"
+repository = "https://github.com/Jelmerta/Kloenk/"
+description = "Custom Rust engine targeting WASM with WebGpu (with the dream of creating a multiplayer online game)"
+license = "GPL-3.0-or-later"
+
+[dependencies]
+cfg-if = "1.0"
+winit = { version = "0.30", default-features = false, features = ["rwh_06", "x11"] }
+env_logger = { version = "0.11", default-features = false } # Only used for dev debug logging atm
+log = "0.4"
+pollster = "0.4"# TODO needed in wasm?
+bytemuck = "1.23"
+cgmath = "0.18"
+anyhow = { version = "1.0", default-features = false }
+itertools = { version = "0.14", default-features = false, features = ["use_alloc"] }
+#glyphon = "0.10"
+glyphon = "0.9"
+image = { version = "0.25", default-features = false, features = ["webp"] }
+gltf = { version = "1.4", default-features = false, features = ["utils"] }
+woff2-patched = "0.4"# idk if woff2 is worth pulling in all these dependencies...
+#woff = "0.6"
+
+#brotli = "8.0"
+#allsorts way too much extra stuff
+#ttf-parser = { version = "0.25", default-features = true }
+hydro-utils = { path = "../../../hydro-engine/hydro-utils" }
+hydro-audio = { path = "../../../hydro-engine/hydro-audio" }
+
+[build-dependencies]
+anyhow = "1.0"
+fs_extra = "1.3"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+fs_extra = "1.3"
+#wgpu = { version = "26.0", default-features = false, features = ["vulkan"] }
+wgpu = { version = "25.0", default-features = false, features = ["vulkan"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+console_error_panic_hook = "0.1"
+console_log = "1.0"
+wgpu = { version = "25.0", default-features = false, features = ["webgpu"] }
+#wgpu = { version = "26.0", default-features = false, features = ["webgpu"] }
+wasm-bindgen = { version = "0.2", default-features = false }
+wasm-bindgen-futures = "0.4"
+web-sys = { version = "0.3", features = [# todo check which are not needed
+    "Document",
+    "Window",
+    "VisualViewport",
+    "Element",
+    "Location",
+    "HtmlCanvasElement",
+] }
+reqwest = { version = "0.12", default-features = false }
+
+[[bin]]
+name = "kloenk"
+path = "src/main.rs"
+
+[profile.dev]
+opt-level = 0
+lto = false
+codegen-units = 256
+debug = 1
+strip = "none"
+incremental = true
+#codegen-backend = "cranelift"
+
+[profile.release]
+opt-level = "z"
+panic = "abort"
+lto = true
+strip = true
+codegen-units = 1
+debug = "none"
+
+[profile.release.package."*"]
+opt-level = "z"
+strip = true
+codegen-units = 1
+debug = "none"

@@ -3,7 +3,7 @@ run-name: Deploying server
 on:
   push:
     branches: [ "main" ]
-    paths: [ 'kloenk-server/**', '.github/workflows/deploy-server.yaml' ]
+    paths: [ '../../kloenk/kloenk-server/**', '.github/workflows/deploy-server.yaml' ]
 
 jobs:
   build:

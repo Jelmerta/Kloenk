@@ -3,7 +3,7 @@ run-name: Deploying infra
 on:
   push:
     branches: [ "main" ]
-    paths: [ 'kloenk-infra/**', '.github/workflows/deploy-infra.yaml' ]
+    paths: [ '../../hatsu-infra/**', '.github/workflows/deploy-infra.yaml' ]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,9 +23,9 @@ jobs:
       - name: Build and push Docker images
         uses: docker/build-push-action@v6
         with:
-          context: ./kloenk-infra
+          context: ./hatsu-infra
           push: 'true'
-          tags: hydrogax/kloenk-infra:latest
+          tags: hydrogax/hatsu-infra:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -43,4 +43,4 @@ jobs:
           username: ${{ secrets.ARTIFACT_USERNAME }}
           key: ${{ secrets.ARTIFACT_SSH_KEY }}
           script:
-            docker pull hydrogax/kloenk-infra && (docker rm -f kloenk-infra || true) && docker run -d --mount type=volume,src=kloenk-static,dst=/usr/share/nginx/html,readonly --mount type=bind,src=/etc/ssl-kloenk,dst=/etc/ssl,readonly --mount type=bind,src=/var/www/certbot-acme,dst=/var/www/certbot-acme -p 80:80 -p 443:443 --name kloenk-infra hydrogax/kloenk-infra
+            docker pull hydrogax/hatsu-infra && (docker rm -f hatsu-infra || true) && docker run -d --mount type=volume,src=kloenk-static,dst=/usr/share/nginx/html,readonly --mount type=bind,src=/etc/ssl-kloenk,dst=/etc/ssl,readonly --mount type=bind,src=/var/www/certbot-acme,dst=/var/www/certbot-acme -p 80:80 -p 443:443 --name hatsu-infra hydrogax/hatsu-infra

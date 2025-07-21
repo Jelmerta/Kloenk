@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta content="Browser games! Soon(tm) to be multiplayer. Currently a custom Rust engine targeting WASM with WebGpu (with the dream of creating a multiplayer online game)"
+          name="description">
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Kloenk</title>
+    <link as="fetch" crossorigin="anonymous" href="/client/kloenk.wasm" rel="preload" type="application/wasm">
+    <link href="/client/kloenk.js" rel="modulepreload">
+
+    <link href="assets/favicon.ico" rel="icon" type="image/x-icon">
+
+    <link href="assets/cursor.webp" rel="prefetch" type="image/webp">
+
+    <link href="assets/close_button.webp" rel="prefetch" type="image/webp">
+    <link href="assets/close_button_hover.webp" rel="prefetch" type="image/webp">
+
+    <link href="assets/bonk.ogg" rel="prefetch" type="audio/ogg">
+
+    <link href="assets/gozer.bin" rel="prefetch" type="application/octet-stream">
+
+    <link href="assets/gozer.gltf" rel="prefetch" type="model/gltf+json">
+
+    <link href="assets/grass.webp" rel="prefetch" type="image/webp">
+    <link href="assets/shield.webp" rel="prefetch" type="image/webp">
+    <link href="assets/sword.webp" rel="prefetch" type="image/webp">
+    <link href="assets/tree.webp" rel="prefetch" type="image/webp">
+
+    <link href="assets/PlaywriteNL-Regular.woff2" rel="prefetch" type="font/woff2">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        /* This makes it so there are no rounded corners on selection. border-radius does not seem to work... */
+        canvas:focus {
+            outline: none;
+        }
+    </style>
+</head>
+
+<body id="kloenk-wasm">
+<script crossorigin="anonymous" type="module">
+    import init, * as bindings from '/client/kloenk.js';
+
+    const wasm = await init({module_or_path: '/client/kloenk.wasm'});
+    window.wasmBindings = bindings;
+</script>
+<script type="module">
+    export function prevent_default_context_menu() {
+        window.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+    }
+
+    prevent_default_context_menu();
+</script>
+</body>
+</html>
