@@ -38,7 +38,8 @@ COPY . .
 RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-threshold=10 -Cllvm-args=-inlinehint-threshold=10' \
     cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk.wasm --target web --out-dir bg_output --out-name kloenk \
-&& wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz --enable-bulk-memory --enable-nontrapping-float-to-int --dce --strip-debug --strip-producers --inlining --coalesce-locals --simplify-locals \
+#&& wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz --enable-bulk-memory --enable-nontrapping-float-to-int --dce --strip-debug --strip-producers --inlining --coalesce-locals --simplify-locals \ TODO tmp disabled for profiling
+&& wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz --enable-bulk-memory --enable-nontrapping-float-to-int --dce --strip-producers --inlining --coalesce-locals --simplify-locals \
 && mkdir output \
 && cp ./bg_output/kloenk.js output/kloenk.js \
 && cp ./bg_output/kloenk.wasm output/kloenk.wasm
