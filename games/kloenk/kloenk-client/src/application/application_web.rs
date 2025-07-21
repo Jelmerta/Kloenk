@@ -190,6 +190,7 @@ impl ApplicationHandler<CustomEvent> for Application {
             CustomEvent::StateInitializationEvent(mut engine) => {
                 log::info!("Received initialization event");
                 engine.renderer.resize(engine.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
+                engine.window.request_redraw();
                 self.application_state = State::Initialized(engine);
             }
             CustomEvent::WebResizedEvent => {
