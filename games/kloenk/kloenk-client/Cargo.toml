@@ -86,5 +86,5 @@ debug = true
 opt-level = "z"
 strip = true
 codegen-units = 1
-#debug = "none"
+#debug = "none" TODO tmp disabled to show debug profiling
 debug = true
