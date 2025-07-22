@@ -18,7 +18,8 @@ impl Texture {
         bytes: &[u8],
         label: &str,
     ) -> Result<Self> {
-        // Decoding takes a bit of time. We do not want to block on this task.
+        // Decoding takes a bit of time. We do not want to block on this task. TODO does not actually seem to help anything...? Probably because there's not really any other tasks left to do, image loading tasks take the longest amount of time. Could have placeholder until it is decoded
+        // let result = web_sys::window().unwrap().create_image_bitmap_with_blob(bytes);
         let diffuse_image = Self::decode_image(bytes).await?;
         Self::from_image(device, queue, &diffuse_image, Some(label))
     }
