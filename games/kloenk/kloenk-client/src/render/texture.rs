@@ -1,5 +1,8 @@
+use crate::application::AssetType::Image;
+use crate::application::{Asset, AssetType};
 use anyhow::{Ok, Result};
 use image::{DynamicImage, GenericImageView, ImageResult};
+// use image::{DynamicImage, GenericImageView, ImageResult};
 
 pub struct Texture {
     pub view: wgpu::TextureView,
@@ -15,17 +18,25 @@ impl Texture {
     pub async fn from_bytes(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        bytes: &[u8],
-        label: &str,
+        // image_bytes: &[u8],
+        image: Asset,
+        // label: &str,
     ) -> Result<Self> {
         // Decoding takes a bit of time. We do not want to block on this task. TODO does not actually seem to help anything...? Probably because there's not really any other tasks left to do, image loading tasks take the longest amount of time. Could have placeholder until it is decoded
         // let result = web_sys::window().unwrap().create_image_bitmap_with_blob(bytes);
-        let diffuse_image = Self::decode_image(bytes).await?;
-        Self::from_image(device, queue, &diffuse_image, Some(label))
+        // let diffuse_image = Self::decode_image(bytes).await?;
+        Self::from_image(device, queue, image)
+        // Self::from_image(device, queue, &image, Some(label))
     }
 
     fn decode_image(image_bytes: &[u8]) -> impl Future<Output=ImageResult<DynamicImage>> {
         async move {
+            // let mut decoder = image_webp::WebPDecoder::new(Cursor::new(image_bytes)).unwrap();
+            // let bytes_per_pixel = if decoder.has_alpha() { 4 } else { 3 };
+            // let (width, height) = decoder.dimensions();
+            // let mut data = vec![0; width as usize * height as usize * bytes_per_pixel];
+            // decoder.read_image(&mut data).unwrap();
+            // decoder.
             image::load_from_memory(image_bytes)
         }
     }
@@ -33,12 +44,19 @@ impl Texture {
     pub fn from_image(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        diffuse_image: &DynamicImage,
-        label: Option<&str>,
+        image: Asset,
+        // label: Option<&str>,
     ) -> Result<Self> {
-        let diffuse_rgba = diffuse_image.to_rgba8();
+        let dynamic_image;
+        match image.asset_type {
+            AssetType::Audio => { panic!("unexpected asset type"); }
+            Image(img) => { dynamic_image = img; }
+            AssetType::Model => { panic!("unexpected asset type"); }
+            AssetType::Font => { panic!("unexpected asset type"); }
+        } //= image.asset_type;
+        let diffuse_rgba = dynamic_image.to_rgba8();
 
-        let dimensions = diffuse_image.dimensions();
+        let dimensions = dynamic_image.dimensions();
 
         let texture_size = wgpu::Extent3d {
             width: dimensions.0,
@@ -52,7 +70,8 @@ impl Texture {
             dimension: wgpu::TextureDimension::D2,
             format: wgpu::TextureFormat::Rgba8UnormSrgb,
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-            label,
+            // label,
+            label: Some(&image.name),
             view_formats: &[],
         });
 

@@ -20,6 +20,7 @@ use crate::state::ui_state::UIState;
 use crate::systems::game_system::GameSystem;
 use winit::keyboard::KeyCode;
 
+use crate::application::AssetLoader;
 use hydrox::{load_binary, AudioSystem};
 
 pub struct Engine {
@@ -97,7 +98,14 @@ impl ApplicationHandler for Application {
             window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
         }
 
-        let renderer_future = Renderer::new(window.clone());
+        // let mut assets = Vec::new();
+        // pollster::block_on(async move {
+        //     assets = AssetLoader::load_critical_assets().await;
+        // });
+
+        let assets = pollster::block_on(AssetLoader::load_critical_assets());
+
+        let renderer_future = Renderer::new(window.clone(), assets);
 
         let renderer = pollster::block_on(renderer_future);
         let audio_system = pollster::block_on(AudioSystem::new());

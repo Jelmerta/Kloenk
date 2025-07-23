@@ -7,10 +7,7 @@ use wgpu::{
     SurfaceConfiguration, TextureView,
 };
 
-use wgpu::util::DeviceExt;
-use winit::dpi::PhysicalSize;
-use winit::window::Window;
-
+use crate::application::Asset;
 use crate::render::camera::Camera;
 use crate::render::camera_manager::CameraManager;
 use crate::render::instance::InstanceRaw;
@@ -25,6 +22,9 @@ use crate::state::components::{Entity, Size};
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::{RenderCommand, UIElement, UIState};
+use wgpu::util::DeviceExt;
+use winit::dpi::PhysicalSize;
+use winit::window::Window;
 
 pub struct Renderer {
     surface: wgpu::Surface<'static>,
@@ -62,7 +62,7 @@ struct RenderBatch {
 }
 
 impl Renderer {
-    pub async fn new(window: Arc<Window>) -> Renderer {
+    pub async fn new(window: Arc<Window>, assets: Vec<Asset>) -> Renderer {
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             flags: InstanceFlags::empty(), // Remove Vulkan validation layer as this leads to tons of unhelpful logging (and VK_LAYER_KHRONOS_validation does not seem to exist? not debugging this)
@@ -123,7 +123,7 @@ impl Renderer {
 
         let model_manager = ModelManager::new(&device).await;
         let camera_manager = CameraManager::new(&device);
-        let material_manager = MaterialManager::new(&device, &queue).await;
+        let material_manager = MaterialManager::new(&device, &queue, assets).await;
         let render_context_manager =
             RenderContextManager::new(&device, &config, &camera_manager, &material_manager);
 

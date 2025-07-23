@@ -14,6 +14,7 @@ use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{CustomCursor, Window, WindowId};
 
+use crate::application::asset_loader::AssetLoader;
 use crate::render::render::Renderer;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
@@ -105,6 +106,11 @@ impl ApplicationHandler<CustomEvent> for Application {
             } // Continue
         }
 
+        let mut assets = Vec::new(); // Don't know why we need to assign a value. Get error otherwise
+        spawn_local(async move {
+            assets = AssetLoader::load_critical_assets().await;
+        });
+
         // Note: This is more of a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
         // We want to have ownership of the zoom level ourselves. We therefore disregard the dpi ratio and always attempt to render the same image
@@ -161,7 +167,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 Some(())
             })
             .expect("Couldn't append canvas to document body.");
-        let renderer_future = Renderer::new(window.clone());
+        let renderer_future = Renderer::new(window.clone(), assets);
 
         let event_loop_proxy = self.event_loop_proxy.clone();
 
