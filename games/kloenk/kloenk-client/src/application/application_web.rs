@@ -1,6 +1,9 @@
 use winit::application::ApplicationHandler;
-use winit::event_loop::{EventLoop, EventLoopProxy};
-use winit::{event::{KeyEvent, WindowEvent}, keyboard::PhysicalKey};
+use winit::event_loop::{EventLoop, EventLoopBuilder, EventLoopProxy};
+use winit::{
+    event::{KeyEvent, WindowEvent},
+    keyboard::PhysicalKey,
+};
 
 use winit::platform::web::{CustomCursorExtWebSys, WindowExtWebSys};
 
@@ -15,6 +18,7 @@ use winit::event_loop::ActiveEventLoop;
 use winit::window::{CustomCursor, Window, WindowId};
 
 use crate::application::asset_loader::AssetLoader;
+use crate::application::{Asset, AssetType};
 use crate::render::render::Renderer;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
@@ -51,6 +55,7 @@ pub enum CustomEvent {
     StateInitializationEvent(Engine),
     WebResizedEvent, // Only sent on web when window gets resized. Resized event only seems to send event on dpi change (browser zoom or system scale ratio) which is insufficient
     AudioStateChanged(AudioState),
+    AssetLoaded(Asset),
 }
 pub struct Application {
     application_state: State,
@@ -106,9 +111,20 @@ impl ApplicationHandler<CustomEvent> for Application {
             } // Continue
         }
 
-        let mut assets = Vec::new(); // Don't know why we need to assign a value. Get error otherwise
+        // let mut assets = Vec::new(); // Don't know why we need to assign a value. Get error otherwise
+        // assets = spawn_local(async move {
+        // });
+
+        // Wondering if this is effectively blocking since files should be immediately available?
+        let event_loop_proxy = self.event_loop_proxy.clone();
         spawn_local(async move {
-            assets = AssetLoader::load_critical_assets().await;
+            for asset_to_load in AssetLoader::STARTUP_GPU_ASSETS {
+                let asset = AssetLoader::load_image_asset(asset_to_load).await;
+                event_loop_proxy.send_event(CustomEvent::AssetLoaded(asset))
+                    .unwrap_or_else(|_| {
+                        panic!("Failed to send initialization event");
+                    });
+            }
         });
 
         // Note: This is more of a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
@@ -150,7 +166,11 @@ impl ApplicationHandler<CustomEvent> for Application {
             .with_title("Kloenk!")
             .with_inner_size(LogicalSize::new(initial_width, initial_height))
             .with_active(true)
-            .with_cursor(event_loop.create_custom_cursor(CustomCursor::from_url(String::from("assets/cursor.webp"), 3, 3)));
+            .with_cursor(event_loop.create_custom_cursor(CustomCursor::from_url(
+                String::from("assets/cursor.webp"), // TODO verify with squoosh/avif but this is something we want high quality dont worry too much about the kbs
+                3,
+                3,
+            )));
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
@@ -167,7 +187,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 Some(())
             })
             .expect("Couldn't append canvas to document body.");
-        let renderer_future = Renderer::new(window.clone(), assets);
+        let renderer_future = Renderer::new(window.clone());
 
         let event_loop_proxy = self.event_loop_proxy.clone();
 
@@ -196,8 +216,26 @@ impl ApplicationHandler<CustomEvent> for Application {
             CustomEvent::StateInitializationEvent(mut engine) => {
                 log::info!("Received initialization event");
                 engine.renderer.resize(engine.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
-                engine.window.request_redraw();
+                engine.window.request_redraw(); // TODO are these resizes here necessary?
                 self.application_state = State::Initialized(engine);
+                // TODO load critical assets as textures using custom event. async such that main thread can start rendering, even if there is no textures yet
+
+                // TODO I suppose we could just "drain" pending assets not yet loaded here. assets that are loaded later are handled by the assetloaded event
+            }
+            CustomEvent::AssetLoaded(asset) => {
+                if let State::Initialized(engine) = &mut self.application_state {
+                    match asset.asset_type {
+                        AssetType::Audio => {}
+                        AssetType::Image(image_asset) => {
+                            engine.renderer.load_material(image_asset);
+                        }
+                        AssetType::Model => {}
+                        AssetType::Font => {}
+                    }
+                } else {
+                    // Queue for later usage, after state init event renderer is ready and queue can be drained
+                }
+                // TODO what if engine is not yet loaded? just send event again lol?
             }
             CustomEvent::WebResizedEvent => {
                 let State::Initialized(ref mut engine) = self.application_state else {

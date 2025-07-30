@@ -20,11 +20,9 @@ anyhow = { version = "1.0", default-features = false }
 itertools = { version = "0.14", default-features = false, features = ["use_alloc"] }
 #glyphon = "0.10"
 glyphon = "0.9"
-image = { version = "0.25", default-features = false, features = ["webp"] }
+#image = { version = "0.25", default-features = false, features = ["webp"] }
 gltf = { version = "1.4", default-features = false, features = ["utils"] }
-woff2-patched = "0.4"# idk if woff2 is worth pulling in all these dependencies...
 
-#woff = "0.6"
 
 #brotli = "8.0"
 #allsorts way too much extra stuff
@@ -57,6 +55,14 @@ web-sys = { version = "0.3", features = [# todo check which are not needed
     "HtmlCanvasElement",
 ] }
 reqwest = { version = "0.12", default-features = false }
+# Asset dependencies
+woff2-patched = "0.4"# idk if woff2 is worth pulling in all these dependencies... TODO web should not need this right?
+ktx2 = "0.4"
+basis-universal = "0.3" # Bindings, unsafe. No good production-ready Rust alternatives? https://github.com/UberLambda/libktx-rs, https://github.com/JakubValtar/basisu_rs
+zstd = "0.13" # Lovely, more unsafe bindings, zstd-safe? alternatives? TODO Web prob does not need this?
+#ktx2-rw = "0.1" # this sure dropped out of nowhere, let's try it i guess
+#ktx2-rw = { git = "https://github.com/AllenDang/ktx2-rw.git" } -> small erors u32/i32 i guess
+#woff = "0.6"
 
 [[bin]]
 name = "kloenk"

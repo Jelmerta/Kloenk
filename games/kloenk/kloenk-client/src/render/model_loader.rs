@@ -1,4 +1,4 @@
-use crate::application::Asset;
+use crate::application::ImageAsset;
 use crate::render::model::{ColoredVertex, Mesh, Model, TexVertex, VertexType};
 use crate::render::texture;
 use cgmath::Vector3;
@@ -281,13 +281,13 @@ fn build_colored_meshes(
     meshes
 }
 
-pub async fn load_texture(
+pub fn load_texture(
     // file_name: &str,
     device: &Device,
     queue: &wgpu::Queue,
-    image: Asset,
+    image: ImageAsset,
 ) -> anyhow::Result<texture::Texture> {
     // let data = load_binary(file_name).await?;
-    texture::Texture::from_bytes(device, queue, image).await
+    texture::Texture::from_bytes(device, queue, image)
 }
 

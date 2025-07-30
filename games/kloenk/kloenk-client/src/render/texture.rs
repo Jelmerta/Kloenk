@@ -1,8 +1,5 @@
-use crate::application::AssetType::Image;
-use crate::application::{Asset, AssetType};
+use crate::application::ImageAsset;
 use anyhow::{Ok, Result};
-use image::{DynamicImage, GenericImageView, ImageResult};
-// use image::{DynamicImage, GenericImageView, ImageResult};
 
 pub struct Texture {
     pub view: wgpu::TextureView,
@@ -15,11 +12,11 @@ pub struct Depth {
 }
 
 impl Texture {
-    pub async fn from_bytes(
+    pub fn from_bytes(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         // image_bytes: &[u8],
-        image: Asset,
+        image: ImageAsset,
         // label: &str,
     ) -> Result<Self> {
         // Decoding takes a bit of time. We do not want to block on this task. TODO does not actually seem to help anything...? Probably because there's not really any other tasks left to do, image loading tasks take the longest amount of time. Could have placeholder until it is decoded
@@ -29,38 +26,42 @@ impl Texture {
         // Self::from_image(device, queue, &image, Some(label))
     }
 
-    fn decode_image(image_bytes: &[u8]) -> impl Future<Output=ImageResult<DynamicImage>> {
-        async move {
-            // let mut decoder = image_webp::WebPDecoder::new(Cursor::new(image_bytes)).unwrap();
-            // let bytes_per_pixel = if decoder.has_alpha() { 4 } else { 3 };
-            // let (width, height) = decoder.dimensions();
-            // let mut data = vec![0; width as usize * height as usize * bytes_per_pixel];
-            // decoder.read_image(&mut data).unwrap();
-            // decoder.
-            image::load_from_memory(image_bytes)
+    // fn decode_image(image_bytes: &[u8]) -> impl Future<Output=ImageResult<DynamicImage>> {
+    //     async move {
+    //         // let mut decoder = image_webp::WebPDecoder::new(Cursor::new(image_bytes)).unwrap();
+    //         // let bytes_per_pixel = if decoder.has_alpha() { 4 } else { 3 };
+    //         // let (width, height) = decoder.dimensions();
+    //         // let mut data = vec![0; width as usize * height as usize * bytes_per_pixel];
+    //         // decoder.read_image(&mut data).unwrap();
+    //         // decoder.
+    //         image::load_from_memory(image_bytes)
+    //     }
+    // }
+
+    fn transcode_rgb_to_rgba(data: Vec<u8>) -> Vec<u8> {
+        let num_pixels = data.len() / 3;
+        let mut output = Vec::with_capacity(num_pixels * 4); // TODO or pixels * 4? hm could this be done better? pre-calculate?
+
+        for chunk in data.chunks_exact(3) {
+            output.extend_from_slice(chunk);
+            output.push(255);
         }
+        output
     }
 
     pub fn from_image(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        image: Asset,
-        // label: Option<&str>,
+        image: ImageAsset,
     ) -> Result<Self> {
-        let dynamic_image;
-        match image.asset_type {
-            AssetType::Audio => { panic!("unexpected asset type"); }
-            Image(img) => { dynamic_image = img; }
-            AssetType::Model => { panic!("unexpected asset type"); }
-            AssetType::Font => { panic!("unexpected asset type"); }
-        } //= image.asset_type;
-        let diffuse_rgba = dynamic_image.to_rgba8();
-
-        let dimensions = dynamic_image.dimensions();
+        let mut diffuse_rgba = image.data;
+        if !image.has_alpha {
+            diffuse_rgba = Self::transcode_rgb_to_rgba(diffuse_rgba);
+        }
 
         let texture_size = wgpu::Extent3d {
-            width: dimensions.0,
-            height: dimensions.1,
+            width: image.dimensions.pixel_width,
+            height: image.dimensions.pixel_height,
             depth_or_array_layers: 1,
         };
         let texture = device.create_texture(&wgpu::TextureDescriptor {
@@ -85,8 +86,8 @@ impl Texture {
             &diffuse_rgba,
             wgpu::TexelCopyBufferLayout {
                 offset: 0,
-                bytes_per_row: Some(4 * dimensions.0),
-                rows_per_image: Some(dimensions.1),
+                bytes_per_row: Some(4 * image.dimensions.pixel_width),
+                rows_per_image: Some(image.dimensions.pixel_height),
             },
             texture_size,
         );

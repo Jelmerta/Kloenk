@@ -1,4 +1,4 @@
-use crate::application::Asset;
+use crate::application::ImageAsset;
 use crate::render::model_loader::load_texture;
 use crate::render::texture;
 use std::collections::HashMap;
@@ -15,13 +15,13 @@ MaterialManager {
 }
 
 impl MaterialManager {
-    pub async fn new(device: &Device, queue: &Queue, assets: Vec<Asset>) -> MaterialManager {
-        let mut material_manager = MaterialManager {
+    pub async fn new(device: &Device, queue: &Queue) -> MaterialManager {
+        MaterialManager {
             bind_group_layout: Self::setup_texture_layout(device),
             materials: HashMap::new(),
-        };
-        material_manager.load_materials(device, queue, assets).await;
-        material_manager
+        }
+        // material_manager.load_materials(device, queue, assets).await;
+        // material_manager
     }
 
     pub fn get_material(&self, material_name: &str) -> &Material {
@@ -36,66 +36,68 @@ impl MaterialManager {
             .texture_bind_group
     }
 
-    async fn load_materials(&mut self, device: &Device, queue: &Queue, assets: Vec<Asset>) {
-        let materials = &mut self.materials;
-        let layout = &self.bind_group_layout;
-        for asset in assets {
-            // let Image(image) = asset.asset_type;
-            let asset_name = asset.name.clone();
-            let material = Self::load_material(device, queue, layout, asset).await.unwrap();
+    // async fn load_materials(&mut self, device: &Device, queue: &Queue, assets: Vec<Asset>) {
+    //     let materials = &mut self.materials;
+    //     let layout = &self.bind_group_layout;
+    //     for asset in assets {
+    //         // let Image(image) = asset.asset_type;
+    //         let asset_name = asset.name.clone();
+    //         let material = Self::load_material(device, queue, layout, asset).await.unwrap();
+    //
+    //         materials.insert(
+    //             asset_name,
+    //             material,
+    //         );
+    //     }
+    //
+    //     //
+    //     // materials.insert(
+    //     //     "shield".to_string(),
+    //     //     Self::load_material(device, queue, layout, "shield.webp")
+    //     //         .await
+    //     //         .unwrap(),
+    //     // );
+    //     // materials.insert(
+    //     //     "grass".to_string(),
+    //     //     Self::load_material(device, queue, layout, "grass.webp")
+    //     //         .await
+    //     //         .unwrap(),
+    //     // );
+    //     // materials.insert(
+    //     //     "tree".to_string(),
+    //     //     Self::load_material(device, queue, layout, "tree.webp")
+    //     //         .await
+    //     //         .unwrap(),
+    //     // );
+    //     //
+    //     // materials.insert(
+    //     //     "close_button".to_string(),
+    //     //     Self::load_material(device, queue, layout, "close_button.webp")
+    //     //         .await
+    //     //         .unwrap(),
+    //     // );
+    //     //
+    //     // materials.insert(
+    //     //     "close_button_hover".to_string(),
+    //     //     Self::load_material(device, queue, layout, "close_button_hover.webp")
+    //     //         .await
+    //     //         .unwrap(),
+    //     // );
+    // }
 
-            materials.insert(
-                asset_name,
-                material,
-            );
-        }
-
-        //
-        // materials.insert(
-        //     "shield".to_string(),
-        //     Self::load_material(device, queue, layout, "shield.webp")
-        //         .await
-        //         .unwrap(),
-        // );
-        // materials.insert(
-        //     "grass".to_string(),
-        //     Self::load_material(device, queue, layout, "grass.webp")
-        //         .await
-        //         .unwrap(),
-        // );
-        // materials.insert(
-        //     "tree".to_string(),
-        //     Self::load_material(device, queue, layout, "tree.webp")
-        //         .await
-        //         .unwrap(),
-        // );
-        //
-        // materials.insert(
-        //     "close_button".to_string(),
-        //     Self::load_material(device, queue, layout, "close_button.webp")
-        //         .await
-        //         .unwrap(),
-        // );
-        //
-        // materials.insert(
-        //     "close_button_hover".to_string(),
-        //     Self::load_material(device, queue, layout, "close_button_hover.webp")
-        //         .await
-        //         .unwrap(),
-        // );
-    }
-
-    async fn load_material(
+    pub fn load_material(
+        &mut self,
         device: &Device,
         queue: &Queue,
-        layout: &BindGroupLayout,
-        image: Asset,
-    ) -> anyhow::Result<Material> {
-        let diffuse_texture = load_texture(device, queue, image).await?;
-        let bind_group = Self::build_texture_bind_group(device, layout, &diffuse_texture);
-        Ok(Material {
+        image: ImageAsset,
+    ) {
+        let name = image.name.clone();
+        let diffuse_texture = load_texture(device, queue, image).unwrap();
+        let bind_group = Self::build_texture_bind_group(device, &self.bind_group_layout, &diffuse_texture);
+        let material = Material {
             texture_bind_group: bind_group,
-        })
+        };
+        self.materials.insert(name, material);
     }
 
     fn build_texture_bind_group(

@@ -10,7 +10,7 @@ use crate::state::input::Input;
 use std::sync::Arc;
 use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
-use winit::window::{Cursor, Fullscreen, Icon, Window, WindowId};
+use winit::window::{Cursor, CustomCursor, Fullscreen, Icon, Window, WindowId};
 
 use crate::application::cursor_manager::CursorManager;
 use crate::render::render::Renderer;
@@ -20,7 +20,7 @@ use crate::state::ui_state::UIState;
 use crate::systems::game_system::GameSystem;
 use winit::keyboard::KeyCode;
 
-use crate::application::AssetLoader;
+use crate::application::{AssetLoader, AssetType};
 use hydrox::{load_binary, AudioSystem};
 
 pub struct Engine {
@@ -72,16 +72,19 @@ impl ApplicationHandler for Application {
         let mut initial_height = 1.0;
 
         let window_attributes;
-        let cursor_binary = pollster::block_on(load_binary("cursor.webp")).unwrap();
+        // TODO can we not just use webp as this is loaded js_sys/web_sys?
+        let cursor_binary = pollster::block_on(AssetLoader::load_image_asset("cursor.ktx2")).data;
+        // let cursor_binary = pollster::block_on(AssetLoader::load_image_asset("tree.ktx2")).data; // todo tmp
         let cursor_source = CursorManager::load_cursor(cursor_binary.clone());
         let custom_cursor = event_loop.create_custom_cursor(cursor_source);
 
-        let window_icon_binary = pollster::block_on(load_binary("kunst.webp")).unwrap();
-        let window_icon_rgba = image::load_from_memory(&window_icon_binary)
-            .unwrap()
-            .to_rgba8()
-            .into_raw();
-        let window_icon = Some(Icon::from_rgba(window_icon_rgba, 64, 64).unwrap());
+        // TODO probably load rgba8 version of window icon directly in memory
+        let window_icon_binary = pollster::block_on(AssetLoader::load_image_asset("favicon.ktx2")).data;
+        // let window_icon_rgba = image::load_from_memory(&window_icon_binary)
+        //     .unwrap()
+        //     .to_rgba8()
+        //     .into_raw();
+        let window_icon = Some(Icon::from_rgba(window_icon_binary, 64, 64).unwrap());
 
         window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
@@ -104,10 +107,17 @@ impl ApplicationHandler for Application {
         // });
 
         let assets = pollster::block_on(AssetLoader::load_critical_assets());
+        // TODO make game running in this state without any assets loaded yet
 
-        let renderer_future = Renderer::new(window.clone(), assets);
+        let renderer_future = Renderer::new(window.clone());
 
-        let renderer = pollster::block_on(renderer_future);
+        let mut renderer = pollster::block_on(renderer_future);
+        for asset in assets {
+            if let AssetType::Image(image_asset) = asset.asset_type {
+                renderer.load_material(image_asset);
+            }
+        }
+        // renderer.load_materials(assets);
         let audio_system = pollster::block_on(AudioSystem::new());
 
         self.application_state = State::Initialized(Engine {

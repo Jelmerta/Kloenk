@@ -45,7 +45,7 @@ impl ModelManager {
             blood_red.meshes.into_iter().next().unwrap(),
         );
 
-        let shield = load_model(device, "CUBE", "shield.webp")
+        let shield = load_model(device, "CUBE", "shield.ktx2")
             .await
             .unwrap();
         mesh_map.insert(
@@ -53,7 +53,7 @@ impl ModelManager {
             shield.meshes.into_iter().next().unwrap(),
         );
 
-        let shield_inventory = load_model(device, "SQUARE", "shield.webp")
+        let shield_inventory = load_model(device, "SQUARE", "shield.ktx2")
             .await
             .unwrap();
         mesh_map.insert(
@@ -61,7 +61,7 @@ impl ModelManager {
             shield_inventory.meshes.into_iter().next().unwrap(),
         );
 
-        let sword = load_model(device, "CUBE", "sword.webp")
+        let sword = load_model(device, "CUBE", "sword.ktx2")
             .await
             .unwrap();
         mesh_map.insert(
@@ -69,7 +69,7 @@ impl ModelManager {
             sword.meshes.into_iter().next().unwrap(),
         );
 
-        let sword_inventory = load_model(device, "SQUARE", "sword.webp")
+        let sword_inventory = load_model(device, "SQUARE", "sword.ktx2")
             .await
             .unwrap();
         mesh_map.insert(
@@ -77,7 +77,7 @@ impl ModelManager {
             sword_inventory.meshes.into_iter().next().unwrap(),
         );
 
-        let grass = load_model(device, "CUBE", "grass.webp")
+        let grass = load_model(device, "CUBE", "grass.ktx2")
             .await
             .unwrap();
         mesh_map.insert(
@@ -85,7 +85,7 @@ impl ModelManager {
             grass.meshes.into_iter().next().unwrap(),
         );
 
-        let tree = load_model(device, "CUBE", "tree.webp").await.unwrap();
+        let tree = load_model(device, "CUBE", "tree.ktx2").await.unwrap();
         mesh_map.insert("tree".to_string(), tree.meshes.into_iter().next().unwrap());
 
         let gozer = load_gltf(device, "gozer.gltf").await;
@@ -94,7 +94,7 @@ impl ModelManager {
             gozer.meshes.into_iter().next().unwrap(),
         );
 
-        let close_button = load_model(device, "SQUARE", "close_button.webp")
+        let close_button = load_model(device, "SQUARE", "close_button.ktx2")
             .await
             .unwrap();
         mesh_map.insert(
@@ -102,7 +102,7 @@ impl ModelManager {
             close_button.meshes.into_iter().next().unwrap(),
         );
 
-        let close_button_hover = load_model(device, "SQUARE", "close_button_hover.webp")
+        let close_button_hover = load_model(device, "SQUARE", "close_button_hover.ktx2")
             .await
             .unwrap();
         mesh_map.insert(
