@@ -1,5 +1,9 @@
-use crate::application::ImageAsset;
+use crate::application::{ImageAsset, ImageEncoding};
 use anyhow::{Ok, Result};
+use basis_universal::LowLevelUastcTranscoder;
+use log::error;
+use std::cmp::PartialEq;
+use wgpu::{AstcBlock, AstcChannel, Device, Features, TextureFormat};
 
 pub struct Texture {
     pub view: wgpu::TextureView,
@@ -54,6 +58,14 @@ impl Texture {
         queue: &wgpu::Queue,
         image: ImageAsset,
     ) -> Result<Self> {
+        let transcode_format = decide_transcode_format(device, &image);
+        // Transcoding UASTC
+        let transcoder = LowLevelUastcTranscoder::new();
+        // transcoder.transcode_slice()
+        // transcoder.transcode_slice(data, )
+        // LowLevelUastcTranscoder::low_level_uastc_transcoder_new();
+
+
         let mut diffuse_rgba = image.data;
         if !image.has_alpha {
             diffuse_rgba = Self::transcode_rgb_to_rgba(diffuse_rgba);
@@ -108,6 +120,29 @@ impl Texture {
         });
 
         Ok(Self { view, sampler })
+    }
+}
+
+
+// TODO should this be in basis blockformat or wgpu?
+fn decide_transcode_format(device: &Device, asset: &ImageAsset) -> TextureFormat {
+    let features = device.features();
+    log::error!("supported transcode format: {:?}", features);
+    if features.contains(Features::TEXTURE_COMPRESSION_ASTC) {
+        TextureFormat::Astc {
+            block: AstcBlock::B4x4,
+            channel: AstcChannel::UnormSrgb,
+        }
+    } else if features.contains(Features::TEXTURE_COMPRESSION_ETC2) {
+        if asset.has_alpha {
+            TextureFormat::Etc2Rgba8UnormSrgb
+        } else {
+            TextureFormat::Etc2Rgb8UnormSrgb
+        }
+    } else if features.contains(Features::TEXTURE_COMPRESSION_BC) {
+        TextureFormat::Bc7RgbaUnormSrgb
+    } else {
+        TextureFormat::Rgba8UnormSrgb
     }
 }
 

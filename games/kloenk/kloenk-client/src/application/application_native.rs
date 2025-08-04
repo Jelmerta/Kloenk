@@ -71,15 +71,18 @@ impl ApplicationHandler for Application {
         #[allow(unused_mut)]
         let mut initial_height = 1.0;
 
+        // TODO probably just use rgba bin file? am not importing image or bc7 transcoding? do we not use bc7 rgba backup? how is that done?
         let window_attributes;
         // TODO can we not just use webp as this is loaded js_sys/web_sys?
-        let cursor_binary = pollster::block_on(AssetLoader::load_image_asset("cursor.ktx2")).data;
-        // let cursor_binary = pollster::block_on(AssetLoader::load_image_asset("tree.ktx2")).data; // todo tmp
-        let cursor_source = CursorManager::load_cursor(cursor_binary.clone());
-        let custom_cursor = event_loop.create_custom_cursor(cursor_source);
+        // TODO uncomment
+        // TODO maybe just render this in wgpu
+        // TODO with the bug in web where it doesnt show bottom and right side, could try setting this on body
+        // let cursor_binary = pollster::block_on(AssetLoader::load_image_asset("cursor.ktx2")).data;
+        // let cursor_source = CursorManager::load_cursor(cursor_binary.clone());
+        // let custom_cursor = event_loop.create_custom_cursor(cursor_source);
 
         // TODO probably load rgba8 version of window icon directly in memory
-        let window_icon_binary = pollster::block_on(AssetLoader::load_image_asset("favicon.ktx2")).data;
+        let window_icon_binary = pollster::block_on(AssetLoader::load_image_asset("favicon.rgba")).data;
         // let window_icon_rgba = image::load_from_memory(&window_icon_binary)
         //     .unwrap()
         //     .to_rgba8()
@@ -90,10 +93,11 @@ impl ApplicationHandler for Application {
             .with_title("Kloenk!")
             .with_inner_size(LogicalSize::new(initial_width, initial_height))
             .with_active(true)
-            .with_cursor(Cursor::Custom(custom_cursor))
+            // .with_cursor(Cursor::Custom(custom_cursor))
             .with_window_icon(window_icon);
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
+        // window.set_cursor_visible(false); TODO surely this doesnt help
 
         if let Some(monitor) = window.current_monitor() {
             let fullscreen_video_mode = monitor.video_modes().next().unwrap();
@@ -106,17 +110,17 @@ impl ApplicationHandler for Application {
         //     assets = AssetLoader::load_critical_assets().await;
         // });
 
-        let assets = pollster::block_on(AssetLoader::load_critical_assets());
+        // let assets = pollster::block_on(AssetLoader::load_critical_assets());
         // TODO make game running in this state without any assets loaded yet
 
         let renderer_future = Renderer::new(window.clone());
 
         let mut renderer = pollster::block_on(renderer_future);
-        for asset in assets {
-            if let AssetType::Image(image_asset) = asset.asset_type {
-                renderer.load_material(image_asset);
-            }
-        }
+        // for asset in assets {
+        //     if let AssetType::Image(image_asset) = asset.asset_type {
+        //         renderer.load_material(image_asset);
+        //     }
+        // }
         // renderer.load_materials(assets);
         let audio_system = pollster::block_on(AudioSystem::new());
 

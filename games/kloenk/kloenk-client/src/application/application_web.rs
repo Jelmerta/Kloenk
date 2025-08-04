@@ -165,12 +165,12 @@ impl ApplicationHandler<CustomEvent> for Application {
         window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
             .with_inner_size(LogicalSize::new(initial_width, initial_height))
-            .with_active(true)
-            .with_cursor(event_loop.create_custom_cursor(CustomCursor::from_url(
-                String::from("assets/cursor.webp"), // TODO verify with squoosh/avif but this is something we want high quality dont worry too much about the kbs
-                3,
-                3,
-            )));
+            .with_active(true);
+        // .with_cursor(event_loop.create_custom_cursor(CustomCursor::from_url(
+        //     String::from("assets/cursor.webp"), // TODO verify with squoosh/avif but this is something we want high quality dont worry too much about the kbs
+        //     3,
+        //     3,
+        // )));
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 

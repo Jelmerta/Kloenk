@@ -17,6 +17,8 @@ struct Ray {
 
 pub struct ObjectDetectionSystem {}
 
+
+// TODO Check if this could be done with depth stencils instead of this cpu-heavy operation. i guess depth stencil for each object should be able to do this
 impl ObjectDetectionSystem {
     // Perhaps data could be kept for next frame to handle
     pub fn setup_detection_for_frame(

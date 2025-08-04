@@ -1,16 +1,6 @@
 use crate::application::asset_loader::AssetType::Image;
-use basis_universal::sys::{low_level_uastc_transcoder_new, low_level_uastc_transcoder_transcode_slice, LowLevelUastcTranscoder};
-use basis_universal::{
-    BasisTextureFormat, Compressor, CompressorParams, TranscodeParameters, Transcoder,
-    TranscoderTextureFormat, UserData,
-};
-use cgmath::num_traits::ToPrimitive;
 use hydrox::load_binary;
-use itertools::Itertools;
-use ktx2::{ColorModel, DfdBlockBasic, DfdBlockHeaderBasic, DfdHeader, Format, SampleInformation, SupercompressionScheme};
-use std::ptr::read;
-use zstd::bulk::decompress;
-// Add zstd crate to dependencies
+use std::io::{Cursor, Read};
 
 pub enum AssetType {
     Audio,
@@ -33,11 +23,22 @@ pub struct ImageAsset {
     pub data: Vec<u8>,
 }
 
+// TODO should probably contain transcoded image?
 #[derive(Debug)]
 pub enum ImageEncoding {
     BasisLz,
     Uastc,
 }
+
+// impl PartialEq for ImageEncoding {
+//     fn eq(&self, other: &Self) -> bool {
+//         match (self, other) {
+//             (ImageEncoding::BasisLz, ImageEncoding::BasisLz) => true,
+//             (ImageEncoding::Uastc, ImageEncoding::Uastc) => true,
+//             _ => false,
+//         }
+//     }
+// }
 
 #[derive(Debug)]
 pub struct TextureDimensions {
@@ -76,54 +77,26 @@ impl AssetLoader {
         let data = load_binary(image_path).await.unwrap();
         Self::load_image(image_path, &data)
     }
-    // fn decode_image(image_bytes: &[u8]) -> impl Future<Output=ImageResult<DynamicImage>> {
-    //     async move {
-    //         // let mut decoder = image_webp::WebPDecoder::new(Cursor::new(image_bytes)).unwrap();
-    //         // let bytes_per_pixel = if decoder.has_alpha() { 4 } else { 3 };
-    //         // let (width, height) = decoder.dimensions();
-    //         // let mut data = vec![0; width as usize * height as usize * bytes_per_pixel];
-    //         // decoder.read_image(&mut data).unwrap();
-    //         // decoder.
-    //         image::load_from_memory(image_bytes)
-    //     }
-    // }
-
-    // fn decode_image(image_bytes: &[u8]) -> ImageResult<DynamicImage> {
-    //     image::load_from_memory(image_bytes)
-    // }
 
     // Helpful: https://github.com/woelper/oculante/blob/680faabd105435b7c2668bcd3be715e28aa9605e/src/ktx2_loader/ktx2.rs
     fn load_image(image_name: &str, image_bytes: &[u8]) -> ImageAsset {
         log::error!("Loading image: {}", image_name);
-        let reader = ktx2::Reader::new(image_bytes).unwrap();
+        let reader = Reader::new(image_bytes).unwrap();
 
         // Handle supercompression TODO handle etc1s?
-        let data;
-        let supercompress_scheme = reader.header().supercompression_scheme;
-        if reader.header().supercompression_scheme.is_some() {
-            let scheme = supercompress_scheme.unwrap();
-            if let SupercompressionScheme::Zstandard = scheme {
-                let level = reader.levels().next().unwrap(); // Assume 1 level
-                //                     let mut decoder = ruzstd::decoding::StreamingDecoder::new(&mut cursor)?
-                data = decompress(level.data, level.uncompressed_byte_length.to_usize().unwrap()).unwrap();
-            } else {
-                panic!("Unsupported supercompression scheme: {:?}", supercompress_scheme);
-            }
-        } else {
-            panic!("Unsupported supercompression scheme: {:?}", supercompress_scheme);
-        }
+        let decompressed_data = Self::handle_supercompression(&reader);
+        log::error!("Decompressed data: {:?}", decompressed_data);
+        // Verify Basis header
+        // if !decompressed_data.starts_with(&[0x73, 0x42, 0x61, 0x73]) {
+        //     panic!("Invalid Basis file signature in first level");
+        // }
 
-        // Load GPU format. Note: Header format is empty when supercompression is used
+        // Load GPU format. Note: Header format is empty when supercompression is used. We instead look at information in DFD block to decide how to handle format
         log::error!("Loading format: {:?}", reader.header());
         let pixel_width = reader.header().pixel_width;
         let pixel_height = reader.header().pixel_height;
         let dfd_block = reader.dfd_blocks().next().unwrap(); // TODO are there many? could some have other DFD model? basically only need to check one value which should be the same for the whole image?
 
-        // dfd_block.header
-        // DfdHeader::BASIC
-        // DfdBlockHeaderBasic
-        // let x :DfdBlockBasic
-        // let block = DfdBlockBasic::parse(dfd_block.data.try_into().unwrap()).unwrap();
         let block_basic = DfdBlockBasic::parse(dfd_block.data).unwrap(); // TODO assume header is contained in data?
         let color_model = block_basic.header.color_model.unwrap();
         let encoding = match color_model {
@@ -135,34 +108,11 @@ impl AssetLoader {
         };
         log::error!("Encoding: {:?}", encoding);
 
-
-        //  Some(ColorModel::UASTC) => {
-        //             return Err(TextureError::FormatRequiresTranscodingError(
-        //                 TranscodeFormat::Uastc(match sample_information[0].channel_type {
-        //                     0 => DataFormat::Rgb,
-        //                     3 => DataFormat::Rgba,
-        //                     4 => DataFormat::Rrr,
-        //                     5 => DataFormat::Rrrg,
-        //                     6 => DataFormat::Rg,
-        //                     channel_type => {
-        //                         return Err(TextureError::UnsupportedTextureFormat(format!(
-        //                             "Invalid KTX2 UASTC channel type: {channel_type}",
-        //                         )))
-        //                     }
-        //                 }),
-        //             ));
-        //         }
-
-        // TODO they dont transcode this? you can do that i believe hm
         // // ETC1 a subset of ETC2 only supporting Rgb8
         // Some(ColorModel::ETC1) => {
-        //     if is_srgb {
         //         TextureFormat::Etc2Rgb8UnormSrgb
-        //     } else {
-        //         TextureFormat::Etc2Rgb8Unorm
         //     }
         // }
-
 
         let sample_information = block_basic.sample_information().next().unwrap();
         let has_alpha = match sample_information.channel_type {
@@ -175,13 +125,32 @@ impl AssetLoader {
         };
         log::error!("alpha: {}", has_alpha);
 
-        // Transcoding UASTC
-        let transcoder = basis_universal::LowLevelUastcTranscoder::new();
-        transcoder.transcode_slice(data, )
-        // let transcoder = LowLevelUastcTranscoder::
-        // let transcoder = low_level_uastc_transcoder_new;
-        low_level_uastc_transcoder_transcode_slice(transcoder);
-        LowLevelUastcTranscoder::low_level_uastc_transcoder_new();
+
+        // TODO i probably just need lowleveluastc...
+        // let mut transcoder = Transcoder::new();
+        // // transcoder.prepare_transcoding(&decompressed_data).map_err(|err| log::error!("{:?}", err)).ok();
+        // let to_transcode: &[u8] = &decompressed_data;
+        // let file_info = transcoder.file_info(to_transcode).unwrap();
+        // log::error!("file: {:?}", file_info);
+        // let info = transcoder.image_info(to_transcode, 0).unwrap();
+        // log::error!("Image info: {:?}", info);
+        // let level_info = transcoder.image_level_info(to_transcode, 0, 0).unwrap();
+        // log::error!("Level info: {:?}", level_info);
+        // transcoder.prepare_transcoding(to_transcode).map_err(|err| log::error!("wat {:?}", err)).ok();
+        // let result1 = transcoder
+        //     .transcode_image_level(
+        //         to_transcode,
+        //         TranscoderTextureFormat::BC7_RGBA,
+        //         TranscodeParameters {
+        //             image_index: 0,
+        //             level_index: 0,
+        //             decode_flags: Some(DecodeFlags::HIGH_QUALITY), // TODO alpha?
+        //             output_row_pitch_in_blocks_or_pixels: None,
+        //             output_rows_in_pixels: None,
+        //         },
+        //     )
+        //     .unwrap();
+        // log::error!("result1: {:?}", result1.len());
 
 
         // let encoding = match supercompression_scheme {
@@ -189,7 +158,6 @@ impl AssetLoader {
         //     None => ImageEncoding::Uastc,
         //     Some(_) => panic!("Unsupported supercompression format {:?}", format),
         // };
-
 
         // basis_universal::transcoder_init(); // TODO difference?
         // let mut transcoder = Transcoder::new();
@@ -221,9 +189,134 @@ impl AssetLoader {
             encoding,
             has_alpha,
             // data: data.to_vec(),
-            data: result,
+            data: decompressed_data, // todo wrong format
         };
         log::error!("Loaded image: {:?}", asset);
         asset
     }
+
+    fn handle_supercompression(reader: &Reader<&[u8]>) -> Vec<u8> {
+        let supercompress_scheme = reader.header().supercompression_scheme;
+        if reader.header().supercompression_scheme.is_some() {
+            let scheme = supercompress_scheme.unwrap();
+
+            match scheme {
+                SupercompressionScheme::Zstandard => {
+                    // let data_offset = reader.data()
+                    let level = reader.levels().next().unwrap(); // Assume 1 level
+                    log::error!("Supercompression level byte: {:?}", level.uncompressed_byte_length);
+                    log::error!("Supercompression level len: {:?}", level.data.bytes().count());
+                    log::error!("Supercompression level len: {:?}", level.data.bytes());
+                    log::error!("offset {:?}",                     reader.header().index.dfd_byte_offset);
+                    log::error!("offset {:?}",                     reader.header().index);
+
+                    let mut cursor = Cursor::new(level.data);
+                    let mut decoder = ruzstd::decoding::StreamingDecoder::new(&mut cursor).unwrap();
+                    let mut decompressed = Vec::new();
+                    decoder.read_to_end(&mut decompressed).map_err(|err| {
+                        log::error!(
+                            "Failed to decompress",
+                        )
+                    }).unwrap();
+
+                    // Validate decompressed size matches header
+                    if reader.header().supercompression_scheme != Some(SupercompressionScheme::BasisLZ) {
+                        assert_eq!(
+                            decompressed.len(),
+                            level.uncompressed_byte_length as usize,
+                            "Decompressed size mismatch"
+                        );
+                    }
+
+                    decompressed
+
+                    // decompress(
+                    //     level.data,
+                    //     level.uncompressed_byte_length.to_usize().unwrap(),
+                    // )
+                    //     .unwrap()
+                }
+                SupercompressionScheme::BasisLZ => reader.levels().next().unwrap().data.to_vec(),
+                _ => panic!(
+                    "Unsupported supercompression scheme: {:?}",
+                    supercompress_scheme
+                ),
+            }
+        } else {
+            panic!(
+                "Unsupported supercompression scheme: {:?}",
+                supercompress_scheme
+            );
+        }
+
+        // else {
+        // panic ! ("Unsupported supercompression scheme: {:?}", supercompress_scheme);
+        // }
+        // }
+    }
+
+    //     for best practice Transcoding requires device/queue to be loaded i think in order to dynamically figure transcoding format https://github.com/woelper/oculante/blob/master/src/ktx2_loader/image.rs#L387
+    //         pub fn from_features(features: wgpu::Features) -> Self {
+    //         let mut supported_compressed_formats = Self::default();
+    //         if features.contains(wgpu::Features::TEXTURE_COMPRESSION_ASTC) {
+    //             supported_compressed_formats |= Self::ASTC_LDR;
+    //         }
+    //         if features.contains(wgpu::Features::TEXTURE_COMPRESSION_BC) {
+    //             supported_compressed_formats |= Self::BC;
+    //         }
+    //         if features.contains(wgpu::Features::TEXTURE_COMPRESSION_ETC2) {
+    //             supported_compressed_formats |= Self::ETC2;
+    //         }
+    //         supported_compressed_formats
+    //     }
+
+    //     Similarly?
+    //     // NOTE: Rgba16Float should be transcoded to BC6H/ASTC_HDR. Neither are supported by
+    //         // basis-universal, nor is ASTC_HDR supported by wgpu
+    //         DataFormat::Rgb | DataFormat::Rgba => {
+    //             // NOTE: UASTC can be losslessly transcoded to ASTC4x4 and ASTC uses the same
+    //             // space as BC7 (128-bits per 4x4 texel block) so prefer ASTC over BC for
+    //             // transcoding speed and quality.
+    //             if supported_compressed_formats.contains(CompressedImageFormats::ASTC_LDR) {
+    //                 (
+    //                     TranscoderBlockFormat::ASTC_4x4,
+    //                     TextureFormat::Astc {
+    //                         block: AstcBlock::B4x4,
+    //                         channel: if is_srgb {
+    //                             AstcChannel::UnormSrgb
+    //                         } else {
+    //                             AstcChannel::Unorm
+    //                         },
+    //                     },
+    //                 )
+    //             } else if supported_compressed_formats.contains(CompressedImageFormats::BC) {
+    //                 (
+    //                     TranscoderBlockFormat::BC7,
+    //                     if is_srgb {
+    //                         TextureFormat::Bc7RgbaUnormSrgb
+    //                     } else {
+    //                         TextureFormat::Bc7RgbaUnorm
+    //                     },
+    //                 )
+    //             } else if supported_compressed_formats.contains(CompressedImageFormats::ETC2) {
+    //                 (
+    //                     TranscoderBlockFormat::ETC2_RGBA,
+    //                     if is_srgb {
+    //                         TextureFormat::Etc2Rgba8UnormSrgb
+    //                     } else {
+    //                         TextureFormat::Etc2Rgba8Unorm
+    //                     },
+    //                 )
+    //             } else {
+    //                 (
+    //                     TranscoderBlockFormat::RGBA32,
+    //                     if is_srgb {
+    //                         TextureFormat::Rgba8UnormSrgb
+    //                     } else {
+    //                         TextureFormat::Rgba8Unorm
+    //                     },
+    //                 )
+    //             }
+    //         }
+    //     }
 }

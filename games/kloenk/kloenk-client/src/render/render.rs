@@ -2,10 +2,7 @@ use cgmath::{prelude::*, Point3, Vector3};
 use itertools::Itertools;
 use std::iter;
 use std::sync::Arc;
-use wgpu::{
-    Backend, Buffer, CommandEncoder, Device, InstanceFlags, MemoryHints, Queue,
-    SurfaceConfiguration, TextureView,
-};
+use wgpu::{Backend, Buffer, CommandEncoder, Device, Features, InstanceFlags, MemoryHints, Queue, SurfaceConfiguration, TextureView};
 
 use crate::application::{Asset, ImageAsset};
 use crate::render::camera::Camera;
@@ -91,16 +88,34 @@ impl Renderer {
             Backend::Noop => log::info!("No graphics backend"),
         }
 
+        // Add gpu compression formats
+        let available_features = adapter.features();
+        let mut desired_features = Features::empty();
+        if available_features.contains(Features::TEXTURE_COMPRESSION_BC) {
+            desired_features |= Features::TEXTURE_COMPRESSION_BC;
+        }
+        if available_features.contains(Features::TEXTURE_COMPRESSION_ASTC) {
+            desired_features |= Features::TEXTURE_COMPRESSION_ASTC;
+        }
+        if available_features.contains(Features::TEXTURE_COMPRESSION_ETC2) {
+            desired_features |= Features::TEXTURE_COMPRESSION_ETC2;
+        }
+
         let (device, queue) = adapter
             .request_device(&wgpu::DeviceDescriptor {
                 label: None,
-                required_features: wgpu::Features::empty(),
+                required_features: desired_features,
                 required_limits: wgpu::Limits::default(),
                 memory_hints: MemoryHints::default(),
                 trace: Default::default(),
             })
             .await
             .unwrap();
+
+        let features = device.features();
+        log::error!("device features: {:?}", features);
+        let features_adapter = adapter.features();
+        log::error!("adapter features: {:?}", features_adapter);
 
         let surface_caps = surface.get_capabilities(&adapter);
         let surface_format = surface_caps
@@ -116,7 +131,7 @@ impl Renderer {
             height: window_size.height.max(1),
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
-            view_formats: vec![surface_format.add_srgb_suffix()], // Adding srgb view for webgpu. When using config.format we need to add_srgb_suffix() as well
+            view_formats: vec![surface_format.add_srgb_suffix()], // Adding srgb view for webgpu. When using config.format we need to add_srgb_suffix() as well TODO also required on desktop? or only web?
             desired_maximum_frame_latency: 2,
         };
         surface.configure(&device, &config);
