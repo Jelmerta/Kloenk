@@ -227,7 +227,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                     match asset.asset_type {
                         AssetType::Audio => {}
                         AssetType::Image(image_asset) => {
-                            engine.renderer.load_material(image_asset);
+                            engine.renderer.load_material_to_memory(image_asset);
                         }
                         AssetType::Model => {}
                         AssetType::Font => {}

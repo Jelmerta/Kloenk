@@ -10,9 +10,8 @@ use crate::state::input::Input;
 use std::sync::Arc;
 use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
-use winit::window::{Cursor, CustomCursor, Fullscreen, Icon, Window, WindowId};
+use winit::window::{Cursor, Fullscreen, Icon, Window, WindowId};
 
-use crate::application::cursor_manager::CursorManager;
 use crate::render::render::Renderer;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
@@ -20,7 +19,10 @@ use crate::state::ui_state::UIState;
 use crate::systems::game_system::GameSystem;
 use winit::keyboard::KeyCode;
 
+use crate::application::cursor_manager::CursorManager;
 use crate::application::{AssetLoader, AssetType};
+use crate::render::model_manager::ModelManager;
+use crate::render::preload_manager::PreloadManager;
 use hydrox::{load_binary, AudioSystem};
 
 pub struct Engine {
@@ -71,33 +73,22 @@ impl ApplicationHandler for Application {
         #[allow(unused_mut)]
         let mut initial_height = 1.0;
 
-        // TODO probably just use rgba bin file? am not importing image or bc7 transcoding? do we not use bc7 rgba backup? how is that done?
         let window_attributes;
-        // TODO can we not just use webp as this is loaded js_sys/web_sys?
-        // TODO uncomment
-        // TODO maybe just render this in wgpu
-        // TODO with the bug in web where it doesnt show bottom and right side, could try setting this on body
-        // let cursor_binary = pollster::block_on(AssetLoader::load_image_asset("cursor.ktx2")).data;
-        // let cursor_source = CursorManager::load_cursor(cursor_binary.clone());
-        // let custom_cursor = event_loop.create_custom_cursor(cursor_source);
+        let cursor_binary = pollster::block_on(load_binary("cursor.rgba")).unwrap();
+        let cursor_source = CursorManager::load_cursor(cursor_binary);
+        let custom_cursor = event_loop.create_custom_cursor(cursor_source);
 
-        // TODO probably load rgba8 version of window icon directly in memory
-        let window_icon_binary = pollster::block_on(AssetLoader::load_image_asset("favicon.rgba")).data;
-        // let window_icon_rgba = image::load_from_memory(&window_icon_binary)
-        //     .unwrap()
-        //     .to_rgba8()
-        //     .into_raw();
+        let window_icon_binary = pollster::block_on(load_binary("favicon.rgba")).unwrap();
         let window_icon = Some(Icon::from_rgba(window_icon_binary, 64, 64).unwrap());
 
         window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
             .with_inner_size(LogicalSize::new(initial_width, initial_height))
             .with_active(true)
-            // .with_cursor(Cursor::Custom(custom_cursor))
+            .with_cursor(Cursor::Custom(custom_cursor))
             .with_window_icon(window_icon);
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
-        // window.set_cursor_visible(false); TODO surely this doesnt help
 
         if let Some(monitor) = window.current_monitor() {
             let fullscreen_video_mode = monitor.video_modes().next().unwrap();
@@ -105,23 +96,29 @@ impl ApplicationHandler for Application {
             window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
         }
 
-        // let mut assets = Vec::new();
-        // pollster::block_on(async move {
-        //     assets = AssetLoader::load_critical_assets().await;
-        // });
+        // let model_manager = ModelManager::new();
+
+        // TODO load_critical_models instead?
+        // let assets = pollster::block_on(AssetLoader::load_critical_assets());
+
+        let preload_manager = pollster::block_on(PreloadManager::new());
+
+        let mut renderer = pollster::block_on(Renderer::new(window.clone()));
+
+        // let mut renderer = enderer_future);
+        // let meshes = build_textured_meshes(&model, &indices, mesh_material_id);
 
         // let assets = pollster::block_on(AssetLoader::load_critical_assets());
-        // TODO make game running in this state without any assets loaded yet
-
-        let renderer_future = Renderer::new(window.clone());
-
-        let mut renderer = pollster::block_on(renderer_future);
         // for asset in assets {
-        //     if let AssetType::Image(image_asset) = asset.asset_type {
-        //         renderer.load_material(image_asset);
+        //     match asset.asset_type {
+        //         AssetType::Image(image_asset) => {
+        //             renderer.load_material_to_memory(image_asset);
+        //         }
         //     }
         // }
-        // renderer.load_materials(assets);
+
+        pollster::block_on(renderer.update_models(&preload_manager));
+
         let audio_system = pollster::block_on(AudioSystem::new());
 
         self.application_state = State::Initialized(Engine {

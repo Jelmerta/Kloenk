@@ -98,3 +98,7 @@ sudo cp bg_output/kloenk.js /usr/share/nginx/html
 Build for product owner (on windows):
 ```cargo build --target x86_64-pc-windows-msvc --release```
 ```Compress-Archive -Path .\target\x86_64-pc-windows-msvc\release\assets\,.\target\x86_64-pc-windows-msvc\release\kloenk.exe -DestinationPath .\kloenk.zip```
+
+Generating dds files
+\bc7enc.exe '..\..\..\Pictures\kloenk original images\png_versions\close_button_hover.png' -zc65536 -z'0.5' -zm -o '
+..\..\..\Pictures\kloenk original images\rdo...

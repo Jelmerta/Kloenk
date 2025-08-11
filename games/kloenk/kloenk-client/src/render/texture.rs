@@ -1,9 +1,6 @@
 use crate::application::{ImageAsset, ImageEncoding};
 use anyhow::{Ok, Result};
-use basis_universal::LowLevelUastcTranscoder;
-use log::error;
-use std::cmp::PartialEq;
-use wgpu::{AstcBlock, AstcChannel, Device, Features, TextureFormat};
+use wgpu::TextureFormat;
 
 pub struct Texture {
     pub view: wgpu::TextureView,
@@ -16,64 +13,23 @@ pub struct Depth {
 }
 
 impl Texture {
-    pub fn from_bytes(
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        // image_bytes: &[u8],
-        image: ImageAsset,
-        // label: &str,
-    ) -> Result<Self> {
-        // Decoding takes a bit of time. We do not want to block on this task. TODO does not actually seem to help anything...? Probably because there's not really any other tasks left to do, image loading tasks take the longest amount of time. Could have placeholder until it is decoded
-        // let result = web_sys::window().unwrap().create_image_bitmap_with_blob(bytes);
-        // let diffuse_image = Self::decode_image(bytes).await?;
-        Self::from_image(device, queue, image)
-        // Self::from_image(device, queue, &image, Some(label))
-    }
-
-    // fn decode_image(image_bytes: &[u8]) -> impl Future<Output=ImageResult<DynamicImage>> {
-    //     async move {
-    //         // let mut decoder = image_webp::WebPDecoder::new(Cursor::new(image_bytes)).unwrap();
-    //         // let bytes_per_pixel = if decoder.has_alpha() { 4 } else { 3 };
-    //         // let (width, height) = decoder.dimensions();
-    //         // let mut data = vec![0; width as usize * height as usize * bytes_per_pixel];
-    //         // decoder.read_image(&mut data).unwrap();
-    //         // decoder.
-    //         image::load_from_memory(image_bytes)
-    //     }
-    // }
-
-    fn transcode_rgb_to_rgba(data: Vec<u8>) -> Vec<u8> {
-        let num_pixels = data.len() / 3;
-        let mut output = Vec::with_capacity(num_pixels * 4); // TODO or pixels * 4? hm could this be done better? pre-calculate?
-
-        for chunk in data.chunks_exact(3) {
-            output.extend_from_slice(chunk);
-            output.push(255);
-        }
-        output
-    }
-
     pub fn from_image(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         image: ImageAsset,
     ) -> Result<Self> {
-        let transcode_format = decide_transcode_format(device, &image);
-        // Transcoding UASTC
-        let transcoder = LowLevelUastcTranscoder::new();
-        // transcoder.transcode_slice()
-        // transcoder.transcode_slice(data, )
-        // LowLevelUastcTranscoder::low_level_uastc_transcoder_new();
+        let texture_format = match image.encoding {
+            ImageEncoding::BC1 => { TextureFormat::Bc1RgbaUnormSrgb }
+            ImageEncoding::BC7 => { TextureFormat::Bc7RgbaUnormSrgb }
+        };
 
-
-        let mut diffuse_rgba = image.data;
-        if !image.has_alpha {
-            diffuse_rgba = Self::transcode_rgb_to_rgba(diffuse_rgba);
-        }
+        let block_size = 4; // TODO static constant thing
+        let blocks_wide = (image.dimensions.pixel_width + block_size - 1) / block_size;
+        let blocks_high = (image.dimensions.pixel_height + block_size - 1) / block_size;
 
         let texture_size = wgpu::Extent3d {
-            width: image.dimensions.pixel_width,
-            height: image.dimensions.pixel_height,
+            width: blocks_wide * block_size, // padded width
+            height: blocks_high * block_size, // padded height
             depth_or_array_layers: 1,
         };
         let texture = device.create_texture(&wgpu::TextureDescriptor {
@@ -81,12 +37,18 @@ impl Texture {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            format: texture_format,
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-            // label,
             label: Some(&image.name),
             view_formats: &[],
         });
+
+        let bytes_per_block = match image.encoding {
+            ImageEncoding::BC1 => 8,
+            ImageEncoding::BC7 => 16,
+        };
+        // Based on blocks, not pixels
+        let bytes_per_row = blocks_wide * bytes_per_block;
 
         queue.write_texture(
             wgpu::TexelCopyTextureInfo {
@@ -95,14 +57,18 @@ impl Texture {
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
             },
-            &diffuse_rgba,
+            &image.data,
             wgpu::TexelCopyBufferLayout {
                 offset: 0,
-                bytes_per_row: Some(4 * image.dimensions.pixel_width),
+                // bytes_per_row: Some(4 * image.dimensions.pixel_width),  rgba
+                bytes_per_row: Some(bytes_per_row),
                 rows_per_image: Some(image.dimensions.pixel_height),
             },
             texture_size,
         );
+
+        // TODO difference?
+        // device.create_texture_with_data()
 
         let view = texture.create_view(&wgpu::TextureViewDescriptor {
             label: Some("Image view"),
@@ -123,31 +89,8 @@ impl Texture {
     }
 }
 
-
-// TODO should this be in basis blockformat or wgpu?
-fn decide_transcode_format(device: &Device, asset: &ImageAsset) -> TextureFormat {
-    let features = device.features();
-    log::error!("supported transcode format: {:?}", features);
-    if features.contains(Features::TEXTURE_COMPRESSION_ASTC) {
-        TextureFormat::Astc {
-            block: AstcBlock::B4x4,
-            channel: AstcChannel::UnormSrgb,
-        }
-    } else if features.contains(Features::TEXTURE_COMPRESSION_ETC2) {
-        if asset.has_alpha {
-            TextureFormat::Etc2Rgba8UnormSrgb
-        } else {
-            TextureFormat::Etc2Rgb8UnormSrgb
-        }
-    } else if features.contains(Features::TEXTURE_COMPRESSION_BC) {
-        TextureFormat::Bc7RgbaUnormSrgb
-    } else {
-        TextureFormat::Rgba8UnormSrgb
-    }
-}
-
 impl Depth {
-    pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
+    pub const DEPTH_FORMAT: TextureFormat = TextureFormat::Depth32Float;
     pub fn create_depth_texture(
         device: &wgpu::Device,
         config: &wgpu::SurfaceConfiguration,

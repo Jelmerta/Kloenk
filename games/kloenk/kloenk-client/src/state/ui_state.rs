@@ -17,10 +17,10 @@ impl UIWindow {
 }
 
 pub enum RenderCommand {
-    Mesh {
+    Texture {
         layer: u32,
         ui_element: UIElement,
-        mesh_id: String,
+        texture_model_id: String,
     },
     Text {
         layer: u32,

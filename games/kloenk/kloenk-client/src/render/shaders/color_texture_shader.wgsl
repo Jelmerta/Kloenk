@@ -3,12 +3,15 @@ struct CameraUniform {
 };
 
 @group(0) @binding(0)
-var t_diffuse: texture_2d<f32>;
-
-@group(0) @binding(1)
-var s_diffuse: sampler;
+var primitive_color: vec4<f32>;
 
 @group(1) @binding(0)
+var t_diffuse: texture_2d<f32>;
+
+@group(1) @binding(1)
+var s_diffuse: sampler;
+
+@group(2) @binding(0)
 var<uniform> camera: CameraUniform;
 
 struct VertexInput {
@@ -48,5 +51,5 @@ fn vs_main(
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return textureSample(t_diffuse, s_diffuse, in.tex_coords);
+    return primitive_color * textureSample(t_diffuse, s_diffuse, in.tex_coords);
 }

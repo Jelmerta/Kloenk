@@ -137,7 +137,7 @@ impl GameState {
         entities.push(tree.clone());
 
         let tree_graphics = Graphics3D {
-            mesh_id: "tree".to_string(),
+            model_id: "tree".to_string(),
         };
         graphics_3d_components.insert(tree.clone(), tree_graphics);
 
@@ -181,7 +181,7 @@ impl GameState {
                 entities.push(plane.clone());
 
                 let plane_graphics = Graphics3D {
-                    mesh_id: "grass".to_string(),
+                    model_id: "grass".to_string(),
                 };
                 graphics_3d_components.insert(plane.clone(), plane_graphics);
 
@@ -212,7 +212,7 @@ impl GameState {
             entities.push(sword.clone());
 
             let sword_graphics = Graphics3D {
-                mesh_id: "sword".to_string(),
+                model_id: "sword".to_string(),
             };
             graphics_3d_components.insert(sword.clone(), sword_graphics);
 
@@ -272,7 +272,7 @@ impl GameState {
         let shield = "shield".to_string();
         entities.push(shield.clone());
         let shield_graphics = Graphics3D {
-            mesh_id: "shield".to_string(),
+            model_id: "shield".to_string(),
         };
         graphics_3d_components.insert(shield.clone(), shield_graphics);
 
@@ -333,7 +333,7 @@ impl GameState {
         entities.push(player.clone());
 
         let player_graphics = Graphics3D {
-            mesh_id: "gozer".to_string(),
+            model_id: "gozer".to_string(),
         };
         graphics_3d_components.insert(player.clone(), player_graphics);
 
@@ -395,7 +395,7 @@ impl GameState {
         entities.push(npc.clone());
 
         let player_graphics = Graphics3D {
-            mesh_id: "gozer".to_string(),
+            model_id: "gozer".to_string(),
         };
         graphics_3d_components.insert(npc.clone(), player_graphics);
 
