@@ -17,10 +17,11 @@ impl UIWindow {
 }
 
 pub enum RenderCommand {
+    // TODO how do we maintain aspect ratio if we want that?
     Texture {
         layer: u32,
         ui_element: UIElement,
-        texture_model_id: String,
+        model_id: String,
     },
     Text {
         layer: u32,
@@ -187,7 +188,6 @@ pub struct UIState {
     pub menu_state: MenuState,
     pub dialogue_state: DialogueState,
     pub input_state: InputState,
-
     // pub cursor_bytes: Vec<u8>, // Not sure what a good place to store this data is
     // why do we even need this again?
 }

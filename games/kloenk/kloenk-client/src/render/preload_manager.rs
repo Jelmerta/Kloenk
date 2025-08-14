@@ -1,11 +1,12 @@
-use crate::render::model::ModelToLoad;
+use crate::render::model::ModelDefinition;
 use crate::render::model_loader::ModelLoader;
-use cgmath::Vector3;
+use cgmath::Vector4;
+use std::vec::Drain;
 
 // or like AssetLoadTask / AssetLoadCommand
 // Maybe also in charge of unloading? Just making sure the current state of the world is loaded correctly
 pub struct PreloadManager {
-    models_to_load: Vec<ModelToLoad>,
+    models_to_load: Vec<ModelDefinition>,
 }
 
 impl PreloadManager {
@@ -15,26 +16,27 @@ impl PreloadManager {
         }
     }
 
-    pub fn get_models_to_load(&self) -> &Vec<ModelToLoad> {
-        &self.models_to_load
+    pub fn drain_models_to_load(&mut self) -> Drain<'_, ModelDefinition> {
+        self.models_to_load.drain(..)
     }
 
-    async fn preload_models() -> Vec<ModelToLoad> {
-        let mut models_to_load: Vec<ModelToLoad> = Vec::new();
+    // TODO maybe ModelDefinition instead? reuse preload with ids+source
+    async fn preload_models() -> Vec<ModelDefinition> {
+        let mut models_to_load: Vec<ModelDefinition> = Vec::new();
         models_to_load.push(ModelLoader::load_colored_square_model(
             "black".to_string(),
-            Vector3::new(0.0, 0.0, 0.0),
+            Vector4::new(0.0, 0.0, 0.0, 1.0),
         ));
 
         models_to_load.push(ModelLoader::load_colored_square_model(
             "grey".to_string(),
-            Vector3::new(0.2, 0.2, 0.2),
+            Vector4::new(0.2, 0.2, 0.2, 1.0),
         ));
 
         // #780606
         models_to_load.push(ModelLoader::load_colored_square_model(
             "blood_red".to_string(),
-            Vector3::new(0.46875, 0.0234375, 0.0234375),
+            Vector4::new(0.46875, 0.0234375, 0.0234375, 1.0),
         ));
 
         models_to_load.push(ModelLoader::make_preload_model(
@@ -89,6 +91,12 @@ impl PreloadManager {
             "close_button_hover".to_string(),
             "SQUARE",
             "close_button_hover.dds",
+        ));
+
+        models_to_load.push(ModelLoader::make_preload_model(
+            "cursor".to_string(),
+            "SQUARE",
+            "cursor.dds",
         ));
 
         models_to_load

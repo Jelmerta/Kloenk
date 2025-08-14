@@ -18,7 +18,7 @@ cgmath = "0.18"
 anyhow = { version = "1.0", default-features = false }
 itertools = { version = "0.14", default-features = false, features = ["use_alloc"] }
 glyphon = { git = "https://github.com/grovesNL/glyphon.git" }
-gltf = { version = "1.4", default-features = false, features = ["utils", "KHR_materials_variants"] }
+gltf = { version = "1.4", default-features = false, features = ["utils", "names"] } # "KHR_materials_variants"] }
 ddsfile = "0.5" # already quite minimal, but could make a small reader to just get data i need out
 
 hydrox = { git = "https://github.com/Jelmerta/Hydrox.git" }

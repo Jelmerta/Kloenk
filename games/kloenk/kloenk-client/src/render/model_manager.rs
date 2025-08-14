@@ -1,17 +1,17 @@
-use crate::render::model::Model;
+use crate::render::model::ModelDefinition;
 use std::collections::HashMap;
 
 pub struct ModelManager {
-    loaded_models: HashMap<String, Model>,
+    loaded_models: HashMap<String, ModelDefinition>,
 }
 
 impl ModelManager {
-    pub fn get_model(&self, model_id: String) -> &Model {
+    pub fn get_model(&self, model_id: String) -> &ModelDefinition {
         self.loaded_models.get(&model_id).unwrap()
     }
 
-    pub fn add_model(&mut self, model_id: String, model: Model) {
-        self.loaded_models.insert(model_id, model);
+    pub fn add_model(&mut self, model: ModelDefinition) {
+        self.loaded_models.insert(model.id.clone(), model);
     }
 }
 

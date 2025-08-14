@@ -2,8 +2,13 @@ struct CameraUniform {
     view_projection: mat4x4<f32>
 };
 
+// Wonder if there is a way, or if it is recommended to make struct or not
+struct ColorUniform {
+    primitive_color: vec4<f32>
+}
+
 @group(0) @binding(0)
-var primitive_color: vec4<f32>;
+var<uniform> color_uniform: ColorUniform;
 
 @group(1) @binding(0)
 var t_diffuse: texture_2d<f32>;
@@ -51,5 +56,5 @@ fn vs_main(
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return primitive_color * textureSample(t_diffuse, s_diffuse, in.tex_coords);
+    return color_uniform.primitive_color * textureSample(t_diffuse, s_diffuse, in.tex_coords);
 }

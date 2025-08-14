@@ -1,6 +1,7 @@
 use crate::render::camera_manager::CameraManager;
+use crate::render::color_manager::ColorManager;
 use crate::render::instance::InstanceRaw;
-use crate::render::material_manager::MaterialManager;
+use crate::render::material_manager::TextureManager;
 use crate::render::model::Vertex;
 use crate::render::{model, texture};
 use wgpu::{Device, PipelineCompilationOptions, RenderPipeline, SurfaceConfiguration};
@@ -13,30 +14,40 @@ impl RenderContextManager {
     pub fn new(
         device: &Device,
         config: &SurfaceConfiguration,
+        color_manager: &ColorManager,
         camera_manager: &CameraManager,
-        material_manager: &MaterialManager,
+        material_manager: &TextureManager,
     ) -> Self {
-        let render_pipeline =
-            Self::setup_textured_context(device, config, camera_manager, material_manager);
+        let render_pipeline = Self::setup_textured_context(
+            device,
+            config,
+            color_manager,
+            camera_manager,
+            material_manager,
+        );
         RenderContextManager { render_pipeline }
     }
 
     fn setup_textured_context(
         device: &Device,
         config: &SurfaceConfiguration,
+        color_manager: &ColorManager,
         camera_manager: &CameraManager,
-        material_manager: &MaterialManager,
+        texture_manager: &TextureManager,
     ) -> RenderPipeline {
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Texture Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("shaders/color_texture_shader.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(
+                include_str!("shaders/color_texture_shader.wgsl").into(),
+            ),
         });
 
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
                 bind_group_layouts: &[
-                    &material_manager.bind_group_layout,
+                    &color_manager.bind_group_layout,
+                    &texture_manager.bind_group_layout,
                     &camera_manager.bind_group_layout,
                 ],
                 push_constant_ranges: &[],

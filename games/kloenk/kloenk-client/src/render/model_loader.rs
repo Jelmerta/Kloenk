@@ -1,103 +1,31 @@
-use crate::render::model::MaterialToLoad::{Color, Texture};
 use crate::render::model::{
-    ColorTextureVertex, ModelToLoad, PrimitiveToLoad,
+    ColorDefinition, ColorTextureVertex, ModelDefinition, PrimitiveDefinition, TextureDefinition,
 };
 use crate::render::primitive_vertices_manager::PrimitiveVertices;
-use cgmath::Vector3;
+use cgmath::Vector4;
 use gltf::image::Source;
 use gltf::mesh::util::ReadIndices;
 use gltf::Gltf;
 use hydrox::load_binary;
 
-const CUBE_TEX: &[ColorTextureVertex] = &[
-    // Top ccw as seen from top
-    ColorTextureVertex {
-        position: [0.5, 0.5, 0.5],
-        color: [1.0, 1.0, 1.0, 1.0],
-        tex_coords: [0.0, 1.0],
-    },
-    ColorTextureVertex {
-        position: [0.5, 0.5, -0.5],
-        color: [1.0, 1.0, 1.0, 1.0],
-        tex_coords: [1.0, 1.0],
-    },
-    ColorTextureVertex {
-        position: [-0.5, 0.5, -0.5],
-        color: [1.0, 1.0, 1.0, 1.0],
-        tex_coords: [1.0, 0.0],
-    },
-    ColorTextureVertex {
-        position: [-0.5, 0.5, 0.5],
-        color: [1.0, 1.0, 1.0, 1.0],
-        tex_coords: [0.0, 0.0],
-    },
-    // Bottom ccw as seen from top
-    ColorTextureVertex {
-        position: [0.5, -0.5, 0.5],
-        color: [1.0, 1.0, 1.0, 1.0],
-        tex_coords: [0.0, 0.0],
-    },
-    ColorTextureVertex {
-        position: [0.5, -0.5, -0.5],
-        color: [1.0, 1.0, 1.0, 1.0],
-        tex_coords: [0.0, 1.0],
-    },
-    ColorTextureVertex {
-        position: [-0.5, -0.5, -0.5],
-        color: [1.0, 1.0, 1.0, 1.0],
-        tex_coords: [1.0, 0.0],
-    },
-    ColorTextureVertex {
-        position: [-0.5, -0.5, 0.5],
-        color: [1.0, 1.0, 1.0, 1.0],
-        tex_coords: [1.0, 1.0],
-    },
-];
-
-const CUBE_INDICES: &[u16] = &[
-    0, 1, 2, 0, 2, 3, // Bottom
-    4, 7, 6, 4, 6, 5, // Left
-    0, 3, 7, 0, 7, 4, // Right
-    1, 6, 2, 1, 5, 6, // Front
-    0, 4, 5, 0, 5, 1, // Back
-    2, 6, 7, 2, 7, 3,
-];
-
-const SQUARE_TEX: &[ColorTextureVertex] = &[
-    ColorTextureVertex {
-        position: [0.0, 0.0, 0.0],
-        tex_coords: [0.0, 0.0],
-    },
-    ColorTextureVertex {
-        position: [1.0, 0.0, 0.0],
-        tex_coords: [1.0, 0.0],
-    },
-    ColorTextureVertex {
-        position: [1.0, -1.0, 0.0],
-        tex_coords: [1.0, 1.0],
-    },
-    ColorTextureVertex {
-        position: [0.0, -1.0, 0.0],
-        tex_coords: [0.0, 1.0],
-    },
-];
-
-const SQUARE_INDICES: &[u16] = &[2, 1, 0, 3, 2, 0];
-
 pub struct ModelLoader {}
 
 impl ModelLoader {
-    pub fn load_colored_square_model(name: String, color: Vector3<f32>) -> ModelToLoad {
+    pub fn load_colored_square_model(name: String, color: Vector4<f32>) -> ModelDefinition {
         // let model = load_colored_square(color);
         // let indices = SQUARE_INDICES;
 
         // let meshes = build_colored_meshes(&&model[..], &indices, color);
 
-        ModelToLoad {
-            name: name.clone(),
-            primitives_to_load: vec![PrimitiveToLoad {
-                vertices_to_load: "square".to_string(),
-                material_to_load: Color { name, rgb: color },
+        ModelDefinition {
+            id: name.clone() + "_square",
+            primitives: vec![PrimitiveDefinition {
+                vertices_id: "SQUARE".to_string(),
+                color_definition: ColorDefinition {
+                    id: name,
+                    value: color,
+                },
+                texture_definition: None,
             }],
         }
     }
@@ -122,12 +50,13 @@ impl ModelLoader {
     //     }
     // }
 
-    fn build_colored_1x1_texture() {}
+    // fn build_colored_1x1_texture() {}
 
     // TODO should we save the gltf data immediately as well...? dont want to read it twice
     // TODO load models without texture as well... if there is no image? primitives dont need image necessarily i suppose?
-    pub async fn preload_gltf(model_path: &str) -> Vec<ModelToLoad> {
-        log::error!("Preloading GLTF");
+    // Assume for now one model for each gltf
+    // Maybe at some point we just want to preload a scene?
+    pub async fn preload_gltf(model_path: &str) -> Vec<ModelDefinition> {
         // Used before renderer loaded to set required data
         let data = load_binary(model_path)
             .await
@@ -135,28 +64,72 @@ impl ModelLoader {
         let gltf = Gltf::from_slice(data.as_slice())
             .unwrap_or_else(|_| panic!("Failed to load gltf model {}", model_path));
 
-        // TODO note we can have multiple primitives, each with different materials
-        let mut models = vec![];
-        gltf.images().for_each(|image| match image.source() {
-            Source::Uri { uri, mime_type: _ } => {
-                log::error!("Loading image {}", uri);
-                let material_file_uri = uri.to_string();
-                models.push(ModelToLoad {
-                    name: material_file_uri.clone(), // TODO name for different materials
-                    primitives_to_load: vec![PrimitiveToLoad {
-                        vertices_to_load: model_path.to_string(),
-                        material_to_load: Texture {
-                            file_name: material_file_uri,
-                        },
-                    }],
-                });
-            }
-            Source::View { .. } => {
-                panic!("Views not supported");
-            }
-        });
+        let mut model_definitions = Vec::new();
+        for mesh in gltf.meshes() {
+            let mut primitives = Vec::new();
+            mesh.primitives().for_each(|primitive| {
+                let metal = primitive.material().pbr_metallic_roughness();
+                let primitive_color = metal.base_color_factor();
 
-        models
+                let texture = metal.metallic_roughness_texture();
+                let texture_uri = texture.map(|info| match info.texture().source().source() {
+                    Source::View { .. } => {
+                        panic!("Only supports URI")
+                    }
+                    Source::Uri { uri, .. } => uri.to_string(),
+                });
+
+                let primitive_definition = PrimitiveDefinition {
+                    vertices_id: model_path.to_string(), // TODO primitive level
+                    color_definition: ColorDefinition {
+                        // TODO Note id needs to be on primitive level cause different primitives can have different colours
+                        id: mesh.name().unwrap().to_string(), // TODO maybe have some kind of unique id for colors, maybe readable hexvalue? idk.
+                        value: primitive_color.into(),
+                    },
+                    texture_definition: texture_uri.map(|uri| TextureDefinition {
+                        id: uri.clone(),
+                        file_name: uri,
+                    }),
+                };
+                primitives.push(primitive_definition);
+            });
+            let model_definition = ModelDefinition {
+                id: mesh
+                    .name()
+                    .map(|name| name.to_string())
+                    .unwrap_or_else(|| "no name".to_string()), // todo panic?
+                primitives,
+            };
+            model_definitions.push(model_definition);
+        }
+        model_definitions
+
+        // TODO note we can have multiple primitives, each with different materials
+        // let mut models = vec![];
+        // gltf.images().for_each(|image| match image.source() {
+        //     Source::Uri { uri, mime_type: _ } => {
+        //         log::error!("Loading image {}", uri);
+        //         let material_file_uri = uri.to_string();
+        //         models.push(ModelDefinition {
+        //             id: material_file_uri.clone(), // TODO name for different materials
+        //             primitives: vec![PrimitiveDefinition {
+        //                 vertices_id: model_path.to_string(),
+        //                 color_definition: ColorDefinition {
+        //                     id: "".to_string(),
+        //                     value: Vector4 {},
+        //                 },
+        //                 texture_definition: Texture {
+        //                     file_name: material_file_uri,
+        //                 },
+        //             }],
+        //         });
+        //     }
+        //     Source::View { .. } => {
+        //         panic!("Views not supported");
+        //     }
+        // });
+
+        // models
     }
 
     // TODO maybe make an intermediate step and then load everything into gpu buffers with intermediate object?
@@ -191,8 +164,9 @@ impl ModelLoader {
                     .map(|read_tex_coords| read_tex_coords.into_f32().collect::<Vec<[f32; 2]>>())
                     .unwrap();
 
-                let material = primitive.material();
-                let primitive_color = material.pbr_metallic_roughness().base_color_factor();
+                // let material = primitive.material();
+                // let primitive_color = material.pbr_metallic_roughness().base_color_factor();
+                // TODO load color?
 
                 let vertices = if let Some(vertex_attribute) = reader.read_positions() {
                     let mut vertices = Vec::new();
@@ -200,7 +174,6 @@ impl ModelLoader {
                     for (index, vertex) in vertex_attribute.enumerate() {
                         vertices.push(ColorTextureVertex {
                             position: vertex,
-                            color: primitive_color,
                             tex_coords: *tex_coords.get(index).unwrap(),
                         })
                     }
@@ -261,7 +234,11 @@ impl ModelLoader {
     }
 
     // #[allow(clippy::cast_possible_truncation)]
-    pub fn make_preload_model(model_name: String, model_to_load: &str, material_file_uri: &str) -> ModelToLoad {
+    pub fn make_preload_model(
+        model_name: String,
+        model_to_load: &str,
+        material_file_uri: &str,
+    ) -> ModelDefinition {
         // let model: &[TexVertex];
         // let indices: &[u16];
         // if model_to_load.eq("CUBE") {
@@ -276,13 +253,23 @@ impl ModelLoader {
         // name: file_name.to_string(),
         // diffuse_texture,
 
-        ModelToLoad {
-            name: model_name,
-            primitives_to_load: vec![PrimitiveToLoad {
-                vertices_to_load: model_to_load.to_string(),
-                material_to_load: Texture {
-                    file_name: material_file_uri.to_string(),
+        ModelDefinition {
+            id: model_name,
+            primitives: vec![PrimitiveDefinition {
+                vertices_id: model_to_load.to_string(),
+                color_definition: ColorDefinition {
+                    id: "white".to_string(),
+                    value: Vector4 {
+                        x: 1.0,
+                        y: 1.0,
+                        z: 1.0,
+                        w: 1.0,
+                    },
                 },
+                texture_definition: Some(TextureDefinition {
+                    id: material_file_uri.to_string(),
+                    file_name: material_file_uri.to_string(),
+                }),
             }],
         }
     }

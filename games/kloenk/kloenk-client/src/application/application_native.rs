@@ -20,8 +20,6 @@ use crate::systems::game_system::GameSystem;
 use winit::keyboard::KeyCode;
 
 use crate::application::cursor_manager::CursorManager;
-use crate::application::{AssetLoader, AssetType};
-use crate::render::model_manager::ModelManager;
 use crate::render::preload_manager::PreloadManager;
 use hydrox::{load_binary, AudioSystem};
 
@@ -85,7 +83,7 @@ impl ApplicationHandler for Application {
             .with_title("Kloenk!")
             .with_inner_size(LogicalSize::new(initial_width, initial_height))
             .with_active(true)
-            .with_cursor(Cursor::Custom(custom_cursor))
+            // .with_cursor(Cursor::Custom(custom_cursor))
             .with_window_icon(window_icon);
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
@@ -101,7 +99,7 @@ impl ApplicationHandler for Application {
         // TODO load_critical_models instead?
         // let assets = pollster::block_on(AssetLoader::load_critical_assets());
 
-        let preload_manager = pollster::block_on(PreloadManager::new());
+        let mut preload_manager = pollster::block_on(PreloadManager::new());
 
         let mut renderer = pollster::block_on(Renderer::new(window.clone()));
 
@@ -117,7 +115,7 @@ impl ApplicationHandler for Application {
         //     }
         // }
 
-        pollster::block_on(renderer.update_models(&preload_manager));
+        pollster::block_on(renderer.update_models(&mut preload_manager));
 
         let audio_system = pollster::block_on(AudioSystem::new());
 
@@ -168,6 +166,7 @@ impl ApplicationHandler for Application {
                 engine.input_handler.process_mouse_button(button, state);
             }
             WindowEvent::CursorMoved { position, .. } => {
+                log::error!("{:?}", position);
                 engine.input_handler.process_mouse_movement(
                     position,
                     engine.window.inner_size().width as f32,

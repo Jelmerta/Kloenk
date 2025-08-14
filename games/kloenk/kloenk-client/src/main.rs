@@ -1,12 +1,12 @@
 // Makes sure Windows does not open terminal on release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod run;
 mod application;
+mod gui;
 mod render;
+mod run;
 mod state;
 mod systems;
-mod gui;
 
 fn main() {
     run::run();

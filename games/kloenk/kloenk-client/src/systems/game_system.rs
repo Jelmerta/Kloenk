@@ -7,6 +7,7 @@ use crate::systems::camera_system::CameraSystem;
 use crate::systems::chat_system::ChatSystem;
 use crate::systems::close_menu_system::CloseMenuSystem;
 use crate::systems::command_handle_system::CommandHandleSystem;
+use crate::systems::cursor_manager::CursorSystem;
 use crate::systems::dialogue_system::DialogueSystem;
 use crate::systems::health_system::HealthSystem;
 use crate::systems::inventory_system::InventorySystem;
@@ -67,6 +68,8 @@ impl GameSystem {
         frame_state.gui.add_text_render_commands(ui_state);
 
         HealthSystem::display_health(window, game_state, input, frame_state);
+
+        CursorSystem::handle_cursor(window, input, frame_state);
 
         input.update_end_frame();
     }

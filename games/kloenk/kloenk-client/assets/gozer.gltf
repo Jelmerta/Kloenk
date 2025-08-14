@@ -15,7 +15,7 @@
 	"nodes":[
 		{
 			"mesh":0,
-			"name":"Cube"
+			"name":"Gozer"
 		}
 	],
 	"materials":[
@@ -36,7 +36,7 @@
 	],
 	"meshes":[
 		{
-			"name":"Cube.001",
+			"name":"Gozer",
 			"primitives":[
 				{
 					"attributes":{

@@ -1,25 +1,27 @@
 use crate::application::ImageAsset;
-use crate::render::texture;
+use crate::render::model::TextureDefinition;
 use crate::render::texture::Texture;
 use std::collections::HashMap;
 use wgpu::{BindGroup, BindGroupLayout, Device, Queue};
 
-pub struct MaterialGpu {
-    pub texture_bind_group: BindGroup,
-}
-
-pub struct
-MaterialManager {
+pub struct TextureManager {
     pub bind_group_layout: BindGroupLayout,
-    materials: HashMap<String, MaterialGpu>,
+    textures_gpu: HashMap<String, BindGroup>,
 }
 
-impl MaterialManager {
-    pub async fn new(device: &Device) -> MaterialManager {
-        // let mut material_manager = MaterialManager {
-        MaterialManager {
-            bind_group_layout: Self::setup_texture_layout(device),
-            materials: HashMap::new(),
+impl TextureManager {
+    pub async fn new(device: &Device, queue: &Queue) -> TextureManager {
+        let texture_layout = Self::setup_texture_layout(device);
+        let white_texture = Texture::white_1x1(device, queue).unwrap();
+
+        let white_texture_bind_group =
+            Self::build_texture_bind_group(device, &texture_layout, &white_texture);
+        let mut textures = HashMap::new();
+        textures.insert("white".to_string(), white_texture_bind_group);
+
+        TextureManager {
+            bind_group_layout: texture_layout,
+            textures_gpu: textures,
         }
 
         // let default_image_asset = ImageAsset {
@@ -34,37 +36,32 @@ impl MaterialManager {
         // material_manager
     }
 
-    pub fn get_material(&self, material_name: &str) -> &MaterialGpu {
-        self.materials.get(material_name).unwrap()
-    }
+    // pub fn get_texture(&self, material_name: &str) -> &TexturesGpu {
+    //     self.textures.get(material_name).unwrap()
+    // }
 
-    pub fn get_bind_group(&self, material_name: &str) -> &BindGroup {
+    // TODO if none found, 1x1 white texture
+    // pub fn get_bind_group(&self, material_name: &str) -> &BindGroup {
+    pub fn get_bind_group(&self, texture_definition: &Option<TextureDefinition>) -> &BindGroup {
+        let texture_id = texture_definition.clone().map(|td| td.id); // TODO can we do this without cloning...?
         &self
-            .materials
-            .get(material_name)
+            .textures_gpu
+            .get(&texture_id.unwrap_or_else(|| "white".to_string()))
             .unwrap()
-            .texture_bind_group
     }
 
-    pub fn load_material_to_memory(
-        &mut self,
-        device: &Device,
-        queue: &Queue,
-        image: ImageAsset,
-    ) {
+    pub fn load_material_to_memory(&mut self, device: &Device, queue: &Queue, image: ImageAsset) {
         let name = image.name.clone();
         let diffuse_texture = Texture::from_image(device, queue, image).unwrap();
-        let bind_group = Self::build_texture_bind_group(device, &self.bind_group_layout, &diffuse_texture);
-        let material = MaterialGpu {
-            texture_bind_group: bind_group,
-        };
-        self.materials.insert(name, material);
+        let bind_group =
+            Self::build_texture_bind_group(device, &self.bind_group_layout, &diffuse_texture);
+        self.textures_gpu.insert(name, bind_group);
     }
 
     fn build_texture_bind_group(
         device: &Device,
         texture_bind_group_layout: &BindGroupLayout,
-        diffuse_texture: &texture::Texture,
+        diffuse_texture: &Texture,
     ) -> BindGroup {
         let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: texture_bind_group_layout,

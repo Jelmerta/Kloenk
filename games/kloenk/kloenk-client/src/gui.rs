@@ -19,7 +19,7 @@ impl Gui {
         let image_command = RenderCommand::Texture {
             layer,
             ui_element: rect,
-            texture_model_id: image_name,
+            model_id: image_name,
         };
         self.render_commands.push(image_command);
     }
@@ -35,7 +35,7 @@ impl Gui {
         let image_command = RenderCommand::Texture {
             layer,
             ui_element,
-            texture_model_id: image_name,
+            model_id: image_name,
         };
         self.render_commands.push(image_command);
         let element_contains = ui_element.contains(input.mouse_position_ui, window);
@@ -66,7 +66,7 @@ impl Gui {
             let image_command = RenderCommand::Texture {
                 layer,
                 ui_element: rect,
-                texture_model_id: color.to_string(), // TODO hardcoded
+                model_id: color.to_string() + "_square", // TODO hardcoded
             };
             self.render_commands.push(image_command);
             return UserAction::LeftClick;
@@ -75,7 +75,7 @@ impl Gui {
             let image_command = RenderCommand::Texture {
                 layer,
                 ui_element: rect,
-                texture_model_id: color.to_string(), // TODO hardcoded
+                model_id: color.to_string() + "_square", // TODO hardcoded
             };
             self.render_commands.push(image_command);
             return UserAction::RightClick;
@@ -84,7 +84,7 @@ impl Gui {
             let image_command = RenderCommand::Texture {
                 layer,
                 ui_element: rect,
-                texture_model_id: color.to_string(), // TODO hardcode
+                model_id: color.to_string() + "_square", // TODO hardcode
             };
             self.render_commands.push(image_command);
             return UserAction::Hover;
@@ -93,7 +93,7 @@ impl Gui {
         let image_command = RenderCommand::Texture {
             layer,
             ui_element: rect,
-            texture_model_id: color.to_string(), // TODO hardcoded
+            model_id: color.to_string() + "_square", // TODO hardcoded
         };
         self.render_commands.push(image_command);
         UserAction::None

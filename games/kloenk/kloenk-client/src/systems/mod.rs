@@ -16,3 +16,4 @@ mod object_selection_system;
 mod position_manager;
 mod storage_manager;
 mod utility;
+mod cursor_manager;

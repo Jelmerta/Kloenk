@@ -120,7 +120,8 @@ impl ApplicationHandler<CustomEvent> for Application {
         spawn_local(async move {
             for asset_to_load in AssetLoader::STARTUP_GPU_ASSETS {
                 let asset = AssetLoader::load_image_asset(asset_to_load).await;
-                event_loop_proxy.send_event(CustomEvent::AssetLoaded(asset))
+                event_loop_proxy
+                    .send_event(CustomEvent::AssetLoaded(asset))
                     .unwrap_or_else(|_| {
                         panic!("Failed to send initialization event");
                     });

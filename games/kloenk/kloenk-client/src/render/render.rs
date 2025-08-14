@@ -7,13 +7,13 @@ use wgpu::{
     SurfaceConfiguration, TextureView,
 };
 
-use crate::application::AssetType::Image;
-use crate::application::{Asset, AssetLoader, ImageAsset};
+use crate::application::{AssetLoader, ImageAsset};
 use crate::render::camera::Camera;
 use crate::render::camera_manager::CameraManager;
+use crate::render::color_manager::ColorManager;
 use crate::render::instance::InstanceRaw;
-use crate::render::material_manager::MaterialManager;
-use crate::render::model::{ColorTextureVertex, Draw, MaterialToLoad, Model, Primitive};
+use crate::render::material_manager::TextureManager;
+use crate::render::model::{ColorDefinition, Draw, PrimitiveDefinition};
 use crate::render::model_loader::ModelLoader;
 use crate::render::model_manager::ModelManager;
 use crate::render::preload_manager::PreloadManager;
@@ -37,7 +37,8 @@ pub struct Renderer {
 
     model_manager: ModelManager,
     primitive_vertices_manager: PrimitiveVerticesManager,
-    material_manager: MaterialManager,
+    color_manager: ColorManager,
+    texture_manager: TextureManager,
     camera_manager: CameraManager,
     render_context_manager: RenderContextManager,
 
@@ -61,7 +62,7 @@ impl Instance {
 // Hmm we might be able to batch together different meshes. group models based on shadows, lighting, transparency etc
 struct RenderBatch {
     instance_buffer: Buffer,
-    primitive: Primitive,
+    primitive: PrimitiveDefinition,
     instance_count: u32,
 }
 
@@ -130,17 +131,23 @@ impl Renderer {
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![surface_format.add_srgb_suffix()], // Adding srgb view for webgpu. When using config.format we need to add_srgb_suffix() as well TODO also required on desktop? or only web?
-            desired_maximum_frame_latency: 2,
+            desired_maximum_frame_latency: 1, // faster than default frame display
         };
         surface.configure(&device, &config);
 
         let camera_manager = CameraManager::new(&device);
         // let vertex_manager
         let model_manager = ModelManager::new().await; // TODO kind of implicit preload
-        let primitive_vertices_manager = PrimitiveVerticesManager::new();
-        let material_manager = MaterialManager::new(&device).await;
-        let render_context_manager =
-            RenderContextManager::new(&device, &config, &camera_manager, &material_manager);
+        let primitive_vertices_manager = PrimitiveVerticesManager::new(&device);
+        let color_manager = ColorManager::new(&device);
+        let material_manager = TextureManager::new(&device, &queue).await;
+        let render_context_manager = RenderContextManager::new(
+            &device,
+            &config,
+            &color_manager,
+            &camera_manager,
+            &material_manager,
+        );
 
         // Meh, configure + depth texture creation also happen in resize, which is called in web before rendering.
         let depth_texture = texture::Depth::create_depth_texture(&device, &config, "depth_texture");
@@ -153,7 +160,8 @@ impl Renderer {
             config,
             model_manager,
             primitive_vertices_manager,
-            material_manager,
+            color_manager,
+            texture_manager: material_manager,
             camera_manager,
             render_context_manager,
             depth_texture,
@@ -242,18 +250,26 @@ impl Renderer {
                 timestamp_writes: None,
             });
 
-            self.render_batches.iter().for_each(|render_group| {
-                let primitive_vertices = self.primitive_vertices_manager.get_primitive_vertices(render_group.primitive.primitive_vertices_id.to_string());
+            self.render_batches.drain(..).for_each(|render_group| {
+                let primitive_vertices = self
+                    .primitive_vertices_manager
+                    .get_primitive_vertices(render_group.primitive.vertices_id.to_string());
                 let pipeline = &self.render_context_manager.render_pipeline;
                 render_pass.set_pipeline(pipeline);
 
-                let texture_bind_group =
-                    self.material_manager.get_bind_group(&render_group.primitive.material_id);
+                let color = self
+                    .color_manager
+                    .get_color_bind_group(&render_group.primitive.color_definition.id);
+                let texture_bind_group = self
+                    .texture_manager
+                    .get_bind_group(&render_group.primitive.texture_definition);
+
                 render_pass.set_bind_group(0, color, &[]);
                 render_pass.set_bind_group(1, texture_bind_group, &[]);
                 render_pass.set_bind_group(2, self.camera_manager.get_bind_group("camera_3d"), &[]);
                 render_pass.set_vertex_buffer(1, render_group.instance_buffer.slice(..));
-                render_pass.draw_primitive_instanced(primitive_vertices, 0..render_group.instance_count);
+                render_pass
+                    .draw_primitive_instanced(primitive_vertices, 0..render_group.instance_count);
             });
 
             drop(render_pass);
@@ -273,13 +289,13 @@ impl Renderer {
 
         frame_state
             .gui
-            .render_commands
+            .render_commands // TODO why is this different from render_batches? why separate implementation for UI? Can this be unified?
             .iter()
             .sorted_by_key(|render_command| match render_command {
                 RenderCommand::Texture {
                     layer,
                     ui_element: _rect,
-                    texture_model_id: _image_name,
+                    model_id: _image_name,
                 } => layer,
                 RenderCommand::Text {
                     layer,
@@ -301,9 +317,9 @@ impl Renderer {
                     RenderCommand::Texture {
                         layer: _layer,
                         ui_element: rect,
-                        texture_model_id, // TODO is this mesh or model?
+                        model_id: texture_model_id, // TODO is this mesh or model?
                     } => {
-                        self.draw(window, view, encoder, texture_model_id.to_string(), rect);
+                        self.draw_ui(window, view, encoder, texture_model_id.to_string(), rect);
                     }
                 } // TODO or maybe call it widget?
             });
@@ -405,13 +421,12 @@ impl Renderer {
                     })
                     .collect();
                 let instance_buffer = Self::create_instance_buffer(&self.device, &instance_group);
-                log::error!("model {}", model_id);
                 let model = self.model_manager.get_model(model_id);
                 // let primitive_id = model.primitives.iter().next().unwrap().primitive_vertices_id.clone();
                 let primitive = model.primitives.iter().next().unwrap(); //.primitive_vertices_id.clone();
                 let render_group = RenderBatch {
                     instance_buffer,
-                    primitive: primitive.clone(),
+                    primitive: primitive.clone(), // TODO i dont like cloning here... maybe pass an id to the primitive definition and then retrieve the whole definition from a map?
                     instance_count: instance_group.len() as u32,
                 };
                 render_batches.push(render_group);
@@ -425,7 +440,7 @@ impl Renderer {
             .update_buffer("camera_2d".to_string(), &self.queue, camera);
     }
 
-    fn draw(
+    fn draw_ui(
         &mut self,
         window: &Arc<Window>,
         view: &TextureView,
@@ -461,67 +476,69 @@ impl Renderer {
             timestamp_writes: None,
         });
 
+        let color = self
+            .color_manager
+            .get_color_bind_group(&primitive.color_definition.id);
+
+        let texture = self
+            .texture_manager
+            .get_bind_group(&primitive.texture_definition); // TODO consume instead of clone? just pass id?
+
         render_pass_ui.set_pipeline(pipeline);
-        render_pass_ui.set_bind_group(0, color);
+        render_pass_ui.set_bind_group(0, color, &[]);
+        render_pass_ui.set_bind_group(1, texture, &[]);
         render_pass_ui.set_bind_group(2, self.camera_manager.get_bind_group("camera_2d"), &[]);
 
         let element_instance = Self::create_ui_element_instance(window, *ui_element);
         let instance_buffer = Self::create_instance_buffer(&self.device, &[element_instance]);
         let instance_count = 1;
 
-        let material = &self
-            .material_manager
-            .get_material(&primitive.material_id)
-            .texture_bind_group;
-        render_pass_ui.set_bind_group(1, material, &[]);
         render_pass_ui.set_vertex_buffer(1, instance_buffer.slice(..));
-        let primitive_vertices = self.primitive_vertices_manager.get_primitive_vertices(primitive.primitive_vertices_id.clone());
+        let primitive_vertices = self
+            .primitive_vertices_manager
+            .get_primitive_vertices(primitive.vertices_id.clone());
         render_pass_ui.draw_primitive_instanced(primitive_vertices, 0..instance_count);
         drop(render_pass_ui);
     }
 
-    pub fn load_primitive_vertices_to_memory(&mut self, primitive_vertices: Vec<PrimitiveVertices>) {
+    fn load_primitive_vertices_to_memory(&mut self, primitive_vertices: Vec<PrimitiveVertices>) {
         for primitive_vertices in primitive_vertices {
-            self.primitive_vertices_manager.load_primitive_vertices_to_memory(&self.device, primitive_vertices)
+            self.primitive_vertices_manager
+                .load_primitive_vertices_to_memory(&self.device, primitive_vertices)
         }
     }
 
-    pub fn load_material_to_memory(&mut self, asset: ImageAsset) {
-        self.material_manager
+    fn load_color_to_memory(&mut self, color_definition: &ColorDefinition) {
+        self.color_manager
+            .load_color_to_memory(&self.device, color_definition);
+    }
+
+    fn load_material_to_memory(&mut self, asset: ImageAsset) {
+        self.texture_manager
             .load_material_to_memory(&self.device, &self.queue, asset);
     }
 
     // TODO make sure we dont stupidly keep updating pre-existing vertices/materials
-    pub async fn update_models(&mut self, preload_manager: &PreloadManager) {
-        for model in preload_manager.get_models_to_load() {
-            let mut loaded_primitives = Vec::new();
-
-            for primitive in &model.primitives_to_load {
-                if primitive.vertices_to_load.ends_with(".gltf") {
-                    let primitive_vertices = ModelLoader::load_gltf(&primitive.vertices_to_load).await;
+    pub async fn update_models(&mut self, preload_manager: &mut PreloadManager) {
+        for model in preload_manager.drain_models_to_load() {
+            for primitive in &model.primitives {
+                if primitive.vertices_id.ends_with(".gltf") {
+                    let primitive_vertices = ModelLoader::load_gltf(&primitive.vertices_id).await;
                     self.load_primitive_vertices_to_memory(primitive_vertices);
                 }
 
-                let material_id;
-                match &primitive.material_to_load {
-                    MaterialToLoad::Color { name, rgb } => {
-                        material_id = name;
-                    }
-                    MaterialToLoad::Texture { file_name } => {
-                        material_id = file_name;
-                        let image_texture_asset = AssetLoader::load_image_asset(&file_name).await;
-                        self.load_material_to_memory(image_texture_asset);
-                    }
+                if let Some(texture_id) = &primitive.texture_definition {
+                    // TODO check if not already loaded first
+                    let image_texture_asset =
+                        AssetLoader::load_image_asset(&texture_id.file_name).await;
+                    self.load_material_to_memory(image_texture_asset);
                 }
 
-                loaded_primitives.push(Primitive { primitive_vertices_id: primitive.vertices_to_load.to_string(), material_id: material_id.to_string() });
+                // todo check if not already loaded
+                self.load_color_to_memory(&primitive.color_definition);
             }
 
-            let loaded_model = Model {
-                primitives: loaded_primitives,
-            };
-            log::error!("Loaded model: {:?}", model.name.clone());
-            self.model_manager.add_model(model.name.clone(), loaded_model);
+            self.model_manager.add_model(model);
         }
     }
 

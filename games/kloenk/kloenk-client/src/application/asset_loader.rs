@@ -1,17 +1,17 @@
 use ddsfile::{Dds, DxgiFormat, FourCC, Header, Header10};
 use hydrox::load_binary;
 
-pub enum AssetType {
-    // Audio,
-    Image(ImageAsset),
-    // Model,
-    // Font,
-}
-
-pub struct Asset {
-    pub asset_type: AssetType,
-    // pub name: String,
-}
+// pub enum AssetType {
+//     // Audio,
+//     Image(ImageAsset),
+//     // Model,
+//     // Font,
+// }
+//
+// pub struct Asset {
+//     pub asset_type: AssetType,
+//     // pub name: String,
+// }
 
 #[derive(Debug)]
 pub struct ImageAsset {
@@ -79,7 +79,10 @@ impl AssetLoader {
         let format = detect_format(&dds.header, &dds.header10);
         ImageAsset {
             name: image_name.to_string(),
-            dimensions: TextureDimensions { pixel_width: dds.header.width, pixel_height: dds.header.height },
+            dimensions: TextureDimensions {
+                pixel_width: dds.header.width,
+                pixel_height: dds.header.height,
+            },
             encoding: format,
             // has_alpha: false,
             data: dds.data,
@@ -97,7 +100,10 @@ fn detect_format(header: &Header, header10: &Option<Header10>) -> ImageEncoding 
     } else {
         match header.spf.fourcc.clone().unwrap() {
             FourCC(FourCC::BC1_UNORM) => ImageEncoding::BC1,
-            _ => panic!("Unexpected DXGI format {:?}", header.spf.fourcc.clone().unwrap()),
+            _ => panic!(
+                "Unexpected DXGI format {:?}",
+                header.spf.fourcc.clone().unwrap()
+            ),
         }
     }
 }

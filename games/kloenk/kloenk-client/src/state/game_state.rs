@@ -333,7 +333,7 @@ impl GameState {
         entities.push(player.clone());
 
         let player_graphics = Graphics3D {
-            model_id: "gozer".to_string(),
+            model_id: "Gozer".to_string(), // Matches mesh name in gltf
         };
         graphics_3d_components.insert(player.clone(), player_graphics);
 
@@ -395,7 +395,7 @@ impl GameState {
         entities.push(npc.clone());
 
         let player_graphics = Graphics3D {
-            model_id: "gozer".to_string(),
+            model_id: "Gozer".to_string(), // matches name in gltf mesh
         };
         graphics_3d_components.insert(npc.clone(), player_graphics);
 
