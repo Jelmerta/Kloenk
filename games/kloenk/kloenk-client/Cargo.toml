@@ -10,13 +10,12 @@ description = "Custom Rust engine targeting WASM with WebGpu (with the dream of 
 license = "GPL-3.0-or-later"
 
 [dependencies]
-winit = { version = "0.30", default-features = false, features = ["rwh_06", "x11"] }
-env_logger = { version = "0.11", default-features = false } # Only used for dev debug logging atm
-log = "0.4"
+winit = { version = "0.30", default-features = false, features = ["rwh_06"] } # TODO are these features needed for both desktop and web? I think x11 feature is needed for linux? , "x11"
+#env_logger = { version = "0.11", default-features = false } # Only used for dev debug logging atm maybe make a dev flag
+#log = "0.4" # Info logging. Maybe also behind a flag?
 bytemuck = "1.23"
 cgmath = "0.18"
 anyhow = { version = "1.0", default-features = false }
-itertools = { version = "0.14", default-features = false, features = ["use_alloc"] }
 glyphon = { git = "https://github.com/grovesNL/glyphon.git" }
 gltf = { version = "1.4", default-features = false, features = ["utils", "names"] } # "KHR_materials_variants"] }
 ddsfile = "0.5" # already quite minimal, but could make a small reader to just get data i need out
@@ -28,13 +27,12 @@ anyhow = "1.0"
 fs_extra = "1.3"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-fs_extra = "1.3"
 wgpu = { version = "26.0", default-features = false, features = ["vulkan"] }
 pollster = "0.4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-console_error_panic_hook = "0.1"
-console_log = "1.0"
+#console_error_panic_hook = "0.1"
+#console_log = "1.0"
 wgpu = { version = "26.0", default-features = false, features = ["webgpu"] }
 wasm-bindgen = { version = "0.2", default-features = false }
 wasm-bindgen-futures = "0.4"

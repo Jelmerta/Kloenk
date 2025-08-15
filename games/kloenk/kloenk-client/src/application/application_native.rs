@@ -83,7 +83,7 @@ impl ApplicationHandler for Application {
             .with_title("Kloenk!")
             .with_inner_size(LogicalSize::new(initial_width, initial_height))
             .with_active(true)
-            // .with_cursor(Cursor::Custom(custom_cursor))
+            .with_cursor(Cursor::Custom(custom_cursor))
             .with_window_icon(window_icon);
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
@@ -166,7 +166,6 @@ impl ApplicationHandler for Application {
                 engine.input_handler.process_mouse_button(button, state);
             }
             WindowEvent::CursorMoved { position, .. } => {
-                log::error!("{:?}", position);
                 engine.input_handler.process_mouse_movement(
                     position,
                     engine.window.inner_size().width as f32,
@@ -195,23 +194,23 @@ impl ApplicationHandler for Application {
                 match engine.renderer.render(
                     &engine.window,
                     &mut engine.game_state,
-                    &engine.frame_state,
+                    &mut engine.frame_state,
                 ) {
                     Ok(()) => {}
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
                         engine.renderer.resize(engine.window.inner_size());
                     }
                     Err(wgpu::SurfaceError::OutOfMemory) => {
-                        log::error!("Out of memory");
+                        // log::error!("Out of memory");
                         event_loop.exit();
                     }
 
                     Err(wgpu::SurfaceError::Timeout) => {
-                        log::warn!("Surface timeout");
+                        // log::warn!("Surface timeout");
                     }
 
                     Err(wgpu::SurfaceError::Other) => {
-                        log::warn!("Other error");
+                        // log::warn!("Other error");
                     }
                 }
             }

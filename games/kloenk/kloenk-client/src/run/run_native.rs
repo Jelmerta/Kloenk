@@ -2,10 +2,11 @@ use crate::application::Application;
 use winit::event_loop::EventLoop;
 
 pub fn run() {
-    env_logger::builder()
-        .filter(None, log::LevelFilter::Warn)
-        .filter(Some("wgpu_hal::vulkan"), log::LevelFilter::Error)
-        .init();
+    // Needed for logging, maybe make a dev flag
+    // env_logger::builder()
+    //     .filter(None, log::LevelFilter::Warn)
+    //     .filter(Some("wgpu_hal::vulkan"), log::LevelFilter::Error)
+    //     .init();
 
     let event_loop = EventLoop::new().unwrap();
 

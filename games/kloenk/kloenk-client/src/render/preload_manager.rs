@@ -93,12 +93,6 @@ impl PreloadManager {
             "close_button_hover.dds",
         ));
 
-        models_to_load.push(ModelLoader::make_preload_model(
-            "cursor".to_string(),
-            "SQUARE",
-            "cursor.dds",
-        ));
-
         models_to_load
     }
 }

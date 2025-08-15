@@ -21,10 +21,16 @@ pub struct ColorManager {
 
 impl ColorManager {
     pub fn new(device: &Device) -> Self {
-        ColorManager {
+        let mut color_manager = ColorManager {
             bind_group_layout: Self::setup_color_layout(device),
             colors: HashMap::new(),
-        }
+        };
+        let white_color_definition = ColorDefinition {
+            id: "white".to_string(),
+            value: Vector4::new(1.0, 1.0, 1.0, 1.0),
+        };
+        color_manager.load_color_to_memory(device, &white_color_definition);
+        color_manager
     }
 
     pub fn get_color_bind_group(&self, color: &str) -> &BindGroup {

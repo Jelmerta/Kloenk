@@ -4,7 +4,7 @@ use glyphon::{
     SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
 };
 use hydrox::load_binary;
-use itertools::Itertools;
+// use itertools::Itertools;
 use std::sync::Arc;
 use wgpu::{CommandEncoder, Device, Queue, SurfaceConfiguration, TextureView};
 use winit::window::Window;
@@ -173,7 +173,7 @@ impl TextWriter {
                 self.queue
                     .iter()
                     .map(|text_context| text_context.to_text_area(window))
-                    .collect_vec(),
+                    .collect::<Vec<_>>(),
                 &mut self.swash_cache,
             )
             .unwrap();

@@ -1,9 +1,9 @@
 use cgmath::{prelude::*, Point3, Vector3};
-use itertools::Itertools;
+use std::collections::HashMap;
 use std::iter;
 use std::sync::Arc;
 use wgpu::{
-    Backend, Buffer, CommandEncoder, Device, Features, InstanceFlags, MemoryHints, Queue,
+    Buffer, CommandEncoder, Device, Features, InstanceFlags, MemoryHints, Queue,
     SurfaceConfiguration, TextureView,
 };
 
@@ -21,7 +21,7 @@ use crate::render::primitive_vertices_manager::{PrimitiveVertices, PrimitiveVert
 use crate::render::render_context_manager::RenderContextManager;
 use crate::render::text_renderer::TextWriter;
 use crate::render::texture;
-use crate::state::components::{Entity, Size};
+use crate::state::components::Size;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::{RenderCommand, UIElement, UIState};
@@ -86,15 +86,16 @@ impl Renderer {
             .await
             .unwrap();
 
-        let backend = adapter.get_info().backend;
-        match backend {
-            Backend::Vulkan => log::info!("Using Vulkan backend"),
-            Backend::Metal => log::info!("Using Metal backend"),
-            Backend::Dx12 => log::info!("Using DirectX 12 backend"),
-            Backend::Gl => log::info!("Using OpenGL backend (likely WebGL)"),
-            Backend::BrowserWebGpu => log::info!("Using Browser's WebGPU backend"),
-            Backend::Noop => log::info!("No graphics backend"),
-        }
+        // Dev flag log?
+        // let backend = adapter.get_info().backend;
+        // match backend {
+        //     Backend::Vulkan => log::info!("Using Vulkan backend"),
+        //     Backend::Metal => log::info!("Using Metal backend"),
+        //     Backend::Dx12 => log::info!("Using DirectX 12 backend"),
+        //     Backend::Gl => log::info!("Using OpenGL backend (likely WebGL)"),
+        //     Backend::BrowserWebGpu => log::info!("Using Browser's WebGPU backend"),
+        //     Backend::Noop => log::info!("No graphics backend"),
+        // }
 
         // Add gpu compression formats
         let available_features = adapter.features();
@@ -184,7 +185,7 @@ impl Renderer {
         &mut self,
         window: &Arc<Window>,
         game_state: &mut GameState,
-        frame_state: &FrameState,
+        frame_state: &mut FrameState,
     ) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor {
@@ -280,49 +281,37 @@ impl Renderer {
         &mut self,
         window: &Arc<Window>,
         game_state: &mut GameState,
-        frame_state: &FrameState,
+        frame_state: &mut FrameState,
         view: &TextureView,
         encoder: &mut CommandEncoder,
     ) {
         let camera = game_state.camera_components.get_mut("camera_ui").unwrap();
         self.set_camera_data_ui(camera, &window);
 
-        frame_state
-            .gui
-            .render_commands // TODO why is this different from render_batches? why separate implementation for UI? Can this be unified?
-            .iter()
-            .sorted_by_key(|render_command| match render_command {
-                RenderCommand::Texture {
-                    layer,
-                    ui_element: _rect,
-                    model_id: _image_name,
-                } => layer,
+        frame_state.gui.render_commands.sort_by_key(|render_command| match render_command {
+            RenderCommand::Texture { layer, .. } => { *layer }
+            RenderCommand::Text { layer, .. } => { *layer }
+        });
+
+        for render_command in frame_state.gui.render_commands.drain(..) {
+            match render_command {
                 RenderCommand::Text {
-                    layer,
-                    rect: _rect,
-                    text: _text,
-                    color: _color,
-                } => layer,
-            })
-            .for_each(|render_command| {
-                match render_command {
-                    RenderCommand::Text {
-                        layer: _layer,
-                        rect,
-                        text,
-                        color,
-                    } => {
-                        self.text_writer.add(&window, rect, text, color);
-                    }
-                    RenderCommand::Texture {
-                        layer: _layer,
-                        ui_element: rect,
-                        model_id: texture_model_id, // TODO is this mesh or model?
-                    } => {
-                        self.draw_ui(window, view, encoder, texture_model_id.to_string(), rect);
-                    }
-                } // TODO or maybe call it widget?
-            });
+                    layer: _layer,
+                    rect,
+                    text,
+                    color,
+                } => {
+                    self.text_writer.add(&window, &rect, &text, &color);
+                }
+                RenderCommand::Texture {
+                    layer: _layer,
+                    ui_element: rect,
+                    model_id: texture_model_id, // TODO is this mesh or model?
+                } => {
+                    self.draw_ui(window, view, encoder, texture_model_id.to_string(), &rect);
+                }
+            } // TODO or maybe call it widget?
+        };
         self.text_writer
             .write(&self.device, &self.queue, encoder, view, window)
     }
@@ -388,6 +377,8 @@ impl Renderer {
     #[allow(clippy::cast_possible_truncation)]
     fn create_render_batches(&mut self, game_state: &GameState) {
         let mut render_batches: Vec<RenderBatch> = Vec::new();
+        let mut render_groups: HashMap<String, Vec<&String>> = HashMap::new();
+
         game_state
             .entities
             .iter()
@@ -396,18 +387,17 @@ impl Renderer {
                 game_state
                     .graphics_3d_components
                     .contains_key(entity.as_str())
-            })
-            .chunk_by(|entity| {
-                game_state
-                    .get_graphics(&(*entity).to_string())
-                    .unwrap()
-                    .model_id
-                    .clone()
-            })
-            .into_iter()
+            }).for_each(|entity| {
+            let model_id = game_state
+                .get_graphics(&(*entity).to_string())
+                .unwrap()
+                .model_id.clone();
+            render_groups.entry(model_id).or_default().push(entity);
+        });
+
+        render_groups.into_iter()
             // TODO? i think we have to iterate over each primitive in the model?
-            .for_each(|(model_id, group)| {
-                let entity_group: Vec<&Entity> = group.collect();
+            .for_each(|(model_id, entity_group)| {
                 let instance_group: Vec<Instance> = entity_group
                     .into_iter()
                     .map(|entity| {
@@ -421,7 +411,7 @@ impl Renderer {
                     })
                     .collect();
                 let instance_buffer = Self::create_instance_buffer(&self.device, &instance_group);
-                let model = self.model_manager.get_model(model_id);
+                let model = self.model_manager.get_model_3d(model_id);
                 // let primitive_id = model.primitives.iter().next().unwrap().primitive_vertices_id.clone();
                 let primitive = model.primitives.iter().next().unwrap(); //.primitive_vertices_id.clone();
                 let render_group = RenderBatch {
@@ -448,7 +438,7 @@ impl Renderer {
         model_id: String,
         ui_element: &UIElement,
     ) {
-        let model = self.model_manager.get_model(model_id.to_string());
+        let model = self.model_manager.get_model_2d(model_id.to_string());
         let primitive = model.primitives.iter().next().unwrap(); // todo multiple primitives
 
         let pipeline = &self.render_context_manager.render_pipeline;
@@ -541,24 +531,25 @@ impl Renderer {
             self.model_manager.add_model(model);
         }
     }
-
-    // //  todo access to material manager and primitive vertices
-    // pub async fn load_assets(&self, preload_manager: PreloadManager) -> Vec<Asset> {
-    //     let mut assets = Vec::new();
-    //
-    //     for (index, model) in preload_manager.get_models_to_load() {
-    //         for primitive in model.primitives_to_load {
-    //             self.material_manager.load_material_to_memory(primitive.material_to_load);
-    //         }
-    //
-    //         let image_asset = Self::load_image_asset(image_path).await;
-    //         let asset = Asset {
-    //             asset_type: Image(image_asset),
-    //             // name: image_path.to_string(),
-    //         };
-    //         assets.push(asset);
-    //     }
-    //
-    //     assets
-    // }
 }
+
+// //  todo access to material manager and primitive vertices
+// pub async fn load_assets(&self, preload_manager: PreloadManager) -> Vec<Asset> {
+//     let mut assets = Vec::new();
+//
+//     for (index, model) in preload_manager.get_models_to_load() {
+//         for primitive in model.primitives_to_load {
+//             self.material_manager.load_material_to_memory(primitive.material_to_load);
+//         }
+//
+//         let image_asset = Self::load_image_asset(image_path).await;
+//         let asset = Asset {
+//             asset_type: Image(image_asset),
+//             // name: image_path.to_string(),
+//         };
+//         assets.push(asset);
+//     }
+//
+//     assets
+// }
+// }

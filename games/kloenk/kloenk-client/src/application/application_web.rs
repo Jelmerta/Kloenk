@@ -8,14 +8,16 @@ use winit::{
 use winit::platform::web::{CustomCursorExtWebSys, WindowExtWebSys};
 
 use crate::state::input::Input;
-use hydrox::AudioSystem;
+use hydrox::{load_binary, AudioSystem};
 use std::sync::Arc;
+use std::thread::spawn;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::spawn_local;
+use web_sys::js_sys::Promise;
 use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
-use winit::window::{CustomCursor, Window, WindowId};
+use winit::window::{CustomCursor, Icon, Window, WindowId};
 
 use crate::application::asset_loader::AssetLoader;
 use crate::application::{Asset, AssetType};
@@ -166,12 +168,14 @@ impl ApplicationHandler<CustomEvent> for Application {
         window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
             .with_inner_size(LogicalSize::new(initial_width, initial_height))
-            .with_active(true);
-        // .with_cursor(event_loop.create_custom_cursor(CustomCursor::from_url(
-        //     String::from("assets/cursor.webp"), // TODO verify with squoosh/avif but this is something we want high quality dont worry too much about the kbs
-        //     3,
-        //     3,
-        // )));
+            .with_active(true)
+            // Not so happy with browser only supporting 32x32 without edge failures. Other option is using larger image and mirroring or rotating the image near right/bottom border. Rendering the cursor leads to slight trailing which feels not great in a game so probably want to use system supported, limited cursor
+            .with_cursor(event_loop.create_custom_cursor(CustomCursor::from_url(
+                String::url("assets/cursor.webp"),
+                3,
+                3,
+            )));
+        // Note: window icon on web unsupported and performed through favicon in html
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
