@@ -1,0 +1,1 @@
+pyftsubset PlaywriteNL-Regular.ttf --text-file=needed_characters.txt --output-file=PlaywriteNL-Minimal.ttf --no-hinting

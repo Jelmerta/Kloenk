@@ -16,10 +16,10 @@ impl Gui {
     }
 
     pub fn image(&mut self, layer: u32, rect: UIElement, image_name: String) {
-        let image_command = RenderCommand::Mesh {
+        let image_command = RenderCommand::Texture {
             layer,
             ui_element: rect,
-            mesh_id: image_name,
+            model_id: image_name,
         };
         self.render_commands.push(image_command);
     }
@@ -32,10 +32,10 @@ impl Gui {
         image_name: String,
         input: &Input,
     ) -> UserAction {
-        let image_command = RenderCommand::Mesh {
+        let image_command = RenderCommand::Texture {
             layer,
             ui_element,
-            mesh_id: image_name,
+            model_id: image_name,
         };
         self.render_commands.push(image_command);
         let element_contains = ui_element.contains(input.mouse_position_ui, window);
@@ -63,37 +63,37 @@ impl Gui {
         let mouse_is_contained = rect.contains(input.mouse_position_ui, window);
 
         if mouse_is_contained && input.left_mouse_clicked.is_toggled_on() {
-            let image_command = RenderCommand::Mesh {
+            let image_command = RenderCommand::Texture {
                 layer,
                 ui_element: rect,
-                mesh_id: color.to_string(), // TODO hardcoded
+                model_id: color.to_string() + "_square", // TODO hardcoded
             };
             self.render_commands.push(image_command);
             return UserAction::LeftClick;
         }
         if mouse_is_contained && input.right_mouse_clicked.is_toggled_on() {
-            let image_command = RenderCommand::Mesh {
+            let image_command = RenderCommand::Texture {
                 layer,
                 ui_element: rect,
-                mesh_id: color.to_string(), // TODO hardcoded
+                model_id: color.to_string() + "_square", // TODO hardcoded
             };
             self.render_commands.push(image_command);
             return UserAction::RightClick;
         }
         if mouse_is_contained {
-            let image_command = RenderCommand::Mesh {
+            let image_command = RenderCommand::Texture {
                 layer,
                 ui_element: rect,
-                mesh_id: color.to_string(), // TODO hardcode
+                model_id: color.to_string() + "_square", // TODO hardcode
             };
             self.render_commands.push(image_command);
             return UserAction::Hover;
         }
 
-        let image_command = RenderCommand::Mesh {
+        let image_command = RenderCommand::Texture {
             layer,
             ui_element: rect,
-            mesh_id: color.to_string(), // TODO hardcoded
+            model_id: color.to_string() + "_square", // TODO hardcoded
         };
         self.render_commands.push(image_command);
         UserAction::None

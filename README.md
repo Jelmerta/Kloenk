@@ -98,3 +98,16 @@ sudo cp bg_output/kloenk.js /usr/share/nginx/html
 Build for product owner (on windows):
 ```cargo build --target x86_64-pc-windows-msvc --release```
 ```Compress-Archive -Path .\target\x86_64-pc-windows-msvc\release\assets\,.\target\x86_64-pc-windows-msvc\release\kloenk.exe -DestinationPath .\kloenk.zip```
+
+converting to lower bitrate wav
+ffmpeg -i bonk.wav -ar 20500 -acodec pcm_s16le bonk2.wav
+
+Getting out just RGB(A) values of image
+magick .\cursor.png -size 61*60 RGBA:cursor.rgba
+
+Generating dds files
+C:\Users\Jelmer\projects\bc7enc_rdo\Release
+.\bc7enc.exe '..\..\..\Pictures\kloenk original images\png_versions\close_button_hover.png' -zc65536 -z'0.5' -zm -o '
+..\..\..\Pictures\kloenk original images\rdo_dds\close_button_hover.dds' -C -e
+Can check with and without -C -e for different versions
+Add -1 to generate BC1, for opaque or BC1A single bit alpha

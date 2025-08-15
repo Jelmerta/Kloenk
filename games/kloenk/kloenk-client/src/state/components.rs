@@ -3,7 +3,7 @@ use cgmath::Point3;
 pub type Entity = String;
 
 pub struct Graphics3D {
-    pub mesh_id: String,
+    pub model_id: String,
 }
 
 pub struct Graphics2D {

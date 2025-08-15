@@ -5,7 +5,7 @@ use crate::state::input::Input;
 use crate::systems::position_manager::PositionManager;
 use cgmath::num_traits::Float;
 use cgmath::{InnerSpace, Point3, Vector3, Vector4};
-use itertools::Itertools;
+// use itertools::Itertools;
 
 #[derive(Debug)]
 struct Ray {
@@ -17,6 +17,7 @@ struct Ray {
 
 pub struct ObjectDetectionSystem {}
 
+// TODO Check if this could be done with depth stencils instead of this cpu-heavy operation. i guess depth stencil for each object should be able to do this
 impl ObjectDetectionSystem {
     // Perhaps data could be kept for next frame to handle
     pub fn setup_detection_for_frame(
@@ -87,14 +88,21 @@ impl ObjectDetectionSystem {
             .get_objects_on_cursor()
             .iter()
             .filter(|entity| !(*entity).eq(&"player".to_string()))
-            .map(|entity| {
-                let object_position = game_state.get_position(entity).unwrap();
-                let distance = PositionManager::distance_3d(object_position, player_position);
-                (entity, distance)
-            })
-            .sorted_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap())
-            .map(|(entity, _)| entity.clone())
-            .next();
+            .min_by(|a, b| {
+                let a_pos = game_state.get_position(a).unwrap();
+                let b_pos = game_state.get_position(b).unwrap();
+                let a_dist = PositionManager::distance_3d(a_pos, player_position);
+                let b_dist = PositionManager::distance_3d(b_pos, player_position);
+                a_dist.partial_cmp(&b_dist).expect("Distances must be comparable")
+            }).cloned();
+        // .map(|entity| {
+        //     let object_position = game_state.get_position(entity).unwrap();
+        //     let distance = PositionManager::distance_3d(object_position, player_position);
+        //     (entity, distance)
+        // })
+        // .sorted_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap())
+        // .map(|(entity, _)| entity.clone())
+        // .next();
 
         frame_state.set_nearest_object_on_cursor(nearest_object);
     }

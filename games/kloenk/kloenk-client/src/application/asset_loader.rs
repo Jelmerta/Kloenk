@@ -1,53 +1,64 @@
-use crate::application::asset_loader::AssetType::Image;
+use ddsfile::{Dds, DxgiFormat, FourCC, Header, Header10};
 use hydrox::load_binary;
-use image::{DynamicImage, ImageResult};
 
-pub enum AssetType {
-    Audio,
-    Image(DynamicImage),
-    Model,
-    Font,
-}
-
-pub struct Asset {
-    pub asset_type: AssetType,
+#[derive(Debug)]
+pub struct ImageAsset {
     pub name: String,
+    pub dimensions: TextureDimensions,
+    pub encoding: ImageEncoding,
+    pub data: Vec<u8>,
 }
 
-pub(crate) struct AssetLoader {}
+// TODO should probably contain transcoded image?
+#[derive(Debug)]
+pub enum ImageEncoding {
+    BC1,
+    BC7,
+}
+
+#[derive(Debug)]
+pub struct TextureDimensions {
+    pub pixel_width: u32,
+    pub pixel_height: u32,
+}
+
+pub struct AssetLoader {}
 
 impl AssetLoader {
-    const IMAGE_FILE_NAMES: [&'static str; 6] = ["close_button.webp", "close_button_hover.webp", "grass.webp", "shield.webp", "sword.webp", "tree.webp"];
-
-    pub async fn load_critical_assets() -> Vec<Asset> {
-        let mut assets = Vec::new();
-
-        for image_path in Self::IMAGE_FILE_NAMES {
-            let data = load_binary(image_path).await.unwrap();
-            let decoded_image = Self::decode_image(&data).unwrap();
-            let image_asset = Asset {
-                asset_type: Image(decoded_image),
-                name: image_path.to_string(),
-            };
-            assets.push(image_asset);
-        }
-
-        assets
+    pub async fn load_image_asset(image_path: &str) -> ImageAsset {
+        let data = load_binary(image_path).await.unwrap();
+        Self::load_dds(image_path, &data)
     }
 
-    // fn decode_image(image_bytes: &[u8]) -> impl Future<Output=ImageResult<DynamicImage>> {
-    //     async move {
-    //         // let mut decoder = image_webp::WebPDecoder::new(Cursor::new(image_bytes)).unwrap();
-    //         // let bytes_per_pixel = if decoder.has_alpha() { 4 } else { 3 };
-    //         // let (width, height) = decoder.dimensions();
-    //         // let mut data = vec![0; width as usize * height as usize * bytes_per_pixel];
-    //         // decoder.read_image(&mut data).unwrap();
-    //         // decoder.
-    //         image::load_from_memory(image_bytes)
-    //     }
-    // }
+    fn load_dds(image_name: &str, dds_bytes: &[u8]) -> ImageAsset {
+        let dds = Dds::read(dds_bytes).unwrap();
+        let format = detect_format(&dds.header, &dds.header10);
+        ImageAsset {
+            name: image_name.to_string(),
+            dimensions: TextureDimensions {
+                pixel_width: dds.header.width,
+                pixel_height: dds.header.height,
+            },
+            encoding: format,
+            data: dds.data,
+        }
+    }
+}
 
-    fn decode_image(image_bytes: &[u8]) -> ImageResult<DynamicImage> {
-        image::load_from_memory(image_bytes)
+fn detect_format(header: &Header, header10: &Option<Header10>) -> ImageEncoding {
+    if let Some(header10) = header10 {
+        match header10.dxgi_format {
+            DxgiFormat::BC7_UNorm => ImageEncoding::BC7,
+            DxgiFormat::BC1_UNorm => ImageEncoding::BC1,
+            _ => panic!("Unexpected DXGI format {:?}", header10.dxgi_format),
+        }
+    } else {
+        match header.spf.fourcc.clone().unwrap() {
+            FourCC(FourCC::BC1_UNORM) => ImageEncoding::BC1,
+            _ => panic!(
+                "Unexpected DXGI format {:?}",
+                header.spf.fourcc.clone().unwrap()
+            ),
+        }
     }
 }

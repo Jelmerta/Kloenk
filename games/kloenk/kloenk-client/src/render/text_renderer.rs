@@ -4,7 +4,7 @@ use glyphon::{
     SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
 };
 use hydrox::load_binary;
-use itertools::Itertools;
+// use itertools::Itertools;
 use std::sync::Arc;
 use wgpu::{CommandEncoder, Device, Queue, SurfaceConfiguration, TextureView};
 use winit::window::Window;
@@ -58,9 +58,10 @@ pub struct TextWriter {
 #[allow(clippy::cast_possible_truncation)]
 impl TextWriter {
     pub async fn new(device: &Device, queue: &Queue, config: &SurfaceConfiguration) -> Self {
-        let woff2_data = load_binary("PlaywriteNL-Regular.woff2")
-            .await
-            .unwrap();
+        let font_data = load_binary("PlaywriteNL-Minimal.ttf").await.unwrap();
+        // let woff2_data = load_binary("PlaywriteNL-Minimal.woff2")
+        //     .await
+        //     .unwrap();
 
         // let mut font_data = Vec::new();
         // BrotliDecompress(
@@ -76,7 +77,7 @@ impl TextWriter {
 
         // TODO does it even make sense to await? i mean it needs to happen anyway hmm
         // let font_data = woff2_patched::convert_woff2_to_ttf(&mut std::io::Cursor::new(woff2_data)).unwrap();
-        let font_data = TextWriter::load_woff2(&woff2_data).await;
+        // let font_data = TextWriter::load_woff2(&woff2_data).await; // TODO bro why the fuck do we do this just load the ttf. it's brotli compressed anyway over http no need for woff2-patched... keep it simple idiot no way this compresses that much more anyway. could check before/after i guess
         let mut fontdb = fontdb::Database::new();
         fontdb.load_font_data(font_data);
         let font_system = FontSystem::new_with_locale_and_db("en-US".to_string(), fontdb);
@@ -98,11 +99,11 @@ impl TextWriter {
         }
     }
 
-    fn load_woff2(woff2_data: &Vec<u8>) -> impl Future<Output=Vec<u8>> {
-        async move {
-            woff2_patched::convert_woff2_to_ttf(&mut std::io::Cursor::new(woff2_data)).unwrap()
-        }
-    }
+    // fn load_woff2(woff2_data: &Vec<u8>) -> impl Future<Output=Vec<u8>> {
+    //     async move {
+    //         woff2_patched::convert_woff2_to_ttf(&mut std::io::Cursor::new(woff2_data)).unwrap()
+    //     }
+    // }
 
     pub fn reset_for_frame(&mut self) {
         self.atlas.trim();
@@ -172,7 +173,7 @@ impl TextWriter {
                 self.queue
                     .iter()
                     .map(|text_context| text_context.to_text_area(window))
-                    .collect_vec(),
+                    .collect::<Vec<_>>(),
                 &mut self.swash_cache,
             )
             .unwrap();
@@ -185,6 +186,7 @@ impl TextWriter {
                 label: None,
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view,
+                    depth_slice: None,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Load,

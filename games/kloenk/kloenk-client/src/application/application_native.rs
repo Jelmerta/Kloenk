@@ -12,7 +12,6 @@ use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Cursor, Fullscreen, Icon, Window, WindowId};
 
-use crate::application::cursor_manager::CursorManager;
 use crate::render::render::Renderer;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
@@ -20,7 +19,10 @@ use crate::state::ui_state::UIState;
 use crate::systems::game_system::GameSystem;
 use winit::keyboard::KeyCode;
 
+use crate::application::cursor_manager::CursorManager;
 use crate::application::AssetLoader;
+use crate::render::model_loader::ModelLoader;
+use crate::render::preload_manager::PreloadManager;
 use hydrox::{load_binary, AudioSystem};
 
 pub struct Engine {
@@ -72,16 +74,12 @@ impl ApplicationHandler for Application {
         let mut initial_height = 1.0;
 
         let window_attributes;
-        let cursor_binary = pollster::block_on(load_binary("cursor.webp")).unwrap();
-        let cursor_source = CursorManager::load_cursor(cursor_binary.clone());
+        let cursor_binary = pollster::block_on(load_binary("cursor.rgba")).unwrap();
+        let cursor_source = CursorManager::load_cursor(cursor_binary);
         let custom_cursor = event_loop.create_custom_cursor(cursor_source);
 
-        let window_icon_binary = pollster::block_on(load_binary("kunst.webp")).unwrap();
-        let window_icon_rgba = image::load_from_memory(&window_icon_binary)
-            .unwrap()
-            .to_rgba8()
-            .into_raw();
-        let window_icon = Some(Icon::from_rgba(window_icon_rgba, 64, 64).unwrap());
+        let window_icon_binary = pollster::block_on(load_binary("favicon.rgba")).unwrap();
+        let window_icon = Some(Icon::from_rgba(window_icon_binary, 64, 64).unwrap());
 
         window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
@@ -98,16 +96,57 @@ impl ApplicationHandler for Application {
             window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
         }
 
-        // let mut assets = Vec::new();
-        // pollster::block_on(async move {
-        //     assets = AssetLoader::load_critical_assets().await;
-        // });
+        // let model_manager = ModelManager::new();
 
-        let assets = pollster::block_on(AssetLoader::load_critical_assets());
+        // TODO load_critical_models instead?
+        // let assets = pollster::block_on(AssetLoader::load_critical_assets());
 
-        let renderer_future = Renderer::new(window.clone(), assets);
+        let mut preload_manager = PreloadManager::new();
+        // let mut preload_manager = pollster::block_on(PreloadManager::new());
 
-        let renderer = pollster::block_on(renderer_future);
+        let mut renderer = pollster::block_on(Renderer::new(window.clone()));
+        // spawn_lo
+        // cal()
+
+        renderer.set_models(preload_manager.models_to_load.clone());
+
+        for mut model in preload_manager.drain_models_to_load() { // maybe first make sure uniqueness before loading
+            for primitive in model.primitives.drain(..) {
+                if primitive.vertices_id.ends_with(".gltf") {
+                    let primitive_vertices = pollster::block_on(ModelLoader::load_gltf(&primitive.vertices_id));
+                    renderer.load_primitive_vertices_to_memory(primitive_vertices);
+                }
+
+                if let Some(texture_id) = primitive.texture_definition {
+                    // TODO check if not already loaded first
+                    let image_texture_asset = pollster::block_on(AssetLoader::load_image_asset(&texture_id.file_name));
+                    // AssetLoader::load_image_asset(&texture_id.file_name).await;
+
+                    renderer.load_material_to_memory(image_texture_asset);
+                }
+
+                renderer.load_color_to_memory(primitive.color_definition);
+
+                // todo check if not already loaded
+                // let image_texture_asset = AssetLoader::load_image_asset(&texture_id.file_name).await;
+                // AssetLoader::load_image_asset(&texture_id.file_name).await;
+            }
+        }
+
+        // let mut renderer = enderer_future);
+        // let meshes = build_textured_meshes(&model, &indices, mesh_material_id);
+
+        // let assets = pollster::block_on(AssetLoader::load_critical_assets());
+        // for asset in assets {
+        //     match asset.asset_type {
+        //         AssetType::Image(image_asset) => {
+        //             renderer.load_material_to_memory(image_asset);
+        //         }
+        //     }
+        // }
+
+        // pollster::block_on(renderer.update_models(&mut preload_manager));
+
         let audio_system = pollster::block_on(AudioSystem::new());
 
         self.application_state = State::Initialized(Engine {
@@ -185,23 +224,23 @@ impl ApplicationHandler for Application {
                 match engine.renderer.render(
                     &engine.window,
                     &mut engine.game_state,
-                    &engine.frame_state,
+                    &mut engine.frame_state,
                 ) {
                     Ok(()) => {}
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
                         engine.renderer.resize(engine.window.inner_size());
                     }
                     Err(wgpu::SurfaceError::OutOfMemory) => {
-                        log::error!("Out of memory");
+                        // log::error!("Out of memory");
                         event_loop.exit();
                     }
 
                     Err(wgpu::SurfaceError::Timeout) => {
-                        log::warn!("Surface timeout");
+                        // log::warn!("Surface timeout");
                     }
 
                     Err(wgpu::SurfaceError::Other) => {
-                        log::warn!("Other error");
+                        // log::warn!("Other error");
                     }
                 }
             }
