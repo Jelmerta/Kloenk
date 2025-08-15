@@ -31,8 +31,8 @@ wgpu = { version = "26.0", default-features = false, features = ["vulkan"] }
 pollster = "0.4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-#console_error_panic_hook = "0.1"
-#console_log = "1.0"
+console_error_panic_hook = "0.1"
+console_log = "1.0"
 wgpu = { version = "26.0", default-features = false, features = ["webgpu"] }
 wasm-bindgen = { version = "0.2", default-features = false }
 wasm-bindgen-futures = "0.4"
