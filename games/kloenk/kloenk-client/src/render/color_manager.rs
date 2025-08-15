@@ -29,7 +29,7 @@ impl ColorManager {
             id: "white".to_string(),
             value: Vector4::new(1.0, 1.0, 1.0, 1.0),
         };
-        color_manager.load_color_to_memory(device, &white_color_definition);
+        color_manager.load_color_to_memory(device, white_color_definition);
         color_manager
     }
 
@@ -37,7 +37,7 @@ impl ColorManager {
         &self.colors.get(color).unwrap().bind_group
     }
 
-    pub fn load_color_to_memory(&mut self, device: &Device, color_definition: &ColorDefinition) {
+    pub fn load_color_to_memory(&mut self, device: &Device, color_definition: ColorDefinition) {
         let color_name = color_definition.id.clone();
         let color = ColorGpu {
             bind_group: Self::build_color_bind_group(

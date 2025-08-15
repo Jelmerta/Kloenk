@@ -56,11 +56,12 @@ impl ModelLoader {
     // TODO load models without texture as well... if there is no image? primitives dont need image necessarily i suppose?
     // Assume for now one model for each gltf
     // Maybe at some point we just want to preload a scene?
-    pub async fn preload_gltf(model_path: &str) -> Vec<ModelDefinition> {
+    pub fn preload_gltf(model_path: &str) -> Vec<ModelDefinition> {
+        let data = include_bytes!("../../assets/gozer.gltf");
         // Used before renderer loaded to set required data
-        let data = load_binary(model_path)
-            .await
-            .unwrap_or_else(|_| panic!("Path {} could not be found", model_path));
+        // let data = load_binary(model_path)
+        //     .await
+        //     .unwrap_or_else(|_| panic!("Path {} could not be found", model_path));
         let gltf = Gltf::from_slice(data.as_slice())
             .unwrap_or_else(|_| panic!("Failed to load gltf model {}", model_path));
 

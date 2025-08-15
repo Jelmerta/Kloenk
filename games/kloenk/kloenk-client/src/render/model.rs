@@ -48,6 +48,7 @@ pub struct TextureDefinition {
     pub file_name: String,
 }
 
+#[derive(Debug, Clone)]
 pub struct ModelDefinition {
     pub id: String,
     pub primitives: Vec<PrimitiveDefinition>,

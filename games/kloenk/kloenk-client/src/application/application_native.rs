@@ -20,6 +20,8 @@ use crate::systems::game_system::GameSystem;
 use winit::keyboard::KeyCode;
 
 use crate::application::cursor_manager::CursorManager;
+use crate::application::AssetLoader;
+use crate::render::model_loader::ModelLoader;
 use crate::render::preload_manager::PreloadManager;
 use hydrox::{load_binary, AudioSystem};
 
@@ -99,9 +101,37 @@ impl ApplicationHandler for Application {
         // TODO load_critical_models instead?
         // let assets = pollster::block_on(AssetLoader::load_critical_assets());
 
-        let mut preload_manager = pollster::block_on(PreloadManager::new());
+        let mut preload_manager = PreloadManager::new();
+        // let mut preload_manager = pollster::block_on(PreloadManager::new());
 
         let mut renderer = pollster::block_on(Renderer::new(window.clone()));
+        // spawn_lo
+        // cal()
+
+        renderer.set_models(preload_manager.models_to_load.clone());
+
+        for mut model in preload_manager.drain_models_to_load() { // maybe first make sure uniqueness before loading
+            for primitive in model.primitives.drain(..) {
+                if primitive.vertices_id.ends_with(".gltf") {
+                    let primitive_vertices = pollster::block_on(ModelLoader::load_gltf(&primitive.vertices_id));
+                    renderer.load_primitive_vertices_to_memory(primitive_vertices);
+                }
+
+                if let Some(texture_id) = primitive.texture_definition {
+                    // TODO check if not already loaded first
+                    let image_texture_asset = pollster::block_on(AssetLoader::load_image_asset(&texture_id.file_name));
+                    // AssetLoader::load_image_asset(&texture_id.file_name).await;
+
+                    renderer.load_material_to_memory(image_texture_asset);
+                }
+
+                renderer.load_color_to_memory(primitive.color_definition);
+
+                // todo check if not already loaded
+                // let image_texture_asset = AssetLoader::load_image_asset(&texture_id.file_name).await;
+                // AssetLoader::load_image_asset(&texture_id.file_name).await;
+            }
+        }
 
         // let mut renderer = enderer_future);
         // let meshes = build_textured_meshes(&model, &indices, mesh_material_id);
@@ -115,7 +145,7 @@ impl ApplicationHandler for Application {
         //     }
         // }
 
-        pollster::block_on(renderer.update_models(&mut preload_manager));
+        // pollster::block_on(renderer.update_models(&mut preload_manager));
 
         let audio_system = pollster::block_on(AudioSystem::new());
 

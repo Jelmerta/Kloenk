@@ -6,13 +6,13 @@ use std::vec::Drain;
 // or like AssetLoadTask / AssetLoadCommand
 // Maybe also in charge of unloading? Just making sure the current state of the world is loaded correctly
 pub struct PreloadManager {
-    models_to_load: Vec<ModelDefinition>,
+    pub models_to_load: Vec<ModelDefinition>,
 }
 
 impl PreloadManager {
-    pub async fn new() -> PreloadManager {
+    pub fn new() -> PreloadManager {
         PreloadManager {
-            models_to_load: Self::preload_models().await,
+            models_to_load: Self::preload_models(),
         }
     }
 
@@ -21,7 +21,7 @@ impl PreloadManager {
     }
 
     // TODO maybe ModelDefinition instead? reuse preload with ids+source
-    async fn preload_models() -> Vec<ModelDefinition> {
+    fn preload_models() -> Vec<ModelDefinition> {
         let mut models_to_load: Vec<ModelDefinition> = Vec::new();
         models_to_load.push(ModelLoader::load_colored_square_model(
             "black".to_string(),
@@ -76,7 +76,8 @@ impl PreloadManager {
         ));
 
         // TODO let's just say we need material gozer.dds and maybe gozer2.dds for this. how would we load this?
-        let gozer_models = ModelLoader::preload_gltf("gozer.gltf").await;
+
+        let gozer_models = ModelLoader::preload_gltf("gozer.gltf");
         for model in gozer_models {
             models_to_load.push(model);
         }

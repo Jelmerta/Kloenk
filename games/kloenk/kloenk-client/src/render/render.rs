@@ -7,16 +7,14 @@ use wgpu::{
     SurfaceConfiguration, TextureView,
 };
 
-use crate::application::{AssetLoader, ImageAsset};
+use crate::application::ImageAsset;
 use crate::render::camera::Camera;
 use crate::render::camera_manager::CameraManager;
 use crate::render::color_manager::ColorManager;
 use crate::render::instance::InstanceRaw;
 use crate::render::material_manager::TextureManager;
-use crate::render::model::{ColorDefinition, Draw, PrimitiveDefinition};
-use crate::render::model_loader::ModelLoader;
+use crate::render::model::{ColorDefinition, Draw, ModelDefinition, PrimitiveDefinition};
 use crate::render::model_manager::ModelManager;
-use crate::render::preload_manager::PreloadManager;
 use crate::render::primitive_vertices_manager::{PrimitiveVertices, PrimitiveVerticesManager};
 use crate::render::render_context_manager::RenderContextManager;
 use crate::render::text_renderer::TextWriter;
@@ -491,45 +489,33 @@ impl Renderer {
         drop(render_pass_ui);
     }
 
-    fn load_primitive_vertices_to_memory(&mut self, primitive_vertices: Vec<PrimitiveVertices>) {
-        for primitive_vertices in primitive_vertices {
-            self.primitive_vertices_manager
-                .load_primitive_vertices_to_memory(&self.device, primitive_vertices)
-        }
-    }
-
-    fn load_color_to_memory(&mut self, color_definition: &ColorDefinition) {
-        self.color_manager
-            .load_color_to_memory(&self.device, color_definition);
-    }
-
-    fn load_material_to_memory(&mut self, asset: ImageAsset) {
-        self.texture_manager
-            .load_material_to_memory(&self.device, &self.queue, asset);
-    }
-
-    // TODO make sure we dont stupidly keep updating pre-existing vertices/materials
-    pub async fn update_models(&mut self, preload_manager: &mut PreloadManager) {
-        for model in preload_manager.drain_models_to_load() {
-            for primitive in &model.primitives {
-                if primitive.vertices_id.ends_with(".gltf") {
-                    let primitive_vertices = ModelLoader::load_gltf(&primitive.vertices_id).await;
-                    self.load_primitive_vertices_to_memory(primitive_vertices);
-                }
-
-                if let Some(texture_id) = &primitive.texture_definition {
-                    // TODO check if not already loaded first
-                    let image_texture_asset =
-                        AssetLoader::load_image_asset(&texture_id.file_name).await;
-                    self.load_material_to_memory(image_texture_asset);
-                }
-
-                // todo check if not already loaded
-                self.load_color_to_memory(&primitive.color_definition);
-            }
-
+    pub fn set_models(&mut self, models: Vec<ModelDefinition>) {
+        for model in models {
             self.model_manager.add_model(model);
         }
+    }
+
+    pub fn load_primitive_vertices_to_memory(&mut self, primitive_vertices: Vec<PrimitiveVertices>) {
+        for primitive_vertices in primitive_vertices {
+            let vertices_id = primitive_vertices.name.clone();
+            self.primitive_vertices_manager
+                .load_primitive_vertices_to_memory(&self.device, primitive_vertices);
+            self.model_manager.added_vertices(&vertices_id);
+        }
+    }
+
+    pub fn load_color_to_memory(&mut self, color_definition: ColorDefinition) {
+        let color_id = color_definition.id.clone();
+        self.color_manager
+            .load_color_to_memory(&self.device, color_definition);
+        self.model_manager.added_color(&color_id);
+    }
+
+    pub fn load_material_to_memory(&mut self, asset: ImageAsset) {
+        let texture_id = asset.name.clone();
+        self.texture_manager
+            .load_material_to_memory(&self.device, &self.queue, asset);
+        self.model_manager.added_texture(&texture_id);
     }
 }
 
