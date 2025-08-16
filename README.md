@@ -101,6 +101,7 @@ Build for product owner (on windows):
 
 converting to lower bitrate wav
 ffmpeg -i bonk.wav -ar 20500 -acodec pcm_s16le bonk2.wav
+ffmpeg -i bonk.wav -ar 21000 -c:a pcm_s16le -fflags +bitexact -map_metadata -1 output3.wav
 
 Getting out just RGB(A) values of image
 magick .\cursor.png -size 61*60 RGBA:cursor.rgba
