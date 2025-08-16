@@ -99,12 +99,6 @@ impl TextWriter {
         }
     }
 
-    // fn load_woff2(woff2_data: &Vec<u8>) -> impl Future<Output=Vec<u8>> {
-    //     async move {
-    //         woff2_patched::convert_woff2_to_ttf(&mut std::io::Cursor::new(woff2_data)).unwrap()
-    //     }
-    // }
-
     pub fn reset_for_frame(&mut self) {
         self.atlas.trim();
         self.queue.clear();

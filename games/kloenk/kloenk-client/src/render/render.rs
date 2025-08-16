@@ -286,10 +286,13 @@ impl Renderer {
         let camera = game_state.camera_components.get_mut("camera_ui").unwrap();
         self.set_camera_data_ui(camera, &window);
 
-        frame_state.gui.render_commands.sort_by_key(|render_command| match render_command {
-            RenderCommand::Texture { layer, .. } => { *layer }
-            RenderCommand::Text { layer, .. } => { *layer }
-        });
+        frame_state
+            .gui
+            .render_commands
+            .sort_by_key(|render_command| match render_command {
+                RenderCommand::Texture { layer, .. } => *layer,
+                RenderCommand::Text { layer, .. } => *layer,
+            });
 
         for render_command in frame_state.gui.render_commands.drain(..) {
             match render_command {
@@ -309,7 +312,7 @@ impl Renderer {
                     self.draw_ui(window, view, encoder, texture_model_id.to_string(), &rect);
                 }
             } // TODO or maybe call it widget?
-        };
+        }
         self.text_writer
             .write(&self.device, &self.queue, encoder, view, window)
     }
@@ -385,15 +388,18 @@ impl Renderer {
                 game_state
                     .graphics_3d_components
                     .contains_key(entity.as_str())
-            }).for_each(|entity| {
-            let model_id = game_state
-                .get_graphics(&(*entity).to_string())
-                .unwrap()
-                .model_id.clone();
-            render_groups.entry(model_id).or_default().push(entity);
-        });
+            })
+            .for_each(|entity| {
+                let model_id = game_state
+                    .get_graphics(&(*entity).to_string())
+                    .unwrap()
+                    .model_id
+                    .clone();
+                render_groups.entry(model_id).or_default().push(entity);
+            });
 
-        render_groups.into_iter()
+        render_groups
+            .into_iter()
             // TODO? i think we have to iterate over each primitive in the model?
             .for_each(|(model_id, entity_group)| {
                 let instance_group: Vec<Instance> = entity_group
@@ -489,7 +495,10 @@ impl Renderer {
         drop(render_pass_ui);
     }
 
-    pub fn load_primitive_vertices_to_memory(&mut self, primitive_vertices: Vec<PrimitiveVertices>) {
+    pub fn load_primitive_vertices_to_memory(
+        &mut self,
+        primitive_vertices: Vec<PrimitiveVertices>,
+    ) {
         for primitive_vertices in primitive_vertices {
             let vertices_id = primitive_vertices.name.clone();
             self.primitive_vertices_manager
@@ -512,24 +521,3 @@ impl Renderer {
         self.model_manager.added_texture(&texture_id);
     }
 }
-
-// //  todo access to material manager and primitive vertices
-// pub async fn load_assets(&self, preload_manager: PreloadManager) -> Vec<Asset> {
-//     let mut assets = Vec::new();
-//
-//     for (index, model) in preload_manager.get_models_to_load() {
-//         for primitive in model.primitives_to_load {
-//             self.material_manager.load_material_to_memory(primitive.material_to_load);
-//         }
-//
-//         let image_asset = Self::load_image_asset(image_path).await;
-//         let asset = Asset {
-//             asset_type: Image(image_asset),
-//             // name: image_path.to_string(),
-//         };
-//         assets.push(asset);
-//     }
-//
-//     assets
-// }
-// }

@@ -1,5 +1,5 @@
 use crate::application::{Application, CustomEvent};
-use console_log::init_with_level;
+// use console_log::init_with_level;
 use winit::event_loop::EventLoop;
 use winit::platform::web::EventLoopExtWebSys;
 
