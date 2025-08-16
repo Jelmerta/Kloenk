@@ -99,7 +99,7 @@ Build for product owner (on windows):
 ```cargo build --target x86_64-pc-windows-msvc --release```
 ```Compress-Archive -Path .\target\x86_64-pc-windows-msvc\release\assets\,.\target\x86_64-pc-windows-msvc\release\kloenk.exe -DestinationPath .\kloenk.zip```
 
-converting to lower bitrate wav
+converting to lower bitrate wav file
 ffmpeg -i bonk.wav -ar 20500 -acodec pcm_s16le bonk2.wav
 ffmpeg -i bonk.wav -ar 21000 -c:a pcm_s16le -fflags +bitexact -map_metadata -1 output3.wav
 
