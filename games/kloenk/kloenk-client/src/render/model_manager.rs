@@ -43,16 +43,19 @@ impl ModelManager {
     }
 
     pub fn added_vertices(&mut self, vertices_id: &String) {
+        log::error!("added_vertices {}", vertices_id);
         self.loaded_vertices.insert(vertices_id.clone());
         self.update_ready();
     }
 
     pub fn added_texture(&mut self, texture_id: &String) {
+        log::error!("added_texture {}", texture_id);
         self.loaded_textures.insert(texture_id.clone());
         self.update_ready();
     }
 
     pub fn added_color(&mut self, color_id: &String) {
+        log::error!("added_color {}", color_id);
         self.loaded_colors.insert(color_id.clone());
         self.update_ready();
     }
@@ -68,6 +71,7 @@ impl ModelManager {
             let model = self.model_definitions.get(model_id).unwrap();
 
             if self.primitives_loaded(model) {
+                log::error!("Model loaded {}", model_id);
                 self.loaded_models.insert(model.id.clone());
             }
         }

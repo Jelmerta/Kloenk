@@ -307,6 +307,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                         }
                     }
                 } else {
+                    log::error!("Not yet initialized");
                     // Queue for later usage, after state init event renderer is ready and queue can be drained
                 }
                 // TODO what if engine is not yet loaded? just send event again lol?
