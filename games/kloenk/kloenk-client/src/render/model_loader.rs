@@ -135,9 +135,11 @@ impl ModelLoader {
 
     // TODO maybe make an intermediate step and then load everything into gpu buffers with intermediate object?
     pub async fn load_gltf(model_path: &str) -> Vec<PrimitiveVertices> {
-        let data = load_binary(model_path)
-            .await
-            .unwrap_or_else(|_| panic!("Path {} could not be found", model_path));
+        let data = include_bytes!("../../assets/gozer.gltf"); // TODO
+
+        // let data = load_binary(model_path)
+        //     .await
+        //     .unwrap_or_else(|_| panic!("Path {} could not be found", model_path));
         let gltf = Gltf::from_slice(data.as_slice())
             .unwrap_or_else(|_| panic!("Failed to load gltf model {}", model_path));
 
