@@ -7,6 +7,7 @@ use winit::platform::web::EventLoopExtWebSys;
 pub fn run() {
     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
     init_with_level(log::Level::Warn).expect("Couldn't initialize logger");
+    log::error!("test");
 
     let event_loop = EventLoop::<CustomEvent>::with_user_event().build().unwrap();
 
