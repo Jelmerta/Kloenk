@@ -21,7 +21,6 @@ use crate::application::application::Asset::{Color, Texture, Vertices};
 use crate::application::{AssetLoader, ImageAsset};
 use crate::render::model::ColorDefinition;
 use crate::render::model_loader::ModelLoader;
-use crate::render::preload_manager::PreloadManager;
 use crate::render::primitive_vertices_manager::PrimitiveVertices;
 use crate::render::render::Renderer;
 use crate::state::frame_state::FrameState;
@@ -132,65 +131,64 @@ impl ApplicationHandler<CustomEvent> for Application {
         // Wondering if this is effectively blocking since files should be immediately available?
         // TODO I suppose if we have a lot of startup data, we could send events in batches or single models
 
-        let mut preload_manager = PreloadManager::new();
+        // let mut preload_manager = PreloadManager::new();
         // let mut preload_manager = .await; // todo i though the point was that we could preload before render starts... I guess that's only possible if we make sure we do not load in any external data. if data is within wasm we can load earlier
         // TODO I suppose we can just directly load assets in succession as separate spawn_local tasks though?
 
-        for mut model in preload_manager.drain_models_to_load() { // maybe first make sure uniqueness before loading
-            for primitive in model.primitives.drain(..) {
-                if primitive.vertices_id.ends_with(".gltf") {
-                    let event_loop_proxy = self.event_loop_proxy.clone();
-                    spawn_local(async move {
-                        let primitive_vertices = ModelLoader::load_gltf(&primitive.vertices_id).await;
-                        event_loop_proxy
-                            .send_event(CustomEvent::AssetLoaded(Vertices(primitive_vertices)))
-                            .unwrap_or_else(|_| {
-                                panic!("Failed to send vertices assets loaded event");
-                            });
-                    });
-                }
+        // for mut model in preload_manager.drain_models_to_load() { // maybe first make sure uniqueness before loading
+        //     for primitive in model.primitives.drain(..) {
+        //         if primitive.vertices_id.ends_with(".gltf") {
+        //             let event_loop_proxy = self.event_loop_proxy.clone();
+        //             spawn_local(async move {
+        //                 let primitive_vertices = ModelLoader::load_gltf(&primitive.vertices_id).await;
+        //                 event_loop_proxy
+        //                     .send_event(CustomEvent::AssetLoaded(Vertices(primitive_vertices)))
+        //                     .unwrap_or_else(|_| {
+        //                         panic!("Failed to send vertices assets loaded event");
+        //                     });
+        //             });
+        //         }
+        //
+        //         if let Some(texture_id) = primitive.texture_definition {
+        //             // TODO check if not already loaded first
+        //             let event_loop_proxy = self.event_loop_proxy.clone();
+        //             spawn_local(async move {
+        //                 let image_texture_asset = AssetLoader::load_image_asset(&texture_id.file_name).await;
+        //                 // AssetLoader::load_image_asset(&texture_id.file_name).await;
+        //
+        //                 event_loop_proxy
+        //                     .send_event(CustomEvent::AssetLoaded(Texture(image_texture_asset)))
+        //                     .unwrap_or_else(|_| {
+        //                         panic!("Failed to send vertices assets loaded event");
+        //                     });
+        //             });
+        //         }
+        //
+        //         let event_loop_proxy = self.event_loop_proxy.clone();
+        //         // todo check if not already loaded
+        //         spawn_local(async move {
+        //             // let image_texture_asset = AssetLoader::load_image_asset(&texture_id.file_name).await;
+        //             // AssetLoader::load_image_asset(&texture_id.file_name).await;
+        //
+        //             event_loop_proxy
+        //                 .send_event(CustomEvent::AssetLoaded(Color(primitive.color_definition.clone())))
+        //                 .unwrap_or_else(|_| {
+        //                     panic!("Failed to send vertices assets loaded event");
+        //                 });
+        //         });
+        //     }
 
-                if let Some(texture_id) = primitive.texture_definition {
-                    // TODO check if not already loaded first
-                    let event_loop_proxy = self.event_loop_proxy.clone();
-                    spawn_local(async move {
-                        let image_texture_asset = AssetLoader::load_image_asset(&texture_id.file_name).await;
-                        // AssetLoader::load_image_asset(&texture_id.file_name).await;
-
-                        event_loop_proxy
-                            .send_event(CustomEvent::AssetLoaded(Texture(image_texture_asset)))
-                            .unwrap_or_else(|_| {
-                                panic!("Failed to send vertices assets loaded event");
-                            });
-                    });
-                }
-
-                let event_loop_proxy = self.event_loop_proxy.clone();
-                // todo check if not already loaded
-                spawn_local(async move {
-                    // let image_texture_asset = AssetLoader::load_image_asset(&texture_id.file_name).await;
-                    // AssetLoader::load_image_asset(&texture_id.file_name).await;
-
-                    event_loop_proxy
-                        .send_event(CustomEvent::AssetLoaded(Color(primitive.color_definition.clone())))
-                        .unwrap_or_else(|_| {
-                            panic!("Failed to send vertices assets loaded event");
-                        });
-                });
-            }
-
-            // TODO model manager is not fillled yet...
-            // self.model_manager.add_model(model);
-            // for asset_to_load in preload_manager.drain_models_to_load() {
-            // let asset = AssetLoader::load_image_asset(asset_to_load).await;
-            // event_loop_proxy
-            //     .send_event(CustomEvent::AssetsLoaded(preload_manager))
-            //     .unwrap_or_else(|_| {
-            //         panic!("Failed to send assets loaded event");
-            //     });
-            // }
-        }
-
+        // TODO model manager is not fillled yet...
+        // self.model_manager.add_model(model);
+        // for asset_to_load in preload_manager.drain_models_to_load() {
+        // let asset = AssetLoader::load_image_asset(asset_to_load).await;
+        // event_loop_proxy
+        //     .send_event(CustomEvent::AssetsLoaded(preload_manager))
+        //     .unwrap_or_else(|_| {
+        //         panic!("Failed to send assets loaded event");
+        //     });
+        // }
+        // }
 
         // Note: This is more of a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
@@ -254,14 +252,14 @@ impl ApplicationHandler<CustomEvent> for Application {
                 Some(())
             })
             .expect("Couldn't append canvas to document body.");
-        let models = preload_manager.models_to_load.clone();
+        // let models = preload_manager.models_to_load.clone();
         let renderer_future = Renderer::new(window.clone());
 
         let event_loop_proxy = self.event_loop_proxy.clone();
 
         spawn_local(async move {
             let mut renderer = renderer_future.await;
-            renderer.set_models(models);
+            // renderer.set_models(models);
             let engine = Engine {
                 renderer,
                 game_state: GameState::new(),
@@ -286,7 +284,67 @@ impl ApplicationHandler<CustomEvent> for Application {
                 // log::info!("Received initialization event"); dev flag
                 engine.renderer.resize(engine.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
                 engine.window.request_redraw(); // TODO are these resizes here necessary?
+
+                // Getting quickly through setup stage such that renderer can start rendering first frame
+                // TODO wondering about order loading models/request redraw? below is blocking anyway for until next window draw event? prob does not matter much
+                for (_, model) in engine.renderer.model_manager.get_active_models().clone() {
+                    // maybe first make sure uniqueness before loading
+                    for primitive in &model.primitives {
+                        let vertices_id_clone = primitive.vertices_id.clone();
+                        if primitive.vertices_id.ends_with(".gltf") {
+                            // let vertices_clone = primitive.clone();
+                            let event_loop = self.event_loop_proxy.clone();
+                            spawn_local(async move {
+                                let primitive_vertices =
+                                    ModelLoader::load_gltf(&*vertices_id_clone).await;
+                                event_loop
+                                    .send_event(CustomEvent::AssetLoaded(Vertices(
+                                        primitive_vertices,
+                                    )))
+                                    .unwrap_or_else(|_| {
+                                        panic!("Failed to send vertices event");
+                                    });
+                            });
+                        }
+
+                        if let Some(texture_id) = &primitive.texture_definition {
+                            let event_loop = self.event_loop_proxy.clone();
+
+                            let texture_id_clone = texture_id.clone();
+                            spawn_local(async move {
+                                // TODO check if not already loaded first
+                                let image_texture_asset =
+                                    AssetLoader::load_image_asset(&texture_id_clone.file_name).await;
+                                // AssetLoader::load_image_asset(&texture_id.file_name).await;
+                                event_loop
+                                    .send_event(CustomEvent::AssetLoaded(Texture(
+                                        image_texture_asset,
+                                    )))
+                                    .unwrap_or_else(|_| {
+                                        panic!("Failed to send texture event");
+                                    });
+                            });
+                        }
+
+                        let event_loop = self.event_loop_proxy.clone();
+                        let color_definition = primitive.color_definition.clone();
+                        spawn_local(async move {
+                            event_loop
+                                .send_event(CustomEvent::AssetLoaded(Color(color_definition)))
+                                .unwrap_or_else(|_| {
+                                    panic!("Failed to send texture event");
+                                });
+                        });
+                        // todo check if not already loaded
+                        // let image_texture_asset = AssetLoader::load_image_asset(&texture_id.file_name).await;
+                        // AssetLoader::load_image_asset(&texture_id.file_name).await;
+                    }
+                }
+
                 self.application_state = State::Initialized(engine);
+
+                // let State::Initialized(engine) = self.application_state;
+
                 // TODO load critical assets as textures using custom event. async such that main thread can start rendering, even if there is no textures yet
 
                 // TODO I suppose we could just "drain" pending assets not yet loaded here. assets that are loaded later are handled by the assetloaded event
@@ -299,7 +357,9 @@ impl ApplicationHandler<CustomEvent> for Application {
                     match asset {
                         Vertices(primitive_vertices) => {
                             log::error!("Vertices");
-                            engine.renderer.load_primitive_vertices_to_memory(primitive_vertices);
+                            engine
+                                .renderer
+                                .load_primitive_vertices_to_memory(primitive_vertices);
                         }
                         Color(color_definition) => {
                             log::error!("Color");
@@ -314,6 +374,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 } else {
                     log::error!("Not yet initialized");
                     // Queue for later usage, after state init event renderer is ready and queue can be drained
+                    // we have made it so that renderer is init. so should be a panic
                 }
                 // TODO what if engine is not yet loaded? just send event again lol?
             }
@@ -454,5 +515,3 @@ fn key_is_gesture(key: KeyCode) -> bool {
             | KeyCode::Hyper
     )
 }
-
-

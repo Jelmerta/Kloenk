@@ -1,4 +1,5 @@
 use crate::render::model::{ColorDefinition, ModelDefinition, PrimitiveDefinition};
+use crate::render::model_loader::ModelLoader;
 use cgmath::Vector4;
 use std::collections::{HashMap, HashSet};
 use std::string::ToString;
@@ -6,40 +7,54 @@ use std::string::ToString;
 // TODO what if we just put vertices/textures/color in here such that model manager keeps track if model is ready or not?
 // TODO hmm but what about callbacks on event loop
 pub struct ModelManager {
-    model_definitions: HashMap<String, ModelDefinition>,
-    loaded_models: HashSet<String>,
+    active_models: HashMap<String, ModelDefinition>, // These are the models that should be loaded at this point in time. The loaded models are the actual usable models
+    loaded_models: HashMap<String, ModelDefinition>,
     loaded_vertices: HashSet<String>,
     loaded_textures: HashSet<String>,
     loaded_colors: HashSet<String>,
 }
 
 impl ModelManager {
+    pub fn get_active_models(&self) -> &HashMap<String, ModelDefinition> {
+        &self.active_models
+    }
+
     pub fn get_model_3d(&self, model_id: String) -> &ModelDefinition {
-        if self.loaded_models.contains(&model_id) {
-            self.model_definitions.get(&model_id).unwrap()
-        } else {
-            self.model_definitions
-                .get(&("default_model_3d".to_string()))
-                .unwrap()
-        }
+        self.loaded_models.get(&model_id).or(self.loaded_models
+            .get(&("default_model_3d".to_string()))).unwrap()
+
+
+        // .or_else(|| self.loaded_models
+        // .get(&("default_model_3d".to_string()))
+        // .unwrap()).unwrap()
+        //
+        // if self.loaded_models.contains_key(&model_id) {
+        //     self.model_definitions.get(&model_id).unwrap()
+        // } else {
+        //     self.model_definitions
+        //         .get(&("default_model_3d".to_string()))
+        //         .unwrap()
+        // }
     }
 
     pub fn get_model_2d(&self, model_id: String) -> &ModelDefinition {
-        if self.is_ready(&model_id) {
-            self.model_definitions.get(&model_id).unwrap()
-        } else {
-            self.model_definitions
-                .get(&("default_model_2d".to_string()))
-                .unwrap()
-        }
+        self.loaded_models.get(&model_id).or(self.loaded_models
+            .get(&("default_model_2d".to_string()))).unwrap()
+        // if self.is_ready(&model_id) {
+        //     self.model_definitions.get(&model_id).unwrap()
+        // } else {
+        //     self.model_definitions
+        //         .get(&("default_model_2d".to_string()))
+        //         .unwrap()
+        // }
     }
 
-    pub fn add_model(&mut self, model: ModelDefinition) {
-        self.model_definitions.insert(model.id.clone(), model);
+    pub fn add_active_model(&mut self, model: ModelDefinition) {
+        self.active_models.insert(model.id.clone(), model);
     }
 
     pub fn is_ready(&self, model_id: &String) -> bool {
-        self.loaded_models.contains(model_id)
+        self.loaded_models.contains_key(model_id)
     }
 
     pub fn added_vertices(&mut self, vertices_id: &String) {
@@ -63,16 +78,16 @@ impl ModelManager {
     // TODO maybe maximise usage/Don't call this method too often. gonna explode if 3000 models are being loaded and each is gonna check all models
     // could also make a reverse hashmap: look up all model ids for a texture and only update those
     fn update_ready(&mut self) {
-        for (model_id, _) in &self.model_definitions {
-            if self.loaded_models.contains(model_id) {
+        for (model_id, _) in &self.active_models {
+            if self.loaded_models.contains_key(model_id) {
                 continue;
             }
 
-            let model = self.model_definitions.get(model_id).unwrap();
+            let model = self.active_models.get(model_id).unwrap();
 
             if self.primitives_loaded(model) {
                 log::error!("Model loaded {}", model_id);
-                self.loaded_models.insert(model.id.clone());
+                self.loaded_models.insert(model.id.clone(), model.clone());
             }
         }
     }
@@ -109,8 +124,8 @@ impl ModelManager {
         // TODO white is just none right? get will return it anyway?
 
         let mut model_manager = ModelManager {
-            model_definitions: HashMap::new(),
-            loaded_models: HashSet::new(),
+            active_models: HashMap::new(),
+            loaded_models: HashMap::new(),
             loaded_vertices,
             loaded_textures: HashSet::new(),
             loaded_colors: HashSet::new(),
@@ -128,7 +143,7 @@ impl ModelManager {
                 texture_definition: None,
             }],
         };
-        model_manager.add_model(default_model_2d);
+        model_manager.add_active_model(default_model_2d);
         let default_model_3d = ModelDefinition {
             id: "default_model_3d".to_string(),
             primitives: vec![PrimitiveDefinition {
@@ -140,7 +155,79 @@ impl ModelManager {
                 texture_definition: None,
             }],
         };
-        model_manager.add_model(default_model_3d);
+        model_manager.add_active_model(default_model_3d);
+
+        model_manager.add_active_model(ModelLoader::load_colored_square_model(
+            "black".to_string(),
+            Vector4::new(0.0, 0.0, 0.0, 1.0),
+        ));
+
+        model_manager.add_active_model(ModelLoader::load_colored_square_model(
+            "grey".to_string(),
+            Vector4::new(0.2, 0.2, 0.2, 1.0),
+        ));
+
+        // #780606
+        model_manager.add_active_model(ModelLoader::load_colored_square_model(
+            "blood_red".to_string(),
+            Vector4::new(0.46875, 0.0234375, 0.0234375, 1.0),
+        ));
+
+        model_manager.add_active_model(ModelLoader::make_preload_model(
+            "shield".to_string(),
+            "CUBE",
+            "shield.dds",
+        ));
+
+        model_manager.add_active_model(ModelLoader::make_preload_model(
+            "shield_inventory".to_string(),
+            "SQUARE",
+            "shield.dds",
+        ));
+
+        model_manager.add_active_model(ModelLoader::make_preload_model(
+            "sword".to_string(),
+            "CUBE",
+            "sword.dds",
+        ));
+
+        model_manager.add_active_model(ModelLoader::make_preload_model(
+            "sword_inventory".to_string(),
+            "SQUARE",
+            "sword.dds",
+        ));
+
+        model_manager.add_active_model(ModelLoader::make_preload_model(
+            "grass".to_string(),
+            "CUBE",
+            "grass.dds",
+        ));
+
+        model_manager.add_active_model(ModelLoader::make_preload_model(
+            "tree".to_string(),
+            "CUBE",
+            "tree.dds",
+        ));
+
+        // TODO let's just say we need material gozer.dds and maybe gozer2.dds for this. how would we load this?
+
+        let gozer_models = ModelLoader::preload_gltf("gozer.gltf");
+        for model in gozer_models {
+            model_manager.add_active_model(model);
+        }
+
+        model_manager.add_active_model(ModelLoader::make_preload_model(
+            "close_button".to_string(),
+            "SQUARE",
+            "close_button.dds",
+        ));
+
+        model_manager.add_active_model(ModelLoader::make_preload_model(
+            "close_button_hover".to_string(),
+            "SQUARE",
+            "close_button_hover.dds",
+        ));
+
         model_manager
     }
 }

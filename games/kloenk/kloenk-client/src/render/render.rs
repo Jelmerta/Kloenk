@@ -33,7 +33,7 @@ pub struct Renderer {
     queue: Queue,
     config: SurfaceConfiguration,
 
-    model_manager: ModelManager,
+    pub model_manager: ModelManager,
     primitive_vertices_manager: PrimitiveVerticesManager,
     color_manager: ColorManager,
     texture_manager: TextureManager,
@@ -489,9 +489,10 @@ impl Renderer {
         drop(render_pass_ui);
     }
 
+
     pub fn set_models(&mut self, models: Vec<ModelDefinition>) {
         for model in models {
-            self.model_manager.add_model(model);
+            self.model_manager.add_active_model(model);
         }
     }
 
