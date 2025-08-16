@@ -11,8 +11,8 @@ license = "GPL-3.0-or-later"
 
 [dependencies]
 winit = { version = "0.30", default-features = false, features = ["rwh_06"] } # TODO are these features needed for both desktop and web? I think x11 feature is needed for linux? , "x11"
-env_logger = { version = "0.11", default-features = false } # Only used for dev debug logging atm maybe make a dev flag
-log = "0.4" # Info logging. Maybe also behind a flag?
+#env_logger = { version = "0.11", default-features = false } # Only used for dev debug logging atm maybe make a dev flag
+#log = "0.4" # Info logging. Maybe also behind a flag?
 bytemuck = "1.23"
 cgmath = "0.18"
 anyhow = { version = "1.0", default-features = false }
@@ -31,8 +31,8 @@ wgpu = { version = "26.0", default-features = false, features = ["vulkan"] }
 pollster = "0.4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-console_error_panic_hook = "0.1"
-console_log = "1.0"
+#console_error_panic_hook = "0.1"
+#console_log = "1.0"
 wgpu = { version = "26.0", default-features = false, features = ["webgpu"] }
 wasm-bindgen = { version = "0.2", default-features = false }
 wasm-bindgen-futures = "0.4"

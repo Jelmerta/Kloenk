@@ -13,7 +13,7 @@ use crate::render::camera_manager::CameraManager;
 use crate::render::color_manager::ColorManager;
 use crate::render::instance::InstanceRaw;
 use crate::render::material_manager::TextureManager;
-use crate::render::model::{ColorDefinition, Draw, ModelDefinition, PrimitiveDefinition};
+use crate::render::model::{ColorDefinition, Draw, PrimitiveDefinition};
 use crate::render::model_manager::ModelManager;
 use crate::render::primitive_vertices_manager::{PrimitiveVertices, PrimitiveVerticesManager};
 use crate::render::render_context_manager::RenderContextManager;
@@ -487,13 +487,6 @@ impl Renderer {
             .get_primitive_vertices(primitive.vertices_id.clone());
         render_pass_ui.draw_primitive_instanced(primitive_vertices, 0..instance_count);
         drop(render_pass_ui);
-    }
-
-
-    pub fn set_models(&mut self, models: Vec<ModelDefinition>) {
-        for model in models {
-            self.model_manager.add_active_model(model);
-        }
     }
 
     pub fn load_primitive_vertices_to_memory(&mut self, primitive_vertices: Vec<PrimitiveVertices>) {
