@@ -292,17 +292,22 @@ impl ApplicationHandler<CustomEvent> for Application {
                 // TODO I suppose we could just "drain" pending assets not yet loaded here. assets that are loaded later are handled by the assetloaded event
             }
             CustomEvent::AssetLoaded(asset) => {
+                log::error!("asset loaded event");
                 if let State::Initialized(engine) = &mut self.application_state {
+                    log::error!("Init");
                     // engine.renderer.update_models(&mut preload_manager).await;
                     match asset {
                         Vertices(primitive_vertices) => {
+                            log::error!("Vertices");
                             engine.renderer.load_primitive_vertices_to_memory(primitive_vertices);
                         }
                         Color(color_definition) => {
+                            log::error!("Color");
                             // engine.renderer.color
                             engine.renderer.load_color_to_memory(color_definition);
                         }
                         Texture(texture_asset) => {
+                            log::error!("Texture");
                             engine.renderer.load_material_to_memory(texture_asset);
                         }
                     }
