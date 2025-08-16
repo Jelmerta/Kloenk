@@ -3,8 +3,7 @@
 // use cgmath::Vector4;
 // use std::vec::Drain;
 //
-// // or like AssetLoadTask / AssetLoadCommand
-// // Maybe also in charge of unloading? Just making sure the current state of the world is loaded correctly
+
 // pub struct PreloadManager {
 //     pub models_to_load: Vec<ModelDefinition>,
 // }

@@ -120,76 +120,6 @@ impl ApplicationHandler<CustomEvent> for Application {
             } // Continue
         }
 
-        // TODO why not just simple check every frame whether there's assets to be loaded?
-        // TODO I suppose events can be handled inbetween frames though?
-        // TODO assets are written and read. So can't do that on multiple threads without introducing some arcmutex thing i believe
-
-        // let mut assets = Vec::new(); // Don't know why we need to assign a value. Get error otherwise
-        // assets = spawn_local(async move {
-        // });
-
-        // Wondering if this is effectively blocking since files should be immediately available?
-        // TODO I suppose if we have a lot of startup data, we could send events in batches or single models
-
-        // let mut preload_manager = PreloadManager::new();
-        // let mut preload_manager = .await; // todo i though the point was that we could preload before render starts... I guess that's only possible if we make sure we do not load in any external data. if data is within wasm we can load earlier
-        // TODO I suppose we can just directly load assets in succession as separate spawn_local tasks though?
-
-        // for mut model in preload_manager.drain_models_to_load() { // maybe first make sure uniqueness before loading
-        //     for primitive in model.primitives.drain(..) {
-        //         if primitive.vertices_id.ends_with(".gltf") {
-        //             let event_loop_proxy = self.event_loop_proxy.clone();
-        //             spawn_local(async move {
-        //                 let primitive_vertices = ModelLoader::load_gltf(&primitive.vertices_id).await;
-        //                 event_loop_proxy
-        //                     .send_event(CustomEvent::AssetLoaded(Vertices(primitive_vertices)))
-        //                     .unwrap_or_else(|_| {
-        //                         panic!("Failed to send vertices assets loaded event");
-        //                     });
-        //             });
-        //         }
-        //
-        //         if let Some(texture_id) = primitive.texture_definition {
-        //             // TODO check if not already loaded first
-        //             let event_loop_proxy = self.event_loop_proxy.clone();
-        //             spawn_local(async move {
-        //                 let image_texture_asset = AssetLoader::load_image_asset(&texture_id.file_name).await;
-        //                 // AssetLoader::load_image_asset(&texture_id.file_name).await;
-        //
-        //                 event_loop_proxy
-        //                     .send_event(CustomEvent::AssetLoaded(Texture(image_texture_asset)))
-        //                     .unwrap_or_else(|_| {
-        //                         panic!("Failed to send vertices assets loaded event");
-        //                     });
-        //             });
-        //         }
-        //
-        //         let event_loop_proxy = self.event_loop_proxy.clone();
-        //         // todo check if not already loaded
-        //         spawn_local(async move {
-        //             // let image_texture_asset = AssetLoader::load_image_asset(&texture_id.file_name).await;
-        //             // AssetLoader::load_image_asset(&texture_id.file_name).await;
-        //
-        //             event_loop_proxy
-        //                 .send_event(CustomEvent::AssetLoaded(Color(primitive.color_definition.clone())))
-        //                 .unwrap_or_else(|_| {
-        //                     panic!("Failed to send vertices assets loaded event");
-        //                 });
-        //         });
-        //     }
-
-        // TODO model manager is not fillled yet...
-        // self.model_manager.add_model(model);
-        // for asset_to_load in preload_manager.drain_models_to_load() {
-        // let asset = AssetLoader::load_image_asset(asset_to_load).await;
-        // event_loop_proxy
-        //     .send_event(CustomEvent::AssetsLoaded(preload_manager))
-        //     .unwrap_or_else(|_| {
-        //         panic!("Failed to send assets loaded event");
-        //     });
-        // }
-        // }
-
         // Note: This is more of a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
         // We want to have ownership of the zoom level ourselves. We therefore disregard the dpi ratio and always attempt to render the same image
@@ -206,7 +136,6 @@ impl ApplicationHandler<CustomEvent> for Application {
         initial_width = viewport.width();
         initial_height = viewport.height();
 
-        // does clone work?
         let event_loop_proxy = self.event_loop_proxy.clone();
         let closure = Closure::wrap(Box::new(move || {
             event_loop_proxy
@@ -252,14 +181,13 @@ impl ApplicationHandler<CustomEvent> for Application {
                 Some(())
             })
             .expect("Couldn't append canvas to document body.");
-        // let models = preload_manager.models_to_load.clone();
+
         let renderer_future = Renderer::new(window.clone());
 
         let event_loop_proxy = self.event_loop_proxy.clone();
 
         spawn_local(async move {
-            let mut renderer = renderer_future.await;
-            // renderer.set_models(models);
+            let renderer = renderer_future.await;
             let engine = Engine {
                 renderer,
                 game_state: GameState::new(),
@@ -285,6 +213,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 engine.renderer.resize(engine.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
                 engine.window.request_redraw(); // TODO are these resizes here necessary?
 
+                // TODO make a method for loading the models
                 // Getting quickly through setup stage such that renderer can start rendering first frame
                 // TODO wondering about order loading models/request redraw? below is blocking anyway for until next window draw event? prob does not matter much
                 for (_, model) in engine.renderer.model_manager.get_active_models().clone() {
@@ -335,48 +264,30 @@ impl ApplicationHandler<CustomEvent> for Application {
                                     panic!("Failed to send texture event");
                                 });
                         });
-                        // todo check if not already loaded
-                        // let image_texture_asset = AssetLoader::load_image_asset(&texture_id.file_name).await;
-                        // AssetLoader::load_image_asset(&texture_id.file_name).await;
+                        // todo check if color not already loaded? Maybe only send unique assets?
                     }
                 }
 
                 self.application_state = State::Initialized(engine);
-
-                // let State::Initialized(engine) = self.application_state;
-
-                // TODO load critical assets as textures using custom event. async such that main thread can start rendering, even if there is no textures yet
-
-                // TODO I suppose we could just "drain" pending assets not yet loaded here. assets that are loaded later are handled by the assetloaded event
             }
             CustomEvent::AssetLoaded(asset) => {
-                log::error!("asset loaded event");
                 if let State::Initialized(engine) = &mut self.application_state {
-                    log::error!("Init");
-                    // engine.renderer.update_models(&mut preload_manager).await;
                     match asset {
                         Vertices(primitive_vertices) => {
-                            log::error!("Vertices");
                             engine
                                 .renderer
                                 .load_primitive_vertices_to_memory(primitive_vertices);
                         }
                         Color(color_definition) => {
-                            log::error!("Color");
-                            // engine.renderer.color
                             engine.renderer.load_color_to_memory(color_definition);
                         }
                         Texture(texture_asset) => {
-                            log::error!("Texture");
                             engine.renderer.load_material_to_memory(texture_asset);
                         }
                     }
                 } else {
-                    log::error!("Not yet initialized");
-                    // Queue for later usage, after state init event renderer is ready and queue can be drained
-                    // we have made it so that renderer is init. so should be a panic
+                    panic!("Renderer should be ready before assets are loaded to GPU memory");
                 }
-                // TODO what if engine is not yet loaded? just send event again lol?
             }
             CustomEvent::WebResizedEvent => {
                 let State::Initialized(ref mut engine) = self.application_state else {
@@ -476,16 +387,16 @@ impl ApplicationHandler<CustomEvent> for Application {
                         engine.renderer.resize(engine.window.inner_size());
                     }
                     Err(wgpu::SurfaceError::OutOfMemory) => {
-                        // log::error!("Out of memory");
+                        // log::error!("Out of memory"); dev
                         event_loop.exit();
                     }
 
                     Err(wgpu::SurfaceError::Timeout) => {
-                        // log::warn!("Surface timeout");
+                        // log::warn!("Surface timeout"); dev
                     }
 
                     Err(wgpu::SurfaceError::Other) => {
-                        // log::warn!("Other error");
+                        // log::warn!("Other error"); dev
                     }
                 }
             }
@@ -493,9 +404,6 @@ impl ApplicationHandler<CustomEvent> for Application {
         }
     }
 }
-
-// TODO make sure we dont stupidly keep updating pre-existing vertices/materials
-// pub fn update_models(preload_manager: &mut PreloadManager) {}
 
 fn key_is_gesture(key: KeyCode) -> bool {
     !matches!(

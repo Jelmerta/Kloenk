@@ -8,15 +8,12 @@ use gltf::mesh::util::ReadIndices;
 use gltf::Gltf;
 use hydrox::load_binary;
 
+// // or like AssetLoadTask / AssetLoadCommand
+// // Maybe also in charge of unloading? Just making sure the current state of the world is loaded correctly
 pub struct ModelLoader {}
 
 impl ModelLoader {
     pub fn load_colored_square_model(name: String, color: Vector4<f32>) -> ModelDefinition {
-        // let model = load_colored_square(color);
-        // let indices = SQUARE_INDICES;
-
-        // let meshes = build_colored_meshes(&&model[..], &indices, color);
-
         ModelDefinition {
             id: name.clone() + "_square",
             primitives: vec![PrimitiveDefinition {
@@ -30,38 +27,13 @@ impl ModelLoader {
         }
     }
 
-    // pub fn load_textured_square(file_name: String) -> ModelToLoad {
-    //     ModelToLoad {
-    //         name: file_name.clone(),
-    //         primitives_to_load: vec![PrimitiveToLoad {
-    //             vertices_to_load: "square".to_string(),
-    //             material_to_load: Texture { file_name },
-    //         }],
-    //     }
-    // }
-    //
-    // pub fn load_textured_cube(file_name: String) -> ModelToLoad {
-    //     ModelToLoad {
-    //         name: file_name.clone(),
-    //         primitives_to_load: vec![PrimitiveToLoad {
-    //             vertices_to_load: "cube".to_string(),
-    //             material_to_load: Texture { file_name },
-    //         }],
-    //     }
-    // }
-
-    // fn build_colored_1x1_texture() {}
-
-    // TODO should we save the gltf data immediately as well...? dont want to read it twice
-    // TODO load models without texture as well... if there is no image? primitives dont need image necessarily i suppose?
     // Assume for now one model for each gltf
     // Maybe at some point we just want to preload a scene?
-    pub fn preload_gltf(model_path: &str) -> Vec<ModelDefinition> {
-        let data = include_bytes!("../../assets/gozer.gltf");
-        // Used before renderer loaded to set required data
-        // let data = load_binary(model_path)
-        //     .await
-        //     .unwrap_or_else(|_| panic!("Path {} could not be found", model_path));
+    pub async fn preload_gltf(model_path: &str) -> Vec<ModelDefinition> {
+        // let data = include_bytes!("../../assets/gozer.gltf"); // TODO just hardcoded the one model into memory as we don't want to introduce async here probably
+        let data = load_binary(model_path)
+            .await
+            .unwrap_or_else(|_| panic!("Path {} could not be found", model_path));
         let gltf = Gltf::from_slice(data.as_slice())
             .unwrap_or_else(|_| panic!("Failed to load gltf model {}", model_path));
 
@@ -104,42 +76,13 @@ impl ModelLoader {
             model_definitions.push(model_definition);
         }
         model_definitions
-
-        // TODO note we can have multiple primitives, each with different materials
-        // let mut models = vec![];
-        // gltf.images().for_each(|image| match image.source() {
-        //     Source::Uri { uri, mime_type: _ } => {
-        //         log::error!("Loading image {}", uri);
-        //         let material_file_uri = uri.to_string();
-        //         models.push(ModelDefinition {
-        //             id: material_file_uri.clone(), // TODO name for different materials
-        //             primitives: vec![PrimitiveDefinition {
-        //                 vertices_id: model_path.to_string(),
-        //                 color_definition: ColorDefinition {
-        //                     id: "".to_string(),
-        //                     value: Vector4 {},
-        //                 },
-        //                 texture_definition: Texture {
-        //                     file_name: material_file_uri,
-        //                 },
-        //             }],
-        //         });
-        //     }
-        //     Source::View { .. } => {
-        //         panic!("Views not supported");
-        //     }
-        // });
-
-        // models
     }
 
     // TODO maybe make an intermediate step and then load everything into gpu buffers with intermediate object?
     pub async fn load_gltf(model_path: &str) -> Vec<PrimitiveVertices> {
-        let data = include_bytes!("../../assets/gozer.gltf"); // TODO
-
-        // let data = load_binary(model_path)
-        //     .await
-        //     .unwrap_or_else(|_| panic!("Path {} could not be found", model_path));
+        let data = load_binary(model_path)
+            .await
+            .unwrap_or_else(|_| panic!("Path {} could not be found", model_path));
         let gltf = Gltf::from_slice(data.as_slice())
             .unwrap_or_else(|_| panic!("Failed to load gltf model {}", model_path));
 

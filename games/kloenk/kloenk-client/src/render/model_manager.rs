@@ -22,55 +22,28 @@ impl ModelManager {
     pub fn get_model_3d(&self, model_id: String) -> &ModelDefinition {
         self.loaded_models.get(&model_id).or(self.loaded_models
             .get(&("default_model_3d".to_string()))).unwrap()
-
-
-        // .or_else(|| self.loaded_models
-        // .get(&("default_model_3d".to_string()))
-        // .unwrap()).unwrap()
-        //
-        // if self.loaded_models.contains_key(&model_id) {
-        //     self.model_definitions.get(&model_id).unwrap()
-        // } else {
-        //     self.model_definitions
-        //         .get(&("default_model_3d".to_string()))
-        //         .unwrap()
-        // }
     }
 
     pub fn get_model_2d(&self, model_id: String) -> &ModelDefinition {
         self.loaded_models.get(&model_id).or(self.loaded_models
             .get(&("default_model_2d".to_string()))).unwrap()
-        // if self.is_ready(&model_id) {
-        //     self.model_definitions.get(&model_id).unwrap()
-        // } else {
-        //     self.model_definitions
-        //         .get(&("default_model_2d".to_string()))
-        //         .unwrap()
-        // }
     }
 
     pub fn add_active_model(&mut self, model: ModelDefinition) {
         self.active_models.insert(model.id.clone(), model);
     }
 
-    pub fn is_ready(&self, model_id: &String) -> bool {
-        self.loaded_models.contains_key(model_id)
-    }
-
     pub fn added_vertices(&mut self, vertices_id: &String) {
-        log::error!("added_vertices {}", vertices_id);
         self.loaded_vertices.insert(vertices_id.clone());
         self.update_ready();
     }
 
     pub fn added_texture(&mut self, texture_id: &String) {
-        log::error!("added_texture {}", texture_id);
         self.loaded_textures.insert(texture_id.clone());
         self.update_ready();
     }
 
     pub fn added_color(&mut self, color_id: &String) {
-        log::error!("added_color {}", color_id);
         self.loaded_colors.insert(color_id.clone());
         self.update_ready();
     }
@@ -86,7 +59,6 @@ impl ModelManager {
             let model = self.active_models.get(model_id).unwrap();
 
             if self.primitives_loaded(model) {
-                log::error!("Model loaded {}", model_id);
                 self.loaded_models.insert(model.id.clone(), model.clone());
             }
         }
@@ -211,7 +183,7 @@ impl ModelManager {
 
         // TODO let's just say we need material gozer.dds and maybe gozer2.dds for this. how would we load this?
 
-        let gozer_models = ModelLoader::preload_gltf("gozer.gltf");
+        let gozer_models = ModelLoader::preload_gltf("gozer.gltf").await;
         for model in gozer_models {
             model_manager.add_active_model(model);
         }

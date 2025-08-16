@@ -40,7 +40,7 @@ impl Engine {
 }
 
 pub enum AudioState {
-    Loaded(AudioSystem), // tmp trigger just clean this comment
+    Loaded(AudioSystem),
 }
 
 pub enum State {
@@ -94,57 +94,31 @@ impl ApplicationHandler for Application {
             window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
         }
 
-        // let model_manager = ModelManager::new();
-
-        // TODO load_critical_models instead?
-        // let assets = pollster::block_on(AssetLoader::load_critical_assets());
-
-        // let mut preload_manager = PreloadManager::new();
-        // let mut preload_manager = pollster::block_on(PreloadManager::new());
-
         let mut renderer = pollster::block_on(Renderer::new(window.clone()));
-        // renderer.load_models();
-        for (_, model) in renderer.model_manager.get_active_models().clone() { // maybe first make sure uniqueness before loading
+        for (_, model) in renderer.model_manager.get_active_models().clone() {
+            // TODO maybe first make sure uniqueness before loading
             for primitive in &model.primitives {
                 if primitive.vertices_id.ends_with(".gltf") {
-                    let primitive_vertices = pollster::block_on(ModelLoader::load_gltf(&primitive.vertices_id));
+                    let primitive_vertices =
+                        pollster::block_on(ModelLoader::load_gltf(&primitive.vertices_id));
                     renderer.load_primitive_vertices_to_memory(primitive_vertices);
                 }
 
                 if let Some(texture_id) = &primitive.texture_definition {
                     // TODO check if not already loaded first
-                    let image_texture_asset = pollster::block_on(crate::application::asset_loader::AssetLoader::load_image_asset(&texture_id.file_name));
-                    // AssetLoader::load_image_asset(&texture_id.file_name).await;
-
+                    let image_texture_asset = pollster::block_on(
+                        crate::application::asset_loader::AssetLoader::load_image_asset(
+                            &texture_id.file_name,
+                        ),
+                    );
                     renderer.load_material_to_memory(image_texture_asset);
                 }
 
                 renderer.load_color_to_memory(primitive.color_definition.clone());
 
                 // todo check if not already loaded
-                // let image_texture_asset = AssetLoader::load_image_asset(&texture_id.file_name).await;
-                // AssetLoader::load_image_asset(&texture_id.file_name).await;
             }
         }
-        // spawn_lo
-        // cal()
-
-        // renderer.set_models(preload_manager.models_to_load.clone());
-
-
-        // let mut renderer = enderer_future);
-        // let meshes = build_textured_meshes(&model, &indices, mesh_material_id);
-
-        // let assets = pollster::block_on(AssetLoader::load_critical_assets());
-        // for asset in assets {
-        //     match asset.asset_type {
-        //         AssetType::Image(image_asset) => {
-        //             renderer.load_material_to_memory(image_asset);
-        //         }
-        //     }
-        // }
-
-        // pollster::block_on(renderer.update_models(&mut preload_manager));
 
         let audio_system = pollster::block_on(AudioSystem::new());
 
@@ -247,29 +221,3 @@ impl ApplicationHandler for Application {
         }
     }
 }
-//
-// // TODO native only? maybe put in application
-// fn load_models(&mut self) {
-//     for (_, model) in self.model_manager.get_active_models().clone() { // maybe first make sure uniqueness before loading
-//         for primitive in &model.primitives {
-//             if primitive.vertices_id.ends_with(".gltf") {
-//                 let primitive_vertices = pollster::block_on(ModelLoader::load_gltf(&primitive.vertices_id));
-//                 self.load_primitive_vertices_to_memory(primitive_vertices);
-//             }
-//
-//             if let Some(texture_id) = &primitive.texture_definition {
-//                 // TODO check if not already loaded first
-//                 let image_texture_asset = pollster::block_on(crate::application::asset_loader::AssetLoader::load_image_asset(&texture_id.file_name));
-//                 // AssetLoader::load_image_asset(&texture_id.file_name).await;
-//
-//                 self.load_material_to_memory(image_texture_asset);
-//             }
-//
-//             self.load_color_to_memory(primitive.color_definition.clone());
-//
-//             // todo check if not already loaded
-//             // let image_texture_asset = AssetLoader::load_image_asset(&texture_id.file_name).await;
-//             // AssetLoader::load_image_asset(&texture_id.file_name).await;
-//         }
-//     }
-// }
