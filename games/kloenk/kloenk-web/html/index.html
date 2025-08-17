@@ -61,14 +61,15 @@
     const wasm = await init({module_or_path: '/client/kloenk.wasm'});
     window.wasmBindings = bindings;
 </script>
-<script type="module">
-    export function prevent_default_context_menu() {
-        window.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-        });
-    }
-
-    prevent_default_context_menu();
-</script>
+<!-- TODO checking if needed -->
+<!--<script type="module">-->
+<!--    export function prevent_default_context_menu() {-->
+<!--        window.addEventListener('contextmenu', (e) => {-->
+<!--            e.preventDefault();-->
+<!--        });-->
+<!--    }-->
+<!---->
+<!--    prevent_default_context_menu();-->
+<!--</script>-->
 </body>
 </html>
