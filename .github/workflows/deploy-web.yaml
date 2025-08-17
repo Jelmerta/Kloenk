@@ -26,7 +26,8 @@ jobs:
             --remove-comments \
             --minify-js true \
             --minify-css true \
-            --use-short-doctype \
+            --remove-attribute-quotes \
+            --remove-optional-tags \
             -o ./games/kloenk/kloenk-web/html/index.html
 
       - name: Copy web pages to server using remote ssh commands
