@@ -46,13 +46,13 @@ impl ObjectSelectionSystem {
                 200,
                 pickup_menu_rect,
                 input,
-                "black".to_string(),
+                "black",
             ) {
                 UserAction::LeftClick => {
                     if frame_state.handled_left_click {
                         return;
                     }
-                    ItemPickupSystem::item_pickup(game_state, frame_state, item.clone());
+                    ItemPickupSystem::item_pickup(game_state, frame_state, item);
                     new_menu_state = Closed;
                     frame_state.handled_left_click = true;
                 }
@@ -63,7 +63,7 @@ impl ObjectSelectionSystem {
             frame_state.gui.text(
                 300,
                 pickup_menu_rect.inner_rect(Point2::new(0.01, 0.01), Point2::new(0.99, 0.99)),
-                "Pick up item".to_string(),
+                "Pick up item",
                 text_color,
             );
 
@@ -77,7 +77,7 @@ impl ObjectSelectionSystem {
                 200,
                 examine_menu_rect,
                 input,
-                "black".to_string(),
+                "black",
             ) {
                 UserAction::LeftClick => {
                     if frame_state.handled_left_click {
@@ -97,7 +97,7 @@ impl ObjectSelectionSystem {
             frame_state.gui.text(
                 300,
                 examine_menu_rect.inner_rect(Point2::new(0.01, 0.01), Point2::new(0.99, 0.99)),
-                "Examine item".to_string(),
+                "Examine item",
                 text_color,
             );
         }

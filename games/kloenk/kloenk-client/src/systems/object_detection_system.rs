@@ -78,16 +78,16 @@ impl ObjectDetectionSystem {
 
         let found_objects_text = frame_state.get_objects_on_cursor().join(", ");
         frame_state.action_effects.push(ActionEffect::ItemSelected {
-            found_objects_text: found_objects_text.to_string(),
+            found_objects_text,
         })
     }
 
     fn set_nearest_object(game_state: &GameState, frame_state: &mut FrameState) {
-        let player_position = game_state.get_position(&"player".to_string()).unwrap();
+        let player_position = game_state.get_position("player").unwrap();
         let nearest_object: Option<Entity> = frame_state
             .get_objects_on_cursor()
             .iter()
-            .filter(|entity| !(*entity).eq(&"player".to_string()))
+            .filter(|entity| !(*entity).eq("player"))
             .min_by(|a, b| {
                 let a_pos = game_state.get_position(a).unwrap();
                 let b_pos = game_state.get_position(b).unwrap();

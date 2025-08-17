@@ -15,11 +15,11 @@ impl Gui {
         }
     }
 
-    pub fn image(&mut self, layer: u32, rect: UIElement, image_name: String) {
+    pub fn image(&mut self, layer: u32, rect: UIElement, image_name: &str) {
         let image_command = RenderCommand::Texture {
             layer,
             ui_element: rect,
-            model_id: image_name,
+            model_id: image_name.to_owned(),
         };
         self.render_commands.push(image_command);
     }
@@ -29,13 +29,13 @@ impl Gui {
         window: &Arc<Window>,
         layer: u32,
         ui_element: UIElement,
-        image_name: String,
+        image_name: &str,
         input: &Input,
     ) -> UserAction {
         let image_command = RenderCommand::Texture {
             layer,
             ui_element,
-            model_id: image_name,
+            model_id: image_name.to_owned(),
         };
         self.render_commands.push(image_command);
         let element_contains = ui_element.contains(input.mouse_position_ui, window);
@@ -58,7 +58,7 @@ impl Gui {
         rect: UIElement,
         input: &Input,
         // color: [f32; 3], // Probably want to dynamically generate meshes to draw at some time
-        color: String,
+        color: &str,
     ) -> UserAction {
         let mouse_is_contained = rect.contains(input.mouse_position_ui, window);
 
@@ -66,7 +66,7 @@ impl Gui {
             let image_command = RenderCommand::Texture {
                 layer,
                 ui_element: rect,
-                model_id: color.to_string() + "_square", // TODO hardcoded
+                model_id: color.to_owned() + "_square", // TODO hardcoded
             };
             self.render_commands.push(image_command);
             return UserAction::LeftClick;
@@ -75,7 +75,7 @@ impl Gui {
             let image_command = RenderCommand::Texture {
                 layer,
                 ui_element: rect,
-                model_id: color.to_string() + "_square", // TODO hardcoded
+                model_id: color.to_owned() + "_square", // TODO hardcoded
             };
             self.render_commands.push(image_command);
             return UserAction::RightClick;
@@ -84,7 +84,7 @@ impl Gui {
             let image_command = RenderCommand::Texture {
                 layer,
                 ui_element: rect,
-                model_id: color.to_string() + "_square", // TODO hardcode
+                model_id: color.to_owned() + "_square", // TODO hardcode
             };
             self.render_commands.push(image_command);
             return UserAction::Hover;
@@ -93,17 +93,17 @@ impl Gui {
         let image_command = RenderCommand::Texture {
             layer,
             ui_element: rect,
-            model_id: color.to_string() + "_square", // TODO hardcoded
+            model_id: color.to_owned() + "_square", // TODO hardcoded
         };
         self.render_commands.push(image_command);
         UserAction::None
     }
 
-    pub fn text(&mut self, layer: u32, rect: UIElement, text: String, color: [f32; 3]) {
+    pub fn text(&mut self, layer: u32, rect: UIElement, text: &str, color: [f32; 3]) {
         let text_command = RenderCommand::Text {
             layer,
             rect,
-            text,
+            text: text.to_owned(),
             color,
         };
         self.render_commands.push(text_command);
@@ -113,14 +113,14 @@ impl Gui {
         self.text(
             1000,
             UIElement::new_rect(Point2::new(0.125, 0.7), Point2::new(0.075, 0.1)),
-            ui_state.action_text.clone(),
+            &ui_state.action_text,
             [0.8, 0.8, 0.0],
         );
 
         self.text(
             1000,
             UIElement::new_rect(Point2::new(0.125, 0.15), Point2::new(0.075, 0.05)),
-            ui_state.selected_text.clone(),
+            &ui_state.selected_text,
             [0.8, 0.8, 0.0],
         );
     }

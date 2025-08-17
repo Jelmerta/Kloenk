@@ -1,4 +1,3 @@
-use crate::state::components::Entity;
 use crate::state::frame_state::{ActionEffect, FrameState};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
@@ -15,14 +14,14 @@ impl ItemPickupSystem {
         input: &Input,
         frame_state: &mut FrameState,
     ) {
-        let player = "player".to_string();
+        let player = "player";
 
         if input.e_pressed.is_toggled_on() && !frame_state.handled_e_click {
             let near_pickup = PositionManager::find_nearest_pickup(
                 &game_state.position_components,
                 &game_state.storable_components,
                 &game_state.entities,
-                &player,
+                player,
             );
 
             if near_pickup.is_none() {
@@ -31,7 +30,7 @@ impl ItemPickupSystem {
                     .push(ActionEffect::PickupNoItemInRange); // Might not want to show this, just ignore cause there may be other actions to handle
                 return;
             }
-            if Self::item_pickup(game_state, frame_state, near_pickup.unwrap()) {
+            if Self::item_pickup(game_state, frame_state, &near_pickup.unwrap()) {
                 frame_state.handled_e_click = true;
             }
         }
@@ -51,7 +50,8 @@ impl ItemPickupSystem {
         }
 
         if let Some(nearest_object) = frame_state.get_nearest_object_on_cursor() {
-            Self::item_pickup(game_state, frame_state, nearest_object.clone());
+            let nearest_object_clone = nearest_object.to_owned();
+            Self::item_pickup(game_state, frame_state, &nearest_object_clone);
             frame_state.handled_left_click = true;
         }
     }
@@ -60,11 +60,9 @@ impl ItemPickupSystem {
     pub fn item_pickup(
         game_state: &mut GameState,
         frame_state: &mut FrameState,
-        near_pickup: Entity,
+        near_pickup: &str,
     ) -> bool {
-        let player = "player".to_string();
-
-        let pickup = game_state.storable_components.get(&near_pickup);
+        let pickup = game_state.storable_components.get(near_pickup);
         if pickup.is_none() {
             frame_state
                 .action_effects
@@ -72,7 +70,7 @@ impl ItemPickupSystem {
             return false;
         }
 
-        let item_position = game_state.get_position(&near_pickup.clone());
+        let item_position = game_state.get_position(near_pickup);
         if item_position.is_none() {
             frame_state
                 .action_effects
@@ -80,8 +78,9 @@ impl ItemPickupSystem {
             return false;
         }
 
+        let player = "player";
         if !PositionManager::in_range(
-            game_state.get_position(&player.clone()).unwrap(),
+            game_state.get_position(player).unwrap(),
             item_position.unwrap(),
             ITEM_PICKUP_RANGE,
         ) {
@@ -91,8 +90,8 @@ impl ItemPickupSystem {
             return false;
         }
 
-        let inventory = game_state.get_storage(&player).unwrap();
-        let inventory_items = StorageManager::get_in_storage(game_state, &player);
+        let inventory = game_state.get_storage(player).unwrap();
+        let inventory_items = StorageManager::get_in_storage(game_state, player);
         if !StorageManager::has_space(game_state, inventory, &inventory_items, &near_pickup) {
             frame_state
                 .action_effects
@@ -105,7 +104,7 @@ impl ItemPickupSystem {
 
         game_state.remove_position(&near_pickup.clone());
         game_state.remove_hitbox(&near_pickup.clone());
-        game_state.create_in_storage(&player, near_pickup.clone(), empty_spot);
+        game_state.create_in_storage(player, near_pickup.to_owned(), empty_spot);
         true
     }
 }

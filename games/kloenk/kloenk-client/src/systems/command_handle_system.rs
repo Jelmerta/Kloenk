@@ -27,28 +27,28 @@ impl CommandHandleSystem {
             .iter()
             .for_each(|command| match command {
                 ActionEffect::PickupItemNotStorable => {
-                    ui_state.action_text = "That cannot be picked up.".to_string();
+                    ui_state.action_text = "That cannot be picked up.".to_owned();
                 }
                 ActionEffect::PickupNoItemInRange => {
-                    ui_state.action_text = "No item found around you to pick up.".to_string();
+                    ui_state.action_text = "No item found around you to pick up.".to_owned();
                 }
                 ActionEffect::PlaceItemNonPlaceable => {
-                    ui_state.action_text = "Cannot place outside placeable area.".to_string();
+                    ui_state.action_text = "Cannot place outside placeable area.".to_owned();
                 }
                 ActionEffect::PlaceItemCollidingItem => {
                     ui_state.action_text =
-                        "Found a colliding object.\nNot allowed to place there.".to_string();
+                        "Found a colliding object.\nNot allowed to place there.".to_owned();
                 }
                 ActionEffect::PickupNoInventorySpace => {
                     ui_state.action_text =
                         "There is no space left in your\ninventory to pick up this item."
-                            .to_string();
+                            .to_owned();
                 }
                 ActionEffect::PlaceItemSucceeded => {
-                    ui_state.action_text = "You drop the item.".to_string();
+                    ui_state.action_text = "You drop the item.".to_owned();
                 }
                 ActionEffect::ItemSelected { found_objects_text } => {
-                    ui_state.selected_text = found_objects_text.to_string();
+                    ui_state.selected_text = found_objects_text.to_owned();
                 }
                 ActionEffect::Examine { text } => {
                     ui_state.action_text = text.clone();

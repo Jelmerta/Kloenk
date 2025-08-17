@@ -17,7 +17,7 @@ impl TextureManager {
         let white_texture_bind_group =
             Self::build_texture_bind_group(device, &texture_layout, &white_texture);
         let mut textures = HashMap::new();
-        textures.insert("white".to_string(), white_texture_bind_group);
+        textures.insert("white".to_owned(), white_texture_bind_group);
 
         TextureManager {
             bind_group_layout: texture_layout,
@@ -43,10 +43,10 @@ impl TextureManager {
     // TODO if none found, 1x1 white texture
     // pub fn get_bind_group(&self, material_name: &str) -> &BindGroup {
     pub fn get_bind_group(&self, texture_definition: &Option<TextureDefinition>) -> &BindGroup {
-        let texture_id = texture_definition.clone().map(|td| td.id); // TODO can we do this without cloning...?
+        let texture_id = texture_definition.as_ref().map(|td| td.id.as_str()); // TODO can we do this without cloning...?
         &self
             .textures_gpu
-            .get(&texture_id.unwrap_or_else(|| "white".to_string()))
+            .get(texture_id.unwrap_or_else(|| "white"))
             .unwrap()
     }
 

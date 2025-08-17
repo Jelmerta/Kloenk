@@ -133,11 +133,11 @@ impl GameState {
         hitbox_components: &mut HashMap<String, Hitbox>,
         description_components: &mut HashMap<String, Description>,
     ) {
-        let tree = "tree".to_string();
+        let tree = "tree".to_owned();
         entities.push(tree.clone());
 
         let tree_graphics = Graphics3D {
-            model_id: "tree".to_string(),
+            model_id: "tree".to_owned(),
         };
         graphics_3d_components.insert(tree.clone(), tree_graphics);
 
@@ -160,7 +160,7 @@ impl GameState {
         description_components.insert(
             tree.clone(),
             Description {
-                text: "Tree of life".to_string(),
+                text: "Tree of life".to_owned(),
             },
         );
     }
@@ -177,11 +177,11 @@ impl GameState {
         let plane_latitude_maximum: i8 = 10;
         for x in plane_longitude_minimum..plane_longitude_maximum {
             for z in plane_latitude_minimum..plane_latitude_maximum {
-                let plane = format!("plane{x}{z}"); //todo copy?
+                let plane = "plane".to_owned() + &x.to_string() + &z.to_string();
                 entities.push(plane.clone());
 
                 let plane_graphics = Graphics3D {
-                    model_id: "grass".to_string(),
+                    model_id: "grass".to_owned(),
                 };
                 graphics_3d_components.insert(plane.clone(), plane_graphics);
 
@@ -208,16 +208,16 @@ impl GameState {
         description_components: &mut HashMap<String, Description>,
     ) {
         for i in 1..71 {
-            let sword = "sword".to_string() + &i.to_string();
+            let sword = "sword".to_owned() + &i.to_string();
             entities.push(sword.clone());
 
             let sword_graphics = Graphics3D {
-                model_id: "sword".to_string(),
+                model_id: "sword".to_owned(),
             };
             graphics_3d_components.insert(sword.clone(), sword_graphics);
 
             let sword_graphics_inventory = Graphics2D {
-                material_id: "sword_inventory".to_string(),
+                material_id: "sword_inventory".to_owned(),
             };
             graphics_2d_components.insert(sword.clone(), sword_graphics_inventory);
 
@@ -253,7 +253,7 @@ impl GameState {
             description_components.insert(
                 sword.clone(),
                 Description {
-                    text: "Sword of Tungstenator".to_string(),
+                    text: "Sword of Tungstenator".to_owned(),
                 },
             );
         }
@@ -269,15 +269,15 @@ impl GameState {
         storable_components: &mut HashMap<Entity, Storable>,
         description_components: &mut HashMap<String, Description>,
     ) {
-        let shield = "shield".to_string();
+        let shield = "shield".to_owned();
         entities.push(shield.clone());
         let shield_graphics = Graphics3D {
-            model_id: "shield".to_string(),
+            model_id: shield.clone(),
         };
         graphics_3d_components.insert(shield.clone(), shield_graphics);
 
         let shield_graphics_inventory = Graphics2D {
-            material_id: "shield_inventory".to_string(),
+            material_id: "shield_inventory".to_owned(),
         };
         graphics_2d_components.insert(shield.clone(), shield_graphics_inventory);
 
@@ -313,7 +313,7 @@ impl GameState {
         description_components.insert(
             shield.clone(),
             Description {
-                text: "Shield of Hydrogax".to_string(),
+                text: "Shield of Hydrogax".to_owned(),
             },
         );
     }
@@ -329,11 +329,11 @@ impl GameState {
         storage_components: &mut HashMap<Entity, Storage>,
         description_components: &mut HashMap<String, Description>,
     ) {
-        let player = "player".to_string();
+        let player = "player".to_owned();
         entities.push(player.clone());
 
         let player_graphics = Graphics3D {
-            model_id: "Gozer".to_string(), // Matches mesh name in gltf
+            model_id: "Gozer".to_owned(), // Matches mesh name in gltf
         };
         graphics_3d_components.insert(player.clone(), player_graphics);
 
@@ -378,7 +378,7 @@ impl GameState {
         description_components.insert(
             player.clone(),
             Description {
-                text: "That's me!".to_string(),
+                text: "That's me!".to_owned(),
             },
         );
     }
@@ -391,11 +391,11 @@ impl GameState {
         description_components: &mut HashMap<String, Description>,
         dialogue_components: &mut HashMap<String, Dialogue>,
     ) {
-        let npc = "Dennis".to_string();
+        let npc = "Dennis".to_owned();
         entities.push(npc.clone());
 
         let player_graphics = Graphics3D {
-            model_id: "Gozer".to_string(), // matches name in gltf mesh
+            model_id: "Gozer".to_owned(), // matches name in gltf mesh
         };
         graphics_3d_components.insert(npc.clone(), player_graphics);
 
@@ -417,27 +417,27 @@ impl GameState {
         description_components.insert(
             npc.clone(),
             Description {
-                text: "Dennis is a menace.".to_string(),
+                text: "Dennis is a menace.".to_owned(),
             },
         );
 
         dialogue_components.insert(
             npc.clone(),
             Dialogue {
-                dialogue_id: "dennis_intro".to_string(),
+                dialogue_id: "dennis_intro".to_owned(),
             },
         );
     }
 
     fn load_camera(entities: &mut Vec<Entity>, camera_components: &mut HashMap<String, Camera>) {
-        let camera = "camera".to_string();
-        let camera_component = Camera::new();
+        let camera = "camera".to_owned();
         entities.push(camera.clone());
+        let camera_component = Camera::new();
         camera_components.insert(camera.clone(), camera_component);
     }
 
     fn load_camera_ui(entities: &mut Vec<Entity>, camera_components: &mut HashMap<String, Camera>) {
-        let camera = "camera_ui".to_string();
+        let camera = "camera_ui".to_owned();
         let mut camera_component = Camera::new();
         camera_component.eye = Point3 {
             x: 0.0,
@@ -457,59 +457,59 @@ impl GameState {
         camera_components.insert(camera.clone(), camera_component);
     }
 
-    pub fn get_graphics(&self, entity: &Entity) -> Option<&Graphics3D> {
+    pub fn get_graphics(&self, entity: &str) -> Option<&Graphics3D> {
         self.graphics_3d_components.get(entity)
     }
 
     #[allow(dead_code)]
-    pub fn get_graphics_inventory(&self, entity: &Entity) -> Option<&Graphics2D> {
+    pub fn get_graphics_inventory(&self, entity: &str) -> Option<&Graphics2D> {
         self.graphics_2d_components.get(entity)
     }
 
     // Note: On a position change, also consider updating the hitbox
-    pub fn create_position(&mut self, entity: Entity, position: Point3<f32>) {
-        self.position_components.insert(entity, position);
+    pub fn create_position(&mut self, entity: &str, position: Point3<f32>) {
+        self.position_components.insert(entity.to_owned(), position);
     }
 
-    pub fn get_position(&self, entity: &Entity) -> Option<&Point3<f32>> {
+    pub fn get_position(&self, entity: &str) -> Option<&Point3<f32>> {
         self.position_components.get(entity)
     }
 
     #[allow(dead_code)]
-    pub fn get_position_mut(&mut self, entity: &Entity) -> Option<&mut Point3<f32>> {
+    pub fn get_position_mut(&mut self, entity: &str) -> Option<&mut Point3<f32>> {
         self.position_components.get_mut(entity)
     }
 
     // Note: On a position change, also consider updating the hitbox
-    pub fn remove_position(&mut self, to_remove: &Entity) {
+    pub fn remove_position(&mut self, to_remove: &str) {
         self.position_components.remove(to_remove);
     }
 
-    pub fn get_size(&self, entity: &Entity) -> Option<&Size> {
+    pub fn get_size(&self, entity: &str) -> Option<&Size> {
         self.size_components.get(entity)
     }
 
-    pub fn get_rotation(&self, entity: &Entity) -> Option<&Rotation> {
+    pub fn get_rotation(&self, entity: &str) -> Option<&Rotation> {
         self.rotation_components.get(entity)
     }
 
-    pub fn create_hitbox(&mut self, entity: Entity, hitbox: Hitbox) {
-        self.hitbox_components.insert(entity, hitbox);
+    pub fn create_hitbox(&mut self, entity: &str, hitbox: Hitbox) {
+        self.hitbox_components.insert(entity.to_owned(), hitbox);
     }
 
-    pub fn get_hitbox(&self, entity: &Entity) -> Option<&Hitbox> {
+    pub fn get_hitbox(&self, entity: &str) -> Option<&Hitbox> {
         self.hitbox_components.get(entity)
     }
 
-    pub fn remove_hitbox(&mut self, to_remove: &Entity) {
+    pub fn remove_hitbox(&mut self, to_remove: &str) {
         self.hitbox_components.remove(to_remove);
     }
 
-    pub fn get_camera_target(&self, entity: &Entity) -> Option<&CameraTarget> {
+    pub fn get_camera_target(&self, entity: &str) -> Option<&CameraTarget> {
         self.camera_target_components.get(entity)
     }
 
-    pub fn get_camera_target_mut(&mut self, entity: &Entity) -> Option<&mut CameraTarget> {
+    pub fn get_camera_target_mut(&mut self, entity: &str) -> Option<&mut CameraTarget> {
         self.camera_target_components.get_mut(entity)
     }
 
@@ -522,13 +522,13 @@ impl GameState {
         self.camera_components.get_mut(entity)
     }
 
-    pub fn get_storage(&self, entity: &Entity) -> Option<&Storage> {
+    pub fn get_storage(&self, entity: &str) -> Option<&Storage> {
         self.storage_components.get(entity)
     }
 
-    pub fn create_in_storage(&mut self, storage_entity: &Entity, to_store: Entity, spot: (u8, u8)) {
+    pub fn create_in_storage(&mut self, storage_entity: &str, to_store: Entity, spot: (u8, u8)) {
         let in_storage_component = InStorage {
-            storage_entity: storage_entity.clone(),
+            storage_entity: storage_entity.to_owned(),
             position_x: spot.0,
             position_y: spot.1,
         };
@@ -536,12 +536,12 @@ impl GameState {
             .insert(to_store, in_storage_component);
     }
 
-    pub fn remove_in_storage(&mut self, entity: &Entity) {
+    pub fn remove_in_storage(&mut self, entity: &str) {
         self.in_storage_components.remove(entity);
     }
 
     #[allow(dead_code)]
-    pub fn get_in_storages(&self, storage_entity: &Entity) -> HashMap<&Entity, &InStorage> {
+    pub fn get_in_storages(&self, storage_entity: &str) -> HashMap<&Entity, &InStorage> {
         self.in_storage_components
             .iter()
             .filter(|(_, in_storage)| in_storage.storage_entity == *storage_entity)

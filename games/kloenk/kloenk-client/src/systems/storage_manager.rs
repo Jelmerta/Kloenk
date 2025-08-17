@@ -7,8 +7,8 @@ impl StorageManager {
     pub fn has_space(
         game_state: &GameState,
         storage: &Storage,
-        in_storage_entities: &Vec<&Entity>,
-        near_pickup: &Entity,
+        in_storage_entities: &Vec<Entity>,
+        near_pickup: &str,
     ) -> bool {
         Self::find_empty_spot(game_state, storage, in_storage_entities, near_pickup).is_some()
     }
@@ -16,8 +16,8 @@ impl StorageManager {
     pub fn find_empty_spot(
         game_state: &GameState,
         storage: &Storage,
-        in_storage_entities: &Vec<&Entity>,
-        near_pickup: &Entity,
+        in_storage_entities: &Vec<Entity>,
+        near_pickup: &str,
     ) -> Option<(u8, u8)> {
         let dynamic_storage =
             Self::generate_dynamic_storage_space(game_state, storage, in_storage_entities);
@@ -62,7 +62,7 @@ impl StorageManager {
     fn generate_dynamic_storage_space(
         game_state: &GameState,
         storage: &Storage,
-        in_storage_entities: &Vec<&Entity>,
+        in_storage_entities: &Vec<Entity>,
     ) -> Vec<Vec<bool>> {
         let mut storage_spots =
             vec![vec![false; storage.number_of_rows.into()]; storage.number_of_columns.into()];
@@ -70,11 +70,11 @@ impl StorageManager {
         for in_storage_entity in in_storage_entities {
             let in_storage = game_state
                 .in_storage_components
-                .get(&(*in_storage_entity).to_string())
+                .get(in_storage_entity)
                 .unwrap();
             let storable = game_state
                 .storable_components
-                .get(&(*in_storage_entity).to_string())
+                .get(in_storage_entity)
                 .unwrap();
             for x in in_storage.position_x..in_storage.position_x + storable.shape.width {
                 for y in in_storage.position_y..in_storage.position_y + storable.shape.height {
@@ -85,53 +85,16 @@ impl StorageManager {
         storage_spots
     }
 
-    pub fn get_in_storage<'a>(game_state: &'a GameState, entity: &Entity) -> Vec<&'a Entity> {
+    pub fn get_in_storage(game_state: &GameState, entity: &str) -> Vec<Entity> {
         game_state
             .entities
             .iter()
             .filter(|e| {
-                game_state
-                    .in_storage_components
-                    .contains_key(&(*e).to_string())
-            })
-            .filter(|e| {
-                game_state
-                    .in_storage_components
-                    .get(&(*e).to_string())
-                    .unwrap()
-                    .storage_entity
-                    == *entity
-            })
+                game_state.in_storage_components
+                    .get(e.as_str())
+                    .map(|comp| comp.storage_entity == entity)
+                    .unwrap_or(false)
+            }).cloned()
             .collect()
-    }
-
-    #[allow(dead_code)]
-    pub fn get_in_storage_entities<'a>(
-        game_state: &'a GameState,
-        entity: &Entity,
-    ) -> Vec<&'a Entity> {
-        game_state
-            .entities
-            .iter()
-            .filter(|e| {
-                game_state
-                    .in_storage_components
-                    .contains_key(&(*e).to_string())
-            })
-            .filter(|e| {
-                game_state
-                    .in_storage_components
-                    .get(&(*e).to_string())
-                    .unwrap()
-                    .storage_entity
-                    == *entity
-            })
-            .collect()
-    }
-
-    #[allow(dead_code)]
-    pub fn find_in_storage<'a>(game_state: &'a GameState, entity: &Entity) -> Option<&'a Entity> {
-        let storage_entities = StorageManager::get_in_storage_entities(game_state, entity);
-        storage_entities.first().copied()
     }
 }

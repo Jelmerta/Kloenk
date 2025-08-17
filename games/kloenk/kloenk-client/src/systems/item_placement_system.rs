@@ -9,9 +9,9 @@ impl ItemPlacementSystem {
     pub fn place_item(
         game_state: &mut GameState,
         action_effects: &mut Vec<ActionEffect>,
-        item_unwrap: &String,
+        item_unwrap: &str,
     ) {
-        let player_position = game_state.get_position(&"player".to_string()).unwrap();
+        let player_position = game_state.get_position("player").unwrap();
         let placed_position = Point3 {
             x: player_position.x - 1.1,
             y: player_position.y + 0.25,
@@ -39,7 +39,7 @@ impl ItemPlacementSystem {
             .filter(|entity| *entity != "player")
             .filter(|entity| {
                 CollisionManager::check_collision(
-                    game_state.get_hitbox(&(*entity).to_string()).unwrap(),
+                    game_state.get_hitbox(entity.as_str()).unwrap(),
                     &item_hitbox,
                 )
             })
@@ -51,9 +51,9 @@ impl ItemPlacementSystem {
         }
 
         action_effects.push(ActionEffect::PlaceItemSucceeded);
-        game_state.create_position(item_unwrap.to_string(), placed_position);
-        game_state.create_hitbox(item_unwrap.to_string(), item_hitbox);
-        game_state.remove_in_storage(&item_unwrap.to_string());
+        game_state.create_position(item_unwrap, placed_position);
+        game_state.create_hitbox(item_unwrap, item_hitbox);
+        game_state.remove_in_storage(item_unwrap);
     }
 
     fn is_placeable_area(game_state: &GameState, desired_position: &Point3<f32>) -> bool {
@@ -65,7 +65,7 @@ impl ItemPlacementSystem {
                 CollisionManager::check_in_dimension(
                     desired_position.x,
                     0.0,
-                    game_state.get_position(&(*entity).to_string()).unwrap().x,
+                    game_state.get_position(entity.as_str()).unwrap().x,
                     0.5,
                 )
             }) // Assume 0.5 as half tile
@@ -73,7 +73,7 @@ impl ItemPlacementSystem {
                 CollisionManager::check_in_dimension(
                     desired_position.z,
                     0.0,
-                    game_state.get_position(&entity.to_string()).unwrap().z,
+                    game_state.get_position(entity).unwrap().z,
                     0.5,
                 )
             }) // Assume 0.5 as half tile

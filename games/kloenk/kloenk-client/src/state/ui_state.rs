@@ -201,13 +201,13 @@ impl UIState {
             false,
             UIElement::new_rect(Point2::new(0.775, 0.775), Point2::new(0.175, 0.175)),
         );
-        windows.insert("inventory".to_string(), inventory_window);
+        windows.insert("inventory".to_owned(), inventory_window);
 
         let chat_window = UIWindow::new(
             false,
             UIElement::new_rect(Point2::new(0.25, 0.7), Point2::new(0.2, 0.1)),
         );
-        windows.insert("chat".to_string(), chat_window);
+        windows.insert("chat".to_owned(), chat_window);
 
         UIState {
             windows,

@@ -30,14 +30,14 @@ impl MovementSystem {
 
         let angle = angle_option.unwrap();
 
-        let player_position = game_state.get_position(&"player".to_string()).unwrap();
+        let player_position = game_state.get_position("player").unwrap();
         let desired_position = Point3 {
             x: player_position.x + movement_speed * angle.sin(),
             y: player_position.y,
             z: player_position.z + movement_speed * angle.cos(),
         };
 
-        let player_hitbox = game_state.get_hitbox(&"player".to_string()).unwrap();
+        let player_hitbox = game_state.get_hitbox("player").unwrap();
 
         let desired_player_hitbox = Hitbox {
             box_corner_min: Point3::new(
@@ -55,10 +55,10 @@ impl MovementSystem {
             && !Self::is_colliding(&desired_player_hitbox, game_state, audio_state)
         {
             Self::update_rotation(game_state, desired_position);
-            game_state.remove_position(&"player".to_string());
+            game_state.remove_position("player");
             game_state
                 .position_components
-                .insert("player".to_string(), desired_position);
+                .insert("player".to_owned(), desired_position);
             Self::update_hitbox(game_state, desired_player_hitbox);
         }
     }
@@ -86,13 +86,13 @@ impl MovementSystem {
             .iter()
             .filter(|entity| {
                 entity.as_str() != "player"
-                    && game_state.get_hitbox(&(*entity).to_string()).is_some()
-                    && game_state.get_position(&(*entity).to_string()).is_some()
+                    && game_state.get_hitbox(entity.as_str()).is_some()
+                    && game_state.get_position(entity.as_str()).is_some()
             })
             .collect();
 
         for entity in interactable_entities {
-            let entity_hitbox = game_state.get_hitbox(&entity.to_string()).unwrap();
+            let entity_hitbox = game_state.get_hitbox(entity).unwrap();
 
             if CollisionManager::check_collision(desired_player_hitbox, entity_hitbox) {
                 #[allow(irrefutable_let_patterns)]
@@ -122,8 +122,8 @@ impl MovementSystem {
     }
 
     fn update_rotation(game_state: &mut GameState, desired_position: Point3<f32>) {
-        let old_rotation = game_state.get_rotation(&"player".to_string());
-        let player_position = game_state.get_position(&"player".to_string()).unwrap();
+        let old_rotation = game_state.get_rotation("player");
+        let player_position = game_state.get_position("player").unwrap();
 
         let direction_3d = desired_position.sub(player_position);
         // Player model is aimed at z-direction?
@@ -153,7 +153,7 @@ impl MovementSystem {
 
         game_state.rotation_components.remove("player");
         game_state.rotation_components.insert(
-            "player".to_string(),
+            "player".to_owned(),
             Rotation {
                 degrees_y: used_rotation,
             },
@@ -174,7 +174,7 @@ impl MovementSystem {
         game_state.hitbox_components.remove("player");
         game_state
             .hitbox_components
-            .insert("player".to_string(), new_hitbox);
+            .insert("player".to_owned(), new_hitbox);
     }
 
     // Assumes for now Z-positive is 0 degrees

@@ -24,7 +24,7 @@ impl InventorySystem {
         }
 
         let inventory_graphics = game_state
-            .get_graphics_inventory(&"sword1".to_string()) // TODO inventory graphics
+            .get_graphics_inventory("sword1") // TODO inventory graphics
             .unwrap();
         if !inventory_window.is_visible {
             return;
@@ -33,15 +33,15 @@ impl InventorySystem {
         frame_state.gui.image(
             100,
             inventory_window.rect,
-            inventory_graphics.material_id.to_string(),
+            inventory_graphics.material_id.as_ref(),
         );
 
-        let inventory_ecs = game_state.get_storage(&"player".to_string()).unwrap();
+        let inventory_ecs = game_state.get_storage("player").unwrap();
 
-        let inventory_items = game_state.get_in_storages(&"player".to_string());
+        let inventory_items = game_state.get_in_storages("player");
 
         for (entity, in_storage) in inventory_items.iter() {
-            let storable = game_state.storable_components.get(*entity).unwrap();
+            let storable = game_state.storable_components.get(entity.as_str()).unwrap();
             let item_image = game_state.get_graphics_inventory(entity).unwrap();
 
             let left = in_storage.position_x as f32 / inventory_ecs.number_of_columns as f32;
@@ -57,7 +57,7 @@ impl InventorySystem {
                 window,
                 150,
                 image_element,
-                item_image.material_id.to_string(),
+                &item_image.material_id,
                 input,
             ) {
                 UserAction::None => {}
@@ -68,7 +68,7 @@ impl InventorySystem {
                     frame_state
                         .action_requests
                         .push(ActionRequest::ItemPlacement {
-                            entity: entity.to_string(),
+                            entity: (*entity).clone(),
                         });
                     frame_state.handled_left_click = true;
                 }
@@ -79,7 +79,7 @@ impl InventorySystem {
 
                     ui_state.menu_state = Inventory {
                         mouse_position: input.mouse_position_ui,
-                        item: entity.to_string(),
+                        item: entity.clone().to_owned(),
                     };
 
                     frame_state.handled_right_click = true;
@@ -134,7 +134,7 @@ impl InventorySystem {
                 200,
                 drop_button_rect,
                 input,
-                "black".to_string(),
+                "black",
             ) {
                 UserAction::None => {}
                 UserAction::Hover => {
@@ -158,7 +158,7 @@ impl InventorySystem {
             frame_state.gui.text(
                 300,
                 drop_button_rect.inner_rect(Point2::new(0.01, 0.01), Point2::new(0.99, 0.99)),
-                "Drop item".to_string(),
+                "Drop item",
                 text_color,
             );
 
@@ -175,7 +175,7 @@ impl InventorySystem {
                     200,
                     examine_button_rect,
                     input,
-                    "black".to_string(),
+                    "black",
                 ) {
                     UserAction::None => {}
                     UserAction::Hover => {
@@ -200,7 +200,7 @@ impl InventorySystem {
                     300,
                     examine_button_rect
                         .inner_rect(Point2::new(0.01, 0.01), Point2::new(0.99, 0.99)),
-                    "Examine item".to_string(),
+                    "Examine item",
                     text_color,
                 );
             }

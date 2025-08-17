@@ -218,7 +218,7 @@ impl Renderer {
 
         let camera = game_state.camera_components.get_mut("camera").unwrap();
         self.camera_manager
-            .update_buffer("camera_3d".to_string(), &self.queue, camera);
+            .update_buffer("camera_3d", &self.queue, camera);
 
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -252,7 +252,7 @@ impl Renderer {
             self.render_batches.drain(..).for_each(|render_group| {
                 let primitive_vertices = self
                     .primitive_vertices_manager
-                    .get_primitive_vertices(render_group.primitive.vertices_id.to_string());
+                    .get_primitive_vertices(&render_group.primitive.vertices_id);
                 let pipeline = &self.render_context_manager.render_pipeline;
                 render_pass.set_pipeline(pipeline);
 
@@ -309,7 +309,7 @@ impl Renderer {
                     ui_element: rect,
                     model_id: texture_model_id, // TODO is this mesh or model?
                 } => {
-                    self.draw_ui(window, view, encoder, texture_model_id.to_string(), &rect);
+                    self.draw_ui(window, view, encoder, &texture_model_id, &rect);
                 }
             } // TODO or maybe call it widget?
         }
@@ -383,7 +383,7 @@ impl Renderer {
         game_state
             .entities
             .iter()
-            .filter(|entity| game_state.get_position(&(*entity).to_string()).is_some())
+            .filter(|entity| game_state.get_position(entity.as_ref()).is_some())
             .filter(|entity| {
                 game_state
                     .graphics_3d_components
@@ -391,7 +391,7 @@ impl Renderer {
             })
             .for_each(|entity| {
                 let model_id = game_state
-                    .get_graphics(&(*entity).to_string())
+                    .get_graphics(entity.as_ref())
                     .unwrap()
                     .model_id
                     .clone();
@@ -408,14 +408,14 @@ impl Renderer {
                         let size = game_state.get_size(entity);
                         let rotation = game_state.get_rotation(entity);
                         Self::convert_instance(
-                            game_state.get_position(&entity.to_string()).unwrap(),
+                            game_state.get_position(entity).unwrap(),
                             size,
                             rotation,
                         )
                     })
                     .collect();
                 let instance_buffer = Self::create_instance_buffer(&self.device, &instance_group);
-                let model = self.model_manager.get_model_3d(model_id);
+                let model = self.model_manager.get_model_3d(&model_id);
                 // let primitive_id = model.primitives.iter().next().unwrap().primitive_vertices_id.clone();
                 let primitive = model.primitives.iter().next().unwrap(); //.primitive_vertices_id.clone();
                 let render_group = RenderBatch {
@@ -431,7 +431,7 @@ impl Renderer {
     fn set_camera_data_ui(&mut self, camera: &mut Camera, window: &Arc<Window>) {
         camera.update_view_projection_matrix(window); // TODO hmm i think camera matrix is updated in systems for 3d but for ui we do it here... one place for all.
         self.camera_manager
-            .update_buffer("camera_2d".to_string(), &self.queue, camera);
+            .update_buffer("camera_2d", &self.queue, camera);
     }
 
     fn draw_ui(
@@ -439,10 +439,10 @@ impl Renderer {
         window: &Arc<Window>,
         view: &TextureView,
         encoder: &mut CommandEncoder,
-        model_id: String,
+        model_id: &str,
         ui_element: &UIElement,
     ) {
-        let model = self.model_manager.get_model_2d(model_id.to_string());
+        let model = self.model_manager.get_model_2d(model_id);
         let primitive = model.primitives.iter().next().unwrap(); // todo multiple primitives
 
         let pipeline = &self.render_context_manager.render_pipeline;
@@ -490,7 +490,7 @@ impl Renderer {
         render_pass_ui.set_vertex_buffer(1, instance_buffer.slice(..));
         let primitive_vertices = self
             .primitive_vertices_manager
-            .get_primitive_vertices(primitive.vertices_id.clone());
+            .get_primitive_vertices(&primitive.vertices_id);
         render_pass_ui.draw_primitive_instanced(primitive_vertices, 0..instance_count);
         drop(render_pass_ui);
     }

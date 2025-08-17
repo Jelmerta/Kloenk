@@ -23,7 +23,7 @@ impl DialogueSystem {
             if let Some(near_dialog_interactable) = PositionManager::find_nearest_dialog(game_state)
             {
                 if !PositionManager::in_range(
-                    game_state.get_position(&"player".to_string()).unwrap(),
+                    game_state.get_position("player").unwrap(),
                     game_state.get_position(&near_dialog_interactable).unwrap(),
                     DIALOGUE_RANGE,
                 ) {
@@ -35,12 +35,12 @@ impl DialogueSystem {
 
                 let dialogue = game_state
                     .dialogue_components
-                    .get(&near_dialog_interactable)
+                    .get(near_dialog_interactable)
                     .unwrap();
 
                 ui_state.dialogue_state = DialogueState::Npc {
                     mouse_position: input.mouse_position_ui.clone(),
-                    npc_entity_id: near_dialog_interactable,
+                    npc_entity_id: near_dialog_interactable.to_owned(),
                     dialogue_id: dialogue.clone().dialogue_id,
                 };
                 frame_state.handled_e_click = true;
@@ -72,7 +72,7 @@ impl DialogueSystem {
                 150,
                 dialogue_rect,
                 input,
-                "black".to_string(),
+                "black",
             ) {
                 UserAction::None => {}
                 UserAction::Hover => {}
@@ -86,7 +86,7 @@ impl DialogueSystem {
             frame_state.gui.text(
                 300,
                 dialogue_rect,
-                dialogue_text.clone().text,
+                &dialogue_text.clone().text,
                 [0.8, 0.8, 0.0],
             );
 
@@ -96,7 +96,7 @@ impl DialogueSystem {
                 window,
                 310,
                 close_button_rect,
-                "close_button".to_string(),
+                "close_button",
                 input,
             ) {
                 UserAction::None => {}
@@ -106,7 +106,7 @@ impl DialogueSystem {
                         window,
                         311,
                         close_button_rect,
-                        "close_button_hover".to_string(),
+                        "close_button_hover",
                         input,
                     ) {
                         UserAction::None => {}
@@ -127,7 +127,7 @@ impl DialogueSystem {
             }
 
             if !PositionManager::in_range(
-                game_state.get_position(&"player".to_string()).unwrap(),
+                game_state.get_position("player").unwrap(),
                 game_state.get_position(&npc_entity_id).unwrap(),
                 DIALOGUE_RANGE,
             ) {

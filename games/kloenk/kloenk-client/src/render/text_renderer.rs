@@ -80,7 +80,7 @@ impl TextWriter {
         // let font_data = TextWriter::load_woff2(&woff2_data).await; // TODO bro why the fuck do we do this just load the ttf. it's brotli compressed anyway over http no need for woff2-patched... keep it simple idiot no way this compresses that much more anyway. could check before/after i guess
         let mut fontdb = fontdb::Database::new();
         fontdb.load_font_data(font_data);
-        let font_system = FontSystem::new_with_locale_and_db("en-US".to_string(), fontdb);
+        let font_system = FontSystem::new_with_locale_and_db("en-US".to_owned(), fontdb);
 
         let swash_cache = SwashCache::new();
         let cache = Cache::new(device);

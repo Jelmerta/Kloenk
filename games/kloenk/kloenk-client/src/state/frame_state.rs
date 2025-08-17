@@ -61,8 +61,8 @@ impl FrameState {
         self.nearest_object = nearest_object;
     }
 
-    pub fn get_nearest_object_on_cursor(&self) -> Option<&Entity> {
-        self.nearest_object.as_ref()
+    pub fn get_nearest_object_on_cursor(&self) -> Option<&str> {
+        self.nearest_object.as_deref()
     }
 }
 

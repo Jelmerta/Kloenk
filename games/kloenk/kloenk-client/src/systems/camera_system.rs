@@ -24,9 +24,9 @@ impl CameraSystem {
     }
 
     fn setup_camera(game_state: &mut GameState) {
-        let player = "player".to_string();
-        let player_position = *game_state.get_position(&player).unwrap();
-        let player_camera = *game_state.get_camera_target(&player).unwrap();
+        let player = "player";
+        let player_position = *game_state.get_position(player).unwrap();
+        let player_camera = *game_state.get_camera_target(player).unwrap();
 
         let rad_x = f32::to_radians(player_camera.rotation_x_degrees);
         let rad_y = f32::to_radians(player_camera.rotation_y_degrees);
@@ -49,7 +49,7 @@ impl CameraSystem {
 
     fn setup_camera_target(game_state: &mut GameState, input: &mut Input) {
         let player_camera: &mut CameraTarget = game_state
-            .get_camera_target_mut(&"player".to_string())
+            .get_camera_target_mut("player")
             .unwrap();
 
         if input.up_pressed.is_pressed {

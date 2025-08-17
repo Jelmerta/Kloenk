@@ -34,7 +34,7 @@ impl AssetLoader {
         let dds = Dds::read(dds_bytes).unwrap();
         let format = detect_format(&dds.header, &dds.header10);
         ImageAsset {
-            name: image_name.to_string(),
+            name: image_name.to_owned(),
             dimensions: TextureDimensions {
                 pixel_width: dds.header.width,
                 pixel_height: dds.header.height,

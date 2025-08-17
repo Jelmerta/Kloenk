@@ -22,7 +22,7 @@ impl HealthSystem {
             300,
             health_rect_outside,
             input,
-            "black".to_string(),
+            "black",
         ) {
             UserAction::None => {}
             UserAction::Hover => {}
@@ -45,7 +45,7 @@ impl HealthSystem {
             350,
             health_rect_inside,
             input,
-            "blood_red".to_string(),
+            "blood_red",
         ) {
             UserAction::None => {}
             UserAction::Hover => {}

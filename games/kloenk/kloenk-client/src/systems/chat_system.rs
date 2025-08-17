@@ -58,7 +58,7 @@ impl ChatSystem {
             500,
             chat_window.rect,
             input,
-            "black".to_string(),
+            "black",
         ) {
             UserAction::None => {}
             UserAction::Hover => {}

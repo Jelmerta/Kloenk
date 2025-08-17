@@ -23,9 +23,9 @@ impl DialogueManager {
         let mut dialogues: HashMap<String, Dialogue> = HashMap::new();
 
         dialogues.insert(
-            "dennis_intro".to_string(),
+            "dennis_intro".to_owned(),
             Dialogue {
-                text: "Welcome to the exciting world of Kloenk!".to_string(),
+                text: "Welcome to the exciting world of Kloenk!".to_owned(),
             },
         );
 

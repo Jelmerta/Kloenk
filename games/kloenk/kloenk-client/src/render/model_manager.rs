@@ -2,7 +2,6 @@ use crate::render::model::{ColorDefinition, ModelDefinition, PrimitiveDefinition
 use crate::render::model_loader::ModelLoader;
 use cgmath::Vector4;
 use std::collections::{HashMap, HashSet};
-use std::string::ToString;
 
 // TODO what if we just put vertices/textures/color in here such that model manager keeps track if model is ready or not?
 // TODO hmm but what about callbacks on event loop
@@ -19,32 +18,32 @@ impl ModelManager {
         &self.active_models
     }
 
-    pub fn get_model_3d(&self, model_id: String) -> &ModelDefinition {
-        self.loaded_models.get(&model_id).or(self.loaded_models
-            .get(&("default_model_3d".to_string()))).unwrap()
+    pub fn get_model_3d(&self, model_id: &str) -> &ModelDefinition {
+        self.loaded_models.get(model_id).or(self.loaded_models
+            .get("default_model_3d")).unwrap()
     }
 
-    pub fn get_model_2d(&self, model_id: String) -> &ModelDefinition {
-        self.loaded_models.get(&model_id).or(self.loaded_models
-            .get(&("default_model_2d".to_string()))).unwrap()
+    pub fn get_model_2d(&self, model_id: &str) -> &ModelDefinition {
+        self.loaded_models.get(model_id).or(self.loaded_models
+            .get("default_model_2d")).unwrap()
     }
 
     pub fn add_active_model(&mut self, model: ModelDefinition) {
         self.active_models.insert(model.id.clone(), model);
     }
 
-    pub fn added_vertices(&mut self, vertices_id: &String) {
-        self.loaded_vertices.insert(vertices_id.clone());
+    pub fn added_vertices(&mut self, vertices_id: &str) {
+        self.loaded_vertices.insert(vertices_id.to_owned());
         self.update_ready();
     }
 
-    pub fn added_texture(&mut self, texture_id: &String) {
-        self.loaded_textures.insert(texture_id.clone());
+    pub fn added_texture(&mut self, texture_id: &str) {
+        self.loaded_textures.insert(texture_id.to_owned());
         self.update_ready();
     }
 
-    pub fn added_color(&mut self, color_id: &String) {
-        self.loaded_colors.insert(color_id.clone());
+    pub fn added_color(&mut self, color_id: &str) {
+        self.loaded_colors.insert(color_id.to_owned());
         self.update_ready();
     }
 
@@ -88,8 +87,8 @@ impl ModelManager {
     // TODO put cube/square/white1x1/white in?
     pub async fn new() -> ModelManager {
         let mut loaded_vertices = HashSet::new();
-        loaded_vertices.insert("SQUARE".to_string());
-        loaded_vertices.insert("CUBE".to_string());
+        loaded_vertices.insert("SQUARE".to_owned());
+        loaded_vertices.insert("CUBE".to_owned());
 
         // let loaded_textures = HashSet::new();
         // loaded_textures.insert("white")
@@ -105,11 +104,11 @@ impl ModelManager {
 
         // TODO hm should we return different model based on ui model / 3d?
         let default_model_2d = ModelDefinition {
-            id: "default_model_2d".to_string(),
+            id: "default_model_2d".to_owned(),
             primitives: vec![PrimitiveDefinition {
-                vertices_id: "SQUARE".to_string(),
+                vertices_id: "SQUARE".to_owned(),
                 color_definition: ColorDefinition {
-                    id: "white".to_string(),
+                    id: "white".to_owned(),
                     value: Vector4::new(1.0, 1.0, 1.0, 1.0),
                 },
                 texture_definition: None,
@@ -117,11 +116,11 @@ impl ModelManager {
         };
         model_manager.add_active_model(default_model_2d);
         let default_model_3d = ModelDefinition {
-            id: "default_model_3d".to_string(),
+            id: "default_model_3d".to_owned(),
             primitives: vec![PrimitiveDefinition {
-                vertices_id: "CUBE".to_string(),
+                vertices_id: "CUBE".to_owned(),
                 color_definition: ColorDefinition {
-                    id: "white".to_string(),
+                    id: "white".to_owned(),
                     value: Vector4::new(1.0, 1.0, 1.0, 1.0),
                 },
                 texture_definition: None,
@@ -130,53 +129,53 @@ impl ModelManager {
         model_manager.add_active_model(default_model_3d);
 
         model_manager.add_active_model(ModelLoader::load_colored_square_model(
-            "black".to_string(),
+            "black",
             Vector4::new(0.0, 0.0, 0.0, 1.0),
         ));
 
         model_manager.add_active_model(ModelLoader::load_colored_square_model(
-            "grey".to_string(),
+            "grey",
             Vector4::new(0.2, 0.2, 0.2, 1.0),
         ));
 
         // #780606
         model_manager.add_active_model(ModelLoader::load_colored_square_model(
-            "blood_red".to_string(),
+            "blood_red",
             Vector4::new(0.46875, 0.0234375, 0.0234375, 1.0),
         ));
 
         model_manager.add_active_model(ModelLoader::make_preload_model(
-            "shield".to_string(),
+            "shield",
             "CUBE",
             "shield.dds",
         ));
 
         model_manager.add_active_model(ModelLoader::make_preload_model(
-            "shield_inventory".to_string(),
+            "shield_inventory",
             "SQUARE",
             "shield.dds",
         ));
 
         model_manager.add_active_model(ModelLoader::make_preload_model(
-            "sword".to_string(),
+            "sword",
             "CUBE",
             "sword.dds",
         ));
 
         model_manager.add_active_model(ModelLoader::make_preload_model(
-            "sword_inventory".to_string(),
+            "sword_inventory",
             "SQUARE",
             "sword.dds",
         ));
 
         model_manager.add_active_model(ModelLoader::make_preload_model(
-            "grass".to_string(),
+            "grass",
             "CUBE",
             "grass.dds",
         ));
 
         model_manager.add_active_model(ModelLoader::make_preload_model(
-            "tree".to_string(),
+            "tree",
             "CUBE",
             "tree.dds",
         ));
@@ -189,13 +188,13 @@ impl ModelManager {
         }
 
         model_manager.add_active_model(ModelLoader::make_preload_model(
-            "close_button".to_string(),
+            "close_button",
             "SQUARE",
             "close_button.dds",
         ));
 
         model_manager.add_active_model(ModelLoader::make_preload_model(
-            "close_button_hover".to_string(),
+            "close_button_hover",
             "SQUARE",
             "close_button_hover.dds",
         ));

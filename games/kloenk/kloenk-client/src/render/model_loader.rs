@@ -13,13 +13,13 @@ use hydrox::load_binary;
 pub struct ModelLoader {}
 
 impl ModelLoader {
-    pub fn load_colored_square_model(name: String, color: Vector4<f32>) -> ModelDefinition {
+    pub fn load_colored_square_model(name: &str, color: Vector4<f32>) -> ModelDefinition {
         ModelDefinition {
-            id: name.clone() + "_square",
+            id: name.to_owned() + "_square",
             primitives: vec![PrimitiveDefinition {
-                vertices_id: "SQUARE".to_string(),
+                vertices_id: "SQUARE".to_owned(),
                 color_definition: ColorDefinition {
-                    id: name,
+                    id: name.to_owned(),
                     value: color,
                 },
                 texture_definition: None,
@@ -49,14 +49,14 @@ impl ModelLoader {
                     Source::View { .. } => {
                         panic!("Only supports URI")
                     }
-                    Source::Uri { uri, .. } => uri.to_string(),
+                    Source::Uri { uri, .. } => uri.to_owned(),
                 });
 
                 let primitive_definition = PrimitiveDefinition {
-                    vertices_id: model_path.to_string(), // TODO primitive level
+                    vertices_id: model_path.to_owned(), // TODO primitive level
                     color_definition: ColorDefinition {
                         // TODO Note id needs to be on primitive level cause different primitives can have different colours
-                        id: mesh.name().unwrap().to_string(), // TODO maybe have some kind of unique id for colors, maybe readable hexvalue? idk.
+                        id: mesh.name().unwrap().to_owned(), // TODO maybe have some kind of unique id for colors, maybe readable hexvalue? idk.
                         value: primitive_color.into(),
                     },
                     texture_definition: texture_uri.map(|uri| TextureDefinition {
@@ -69,8 +69,8 @@ impl ModelLoader {
             let model_definition = ModelDefinition {
                 id: mesh
                     .name()
-                    .map(|name| name.to_string())
-                    .unwrap_or_else(|| "no name".to_string()), // todo panic?
+                    .map(|name| name.to_owned())
+                    .unwrap_or_else(|| "no name".to_owned()), // todo panic?
                 primitives,
             };
             model_definitions.push(model_definition);
@@ -167,7 +167,7 @@ impl ModelLoader {
                 primitive_vertices.push(PrimitiveVertices {
                     // primitive_vertices_id: "".to_string(),
                     // vertex_type,
-                    name: model_path.to_string(),
+                    name: model_path.to_owned(),
                     vertices,
                     indices,
                     // material_id: "".to_string(),
@@ -181,7 +181,7 @@ impl ModelLoader {
 
     // #[allow(clippy::cast_possible_truncation)]
     pub fn make_preload_model(
-        model_name: String,
+        model_name: &str,
         model_to_load: &str,
         material_file_uri: &str,
     ) -> ModelDefinition {
@@ -200,11 +200,11 @@ impl ModelLoader {
         // diffuse_texture,
 
         ModelDefinition {
-            id: model_name,
+            id: model_name.to_owned(),
             primitives: vec![PrimitiveDefinition {
-                vertices_id: model_to_load.to_string(),
+                vertices_id: model_to_load.to_owned(),
                 color_definition: ColorDefinition {
-                    id: "white".to_string(),
+                    id: "white".to_owned(),
                     value: Vector4 {
                         x: 1.0,
                         y: 1.0,
@@ -213,8 +213,8 @@ impl ModelLoader {
                     },
                 },
                 texture_definition: Some(TextureDefinition {
-                    id: material_file_uri.to_string(),
-                    file_name: material_file_uri.to_string(),
+                    id: material_file_uri.to_owned(),
+                    file_name: material_file_uri.to_owned(),
                 }),
             }],
         }

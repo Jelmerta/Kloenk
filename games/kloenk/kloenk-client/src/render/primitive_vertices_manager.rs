@@ -1,7 +1,6 @@
 use crate::render::model::ColorTextureVertex;
 use std::collections::HashMap;
 use std::convert::Into;
-use std::string::ToString;
 use wgpu::util::DeviceExt;
 use wgpu::Device;
 
@@ -97,14 +96,14 @@ impl PrimitiveVerticesManager {
         };
 
         let square = PrimitiveVertices {
-            name: "SQUARE".to_string(),
+            name: "SQUARE".to_owned(),
             vertices: SQUARE_TEX.into(),
             indices: SQUARE_INDICES.to_vec(),
         };
         primitive_vertices_manager.load_primitive_vertices_to_memory(device, square);
 
         let cube = PrimitiveVertices {
-            name: "CUBE".to_string(),
+            name: "CUBE".to_owned(),
             vertices: CUBE_TEX.into(),
             indices: CUBE_INDICES.to_vec(),
         };
@@ -113,8 +112,8 @@ impl PrimitiveVerticesManager {
         primitive_vertices_manager
     }
 
-    pub fn get_primitive_vertices(&self, id: String) -> &PrimitiveVerticesGpu {
-        self.primitive_vertices_map.get(&id).unwrap()
+    pub fn get_primitive_vertices(&self, id: &str) -> &PrimitiveVerticesGpu {
+        self.primitive_vertices_map.get(id).unwrap()
     }
 
     // pub fn load_primitive_vertices_to_memory(&mut self, device: &Device, id: String, vertices: &[TexVertex], indices: &[u16]) {

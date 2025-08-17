@@ -11,7 +11,7 @@ impl PositionManager {
         positions: &HashMap<Entity, Point3<f32>>,
         storables: &HashMap<Entity, Storable>,
         entities: &[Entity],
-        entity: &Entity,
+        entity: &str,
     ) -> Option<Entity> {
         entities
             .iter()
@@ -32,21 +32,23 @@ impl PositionManager {
         ((position2.x - position1.x).powi(2) + (position2.z - position1.z).powi(2)).sqrt()
     }
 
-    pub fn find_nearest_dialog(game_state: &GameState) -> Option<Entity> {
+    pub fn find_nearest_dialog(game_state: &GameState) -> Option<&str> {
         game_state
             .entities
             .iter()
-            .filter(|e| game_state.position_components.contains_key(e.as_str()))
-            .filter(|e| game_state.dialogue_components.contains_key(e.as_str()))
+            .filter(|e| {
+                game_state.position_components.contains_key(e.as_str())
+                    && game_state.dialogue_components.contains_key(e.as_str())
+            })
             .min_by_key(|e| {
                 Self::distance_2d(
-                    game_state.position_components.get(e.as_str()).unwrap(),
+                    game_state.position_components.get("player").unwrap(),
                     game_state.position_components.get(e.as_str()).unwrap(),
                 )
                     .round()
                     .to_u32()
             })
-            .cloned()
+            .map(|e| e.as_str())
     }
 
     pub fn distance_3d(point1: &Point3<f32>, point2: &Point3<f32>) -> f32 {

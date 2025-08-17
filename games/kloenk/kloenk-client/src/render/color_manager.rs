@@ -26,7 +26,7 @@ impl ColorManager {
             colors: HashMap::new(),
         };
         let white_color_definition = ColorDefinition {
-            id: "white".to_string(),
+            id: "white".to_owned(),
             value: Vector4::new(1.0, 1.0, 1.0, 1.0),
         };
         color_manager.load_color_to_memory(device, white_color_definition);

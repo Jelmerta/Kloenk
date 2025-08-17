@@ -43,8 +43,8 @@ impl CameraManager {
         manager
     }
 
-    pub fn update_buffer(&mut self, camera_name: String, queue: &Queue, camera: &mut Camera) {
-        let context = self.camera_contexts.get_mut(&camera_name).unwrap();
+    pub fn update_buffer(&mut self, camera_name: &str, queue: &Queue, camera: &mut Camera) {
+        let context = self.camera_contexts.get_mut(camera_name).unwrap();
 
         context.camera_uniform.update_view_projection(camera);
 
@@ -66,10 +66,10 @@ impl CameraManager {
     fn build_camera_contexts(&mut self, device: &Device) {
         let camera_context_3d = self.build_camera_context(device);
         self.camera_contexts
-            .insert("camera_3d".to_string(), camera_context_3d);
+            .insert("camera_3d".to_owned(), camera_context_3d);
         let camera_context_2d = self.build_camera_context(device);
         self.camera_contexts
-            .insert("camera_2d".to_string(), camera_context_2d);
+            .insert("camera_2d".to_owned(), camera_context_2d);
     }
 
     fn build_camera_context(&mut self, device: &Device) -> CameraContext {
