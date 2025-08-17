@@ -10,7 +10,7 @@ use crate::state::input::Input;
 use std::sync::Arc;
 use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
-use winit::window::{Cursor, Fullscreen, Icon, Window, WindowId};
+use winit::window::{Cursor, CustomCursor, Fullscreen, Icon, Window, WindowId};
 
 use crate::render::render::Renderer;
 use crate::state::frame_state::FrameState;
@@ -19,7 +19,6 @@ use crate::state::ui_state::UIState;
 use crate::systems::game_system::GameSystem;
 use winit::keyboard::KeyCode;
 
-use crate::application::cursor_manager::CursorManager;
 use crate::render::model_loader::ModelLoader;
 use hydrox::{load_binary, AudioSystem};
 
@@ -73,7 +72,7 @@ impl ApplicationHandler for Application {
 
         let window_attributes;
         let cursor_binary = pollster::block_on(load_binary("cursor.rgba")).unwrap();
-        let cursor_source = CursorManager::load_cursor(cursor_binary);
+        let cursor_source = CustomCursor::from_rgba(cursor_binary, 61, 60, 3, 3).unwrap();
         let custom_cursor = event_loop.create_custom_cursor(cursor_source);
 
         let window_icon_binary = pollster::block_on(load_binary("favicon.rgba")).unwrap();

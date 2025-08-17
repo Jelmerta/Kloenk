@@ -54,7 +54,7 @@ impl Engine {
     }
 }
 
-enum Asset {
+pub enum Asset {
     Vertices(Vec<PrimitiveVertices>),
     Color(ColorDefinition),
     Texture(ImageAsset),

@@ -1,5 +1,3 @@
-mod cursor_manager;
-
 #[cfg(target_arch = "wasm32")]
 #[path = "application_web.rs"]
 mod application;

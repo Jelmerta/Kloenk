@@ -63,10 +63,10 @@ incremental = true
 opt-level = "z"
 panic = "abort"
 codegen-units = 1
-#lto = true  # Enable to use profiler in devtools
+#lto = false  # Enable to use profiler in devtools
 #strip = false
 #debug = true
-lto = false
+lto = "fat"
 strip = true
 debug = "none"
 
