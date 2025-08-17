@@ -39,7 +39,7 @@ RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-thres
     cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk.wasm --target web --out-dir bg_output --out-name kloenk --no-typescript --omit-default-module-path --split-linked-modules \
 && wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz --enable-bulk-memory --enable-nontrapping-float-to-int --dce --strip-debug --strip-producers --inlining --coalesce-locals --simplify-locals --low-memory-unused --vacuum \
-#&& wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz -g --enable-bulk-memory --enable-nontrapping-float-to-int \ // Enable for profiling
+#Enable for profiling: && wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz -g --enable-bulk-memory --enable-nontrapping-float-to-int \
 && mkdir output \
 && cp ./bg_output/kloenk.js output/kloenk.js \
 && cp ./bg_output/kloenk.wasm output/kloenk.wasm
@@ -52,9 +52,3 @@ COPY --from=auditor /etc/hostname /dev/null
 #COPY --from=formatchecker /etc/hostname /dev/null
 
 COPY --from=builder /app/output/ /app/output/
-#COPY assets /usr/share/nginx/html/assets
-
-
-# TODO serve files
-#no we do this just through infra?
-

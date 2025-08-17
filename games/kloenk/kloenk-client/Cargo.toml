@@ -16,7 +16,7 @@ winit = { version = "0.30", default-features = false, features = ["rwh_06"] } # 
 bytemuck = "1.23"
 cgmath = "0.18"
 anyhow = { version = "1.0", default-features = false }
-glyphon = { git = "https://github.com/grovesNL/glyphon.git" }
+glyphon = { git = "https://github.com/grovesNL/glyphon.git" } # Probably the biggest resource in terms of memory used -> cosmic text and its dependencies are large.
 gltf = { version = "1.4", default-features = false, features = ["utils", "names"] } # "KHR_materials_variants"] }
 ddsfile = "0.5" # already quite minimal, but could make a small reader to just get data i need out
 
