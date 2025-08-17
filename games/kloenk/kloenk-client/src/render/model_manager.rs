@@ -67,7 +67,7 @@ impl ModelManager {
     fn primitives_loaded(&self, model_definition: &ModelDefinition) -> bool {
         for primitive in model_definition.primitives.iter() {
             if !self.loaded_vertices.contains(&primitive.vertices_id) {
-                return false; // TODO go to next model
+                return false;
             }
 
             if primitive.texture_definition.is_some()
