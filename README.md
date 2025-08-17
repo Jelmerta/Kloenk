@@ -112,3 +112,6 @@ C:\Users\Jelmer\projects\bc7enc_rdo\Release
 ..\..\..\Pictures\kloenk original images\rdo_dds\close_button_hover.dds' -C -e
 Can check with and without -C -e for different versions
 Add -1 to generate BC1, for opaque or BC1A single bit alpha
+
+Note for profiling: two sections in cargo.toml and one section in dockerfile need to change to add and keep debug
+information
