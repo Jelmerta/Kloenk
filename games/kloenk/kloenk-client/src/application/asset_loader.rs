@@ -32,7 +32,7 @@ impl AssetLoader {
 
     fn load_dds(image_name: &str, dds_bytes: &[u8]) -> ImageAsset {
         let dds = Dds::read(dds_bytes).unwrap();
-        let format = detect_format(&dds.header, &dds.header10);
+        let format = detect_format(&dds.header, dds.header10.as_ref());
         ImageAsset {
             name: image_name.to_owned(),
             dimensions: TextureDimensions {
@@ -45,7 +45,7 @@ impl AssetLoader {
     }
 }
 
-fn detect_format(header: &Header, header10: &Option<Header10>) -> ImageEncoding {
+fn detect_format(header: &Header, header10: Option<&Header10>) -> ImageEncoding {
     if let Some(header10) = header10 {
         match header10.dxgi_format {
             DxgiFormat::BC7_UNorm => ImageEncoding::BC7,

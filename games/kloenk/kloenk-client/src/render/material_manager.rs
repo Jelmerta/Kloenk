@@ -42,11 +42,11 @@ impl TextureManager {
 
     // TODO if none found, 1x1 white texture
     // pub fn get_bind_group(&self, material_name: &str) -> &BindGroup {
-    pub fn get_bind_group(&self, texture_definition: &Option<TextureDefinition>) -> &BindGroup {
+    pub fn get_bind_group(&self, texture_definition: Option<&TextureDefinition>) -> &BindGroup {
         let texture_id = texture_definition.as_ref().map(|td| td.id.as_str());
-        &self
+        self
             .textures_gpu
-            .get(texture_id.unwrap_or_else(|| "white"))
+            .get(texture_id.unwrap_or("white"))
             .unwrap()
     }
 
@@ -63,7 +63,7 @@ impl TextureManager {
         texture_bind_group_layout: &BindGroupLayout,
         diffuse_texture: &Texture,
     ) -> BindGroup {
-        let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: texture_bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
@@ -76,9 +76,7 @@ impl TextureManager {
                 },
             ],
             label: Some("diffuse_bind_group"),
-        });
-
-        diffuse_bind_group
+        })
     }
 
     fn setup_texture_layout(device: &Device) -> BindGroupLayout {

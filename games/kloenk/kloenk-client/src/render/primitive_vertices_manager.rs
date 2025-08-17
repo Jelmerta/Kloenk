@@ -133,7 +133,7 @@ impl PrimitiveVerticesManager {
             contents: bytemuck::cast_slice(&primitive_vertices.indices),
             usage: wgpu::BufferUsages::INDEX,
         });
-        let num_indices = primitive_vertices.indices.len() as u32;
+        let num_indices = u32::try_from(primitive_vertices.indices.len()).expect("Too many indices to fit in u32");
         let primitive_vertices_gpu = PrimitiveVerticesGpu {
             vertex_buffer,
             index_buffer,

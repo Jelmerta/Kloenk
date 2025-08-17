@@ -28,9 +28,9 @@ impl CameraUniform {
 }
 
 pub struct CameraContext {
-    camera_uniform: CameraUniform,
-    camera_buffer: Buffer,
-    camera_bind_group: BindGroup,
+    uniform: CameraUniform,
+    buffer: Buffer,
+    bind_group: BindGroup,
 }
 
 impl CameraManager {
@@ -46,12 +46,12 @@ impl CameraManager {
     pub fn update_buffer(&mut self, camera_name: &str, queue: &Queue, camera: &mut Camera) {
         let context = self.camera_contexts.get_mut(camera_name).unwrap();
 
-        context.camera_uniform.update_view_projection(camera);
+        context.uniform.update_view_projection(camera);
 
         queue.write_buffer(
-            &context.camera_buffer,
+            &context.buffer,
             0,
-            bytemuck::cast_slice(&[context.camera_uniform]),
+            bytemuck::cast_slice(&[context.uniform]),
         );
     }
 
@@ -60,7 +60,7 @@ impl CameraManager {
             .camera_contexts
             .get(camera_name)
             .unwrap()
-            .camera_bind_group
+            .bind_group
     }
 
     fn build_camera_contexts(&mut self, device: &Device) {
@@ -90,9 +90,9 @@ impl CameraManager {
             }],
         });
         CameraContext {
-            camera_uniform,
-            camera_buffer,
-            camera_bind_group,
+            uniform: camera_uniform,
+            buffer: camera_buffer,
+            bind_group: camera_bind_group,
         }
     }
 

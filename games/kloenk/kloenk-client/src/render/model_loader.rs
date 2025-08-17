@@ -33,9 +33,9 @@ impl ModelLoader {
         // let data = include_bytes!("../../assets/gozer.gltf"); // TODO just hardcoded the one model into memory as we don't want to introduce async here probably
         let data = load_binary(model_path)
             .await
-            .unwrap_or_else(|_| panic!("Path {} could not be found", model_path));
+            .unwrap_or_else(|_| panic!("Path {model_path} could not be found"));
         let gltf = Gltf::from_slice(data.as_slice())
-            .unwrap_or_else(|_| panic!("Failed to load gltf model {}", model_path));
+            .unwrap_or_else(|_| panic!("Failed to load gltf model {model_path}"));
 
         let mut model_definitions = Vec::new();
         for mesh in gltf.meshes() {
@@ -69,8 +69,7 @@ impl ModelLoader {
             let model_definition = ModelDefinition {
                 id: mesh
                     .name()
-                    .map(|name| name.to_owned())
-                    .unwrap_or_else(|| "no name".to_owned()), // todo panic?
+                    .map_or_else(|| "no name".to_owned(), ToOwned::to_owned), // todo panic?
                 primitives,
             };
             model_definitions.push(model_definition);
@@ -82,9 +81,9 @@ impl ModelLoader {
     pub async fn load_gltf(model_path: &str) -> Vec<PrimitiveVertices> {
         let data = load_binary(model_path)
             .await
-            .unwrap_or_else(|_| panic!("Path {} could not be found", model_path));
+            .unwrap_or_else(|_| panic!("Path {model_path} could not be found"));
         let gltf = Gltf::from_slice(data.as_slice())
-            .unwrap_or_else(|_| panic!("Failed to load gltf model {}", model_path));
+            .unwrap_or_else(|_| panic!("Failed to load gltf model {model_path}"));
 
         let mut buffer_data = Vec::new();
         for buffer in gltf.buffers() {
@@ -121,7 +120,7 @@ impl ModelLoader {
                         vertices.push(ColorTextureVertex {
                             position: vertex,
                             tex_coords: *tex_coords.get(index).unwrap(),
-                        })
+                        });
                     }
                     vertices
                 } else {
@@ -133,13 +132,13 @@ impl ModelLoader {
                     let mut indices = Vec::new();
                     match read_indices {
                         ReadIndices::U8(iter) => {
-                            iter.for_each(|index| indices.push(index as u16));
+                            iter.for_each(|index| indices.push(u16::from(index)));
                         }
                         ReadIndices::U16(iter) => {
                             iter.for_each(|index| indices.push(index));
                         }
                         ReadIndices::U32(iter) => {
-                            iter.for_each(|index| indices.push(index as u16));
+                            iter.for_each(|index| indices.push(u16::try_from(index).expect("We expect indices to be mappable to u16")));
                         }
                     }
                     indices
@@ -174,7 +173,7 @@ impl ModelLoader {
                 });
 
                 // TODO load into vertices / material managers
-            })
+            });
         }
         primitive_vertices
     }

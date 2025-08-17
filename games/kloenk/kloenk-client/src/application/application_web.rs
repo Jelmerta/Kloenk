@@ -61,7 +61,7 @@ pub enum Asset {
 }
 
 pub enum CustomEvent {
-    StateInitializationEvent(Engine),
+    StateInitializationEvent(Box<Engine>), // Boxing as Engine is quite large and other enum instance must be large enough to hold its largest variant.
     WebResizedEvent, // Only sent on web when window gets resized. Resized event only seems to send event on dpi change (browser zoom or system scale ratio) which is insufficient
     AudioStateChanged(AudioState),
     AssetLoaded(Asset),
@@ -81,26 +81,23 @@ impl Application {
 
     fn load_audio_player(event_loop_proxy: &EventLoopProxy<CustomEvent>, engine: &mut Engine) {
         let mut new_loading_state = None;
-        match engine.audio_state {
-            AudioState::NotLoaded => {
-                new_loading_state = Some(AudioState::Loading);
-                let event_loop_proxy_clone = event_loop_proxy.clone();
-                spawn_local(async move {
-                    let audio_system = AudioSystem::new().await;
+        if let AudioState::NotLoaded = engine.audio_state {
+            new_loading_state = Some(AudioState::Loading);
+            let event_loop_proxy_clone = event_loop_proxy.clone();
+            spawn_local(async move {
+                let audio_system = AudioSystem::new().await;
 
-                    event_loop_proxy_clone
-                        .send_event(CustomEvent::AudioStateChanged(AudioState::Loaded(
-                            audio_system,
-                        )))
-                        .unwrap_or_else(|_| {
-                            panic!("Failed to send audio state event");
-                        });
-                });
-            }
-            _ => (),
+                event_loop_proxy_clone
+                    .send_event(CustomEvent::AudioStateChanged(AudioState::Loaded(
+                        audio_system,
+                    )))
+                    .unwrap_or_else(|_| {
+                        panic!("Failed to send audio state event");
+                    });
+            });
         }
-        if new_loading_state.is_some() {
-            engine.audio_state = new_loading_state.unwrap();
+        if let Some(new_state) = new_loading_state {
+            engine.audio_state = new_state;
         }
     }
 }
@@ -108,7 +105,7 @@ impl Application {
 pub enum State {
     Uninitialized,
     Initializing,
-    Initialized(Engine),
+    Initialized(Box<Engine>),
 }
 
 impl ApplicationHandler<CustomEvent> for Application {
@@ -124,17 +121,17 @@ impl ApplicationHandler<CustomEvent> for Application {
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
         // We want to have ownership of the zoom level ourselves. We therefore disregard the dpi ratio and always attempt to render the same image
         // Note: 0.0 would lead to error on x11 so we define a minimum size of 1 by 1
-        #[allow(unused_mut)]
-        let mut initial_width = 1.0;
-        #[allow(unused_mut)]
-        let mut initial_height = 1.0;
+        // TODO test if disabling this works #[allow(unused_mut)]
+        // let mut initial_width = 1.0;
+        // #[allow(unused_mut)]
+        // let mut initial_height = 1.0;
         let web_window = web_sys::window().expect("Window should exist");
         // Personal reminder to probably never use window's inner width. Visual viewport returns a float
         let viewport = &web_window
             .visual_viewport()
             .expect("Visual viewport should exist");
-        initial_width = viewport.width();
-        initial_height = viewport.height();
+        let initial_width = viewport.width();
+        let initial_height = viewport.height();
 
         let event_loop_proxy = self.event_loop_proxy.clone();
         let closure = Closure::wrap(Box::new(move || {
@@ -149,12 +146,10 @@ impl ApplicationHandler<CustomEvent> for Application {
         let viewport = &web_window
             .visual_viewport()
             .expect("Visual viewport should exist");
-        viewport.set_onresize(Some(&closure.as_ref().unchecked_ref()));
+        viewport.set_onresize(Some(closure.as_ref().unchecked_ref()));
         closure.forget(); // Wondering if this approach is graceful enough
 
-        let window_attributes;
-
-        window_attributes = Window::default_attributes()
+        let window_attributes = Window::default_attributes()
             .with_title("Kloenk!")
             .with_inner_size(LogicalSize::new(initial_width, initial_height))
             .with_active(true)
@@ -199,7 +194,7 @@ impl ApplicationHandler<CustomEvent> for Application {
             };
 
             event_loop_proxy
-                .send_event(CustomEvent::StateInitializationEvent(engine))
+                .send_event(CustomEvent::StateInitializationEvent(Box::new(engine)))
                 .unwrap_or_else(|_| {
                     panic!("Failed to send initialization event");
                 });
@@ -220,12 +215,13 @@ impl ApplicationHandler<CustomEvent> for Application {
                     // maybe first make sure uniqueness before loading
                     for primitive in &model.primitives {
                         let vertices_id_clone = primitive.vertices_id.clone();
-                        if primitive.vertices_id.ends_with(".gltf") {
-                            // let vertices_clone = primitive.clone();
+                        if std::path::Path::new(&primitive.vertices_id)
+                            .extension()
+                            .is_some_and(|ext| ext.eq_ignore_ascii_case("gltf")) {
                             let event_loop = self.event_loop_proxy.clone();
                             spawn_local(async move {
                                 let primitive_vertices =
-                                    ModelLoader::load_gltf(&*vertices_id_clone).await;
+                                    ModelLoader::load_gltf(&vertices_id_clone).await;
                                 event_loop
                                     .send_event(CustomEvent::AssetLoaded(Vertices(
                                         primitive_vertices,
@@ -243,7 +239,8 @@ impl ApplicationHandler<CustomEvent> for Application {
                             spawn_local(async move {
                                 // TODO check if not already loaded first
                                 let image_texture_asset =
-                                    AssetLoader::load_image_asset(&texture_id_clone.file_name).await;
+                                    AssetLoader::load_image_asset(&texture_id_clone.file_name)
+                                        .await;
                                 // AssetLoader::load_image_asset(&texture_id.file_name).await;
                                 event_loop
                                     .send_event(CustomEvent::AssetLoaded(Texture(
@@ -307,10 +304,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 engine.renderer.resize(physical_size);
             }
             CustomEvent::AudioStateChanged(audio_state) => match self.application_state {
-                State::Uninitialized => {
-                    panic!("Expected application to be loaded")
-                }
-                State::Initializing => {
+                State::Uninitialized | State::Initializing => {
                     panic!("Expected application to be loaded")
                 }
                 State::Initialized(ref mut engine) => {

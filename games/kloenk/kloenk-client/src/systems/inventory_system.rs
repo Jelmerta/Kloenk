@@ -84,9 +84,7 @@ impl InventorySystem {
 
                     frame_state.handled_right_click = true;
                 }
-                UserAction::Hover => {
-                    continue;
-                }
+                UserAction::Hover => {}
             }
         }
     }

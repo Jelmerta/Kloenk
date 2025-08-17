@@ -261,7 +261,7 @@ impl Renderer {
                     .get_color_bind_group(&render_group.primitive.color_definition.id);
                 let texture_bind_group = self
                     .texture_manager
-                    .get_bind_group(&render_group.primitive.texture_definition);
+                    .get_bind_group(render_group.primitive.texture_definition.as_ref());
 
                 render_pass.set_bind_group(0, color, &[]);
                 render_pass.set_bind_group(1, texture_bind_group, &[]);
@@ -476,7 +476,7 @@ impl Renderer {
 
         let texture = self
             .texture_manager
-            .get_bind_group(&primitive.texture_definition); // TODO consume instead of clone? just pass id?
+            .get_bind_group(primitive.texture_definition.as_ref()); // TODO consume instead of clone? just pass id?
 
         render_pass_ui.set_pipeline(pipeline);
         render_pass_ui.set_bind_group(0, color, &[]);
@@ -510,7 +510,7 @@ impl Renderer {
     pub fn load_color_to_memory(&mut self, color_definition: ColorDefinition) {
         let color_id = color_definition.id.clone();
         self.color_manager
-            .load_color_to_memory(&self.device, color_definition);
+            .load_color_to_memory(&self.device, &color_definition);
         self.model_manager.added_color(&color_id);
     }
 

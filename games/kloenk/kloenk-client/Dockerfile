@@ -18,6 +18,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 #FROM rust AS checker
 #COPY . .
 #RUN cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -W clippy::pedantic -W clippy::all -Dwarnings
+# Clippy list to disable: clippy::unreadable-literal?
 
 FROM rust AS auditor
 COPY . .

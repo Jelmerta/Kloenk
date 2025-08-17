@@ -50,7 +50,7 @@ impl ModelManager {
     // TODO maybe maximise usage/Don't call this method too often. gonna explode if 3000 models are being loaded and each is gonna check all models
     // could also make a reverse hashmap: look up all model ids for a texture and only update those
     fn update_ready(&mut self) {
-        for (model_id, _) in &self.active_models {
+        for model_id in self.active_models.keys() {
             if self.loaded_models.contains_key(model_id) {
                 continue;
             }
@@ -64,7 +64,7 @@ impl ModelManager {
     }
 
     fn primitives_loaded(&self, model_definition: &ModelDefinition) -> bool {
-        for primitive in model_definition.primitives.iter() {
+        for primitive in &model_definition.primitives {
             if !self.loaded_vertices.contains(&primitive.vertices_id) {
                 return false;
             }
