@@ -33,7 +33,7 @@ impl InventorySystem {
         frame_state.gui.image(
             100,
             inventory_window.rect,
-            inventory_graphics.material_id.as_ref(),
+            &inventory_graphics.material_id,
         );
 
         let inventory_ecs = game_state.get_storage("player").unwrap();

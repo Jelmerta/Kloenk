@@ -43,7 +43,7 @@ impl TextureManager {
     // TODO if none found, 1x1 white texture
     // pub fn get_bind_group(&self, material_name: &str) -> &BindGroup {
     pub fn get_bind_group(&self, texture_definition: &Option<TextureDefinition>) -> &BindGroup {
-        let texture_id = texture_definition.as_ref().map(|td| td.id.as_str()); // TODO can we do this without cloning...?
+        let texture_id = texture_definition.as_ref().map(|td| td.id.as_str());
         &self
             .textures_gpu
             .get(texture_id.unwrap_or_else(|| "white"))

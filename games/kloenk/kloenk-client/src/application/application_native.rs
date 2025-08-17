@@ -34,7 +34,7 @@ pub struct Engine {
 
 impl Engine {
     pub fn window(&self) -> &Window {
-        self.window.as_ref()
+        &self.window
     }
 }
 

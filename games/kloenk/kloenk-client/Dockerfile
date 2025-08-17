@@ -3,6 +3,8 @@ FROM rust:1.88 AS rust
 RUN rustup target add wasm32-unknown-unknown \
 #	&& rustup component add clippy rustfmt \
 	&& cargo install wasm-bindgen-cli cargo-audit cargo-chef wasm-opt
+RUN apt-get update && apt-get install -y nodejs npm && \
+           npm install -g uglify-js
 WORKDIR /app
 
 FROM rust AS planner
@@ -40,6 +42,7 @@ RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-thres
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk.wasm --target web --out-dir bg_output --out-name kloenk --no-typescript --omit-default-module-path --split-linked-modules \
 && wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz --enable-bulk-memory --enable-nontrapping-float-to-int --dce --strip-debug --strip-producers --inlining --coalesce-locals --simplify-locals --low-memory-unused --vacuum \
 #Enable for profiling: && wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz -g --enable-bulk-memory --enable-nontrapping-float-to-int \
+&&  uglifyjs ./bg_output/kloenk.js --compress --mangle --output bg_output/kloenk.js \
 && mkdir output \
 && cp ./bg_output/kloenk.js output/kloenk.js \
 && cp ./bg_output/kloenk.wasm output/kloenk.wasm

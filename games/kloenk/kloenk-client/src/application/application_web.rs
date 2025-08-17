@@ -50,7 +50,7 @@ pub enum AudioState {
 
 impl Engine {
     pub fn window(&self) -> &Window {
-        self.window.as_ref()
+        &self.window
     }
 }
 
@@ -149,8 +149,8 @@ impl ApplicationHandler<CustomEvent> for Application {
         let viewport = &web_window
             .visual_viewport()
             .expect("Visual viewport should exist");
-        viewport.set_onresize(Some(closure.as_ref().unchecked_ref()));
-        closure.forget();
+        viewport.set_onresize(Some(&closure.as_ref().unchecked_ref()));
+        closure.forget(); // Wondering if this approach is graceful enough
 
         let window_attributes;
 

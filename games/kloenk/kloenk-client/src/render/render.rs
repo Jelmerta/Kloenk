@@ -391,7 +391,7 @@ impl Renderer {
             })
             .for_each(|entity| {
                 let model_id = game_state
-                    .get_graphics(entity.as_ref())
+                    .get_graphics(&entity)
                     .unwrap()
                     .model_id
                     .clone();
