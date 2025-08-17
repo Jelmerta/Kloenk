@@ -92,19 +92,19 @@ impl ItemPickupSystem {
 
         let inventory = game_state.get_storage(player).unwrap();
         let inventory_items = StorageManager::get_in_storage(game_state, player);
-        if !StorageManager::has_space(game_state, inventory, &inventory_items, &near_pickup) {
+        if !StorageManager::has_space(game_state, inventory, &inventory_items, near_pickup) {
             frame_state
                 .action_effects
                 .push(ActionEffect::PickupNoInventorySpace);
             return false;
         }
         let empty_spot =
-            StorageManager::find_empty_spot(game_state, inventory, &inventory_items, &near_pickup)
+            StorageManager::find_empty_spot(game_state, inventory, &inventory_items, near_pickup)
                 .unwrap();
 
-        game_state.remove_position(&near_pickup.clone());
-        game_state.remove_hitbox(&near_pickup.clone());
-        game_state.create_in_storage(player, near_pickup.to_owned(), empty_spot);
+        game_state.remove_position(near_pickup);
+        game_state.remove_hitbox(near_pickup);
+        game_state.create_in_storage(player, near_pickup, empty_spot);
         true
     }
 }

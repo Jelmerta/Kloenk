@@ -79,7 +79,7 @@ impl InventorySystem {
 
                     ui_state.menu_state = Inventory {
                         mouse_position: input.mouse_position_ui,
-                        item: entity.clone().to_owned(),
+                        item: (*entity).to_owned(),
                     };
 
                     frame_state.handled_right_click = true;

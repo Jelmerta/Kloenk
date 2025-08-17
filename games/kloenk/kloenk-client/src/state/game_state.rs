@@ -526,14 +526,14 @@ impl GameState {
         self.storage_components.get(entity)
     }
 
-    pub fn create_in_storage(&mut self, storage_entity: &str, to_store: Entity, spot: (u8, u8)) {
+    pub fn create_in_storage(&mut self, storage_entity: &str, to_store: &str, spot: (u8, u8)) {
         let in_storage_component = InStorage {
             storage_entity: storage_entity.to_owned(),
             position_x: spot.0,
             position_y: spot.1,
         };
         self.in_storage_components
-            .insert(to_store, in_storage_component);
+            .insert(to_store.to_owned(), in_storage_component);
     }
 
     pub fn remove_in_storage(&mut self, entity: &str) {

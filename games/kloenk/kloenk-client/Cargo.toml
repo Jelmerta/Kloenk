@@ -62,17 +62,17 @@ incremental = true
 [profile.release]
 opt-level = "z"
 panic = "abort"
-lto = true
-strip = false
 codegen-units = 1
-debug = true
-#lto = false TODO temp added debug information to profile build in production
-#strip = true
-#debug = "none"
+#lto = true  # Enable to use profiler in devtools
+#strip = false
+#debug = true
+lto = false
+strip = true
+debug = "none"
 
 [profile.release.package."*"]
 opt-level = "z"
 strip = true
 codegen-units = 1
-#debug = "none" TODO tmp disabled to show debug profiling
-debug = true
+debug = "none"
+#debug = true # Enable to use profiler in devtools
