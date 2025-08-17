@@ -11,6 +11,24 @@ jobs:
       - name: Checkout project
         uses: actions/checkout@v4.2.0
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install minification tools
+        run: npm install -g html-minifier-terser uglify-js
+
+      - name: Minify HTML
+        run: |
+          html-minifier-terser ./games/kloenk/kloenk-web/html/index.html \
+            --collapse-whitespace \
+            --remove-comments \
+            --minify-js true \
+            --minify-css true \
+            --use-short-doctype \
+            -o ./games/kloenk/kloenk-web/html/index.html
+
       - name: Copy web pages to server using remote ssh commands
         uses: appleboy/scp-action@v1
         with:
