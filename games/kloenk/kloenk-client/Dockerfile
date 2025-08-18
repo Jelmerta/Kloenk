@@ -42,11 +42,7 @@ RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-thres
     cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk.wasm --target web --out-dir bg_output --out-name kloenk --no-typescript --omit-imports --omit-default-module-path --split-linked-modules --remove-name-section --remove-producers-section \
 # low memory unused TODO : You need to tell wasm-ld not to use address 1024 or below for globals (emcc does it automatically) for that to be safe. \
-# Order matters in wasm-opt?
-#&& wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm --converge --optimize-level 4 --shrink-level 2  --enable-bulk-memory --enable-nontrapping-float-to-int --dce --strip-debug --strip-producers --inlining --coalesce-locals --simplify-locals --low-memory-unused --vacuum \
-#Enable for profiling: && wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz -g --enable-bulk-memory --enable-nontrapping-float-to-int --inlining --coalesce-locals --simplify-locals --low-memory-unused --vacuum \
 && wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm --converge --enable-bulk-memory --enable-nontrapping-float-to-int --strip-producers --coalesce-locals --simplify-locals --low-memory-unused --traps-never-happen --ignore-implicit-traps --fast-math --flatten --rereloop -O4 --gufa -Oz \
-#&& wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm --converge --enable-bulk-memory --enable-nontrapping-float-to-int --simplify-locals --strip-producers --coalesce-locals --simplify-locals --low-memory-unused --vacuum -tnh -iit --fast-math --partial-inlining-ifs=1 --flatten --rereloop -O4 -Oz \
 &&  uglifyjs ./bg_output/kloenk.js --compress passes=3,pure_getters=true,unsafe_math=true --mangle toplevel=true --output bg_output/kloenk.js \
 && mkdir output \
 && cp ./bg_output/kloenk.js output/kloenk.js \
