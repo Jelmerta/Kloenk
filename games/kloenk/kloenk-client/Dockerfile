@@ -45,7 +45,7 @@ RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-thres
 # Order matters in wasm-opt?
 #&& wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm --converge --optimize-level 4 --shrink-level 2  --enable-bulk-memory --enable-nontrapping-float-to-int --dce --strip-debug --strip-producers --inlining --coalesce-locals --simplify-locals --low-memory-unused --vacuum \
 #Enable for profiling: && wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm -Oz -g --enable-bulk-memory --enable-nontrapping-float-to-int --inlining --coalesce-locals --simplify-locals --low-memory-unused --vacuum \
-&& wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm --converge --enable-bulk-memory --enable-nontrapping-float-to-int --simplify-locals --strip-producers --coalesce-locals --simplify-locals --low-memory-unused --vacuum -tnh -iit --partial-inlining-ifs=1 --flatten --rereloop -O4 -Oz \
+&& wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm --converge --enable-bulk-memory --enable-nontrapping-float-to-int --simplify-locals --strip-producers --coalesce-locals --simplify-locals --low-memory-unused --vacuum --traps-never-happe --ignore-implicit-traps --fast-math ---flatten --rereloop -O4 -Oz \
 #&& wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm --converge --enable-bulk-memory --enable-nontrapping-float-to-int --simplify-locals --strip-producers --coalesce-locals --simplify-locals --low-memory-unused --vacuum -tnh -iit --fast-math --partial-inlining-ifs=1 --flatten --rereloop -O4 -Oz \
 &&  uglifyjs ./bg_output/kloenk.js --compress passes=3,pure_getters=true,unsafe_math=true --mangle toplevel=true --output bg_output/kloenk.js \
 && mkdir output \
