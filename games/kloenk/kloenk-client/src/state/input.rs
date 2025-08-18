@@ -54,27 +54,27 @@ pub struct Input {
 impl Input {
     pub fn new() -> Self {
         Input {
-            w_pressed: Default::default(),
-            s_pressed: Default::default(),
-            a_pressed: Default::default(),
-            d_pressed: Default::default(),
+            w_pressed: KeyPress::default(),
+            s_pressed: KeyPress::default(),
+            a_pressed: KeyPress::default(),
+            d_pressed: KeyPress::default(),
 
-            i_pressed: Default::default(),
-            e_pressed: Default::default(),
+            i_pressed: KeyPress::default(),
+            e_pressed: KeyPress::default(),
 
-            up_pressed: Default::default(),
-            down_pressed: Default::default(),
-            left_pressed: Default::default(),
-            right_pressed: Default::default(),
+            up_pressed: KeyPress::default(),
+            down_pressed: KeyPress::default(),
+            left_pressed: KeyPress::default(),
+            right_pressed: KeyPress::default(),
 
-            enter_pressed: Default::default(),
+            enter_pressed: KeyPress::default(),
 
-            left_shift_pressed: Default::default(),
+            left_shift_pressed: KeyPress::default(),
 
             mouse_position_ndc: Point2::new(0.0, 0.0), // TODO what's a default position for the mouse?
             mouse_position_ui: Point2::new(0.0, 0.0),
-            right_mouse_clicked: Default::default(),
-            left_mouse_clicked: Default::default(),
+            right_mouse_clicked: KeyPress::default(),
+            left_mouse_clicked: KeyPress::default(),
 
             scrolled_amount: 0.0,
         }

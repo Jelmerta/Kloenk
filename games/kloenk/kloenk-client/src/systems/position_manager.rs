@@ -42,13 +42,13 @@ impl PositionManager {
             })
             .min_by_key(|e| {
                 Self::distance_2d(
-                    game_state.position_components.get("player").unwrap(),
-                    game_state.position_components.get(e.as_str()).unwrap(),
+                    game_state.position_components.get("player").expect("Player position should exist"),
+                    game_state.position_components.get(e.as_str()).expect("NPC dialogue position should exist"),
                 )
                     .round()
                     .to_u32()
             })
-            .map(|e| e.as_str())
+            .map(String::as_str)
     }
 
     pub fn distance_3d(point1: &Point3<f32>, point2: &Point3<f32>) -> f32 {

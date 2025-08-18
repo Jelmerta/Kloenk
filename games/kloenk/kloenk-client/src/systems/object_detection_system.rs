@@ -70,7 +70,7 @@ impl ObjectDetectionSystem {
         };
 
         frame_state.objects_on_cursor = Vec::new(); // Statement only needed as long as we run this method twice per frame
-        for (entity, hitbox) in game_state.hitbox_components.iter() {
+        for (entity, hitbox) in &game_state.hitbox_components {
             if Self::intersection(&ray, hitbox) {
                 frame_state.add_object(entity.clone());
             }
@@ -83,7 +83,7 @@ impl ObjectDetectionSystem {
     }
 
     fn set_nearest_object(game_state: &GameState, frame_state: &mut FrameState) {
-        let player_position = game_state.get_position("player").unwrap();
+        let player_position = game_state.get_position("player").expect("Player position should exist");
         let nearest_object: Option<Entity> = frame_state
             .get_objects_on_cursor()
             .iter()

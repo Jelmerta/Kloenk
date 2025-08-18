@@ -27,31 +27,28 @@ impl CommandHandleSystem {
             .iter()
             .for_each(|command| match command {
                 ActionEffect::PickupItemNotStorable => {
-                    ui_state.action_text = "That cannot be picked up.".to_owned();
+                    "That cannot be picked up.".clone_into(&mut ui_state.action_text);
                 }
                 ActionEffect::PickupNoItemInRange => {
-                    ui_state.action_text = "No item found around you to pick up.".to_owned();
+                    "No item found around you to pick up.".clone_into(&mut ui_state.action_text);
                 }
                 ActionEffect::PlaceItemNonPlaceable => {
-                    ui_state.action_text = "Cannot place outside placeable area.".to_owned();
+                    "Cannot place outside placeable area.".clone_into(&mut ui_state.action_text);
                 }
                 ActionEffect::PlaceItemCollidingItem => {
-                    ui_state.action_text =
-                        "Found a colliding object.\nNot allowed to place there.".to_owned();
+                    "Found a colliding object.\nNot allowed to place there.".clone_into(&mut ui_state.action_text);
                 }
                 ActionEffect::PickupNoInventorySpace => {
-                    ui_state.action_text =
-                        "There is no space left in your\ninventory to pick up this item."
-                            .to_owned();
+                    "There is no space left in your\ninventory to pick up this item.".clone_into(&mut ui_state.action_text);
                 }
                 ActionEffect::PlaceItemSucceeded => {
-                    ui_state.action_text = "You drop the item.".to_owned();
+                    "You drop the item.".clone_into(&mut ui_state.action_text);
                 }
                 ActionEffect::ItemSelected { found_objects_text } => {
-                    ui_state.selected_text = found_objects_text.to_owned();
+                    found_objects_text.clone_into(&mut ui_state.selected_text);
                 }
                 ActionEffect::Examine { text } => {
-                    ui_state.action_text = text.clone();
+                    text.clone_into(&mut ui_state.action_text)
                 }
             });
     }

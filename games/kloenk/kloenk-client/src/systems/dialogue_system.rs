@@ -96,7 +96,7 @@ impl DialogueSystem {
                 "close_button",
                 input,
             ) {
-                UserAction::None => {}
+                UserAction::None | UserAction::RightClick => {}
                 UserAction::Hover => {
                     // Feels kinda silly/hacky to overlay hover image
                     match frame_state.gui.image_button(
@@ -106,12 +106,10 @@ impl DialogueSystem {
                         "close_button_hover",
                         input,
                     ) {
-                        UserAction::None => {}
-                        UserAction::Hover => {}
+                        UserAction::None | UserAction::Hover | UserAction::RightClick => {}
                         UserAction::LeftClick => {
                             new_dialogue_state = Some(DialogueState::Closed);
                         }
-                        UserAction::RightClick => {}
                     }
                 }
                 UserAction::LeftClick => {
@@ -120,7 +118,6 @@ impl DialogueSystem {
                         frame_state.handled_left_click = true;
                     }
                 }
-                UserAction::RightClick => {}
             }
 
             if !PositionManager::in_range(

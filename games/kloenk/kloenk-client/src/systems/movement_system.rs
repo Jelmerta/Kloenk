@@ -97,7 +97,7 @@ impl MovementSystem {
             if CollisionManager::check_collision(desired_player_hitbox, entity_hitbox) {
                 #[allow(irrefutable_let_patterns)]
                 if let AudioState::Loaded(audio_system) = audio_state {
-                    audio_system.play_sound("bonk")
+                    audio_system.play_sound("bonk");
                 } // else audio not loaded
 
                 return true;

@@ -35,7 +35,7 @@ impl CloseMenuSystem {
                 new_menu_state = Closed;
                 frame_state.handled_left_click = true;
             }
-            _ => {}
+            Closed => {}
         }
         ui_state.menu_state = new_menu_state;
     }

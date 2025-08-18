@@ -97,7 +97,9 @@ impl ApplicationHandler for Application {
         for (_, model) in renderer.model_manager.get_active_models().clone() {
             // TODO maybe first make sure uniqueness before loading
             for primitive in &model.primitives {
-                if primitive.vertices_id.ends_with(".gltf") {
+                if std::path::Path::new(&primitive.vertices_id)
+                    .extension()
+                    .is_some_and(|extension| extension.eq_ignore_ascii_case("gltf")) {
                     let primitive_vertices =
                         pollster::block_on(ModelLoader::load_gltf(&primitive.vertices_id));
                     renderer.load_primitive_vertices_to_memory(primitive_vertices);
@@ -110,10 +112,10 @@ impl ApplicationHandler for Application {
                             &texture_id.file_name,
                         ),
                     );
-                    renderer.load_material_to_memory(image_texture_asset);
+                    renderer.load_material_to_memory(&image_texture_asset);
                 }
 
-                renderer.load_color_to_memory(primitive.color_definition.clone());
+                renderer.load_color_to_memory(&primitive.color_definition);
 
                 // todo check if not already loaded
             }

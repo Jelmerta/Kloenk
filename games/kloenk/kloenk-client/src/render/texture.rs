@@ -16,7 +16,7 @@ impl Texture {
     pub fn from_image(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        image: ImageAsset,
+        image: &ImageAsset,
     ) -> Result<Self> {
         let texture_format = match image.encoding {
             ImageEncoding::BC1 => TextureFormat::Bc1RgbaUnormSrgb,
@@ -27,7 +27,7 @@ impl Texture {
         let blocks_wide = image.dimensions.pixel_width.div_ceil(block_size);
         let blocks_high = image.dimensions.pixel_height.div_ceil(block_size);
 
-        let texture_size = wgpu::Extent3d {
+        let texture_size = Extent3d {
             width: blocks_wide * block_size,  // padded width
             height: blocks_high * block_size, // padded height
             depth_or_array_layers: 1,

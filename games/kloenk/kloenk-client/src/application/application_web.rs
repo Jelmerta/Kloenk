@@ -217,7 +217,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                         let vertices_id_clone = primitive.vertices_id.clone();
                         if std::path::Path::new(&primitive.vertices_id)
                             .extension()
-                            .is_some_and(|ext| ext.eq_ignore_ascii_case("gltf")) {
+                            .is_some_and(|extension| extension.eq_ignore_ascii_case("gltf")) {
                             let event_loop = self.event_loop_proxy.clone();
                             spawn_local(async move {
                                 let primitive_vertices =
@@ -279,7 +279,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                             engine.renderer.load_color_to_memory(color_definition);
                         }
                         Texture(texture_asset) => {
-                            engine.renderer.load_material_to_memory(texture_asset);
+                            engine.renderer.load_material_to_memory(&texture_asset);
                         }
                     }
                 } else {

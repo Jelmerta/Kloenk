@@ -506,14 +506,14 @@ impl Renderer {
         }
     }
 
-    pub fn load_color_to_memory(&mut self, color_definition: ColorDefinition) {
+    pub fn load_color_to_memory(&mut self, color_definition: &ColorDefinition) {
         let color_id = color_definition.id.clone();
         self.color_manager
-            .load_color_to_memory(&self.device, &color_definition);
+            .load_color_to_memory(&self.device, color_definition);
         self.model_manager.added_color(&color_id);
     }
 
-    pub fn load_material_to_memory(&mut self, asset: ImageAsset) {
+    pub fn load_material_to_memory(&mut self, asset: &ImageAsset) {
         let texture_id = asset.name.clone();
         self.texture_manager
             .load_material_to_memory(&self.device, &self.queue, asset);

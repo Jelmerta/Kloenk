@@ -92,8 +92,7 @@ impl StorageManager {
             .filter(|e| {
                 game_state.in_storage_components
                     .get(e.as_str())
-                    .map(|comp| comp.storage_entity == entity)
-                    .unwrap_or(false)
+                    .is_some_and(|comp| comp.storage_entity == entity)
             }).cloned()
             .collect()
     }

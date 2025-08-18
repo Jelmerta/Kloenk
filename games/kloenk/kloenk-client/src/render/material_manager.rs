@@ -50,7 +50,7 @@ impl TextureManager {
             .unwrap()
     }
 
-    pub fn load_material_to_memory(&mut self, device: &Device, queue: &Queue, image: ImageAsset) {
+    pub fn load_material_to_memory(&mut self, device: &Device, queue: &Queue, image: &ImageAsset) {
         let name = image.name.clone();
         let diffuse_texture = Texture::from_image(device, queue, image).unwrap();
         let bind_group =

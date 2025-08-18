@@ -30,17 +30,15 @@ impl InventorySystem {
             return;
         }
 
-        frame_state.gui.image(
-            100,
-            inventory_window.rect,
-            &inventory_graphics.material_id,
-        );
+        frame_state
+            .gui
+            .image(100, inventory_window.rect, &inventory_graphics.material_id);
 
         let inventory_ecs = game_state.get_storage("player").unwrap();
 
         let inventory_items = game_state.get_in_storages("player");
 
-        for (entity, in_storage) in inventory_items.iter() {
+        for (entity, in_storage) in &inventory_items {
             let storable = game_state.storable_components.get(entity.as_str()).unwrap();
             let item_image = game_state.get_graphics_inventory(entity).unwrap();
 
@@ -60,7 +58,7 @@ impl InventorySystem {
                 &item_image.material_id,
                 input,
             ) {
-                UserAction::None => {}
+                UserAction::None | UserAction::Hover => {}
                 UserAction::LeftClick => {
                     if frame_state.handled_left_click {
                         continue;
@@ -84,7 +82,6 @@ impl InventorySystem {
 
                     frame_state.handled_right_click = true;
                 }
-                UserAction::Hover => {}
             }
         }
     }
@@ -127,13 +124,10 @@ impl InventorySystem {
             );
 
             let mut text_color = [0.8, 0.8, 0.8];
-            match frame_state.gui.color_button(
-                window,
-                200,
-                drop_button_rect,
-                input,
-                "black",
-            ) {
+            match frame_state
+                .gui
+                .color_button(window, 200, drop_button_rect, input, "black")
+            {
                 UserAction::None => {}
                 UserAction::Hover => {
                     text_color = [0.8, 0.8, 0.0];
@@ -168,14 +162,11 @@ impl InventorySystem {
                 );
 
                 let mut text_color = [0.8, 0.8, 0.8];
-                match frame_state.gui.color_button(
-                    window,
-                    200,
-                    examine_button_rect,
-                    input,
-                    "black",
-                ) {
-                    UserAction::None => {}
+                match frame_state
+                    .gui
+                    .color_button(window, 200, examine_button_rect, input, "black")
+                {
+                    UserAction::None | UserAction::RightClick => {}
                     UserAction::Hover => {
                         text_color = [0.8, 0.8, 0.0];
                     }
@@ -191,7 +182,6 @@ impl InventorySystem {
                         new_menu_state = Closed;
                         frame_state.handled_left_click = true;
                     }
-                    UserAction::RightClick => {}
                 }
 
                 frame_state.gui.text(

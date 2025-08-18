@@ -41,13 +41,11 @@ impl ObjectSelectionSystem {
             );
 
             let mut text_color = [0.8, 0.8, 0.8];
-            match frame_state.gui.color_button(
-                window,
-                200,
-                pickup_menu_rect,
-                input,
-                "black",
-            ) {
+            match frame_state
+                .gui
+                .color_button(window, 200, pickup_menu_rect, input, "black")
+            {
+                UserAction::None | UserAction::RightClick => {}
                 UserAction::LeftClick => {
                     if frame_state.handled_left_click {
                         return;
@@ -56,9 +54,7 @@ impl ObjectSelectionSystem {
                     new_menu_state = Closed;
                     frame_state.handled_left_click = true;
                 }
-                UserAction::None => {}
                 UserAction::Hover => text_color = [0.8, 0.8, 0.0],
-                UserAction::RightClick => {}
             }
             frame_state.gui.text(
                 300,
@@ -72,13 +68,11 @@ impl ObjectSelectionSystem {
                 Point2::new(0.065, 0.025),
             );
             let mut text_color = [0.8, 0.8, 0.8];
-            match frame_state.gui.color_button(
-                window,
-                200,
-                examine_menu_rect,
-                input,
-                "black",
-            ) {
+            match frame_state
+                .gui
+                .color_button(window, 200, examine_menu_rect, input, "black")
+            {
+                UserAction::None | UserAction::RightClick => {}
                 UserAction::LeftClick => {
                     if frame_state.handled_left_click {
                         return;
@@ -90,9 +84,7 @@ impl ObjectSelectionSystem {
                     new_menu_state = Closed;
                     frame_state.handled_left_click = true;
                 }
-                UserAction::None => {}
                 UserAction::Hover => text_color = [0.8, 0.8, 0.0],
-                UserAction::RightClick => {}
             }
             frame_state.gui.text(
                 300,
