@@ -17,13 +17,10 @@ impl HealthSystem {
     ) {
         let health_rect_outside =
             UIElement::new_rect(Point2::new(0.125, 0.90), Point2::new(0.075, 0.05));
-        match frame_state.gui.color_button(
-            window,
-            300,
-            health_rect_outside,
-            input,
-            "black",
-        ) {
+        match frame_state
+            .gui
+            .color_button(window, 300, health_rect_outside, input, "black")
+        {
             UserAction::None => {}
             UserAction::Hover => {}
             UserAction::LeftClick => {}
@@ -40,13 +37,10 @@ impl HealthSystem {
             Point2::new(0.05 + percentage_health_bar, 0.95),
         );
 
-        match frame_state.gui.color_button(
-            window,
-            350,
-            health_rect_inside,
-            input,
-            "blood_red",
-        ) {
+        match frame_state
+            .gui
+            .color_button(window, 350, health_rect_inside, input, "blood_red")
+        {
             UserAction::None => {}
             UserAction::Hover => {}
             UserAction::LeftClick => {}

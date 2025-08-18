@@ -42,8 +42,14 @@ impl PositionManager {
             })
             .min_by_key(|e| {
                 Self::distance_2d(
-                    game_state.position_components.get("player").expect("Player position should exist"),
-                    game_state.position_components.get(e.as_str()).expect("NPC dialogue position should exist"),
+                    game_state
+                        .position_components
+                        .get("player")
+                        .expect("Player position should exist"),
+                    game_state
+                        .position_components
+                        .get(e.as_str())
+                        .expect("NPC dialogue position should exist"),
                 )
                     .round()
                     .to_u32()

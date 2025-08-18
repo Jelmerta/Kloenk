@@ -36,10 +36,12 @@ impl CommandHandleSystem {
                     "Cannot place outside placeable area.".clone_into(&mut ui_state.action_text);
                 }
                 ActionEffect::PlaceItemCollidingItem => {
-                    "Found a colliding object.\nNot allowed to place there.".clone_into(&mut ui_state.action_text);
+                    "Found a colliding object.\nNot allowed to place there."
+                        .clone_into(&mut ui_state.action_text);
                 }
                 ActionEffect::PickupNoInventorySpace => {
-                    "There is no space left in your\ninventory to pick up this item.".clone_into(&mut ui_state.action_text);
+                    "There is no space left in your\ninventory to pick up this item."
+                        .clone_into(&mut ui_state.action_text);
                 }
                 ActionEffect::PlaceItemSucceeded => {
                     "You drop the item.".clone_into(&mut ui_state.action_text);
@@ -47,9 +49,7 @@ impl CommandHandleSystem {
                 ActionEffect::ItemSelected { found_objects_text } => {
                     found_objects_text.clone_into(&mut ui_state.selected_text);
                 }
-                ActionEffect::Examine { text } => {
-                    text.clone_into(&mut ui_state.action_text)
-                }
+                ActionEffect::Examine { text } => text.clone_into(&mut ui_state.action_text),
             });
     }
 }

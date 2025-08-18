@@ -340,12 +340,7 @@ impl Renderer {
         rotation: Option<&crate::state::components::Rotation>,
     ) -> Instance {
         let scale = if let Some(size_unwrap) = size {
-            cgmath::Vector4::new(
-                size_unwrap.x,
-                size_unwrap.y,
-                size_unwrap.z,
-                1.0,
-            )
+            cgmath::Vector4::new(size_unwrap.x, size_unwrap.y, size_unwrap.z, 1.0)
         } else {
             cgmath::Vector4::new(1.0, 1.0, 1.0, 1.0)
         };

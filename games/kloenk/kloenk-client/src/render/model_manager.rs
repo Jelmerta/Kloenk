@@ -19,13 +19,17 @@ impl ModelManager {
     }
 
     pub fn get_model_3d(&self, model_id: &str) -> &ModelDefinition {
-        self.loaded_models.get(model_id).or(self.loaded_models
-            .get("default_model_3d")).expect("Default models should exist")
+        self.loaded_models
+            .get(model_id)
+            .or(self.loaded_models.get("default_model_3d"))
+            .expect("Default models should exist")
     }
 
     pub fn get_model_2d(&self, model_id: &str) -> &ModelDefinition {
-        self.loaded_models.get(model_id).or(self.loaded_models
-            .get("default_model_2d")).expect("Default models should exist")
+        self.loaded_models
+            .get(model_id)
+            .or(self.loaded_models.get("default_model_2d"))
+            .expect("Default models should exist")
     }
 
     pub fn add_active_model(&mut self, model: ModelDefinition) {
@@ -174,11 +178,7 @@ impl ModelManager {
             "grass.dds",
         ));
 
-        model_manager.add_active_model(ModelLoader::make_preload_model(
-            "tree",
-            "CUBE",
-            "tree.dds",
-        ));
+        model_manager.add_active_model(ModelLoader::make_preload_model("tree", "CUBE", "tree.dds"));
 
         // TODO let's just say we need material gozer.dds and maybe gozer2.dds for this. how would we load this?
 

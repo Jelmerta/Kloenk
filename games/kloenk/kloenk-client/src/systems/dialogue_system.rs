@@ -24,8 +24,12 @@ impl DialogueSystem {
             && let Some(near_dialog_interactable) = PositionManager::find_nearest_dialog(game_state)
         {
             if !PositionManager::in_range(
-                game_state.get_position("player").expect("Player position should exist"),
-                game_state.get_position(near_dialog_interactable).expect("Nearest dialogue was found and should have position"),
+                game_state
+                    .get_position("player")
+                    .expect("Player position should exist"),
+                game_state
+                    .get_position(near_dialog_interactable)
+                    .expect("Nearest dialogue was found and should have position"),
                 DIALOGUE_RANGE,
             ) {
                 // Not in range
@@ -121,8 +125,12 @@ impl DialogueSystem {
             }
 
             if !PositionManager::in_range(
-                game_state.get_position("player").expect("Player position should exist"),
-                game_state.get_position(npc_entity_id).expect("Interacted NPC position should exist"),
+                game_state
+                    .get_position("player")
+                    .expect("Player position should exist"),
+                game_state
+                    .get_position(npc_entity_id)
+                    .expect("Interacted NPC position should exist"),
                 DIALOGUE_RANGE,
             ) {
                 new_dialogue_state = Some(DialogueState::Closed);

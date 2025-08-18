@@ -77,13 +77,15 @@ impl ObjectDetectionSystem {
         }
 
         let found_objects_text = frame_state.get_objects_on_cursor().join(", ");
-        frame_state.action_effects.push(ActionEffect::ItemSelected {
-            found_objects_text,
-        });
+        frame_state
+            .action_effects
+            .push(ActionEffect::ItemSelected { found_objects_text });
     }
 
     fn set_nearest_object(game_state: &GameState, frame_state: &mut FrameState) {
-        let player_position = game_state.get_position("player").expect("Player position should exist");
+        let player_position = game_state
+            .get_position("player")
+            .expect("Player position should exist");
         let nearest_object: Option<Entity> = frame_state
             .get_objects_on_cursor()
             .iter()
@@ -93,8 +95,11 @@ impl ObjectDetectionSystem {
                 let b_pos = game_state.get_position(b).unwrap();
                 let a_dist = PositionManager::distance_3d(a_pos, player_position);
                 let b_dist = PositionManager::distance_3d(b_pos, player_position);
-                a_dist.partial_cmp(&b_dist).expect("Distances must be comparable")
-            }).cloned();
+                a_dist
+                    .partial_cmp(&b_dist)
+                    .expect("Distances must be comparable")
+            })
+            .cloned();
         // .map(|entity| {
         //     let object_position = game_state.get_position(entity).unwrap();
         //     let distance = PositionManager::distance_3d(object_position, player_position);

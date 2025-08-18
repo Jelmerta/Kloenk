@@ -99,7 +99,8 @@ impl ApplicationHandler for Application {
             for primitive in &model.primitives {
                 if std::path::Path::new(&primitive.vertices_id)
                     .extension()
-                    .is_some_and(|extension| extension.eq_ignore_ascii_case("gltf")) {
+                    .is_some_and(|extension| extension.eq_ignore_ascii_case("gltf"))
+                {
                     let primitive_vertices =
                         pollster::block_on(ModelLoader::load_gltf(&primitive.vertices_id));
                     renderer.load_primitive_vertices_to_memory(primitive_vertices);

@@ -18,20 +18,28 @@ impl CameraSystem {
     pub fn update_camera(window: &Arc<Window>, game_state: &mut GameState, input: &mut Input) {
         Self::setup_camera_target(game_state, input);
         Self::setup_camera(game_state);
-        let camera = game_state.get_camera_mut("camera").expect("Camera should exist");
+        let camera = game_state
+            .get_camera_mut("camera")
+            .expect("Camera should exist");
         camera.update_view_projection_matrix(window);
         camera.update_inverse_matrix();
     }
 
     fn setup_camera(game_state: &mut GameState) {
         let player = "player";
-        let player_position = *game_state.get_position(player).expect("Player position should exist");
-        let player_camera = *game_state.get_camera_target(player).expect("Player camera should exist");
+        let player_position = *game_state
+            .get_position(player)
+            .expect("Player position should exist");
+        let player_camera = *game_state
+            .get_camera_target(player)
+            .expect("Player camera should exist");
 
         let rad_x = f32::to_radians(player_camera.rotation_x_degrees);
         let rad_y = f32::to_radians(player_camera.rotation_y_degrees);
 
-        let camera = game_state.get_camera_mut("camera").expect("Camera should exist");
+        let camera = game_state
+            .get_camera_mut("camera")
+            .expect("Camera should exist");
         camera.eye = Point3 {
             x: player_position.x + player_camera.distance * rad_y.sin() * rad_x.cos(),
             y: player_position.y + player_camera.distance * rad_y.cos(),
@@ -48,9 +56,7 @@ impl CameraSystem {
     }
 
     fn setup_camera_target(game_state: &mut GameState, input: &mut Input) {
-        let player_camera: &mut CameraTarget = game_state
-            .get_camera_target_mut("player")
-            .unwrap();
+        let player_camera: &mut CameraTarget = game_state.get_camera_target_mut("player").unwrap();
 
         if input.up_pressed.is_pressed {
             player_camera.rotation_y_degrees += CAMERA_MOVEMENT_SPEED;

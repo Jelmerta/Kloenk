@@ -90,10 +90,12 @@ impl StorageManager {
             .entities
             .iter()
             .filter(|e| {
-                game_state.in_storage_components
+                game_state
+                    .in_storage_components
                     .get(e.as_str())
                     .is_some_and(|comp| comp.storage_entity == entity)
-            }).cloned()
+            })
+            .cloned()
             .collect()
     }
 }

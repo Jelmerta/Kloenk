@@ -138,7 +138,12 @@ impl ModelLoader {
                             iter.for_each(|index| indices.push(index));
                         }
                         ReadIndices::U32(iter) => {
-                            iter.for_each(|index| indices.push(u16::try_from(index).expect("We expect indices to be mappable to u16")));
+                            iter.for_each(|index| {
+                                indices.push(
+                                    u16::try_from(index)
+                                        .expect("We expect indices to be mappable to u16"),
+                                )
+                            });
                         }
                     }
                     indices

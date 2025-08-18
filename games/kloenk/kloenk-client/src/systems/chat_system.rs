@@ -36,7 +36,10 @@ impl ChatSystem {
         if let Some(new_state) = new_input_state {
             ui_state.input_state = new_state;
             frame_state.handled_enter_click = true;
-            let chat_window = ui_state.windows.get_mut("chat").expect("Chat window should exist");
+            let chat_window = ui_state
+                .windows
+                .get_mut("chat")
+                .expect("Chat window should exist");
             chat_window.is_visible = matches!(ui_state.input_state, InputState::Chat);
         }
 
@@ -53,13 +56,10 @@ impl ChatSystem {
         if !chat_window.is_visible {
             return;
         }
-        match frame_state.gui.color_button(
-            window,
-            500,
-            chat_window.rect,
-            input,
-            "black",
-        ) {
+        match frame_state
+            .gui
+            .color_button(window, 500, chat_window.rect, input, "black")
+        {
             UserAction::None => {}
             UserAction::Hover => {}
             UserAction::LeftClick => {}
