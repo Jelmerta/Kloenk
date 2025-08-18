@@ -33,9 +33,9 @@ impl ModelLoader {
         // let data = include_bytes!("../../assets/gozer.gltf"); // TODO just hardcoded the one model into memory as we don't want to introduce async here probably
         let data = load_binary(model_path)
             .await
-            .unwrap_or_else(|_| panic!("Path {model_path} could not be found"));
+            .unwrap_or_else(|_| panic!("Path {model_path} could not be found")); // TODO should retry or something
         let gltf = Gltf::from_slice(data.as_slice())
-            .unwrap_or_else(|_| panic!("Failed to load gltf model {model_path}"));
+            .unwrap_or_else(|_| panic!("Failed to load gltf model {model_path}")); // TODO should retry or something
 
         let mut model_definitions = Vec::new();
         for mesh in gltf.meshes() {

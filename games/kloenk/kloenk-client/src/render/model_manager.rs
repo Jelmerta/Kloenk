@@ -20,12 +20,12 @@ impl ModelManager {
 
     pub fn get_model_3d(&self, model_id: &str) -> &ModelDefinition {
         self.loaded_models.get(model_id).or(self.loaded_models
-            .get("default_model_3d")).unwrap()
+            .get("default_model_3d")).expect("Default models should exist")
     }
 
     pub fn get_model_2d(&self, model_id: &str) -> &ModelDefinition {
         self.loaded_models.get(model_id).or(self.loaded_models
-            .get("default_model_2d")).unwrap()
+            .get("default_model_2d")).expect("Default models should exist")
     }
 
     pub fn add_active_model(&mut self, model: ModelDefinition) {

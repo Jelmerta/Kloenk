@@ -19,32 +19,32 @@ impl DialogueSystem {
         input: &Input,
         frame_state: &mut FrameState,
     ) {
-        if input.e_pressed.is_toggled_on() && !frame_state.handled_e_click {
-            if let Some(near_dialog_interactable) = PositionManager::find_nearest_dialog(game_state)
-            {
-                if !PositionManager::in_range(
-                    game_state.get_position("player").unwrap(),
-                    game_state.get_position(&near_dialog_interactable).unwrap(),
-                    DIALOGUE_RANGE,
-                ) {
-                    // Not in range
-                    return;
-                }
-
-                // Open dialogue
-
-                let dialogue = game_state
-                    .dialogue_components
-                    .get(near_dialog_interactable)
-                    .unwrap();
-
-                ui_state.dialogue_state = DialogueState::Npc {
-                    mouse_position: input.mouse_position_ui.clone(),
-                    npc_entity_id: near_dialog_interactable.to_owned(),
-                    dialogue_id: dialogue.clone().dialogue_id,
-                };
-                frame_state.handled_e_click = true;
+        if input.e_pressed.is_toggled_on()
+            && !frame_state.handled_e_click
+            && let Some(near_dialog_interactable) = PositionManager::find_nearest_dialog(game_state)
+        {
+            if !PositionManager::in_range(
+                game_state.get_position("player").expect("Player position should exist"),
+                game_state.get_position(near_dialog_interactable).expect("Nearest dialogue was found and should have position"),
+                DIALOGUE_RANGE,
+            ) {
+                // Not in range
+                return;
             }
+
+            // Open dialogue
+
+            let dialogue = game_state
+                .dialogue_components
+                .get(near_dialog_interactable)
+                .unwrap();
+
+            ui_state.dialogue_state = DialogueState::Npc {
+                mouse_position: input.mouse_position_ui,
+                npc_entity_id: near_dialog_interactable.to_owned(),
+                dialogue_id: dialogue.clone().dialogue_id,
+            };
+            frame_state.handled_e_click = true;
         }
     }
 
@@ -67,13 +67,10 @@ impl DialogueSystem {
                 Point2::new(0.16, 0.05),
             );
 
-            match frame_state.gui.color_button(
-                window,
-                150,
-                dialogue_rect,
-                input,
-                "black",
-            ) {
+            match frame_state
+                .gui
+                .color_button(window, 150, dialogue_rect, input, "black")
+            {
                 UserAction::None => {}
                 UserAction::Hover => {}
                 UserAction::LeftClick => {}
@@ -127,8 +124,8 @@ impl DialogueSystem {
             }
 
             if !PositionManager::in_range(
-                game_state.get_position("player").unwrap(),
-                game_state.get_position(&npc_entity_id).unwrap(),
+                game_state.get_position("player").expect("Player position should exist"),
+                game_state.get_position(npc_entity_id).expect("Interacted NPC position should exist"),
                 DIALOGUE_RANGE,
             ) {
                 new_dialogue_state = Some(DialogueState::Closed);

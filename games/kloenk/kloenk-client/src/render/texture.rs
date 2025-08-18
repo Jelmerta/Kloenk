@@ -24,8 +24,8 @@ impl Texture {
         };
 
         let block_size = 4; // TODO static constant thing
-        let blocks_wide = (image.dimensions.pixel_width + block_size - 1) / block_size;
-        let blocks_high = (image.dimensions.pixel_height + block_size - 1) / block_size;
+        let blocks_wide = image.dimensions.pixel_width.div_ceil(block_size);
+        let blocks_high = image.dimensions.pixel_height.div_ceil(block_size);
 
         let texture_size = wgpu::Extent3d {
             width: blocks_wide * block_size,  // padded width

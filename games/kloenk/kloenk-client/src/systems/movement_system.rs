@@ -122,8 +122,12 @@ impl MovementSystem {
     }
 
     fn update_rotation(game_state: &mut GameState, desired_position: Point3<f32>) {
-        let old_rotation = game_state.get_rotation("player");
-        let player_position = game_state.get_position("player").unwrap();
+        let old_rotation = game_state
+            .get_rotation("player")
+            .expect("Old rotation should be present");
+        let player_position = game_state
+            .get_position("player")
+            .expect("player position should exist");
 
         let direction_3d = desired_position.sub(player_position);
         // Player model is aimed at z-direction?
@@ -131,25 +135,24 @@ impl MovementSystem {
             Vector2::new(0.0, 1.0),
             Vector2::new(direction_3d.x, direction_3d.z),
         );
-        let mut rotation_difference = new_rotation - old_rotation.unwrap().degrees_y;
+        let mut rotation_difference = new_rotation - old_rotation.degrees_y;
         if rotation_difference < 180.0 {
-            rotation_difference = rotation_difference + 360.0;
+            rotation_difference += 360.0;
         }
         if rotation_difference > 180.0 {
-            rotation_difference = rotation_difference - 360.0;
+            rotation_difference -= 360.0;
         }
         let rotation_difference_clamped = rotation_difference.clamp(
             -CHARACTER_ROTATION_SPEED_DEGREES,
             CHARACTER_ROTATION_SPEED_DEGREES,
         );
-        let used_rotation;
-        if rotation_difference_clamped < CHARACTER_ROTATION_SPEED_DEGREES
+        let used_rotation = if rotation_difference_clamped < CHARACTER_ROTATION_SPEED_DEGREES
             && rotation_difference_clamped > -CHARACTER_ROTATION_SPEED_DEGREES
         {
-            used_rotation = new_rotation;
+            new_rotation
         } else {
-            used_rotation = old_rotation.unwrap().degrees_y + rotation_difference_clamped;
-        }
+            old_rotation.degrees_y + rotation_difference_clamped
+        };
 
         game_state.rotation_components.remove("player");
         game_state.rotation_components.insert(

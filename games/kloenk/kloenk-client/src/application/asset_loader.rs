@@ -26,12 +26,12 @@ pub struct AssetLoader {}
 
 impl AssetLoader {
     pub async fn load_image_asset(image_path: &str) -> ImageAsset {
-        let data = load_binary(image_path).await.unwrap();
+        let data = load_binary(image_path).await.unwrap(); // Maybe retry? How can this fail?
         Self::load_dds(image_path, &data)
     }
 
     fn load_dds(image_name: &str, dds_bytes: &[u8]) -> ImageAsset {
-        let dds = Dds::read(dds_bytes).unwrap();
+        let dds = Dds::read(dds_bytes).unwrap(); // Maybe retry? How can this fail? Bytes are already in memory...
         let format = detect_format(&dds.header, dds.header10.as_ref());
         ImageAsset {
             name: image_name.to_owned(),

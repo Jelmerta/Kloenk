@@ -33,10 +33,10 @@ impl ChatSystem {
             }
         }
 
-        if new_input_state.is_some() {
-            ui_state.input_state = new_input_state.unwrap();
+        if let Some(new_state) = new_input_state {
+            ui_state.input_state = new_state;
             frame_state.handled_enter_click = true;
-            let chat_window = ui_state.windows.get_mut("chat").unwrap();
+            let chat_window = ui_state.windows.get_mut("chat").expect("Chat window should exist");
             chat_window.is_visible = matches!(ui_state.input_state, InputState::Chat);
         }
 
@@ -66,7 +66,7 @@ impl ChatSystem {
             UserAction::RightClick => {}
         }
 
-        // Interact with
+        // TODO Interact with
         if let InputState::Normal = ui_state.input_state {
             return;
         }

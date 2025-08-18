@@ -44,7 +44,7 @@ pub enum AudioState {
 
 pub enum State {
     Uninitialized,
-    Initialized(Engine),
+    Initialized(Box<Engine>),
 }
 
 pub struct Application {
@@ -121,7 +121,7 @@ impl ApplicationHandler for Application {
 
         let audio_system = pollster::block_on(AudioSystem::new());
 
-        self.application_state = State::Initialized(Engine {
+        self.application_state = State::Initialized(Box::new(Engine {
             renderer,
             game_state: GameState::new(),
             ui_state: UIState::new(),
@@ -129,7 +129,7 @@ impl ApplicationHandler for Application {
             frame_state: FrameState::new(),
             window: window.clone(),
             audio_state: AudioState::Loaded(audio_system),
-        });
+        }));
     }
 
     fn window_event(

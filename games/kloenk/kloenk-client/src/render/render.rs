@@ -216,7 +216,7 @@ impl Renderer {
     ) {
         self.create_render_batches(game_state);
 
-        let camera = game_state.camera_components.get_mut("camera").unwrap();
+        let camera = game_state.camera_components.get_mut("camera").expect("Camera components should exist");
         self.camera_manager
             .update_buffer("camera_3d", &self.queue, camera);
 
@@ -283,8 +283,8 @@ impl Renderer {
         view: &TextureView,
         encoder: &mut CommandEncoder,
     ) {
-        let camera = game_state.camera_components.get_mut("camera_ui").unwrap();
-        self.set_camera_data_ui(camera, &window);
+        let camera = game_state.camera_components.get_mut("camera_ui").expect("Camera components should exist");
+        self.set_camera_data_ui(camera, window);
 
         frame_state
             .gui
@@ -302,7 +302,7 @@ impl Renderer {
                     text,
                     color,
                 } => {
-                    self.text_writer.add(&window, &rect, &text, &color);
+                    self.text_writer.add(window, &rect, &text, &color);
                 }
                 RenderCommand::Texture {
                     layer: _layer,
@@ -391,7 +391,7 @@ impl Renderer {
             })
             .for_each(|entity| {
                 let model_id = game_state
-                    .get_graphics(&entity)
+                    .get_graphics(entity)
                     .unwrap()
                     .model_id
                     .clone();
@@ -416,8 +416,7 @@ impl Renderer {
                     .collect();
                 let instance_buffer = Self::create_instance_buffer(&self.device, &instance_group);
                 let model = self.model_manager.get_model_3d(&model_id);
-                // let primitive_id = model.primitives.iter().next().unwrap().primitive_vertices_id.clone();
-                let primitive = model.primitives.iter().next().unwrap(); //.primitive_vertices_id.clone();
+                let primitive = model.primitives.first().unwrap(); //.primitive_vertices_id.clone();
                 let render_group = RenderBatch {
                     instance_buffer,
                     primitive: primitive.clone(), // TODO i dont like cloning here... maybe pass an id to the primitive definition and then retrieve the whole definition from a map?
@@ -443,7 +442,7 @@ impl Renderer {
         ui_element: &UIElement,
     ) {
         let model = self.model_manager.get_model_2d(model_id);
-        let primitive = model.primitives.iter().next().unwrap(); // todo multiple primitives
+        let primitive = model.primitives.first().unwrap(); // todo multiple primitives
 
         let pipeline = &self.render_context_manager.render_pipeline;
 

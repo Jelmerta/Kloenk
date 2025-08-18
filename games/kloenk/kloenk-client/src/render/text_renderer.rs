@@ -58,26 +58,9 @@ pub struct TextWriter {
 #[allow(clippy::cast_possible_truncation)]
 impl TextWriter {
     pub async fn new(device: &Device, queue: &Queue, config: &SurfaceConfiguration) -> Self {
-        let font_data = load_binary("PlaywriteNL-Minimal.ttf").await.unwrap();
-        // let woff2_data = load_binary("PlaywriteNL-Minimal.woff2")
-        //     .await
-        //     .unwrap();
+        // TODO load as resource later, not blocking the renderer?
+        let font_data = load_binary("PlaywriteNL-Minimal.ttf").await.unwrap(); // TODO retry?
 
-        // let mut font_data = Vec::new();
-        // BrotliDecompress(
-        //     &mut &woff2[..],
-        //     &mut font_data,
-        // ).expect("Failed to decompress WOFF2");
-
-        // ttf_parser::
-        // let font_data = woff::version2::decompress(woff2.into()).unwrap();
-
-        // TODO check if this causes website to load like 100ms slower
-        // TODO mayb run this and other decoding tasks async
-
-        // TODO does it even make sense to await? i mean it needs to happen anyway hmm
-        // let font_data = woff2_patched::convert_woff2_to_ttf(&mut std::io::Cursor::new(woff2_data)).unwrap();
-        // let font_data = TextWriter::load_woff2(&woff2_data).await; // TODO bro why the fuck do we do this just load the ttf. it's brotli compressed anyway over http no need for woff2-patched... keep it simple idiot no way this compresses that much more anyway. could check before/after i guess
         let mut fontdb = fontdb::Database::new();
         fontdb.load_font_data(font_data);
         let font_system = FontSystem::new_with_locale_and_db("en-US".to_owned(), fontdb);

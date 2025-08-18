@@ -44,7 +44,7 @@ impl CameraManager {
     }
 
     pub fn update_buffer(&mut self, camera_name: &str, queue: &Queue, camera: &mut Camera) {
-        let context = self.camera_contexts.get_mut(camera_name).unwrap();
+        let context = self.camera_contexts.get_mut(camera_name).expect("Camera contexts should exist");
 
         context.uniform.update_view_projection(camera);
 
@@ -59,7 +59,7 @@ impl CameraManager {
         &self
             .camera_contexts
             .get(camera_name)
-            .unwrap()
+            .expect("Camera contexts should exist")
             .bind_group
     }
 

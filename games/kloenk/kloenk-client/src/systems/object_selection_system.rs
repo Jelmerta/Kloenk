@@ -107,7 +107,7 @@ impl ObjectSelectionSystem {
     fn should_open_menu(
         input: &Input,
         frame_state: &FrameState,
-        selected_objects: &Vec<Entity>,
+        selected_objects: &[Entity],
     ) -> bool {
         if !input.right_mouse_clicked.is_toggled_on() {
             return false;
