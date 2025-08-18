@@ -22,7 +22,7 @@ use crate::application::{AssetLoader, ImageAsset};
 use crate::render::model::ColorDefinition;
 use crate::render::model_loader::ModelLoader;
 use crate::render::primitive_vertices_manager::PrimitiveVertices;
-use crate::render::render::Renderer;
+use crate::render::renderer::Renderer;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::UIState;
@@ -353,8 +353,8 @@ impl ApplicationHandler<CustomEvent> for Application {
             WindowEvent::CursorMoved { position, .. } => {
                 engine.input_handler.process_mouse_movement(
                     position,
-                    engine.window.inner_size().width as f32,
-                    engine.window.inner_size().height as f32,
+                    engine.window.inner_size().width,
+                    engine.window.inner_size().height,
                 );
             }
             WindowEvent::MouseWheel { delta, .. } => {
