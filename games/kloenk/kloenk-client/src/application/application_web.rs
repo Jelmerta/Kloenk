@@ -17,7 +17,7 @@ use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{CustomCursor, Window, WindowId};
 
-use crate::application::application::Asset::{Color, Texture, Vertices};
+use crate::application::Asset::{Color, Texture, Vertices};
 use crate::application::{AssetLoader, ImageAsset};
 use crate::render::model::ColorDefinition;
 use crate::render::model_loader::ModelLoader;
@@ -276,7 +276,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                                 .load_primitive_vertices_to_memory(primitive_vertices);
                         }
                         Color(color_definition) => {
-                            engine.renderer.load_color_to_memory(color_definition);
+                            engine.renderer.load_color_to_memory(&color_definition);
                         }
                         Texture(texture_asset) => {
                             engine.renderer.load_material_to_memory(&texture_asset);
