@@ -135,8 +135,7 @@ impl Renderer {
         surface.configure(&device, &config);
 
         let camera_manager = CameraManager::new(&device);
-        // let vertex_manager
-        let model_manager = ModelManager::new().await; // TODO kind of implicit preload
+        let model_manager = ModelManager::new().await;
         let primitive_vertices_manager = PrimitiveVerticesManager::new(&device);
         let color_manager = ColorManager::new(&device);
         let material_manager = TextureManager::new(&device, &queue);
