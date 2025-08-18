@@ -1,4 +1,4 @@
-use crate::render::render::Instance;
+use crate::render::renderer::Instance;
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]

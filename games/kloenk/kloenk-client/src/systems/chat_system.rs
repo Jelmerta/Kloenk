@@ -68,6 +68,7 @@ impl ChatSystem {
 
         // TODO Interact with
         if let InputState::Normal = ui_state.input_state {
+            #[allow(clippy::needless_return)]
             return;
         }
     }

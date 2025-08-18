@@ -15,19 +15,20 @@ COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
 #Disable for now to speed up iterations without complaints
-#FROM rust AS checker
-#COPY . .
+FROM rust AS checker
+COPY . .
 #RUN cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -W clippy::pedantic -W clippy::all -Dwarnings
 # Clippy list to disable: clippy::unreadable-literal?
+RUN cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -W -W clippy::all -Dwarnings
 
 FROM rust AS auditor
 COPY . .
 RUN cargo audit
 
 #Temporarily disabled, pipeline has minor difference? Should be checked out
-#FROM rust AS formatchecker
-#COPY . .
-#RUN cargo fmt --all -- --check
+FROM rust AS formatchecker
+COPY . .
+RUN cargo fmt --all -- --check
 
 FROM rust AS builder
 COPY --from=planner /app/recipe.json recipe.json

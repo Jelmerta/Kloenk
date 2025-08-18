@@ -197,6 +197,7 @@ impl GameState {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn load_swords(
         entities: &mut Vec<Entity>,
         graphics_3d_components: &mut HashMap<String, Graphics3D>,
@@ -259,6 +260,7 @@ impl GameState {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn load_shield(
         entities: &mut Vec<Entity>,
         graphics_3d_components: &mut HashMap<Entity, Graphics3D>,
@@ -318,6 +320,7 @@ impl GameState {
         );
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn load_player(
         entities: &mut Vec<Entity>,
         graphics_3d_components: &mut HashMap<Entity, Graphics3D>,

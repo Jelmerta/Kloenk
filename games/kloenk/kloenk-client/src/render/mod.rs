@@ -8,7 +8,7 @@ pub mod model_loader;
 pub mod model_manager;
 pub mod preload_manager;
 pub mod primitive_vertices_manager;
-pub mod render;
 mod render_context_manager;
+pub mod renderer;
 pub mod text_renderer;
 pub mod texture;

@@ -12,7 +12,6 @@ use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Cursor, CustomCursor, Fullscreen, Icon, Window, WindowId};
 
-use crate::render::render::Renderer;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::UIState;
@@ -20,6 +19,7 @@ use crate::systems::game_system::GameSystem;
 use winit::keyboard::KeyCode;
 
 use crate::render::model_loader::ModelLoader;
+use crate::render::renderer::Renderer;
 use hydrox::{load_binary, AudioSystem};
 
 pub struct Engine {
@@ -173,8 +173,8 @@ impl ApplicationHandler for Application {
             WindowEvent::CursorMoved { position, .. } => {
                 engine.input_handler.process_mouse_movement(
                     position,
-                    engine.window.inner_size().width as f32,
-                    engine.window.inner_size().height as f32,
+                    engine.window.inner_size().width,
+                    engine.window.inner_size().height,
                 );
             }
             WindowEvent::MouseWheel { delta, .. } => {
