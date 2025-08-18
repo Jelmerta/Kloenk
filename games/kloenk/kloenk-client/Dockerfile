@@ -40,7 +40,7 @@ RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-thres
 COPY . .
 RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-threshold=10 -Cllvm-args=-inlinehint-threshold=10' \
     cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk \
-&& wasm-bindgen target/wasm32-unknown-unknown/release/kloenk.wasm --target web --out-dir bg_output --out-name kloenk --no-typescript --omit-default-module-path --split-linked-modules --remove-name-section --remove-producers-section \
+&& wasm-bindgen target/wasm32-unknown-unknown/release/kloenk.wasm --target web --out-dir bg_output --out-name kloenk --no-typescript --omit-imports --omit-default-module-path --split-linked-modules \
 # low memory unused TODO : You need to tell wasm-ld not to use address 1024 or below for globals (emcc does it automatically) for that to be safe. \
 # Order matters in wasm-opt?
 #&& wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm --converge --optimize-level 4 --shrink-level 2  --enable-bulk-memory --enable-nontrapping-float-to-int --dce --strip-debug --strip-producers --inlining --coalesce-locals --simplify-locals --low-memory-unused --vacuum \
