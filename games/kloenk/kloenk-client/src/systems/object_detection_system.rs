@@ -79,7 +79,7 @@ impl ObjectDetectionSystem {
         let found_objects_text = frame_state.get_objects_on_cursor().join(", ");
         frame_state.action_effects.push(ActionEffect::ItemSelected {
             found_objects_text,
-        })
+        });
     }
 
     fn set_nearest_object(game_state: &GameState, frame_state: &mut FrameState) {

@@ -4,7 +4,7 @@ use std::iter;
 use std::sync::Arc;
 use wgpu::{
     Buffer, CommandEncoder, Device, Features, InstanceFlags, MemoryHints, Queue,
-    SurfaceConfiguration, TextureView,
+    SurfaceConfiguration, TextureView, Trace,
 };
 
 use crate::application::ImageAsset;
@@ -19,7 +19,7 @@ use crate::render::primitive_vertices_manager::{PrimitiveVertices, PrimitiveVert
 use crate::render::render_context_manager::RenderContextManager;
 use crate::render::text_renderer::TextWriter;
 use crate::render::texture;
-use crate::state::components::Size;
+use crate::state::components::Scale;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::{RenderCommand, UIElement, UIState};
@@ -110,7 +110,7 @@ impl Renderer {
                 required_features: desired_features,
                 required_limits: wgpu::Limits::default(),
                 memory_hints: MemoryHints::default(),
-                trace: Default::default(),
+                trace: Trace::default(),
             })
             .await
             .unwrap();
@@ -139,7 +139,7 @@ impl Renderer {
         let model_manager = ModelManager::new().await; // TODO kind of implicit preload
         let primitive_vertices_manager = PrimitiveVerticesManager::new(&device);
         let color_manager = ColorManager::new(&device);
-        let material_manager = TextureManager::new(&device, &queue).await;
+        let material_manager = TextureManager::new(&device, &queue);
         let render_context_manager = RenderContextManager::new(
             &device,
             &config,
@@ -216,7 +216,10 @@ impl Renderer {
     ) {
         self.create_render_batches(game_state);
 
-        let camera = game_state.camera_components.get_mut("camera").expect("Camera components should exist");
+        let camera = game_state
+            .camera_components
+            .get_mut("camera")
+            .expect("Camera components should exist");
         self.camera_manager
             .update_buffer("camera_3d", &self.queue, camera);
 
@@ -283,15 +286,17 @@ impl Renderer {
         view: &TextureView,
         encoder: &mut CommandEncoder,
     ) {
-        let camera = game_state.camera_components.get_mut("camera_ui").expect("Camera components should exist");
+        let camera = game_state
+            .camera_components
+            .get_mut("camera_ui")
+            .expect("Camera components should exist");
         self.set_camera_data_ui(camera, window);
 
         frame_state
             .gui
             .render_commands
             .sort_by_key(|render_command| match render_command {
-                RenderCommand::Texture { layer, .. } => *layer,
-                RenderCommand::Text { layer, .. } => *layer,
+                RenderCommand::Texture { layer, .. } | RenderCommand::Text { layer, .. } => *layer,
             });
 
         for render_command in frame_state.gui.render_commands.drain(..) {
@@ -314,7 +319,7 @@ impl Renderer {
             } // TODO or maybe call it widget?
         }
         self.text_writer
-            .write(&self.device, &self.queue, encoder, view, window)
+            .write(&self.device, &self.queue, encoder, view, window);
     }
 
     fn create_instance_buffer(device: &Device, instance_group: &[Instance]) -> Buffer {
@@ -331,14 +336,14 @@ impl Renderer {
 
     fn convert_instance(
         position: &Point3<f32>,
-        size: Option<&Size>,
+        size: Option<&Scale>,
         rotation: Option<&crate::state::components::Rotation>,
     ) -> Instance {
         let scale = if let Some(size_unwrap) = size {
             cgmath::Vector4::new(
-                size_unwrap.scale_x,
-                size_unwrap.scale_y,
-                size_unwrap.scale_z,
+                size_unwrap.x,
+                size_unwrap.y,
+                size_unwrap.z,
                 1.0,
             )
         } else {
@@ -353,7 +358,7 @@ impl Renderer {
             scale: cgmath::Matrix4::from_diagonal(scale),
             rotation: cgmath::Quaternion::from_axis_angle(
                 Vector3::unit_y(),
-                cgmath::Deg(rotation.map(|r| r.degrees_y).unwrap_or(0.0)),
+                cgmath::Deg(rotation.map_or(0.0, |r| r.degrees_y)),
             ),
         }
     }
@@ -390,40 +395,30 @@ impl Renderer {
                     .contains_key(entity.as_str())
             })
             .for_each(|entity| {
-                let model_id = game_state
-                    .get_graphics(entity)
-                    .unwrap()
-                    .model_id
-                    .clone();
+                let model_id = game_state.get_graphics(entity).unwrap().model_id.clone();
                 render_groups.entry(model_id).or_default().push(entity);
             });
 
-        render_groups
-            .into_iter()
+        for (model_id, entity_group) in render_groups {
             // TODO? i think we have to iterate over each primitive in the model?
-            .for_each(|(model_id, entity_group)| {
-                let instance_group: Vec<Instance> = entity_group
-                    .into_iter()
-                    .map(|entity| {
-                        let size = game_state.get_size(entity);
-                        let rotation = game_state.get_rotation(entity);
-                        Self::convert_instance(
-                            game_state.get_position(entity).unwrap(),
-                            size,
-                            rotation,
-                        )
-                    })
-                    .collect();
-                let instance_buffer = Self::create_instance_buffer(&self.device, &instance_group);
-                let model = self.model_manager.get_model_3d(&model_id);
-                let primitive = model.primitives.first().unwrap(); //.primitive_vertices_id.clone();
-                let render_group = RenderBatch {
-                    instance_buffer,
-                    primitive: primitive.clone(), // TODO i dont like cloning here... maybe pass an id to the primitive definition and then retrieve the whole definition from a map?
-                    instance_count: instance_group.len() as u32,
-                };
-                render_batches.push(render_group);
-            });
+            let instance_group: Vec<Instance> = entity_group
+                .into_iter()
+                .map(|entity| {
+                    let size = game_state.get_size(entity);
+                    let rotation = game_state.get_rotation(entity);
+                    Self::convert_instance(game_state.get_position(entity).unwrap(), size, rotation)
+                })
+                .collect();
+            let instance_buffer = Self::create_instance_buffer(&self.device, &instance_group);
+            let model = self.model_manager.get_model_3d(&model_id);
+            let primitive = model.primitives.first().unwrap(); //.primitive_vertices_id.clone();
+            let render_group = RenderBatch {
+                instance_buffer,
+                primitive: primitive.clone(), // TODO i dont like cloning here... maybe pass an id to the primitive definition and then retrieve the whole definition from a map?
+                instance_count: instance_group.len() as u32,
+            };
+            render_batches.push(render_group);
+        }
         self.render_batches = render_batches;
     }
 

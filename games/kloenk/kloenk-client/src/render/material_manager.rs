@@ -10,7 +10,7 @@ pub struct TextureManager {
 }
 
 impl TextureManager {
-    pub async fn new(device: &Device, queue: &Queue) -> TextureManager {
+    pub fn new(device: &Device, queue: &Queue) -> TextureManager {
         let texture_layout = Self::setup_texture_layout(device);
         let white_texture = Texture::white_1x1(device, queue).unwrap();
 

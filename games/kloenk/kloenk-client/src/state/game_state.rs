@@ -3,7 +3,7 @@ use cgmath::num_traits::ToPrimitive;
 use crate::render::camera::Camera;
 use crate::state::components::{
     CameraTarget, Description, Dialogue, Entity, Graphics2D, Graphics3D, Health, Hitbox, InStorage,
-    ItemShape, Rotation, Size, Storable, Storage,
+    ItemShape, Rotation, Scale, Storable, Storage,
 };
 use cgmath::{ElementWise, Point3};
 use std::collections::{HashMap, HashSet};
@@ -16,7 +16,7 @@ pub struct GameState {
     pub graphics_2d_components: HashMap<Entity, Graphics2D>,
     pub position_components: HashMap<Entity, Point3<f32>>,
     pub surface_components: HashSet<Entity>,
-    pub size_components: HashMap<Entity, Size>,
+    pub size_components: HashMap<Entity, Scale>,
     pub rotation_components: HashMap<Entity, Rotation>,
     pub hitbox_components: HashMap<Entity, Hitbox>,
     pub health_components: HashMap<Entity, Health>,
@@ -202,7 +202,7 @@ impl GameState {
         graphics_3d_components: &mut HashMap<String, Graphics3D>,
         graphics_2d_components: &mut HashMap<String, Graphics2D>,
         position_components: &mut HashMap<String, Point3<f32>>,
-        size_components: &mut HashMap<String, Size>,
+        size_components: &mut HashMap<String, Scale>,
         hitbox_components: &mut HashMap<String, Hitbox>,
         storable_components: &mut HashMap<String, Storable>,
         description_components: &mut HashMap<String, Description>,
@@ -228,10 +228,10 @@ impl GameState {
             };
             position_components.insert(sword.clone(), sword_position);
 
-            let size = Size {
-                scale_x: 0.5,
-                scale_y: 0.5,
-                scale_z: 0.5,
+            let size = Scale {
+                x: 0.5,
+                y: 0.5,
+                z: 0.5,
             };
             size_components.insert(sword.clone(), size);
 
@@ -264,7 +264,7 @@ impl GameState {
         graphics_3d_components: &mut HashMap<Entity, Graphics3D>,
         graphics_2d_components: &mut HashMap<Entity, Graphics2D>,
         position_components: &mut HashMap<Entity, Point3<f32>>,
-        size_components: &mut HashMap<Entity, Size>,
+        size_components: &mut HashMap<Entity, Scale>,
         hitbox_components: &mut HashMap<Entity, Hitbox>,
         storable_components: &mut HashMap<Entity, Storable>,
         description_components: &mut HashMap<String, Description>,
@@ -288,10 +288,10 @@ impl GameState {
         };
         position_components.insert(shield.clone(), shield_position);
 
-        let size = Size {
-            scale_x: 0.5,
-            scale_y: 0.5,
-            scale_z: 0.5,
+        let size = Scale {
+            x: 0.5,
+            y: 0.5,
+            z: 0.5,
         };
         size_components.insert(shield.clone(), size);
 
@@ -485,7 +485,7 @@ impl GameState {
         self.position_components.remove(to_remove);
     }
 
-    pub fn get_size(&self, entity: &str) -> Option<&Size> {
+    pub fn get_size(&self, entity: &str) -> Option<&Scale> {
         self.size_components.get(entity)
     }
 

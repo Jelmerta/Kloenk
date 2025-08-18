@@ -1,9 +1,12 @@
 #[cfg(target_arch = "wasm32")]
 #[path = "run_web.rs"]
-mod run;
+mod run_web;
 
 #[cfg(not(target_arch = "wasm32"))]
 #[path = "run_native.rs"]
-mod run;
+mod run_native;
 
-pub use run::*;
+#[cfg(not(target_arch = "wasm32"))]
+pub use run_native::*;
+#[cfg(target_arch = "wasm32")]
+pub use run_web::*;
