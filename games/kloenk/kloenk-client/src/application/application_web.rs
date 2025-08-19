@@ -382,16 +382,19 @@ impl ApplicationHandler<CustomEvent> for Application {
                         engine.renderer.resize(engine.window.inner_size());
                     }
                     Err(wgpu::SurfaceError::OutOfMemory) => {
-                        // log::error!("Out of memory"); dev
+                        #[cfg(debug_assertions)]
+                        log::error!("Out of memory");
                         event_loop.exit();
                     }
 
                     Err(wgpu::SurfaceError::Timeout) => {
-                        // log::warn!("Surface timeout"); dev
+                        #[cfg(debug_assertions)]
+                        log::warn!("Surface timeout");
                     }
 
                     Err(wgpu::SurfaceError::Other) => {
-                        // log::warn!("Other error"); dev
+                        #[cfg(debug_assertions)]
+                        log::warn!("Other error");
                     }
                 }
             }
