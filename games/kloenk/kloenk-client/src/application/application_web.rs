@@ -214,7 +214,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 for (_, model) in engine.renderer.model_manager.get_active_models().clone() {
                     // maybe first make sure uniqueness before loading
                     for primitive in &model.primitives {
-                        let vertices_id_clone = primitive.vertices_id;
+                        let vertices_id_clone = primitive.vertices_id.clone();
                         if std::path::Path::new(&primitive.vertices_id)
                             .extension()
                             .is_some_and(|extension| extension.eq_ignore_ascii_case("gltf"))
@@ -236,13 +236,12 @@ impl ApplicationHandler<CustomEvent> for Application {
                         if let Some(texture_id) = &primitive.texture_definition {
                             let event_loop = self.event_loop_proxy.clone();
 
-                            let texture_id_clone = texture_id;
+                            let texture_definition_clone = texture_id.clone();
                             spawn_local(async move {
                                 // TODO check if not already loaded first
                                 let image_texture_asset =
-                                    AssetLoader::load_image_asset(&texture_id_clone.file_name)
+                                    AssetLoader::load_image_asset(&texture_definition_clone.file_name)
                                         .await;
-                                // AssetLoader::load_image_asset(&texture_id.file_name).await;
                                 event_loop
                                     .send_event(CustomEvent::AssetLoaded(Texture(
                                         image_texture_asset,
@@ -254,7 +253,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                         }
 
                         let event_loop = self.event_loop_proxy.clone();
-                        let color_definition = primitive.color_definition;
+                        let color_definition = primitive.color_definition.clone();
                         spawn_local(async move {
                             event_loop
                                 .send_event(CustomEvent::AssetLoaded(Color(color_definition)))
