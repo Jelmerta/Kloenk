@@ -274,7 +274,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                         Vertices(primitive_vertices) => {
                             engine
                                 .renderer
-                                .load_primitive_vertices_to_memory(primitive_vertices);
+                                .load_primitive_vertices_to_memory(&primitive_vertices);
                         }
                         Color(color_definition) => {
                             engine.renderer.load_color_to_memory(&color_definition);
