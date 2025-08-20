@@ -103,7 +103,7 @@ impl ApplicationHandler for Application {
                 {
                     let primitive_vertices =
                         pollster::block_on(ModelLoader::load_gltf(&primitive.vertices_id));
-                    renderer.load_primitive_vertices_to_memory(primitive_vertices);
+                    renderer.load_primitive_vertices_to_memory(&primitive_vertices);
                 }
 
                 if let Some(texture_id) = &primitive.texture_definition {

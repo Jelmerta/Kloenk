@@ -19,24 +19,22 @@ impl CloseMenuSystem {
             return;
         }
 
-        let mut new_menu_state = ui_state.menu_state.clone();
         match &ui_state.menu_state {
             MenuState::World {
-                mouse_position: _mouse_position,
+                render_position: _render_position,
                 item: _item,
             } => {
-                new_menu_state = Closed;
                 frame_state.handled_left_click = true;
+                ui_state.menu_state = Closed;
             }
             MenuState::Inventory {
-                mouse_position: _mouse_position,
+                render_position: _render_position,
                 item: _item,
             } => {
-                new_menu_state = Closed;
                 frame_state.handled_left_click = true;
+                ui_state.menu_state = Closed;
             }
             Closed => {}
         }
-        ui_state.menu_state = new_menu_state;
     }
 }

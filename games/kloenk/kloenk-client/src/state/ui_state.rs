@@ -17,7 +17,6 @@ impl UIWindow {
 }
 
 pub enum RenderCommand {
-    // TODO how do we maintain aspect ratio if we want that?
     Texture {
         layer: u32,
         ui_element: UIElement,
@@ -38,7 +37,7 @@ pub enum UserAction {
     RightClick,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
 pub struct UIElement {
     pub ui_coordinate_origin: Point2<f32>,
     pub top_left: Vector2<f32>,
@@ -67,6 +66,7 @@ impl UIElement {
         }
     }
 
+    // TODO can this be window-agnostic somehow?
     pub fn contains(&self, point: Point2<f32>, window: &Arc<Window>) -> bool {
         point.x < self.right_ui(window)
             && point.x >= self.left_ui(window)
@@ -151,7 +151,7 @@ impl UIElement {
 pub enum DialogueState {
     Closed,
     Npc {
-        mouse_position: Point2<f32>,
+        render_position: Point2<f32>,
         npc_entity_id: Entity,
         dialogue_id: String,
     },
@@ -161,11 +161,11 @@ pub enum DialogueState {
 pub enum MenuState {
     Closed,
     World {
-        mouse_position: Point2<f32>,
+        render_position: Point2<f32>,
         item: Entity,
     },
     Inventory {
-        mouse_position: Point2<f32>,
+        render_position: Point2<f32>,
         item: Entity,
     },
 }

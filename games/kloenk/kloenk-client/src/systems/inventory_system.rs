@@ -2,7 +2,7 @@ use crate::state::frame_state::{ActionEffect, ActionRequest, FrameState};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
 use crate::state::ui_state::MenuState::{Closed, Inventory};
-use crate::state::ui_state::{MenuState, UIElement, UIState, UserAction};
+use crate::state::ui_state::{MenuState, RenderCommand, UIElement, UIState, UserAction};
 use crate::systems::item_placement_system::ItemPlacementSystem;
 use cgmath::Point2;
 use std::sync::Arc;
@@ -38,6 +38,7 @@ impl InventorySystem {
 
         let inventory_items = game_state.get_in_storages("player");
 
+        // TODO besides rendering, we can stop checking user input? mouse click can only be on one location?
         for (entity, in_storage) in &inventory_items {
             let storable = game_state.storable_components.get(entity.as_str()).unwrap();
             let item_image = game_state.get_graphics_inventory(entity).unwrap();
@@ -50,12 +51,16 @@ impl InventorySystem {
             let image_element = inventory_window
                 .rect
                 .inner_rect(Point2::new(left, top), Point2::new(right, bottom));
+            let inventory_item_command = RenderCommand::Texture {
+                layer: 150,
+                ui_element: image_element,
+                model_id: item_image.material_id.clone(),
+            };
+            frame_state.gui.render_commands.push(inventory_item_command);
 
-            match frame_state.gui.image_button(
+            match frame_state.gui.button_handle(
                 window,
-                150,
                 image_element,
-                &item_image.material_id,
                 input,
             ) {
                 UserAction::None | UserAction::Hover => {}
@@ -76,8 +81,8 @@ impl InventorySystem {
                     }
 
                     ui_state.menu_state = Inventory {
-                        mouse_position: input.mouse_position_ui,
-                        item: (*entity).to_owned(),
+                        render_position: input.mouse_position_ui,
+                        item: (*entity).clone(),
                     };
 
                     frame_state.handled_right_click = true;
@@ -93,40 +98,48 @@ impl InventorySystem {
         input: &Input,
         frame_state: &mut FrameState,
     ) {
-        let old_menu_state = ui_state.menu_state.clone();
         ui_state.menu_state = Self::handle_inventory_menu_state(
             window,
             game_state,
-            old_menu_state,
+            ui_state,
             input,
             frame_state,
         );
     }
 
+    // TODO maybe some gui.start_window() and commit() to create whole windows in place? too much logic around now. since we only know at the end if we should render the window or not. could have been closed
     fn handle_inventory_menu_state(
         window: &Arc<Window>,
         game_state: &mut GameState,
-        menu_state: MenuState,
+        ui_state: &mut UIState,
         input: &Input,
         frame_state: &mut FrameState,
     ) -> MenuState {
-        let mut new_menu_state = menu_state.clone();
+        let mut new_menu_state = ui_state.menu_state.clone();
+
+        // If inventory closes, we do not add the render commands
+        let mut inventory_render_commands = Vec::new();
 
         if let Inventory {
-            mouse_position,
+            render_position,
             item,
-        } = menu_state
+        } = &ui_state.menu_state
         {
-            // Drop button
             let drop_button_rect = UIElement::new_rect(
-                Point2::new(mouse_position.x + 0.015, mouse_position.y + 0.005),
+                Point2::new(render_position.x + 0.015, render_position.y + 0.005),
                 Point2::new(0.065, 0.025),
             );
+            let drop_button_render_command = RenderCommand::Texture {
+                layer: 200,
+                ui_element: drop_button_rect,
+                model_id: "black_square".to_owned(),
+            };
+            inventory_render_commands.push(drop_button_render_command);
 
             let mut text_color = [0.8, 0.8, 0.8];
             match frame_state
                 .gui
-                .color_button(window, 200, drop_button_rect, input, "black")
+                .button_handle(window, drop_button_rect, input)
             {
                 UserAction::None => {}
                 UserAction::Hover => {
@@ -147,24 +160,31 @@ impl InventorySystem {
                 UserAction::RightClick => {}
             }
 
-            frame_state.gui.text(
+            let drop_item_text_render_command = frame_state.gui.build_text_render_command(
                 300,
                 drop_button_rect.inner_rect(Point2::new(0.01, 0.01), Point2::new(0.99, 0.99)),
                 "Drop item",
                 text_color,
             );
+            inventory_render_commands.push(drop_item_text_render_command);
 
             // Examine button
-            if game_state.description_components.contains_key(&item) {
+            if game_state.description_components.contains_key(item) {
                 let examine_button_rect = UIElement::new_rect(
-                    Point2::new(mouse_position.x + 0.015, mouse_position.y + 0.055),
+                    Point2::new(render_position.x + 0.015, render_position.y + 0.055),
                     Point2::new(0.065, 0.025),
                 );
+                let examine_render_command = RenderCommand::Texture {
+                    layer: 200,
+                    ui_element: examine_button_rect,
+                    model_id: "black_square".to_owned(),
+                };
+                inventory_render_commands.push(examine_render_command);
 
                 let mut text_color = [0.8, 0.8, 0.8];
                 match frame_state
                     .gui
-                    .color_button(window, 200, examine_button_rect, input, "black")
+                    .button_handle(window, examine_button_rect, input)
                 {
                     UserAction::None | UserAction::RightClick => {}
                     UserAction::Hover => {
@@ -174,7 +194,7 @@ impl InventorySystem {
                         if frame_state.handled_left_click {
                             return new_menu_state;
                         }
-                        let examine_text = game_state.description_components.get(&item).unwrap();
+                        let examine_text = game_state.description_components.get(item).unwrap();
                         frame_state.action_effects.push(ActionEffect::Examine {
                             text: examine_text.text.clone(),
                         });
@@ -184,15 +204,27 @@ impl InventorySystem {
                     }
                 }
 
-                frame_state.gui.text(
+                let examine_text_render_command = frame_state.gui.build_text_render_command(
                     300,
                     examine_button_rect
                         .inner_rect(Point2::new(0.01, 0.01), Point2::new(0.99, 0.99)),
                     "Examine item",
                     text_color,
                 );
+                inventory_render_commands.push(examine_text_render_command);
             }
         }
+
+        match &new_menu_state {
+            Closed | MenuState::World { .. } => {}
+            Inventory { .. } => {
+                frame_state
+                    .gui
+                    .render_commands
+                    .append(&mut inventory_render_commands);
+            }
+        }
+
         new_menu_state
     }
 }

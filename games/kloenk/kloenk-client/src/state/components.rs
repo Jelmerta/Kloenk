@@ -65,5 +65,5 @@ pub struct Description {
 
 #[derive(Clone)]
 pub struct Dialogue {
-    pub dialogue_id: String,
+    pub dialogue_id: Entity,
 }

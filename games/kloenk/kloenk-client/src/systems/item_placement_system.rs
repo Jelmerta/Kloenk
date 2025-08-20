@@ -11,6 +11,14 @@ impl ItemPlacementSystem {
         action_effects: &mut Vec<ActionEffect>,
         item_unwrap: &str,
     ) {
+        let storage_component = game_state.in_storage_components.get_mut(item_unwrap);
+        if storage_component.is_none() {
+            #[cfg(debug_assertions)]
+            log::error!("Tried to place item that's not in inventory"); // Interesting to maybe send this to server to keep track of
+            action_effects.push(ActionEffect::PlaceItemNotInInventory);
+            return;
+        }
+
         let player_position = game_state.get_position("player").unwrap();
         let placed_position = Point3 {
             x: player_position.x - 1.1,

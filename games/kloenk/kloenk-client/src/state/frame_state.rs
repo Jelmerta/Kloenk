@@ -33,20 +33,14 @@ impl FrameState {
         }
     }
 
-    pub fn new_frame(frame_state: &mut FrameState) -> FrameState {
-        Self {
-            objects_on_cursor: frame_state.objects_on_cursor.clone(),
-            nearest_object: frame_state.nearest_object.clone(),
-            handled_left_click: false,
-            handled_right_click: false,
-            handled_e_click: false,
-            handled_enter_click: false,
-
-            gui: Gui::new(),
-
-            action_requests: Vec::new(),
-            action_effects: Vec::new(),
-        }
+    pub fn new_frame(&mut self) {
+        self.handled_left_click = false;
+        self.handled_right_click = false;
+        self.handled_e_click = false;
+        self.handled_enter_click = false;
+        self.gui = Gui::new();
+        self.action_requests = Vec::new();
+        self.action_effects = Vec::new();
     }
 
     pub fn add_object(&mut self, object: Entity) {
@@ -73,6 +67,7 @@ pub enum ActionRequest {
 pub enum ActionEffect {
     PickupItemNotStorable,
     PickupNoItemInRange,
+    PlaceItemNotInInventory,
     PlaceItemNonPlaceable,
     PlaceItemCollidingItem,
     PlaceItemSucceeded,

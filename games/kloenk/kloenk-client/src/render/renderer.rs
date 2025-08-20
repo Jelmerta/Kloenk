@@ -13,7 +13,7 @@ use crate::render::camera_manager::CameraManager;
 use crate::render::color_manager::ColorManager;
 use crate::render::instance::InstanceRaw;
 use crate::render::material_manager::TextureManager;
-use crate::render::model::{ColorDefinition, Draw, PrimitiveDefinition};
+use crate::render::model::{ColorDefinition, Draw};
 use crate::render::model_manager::ModelManager;
 use crate::render::primitive_vertices_manager::{PrimitiveVertices, PrimitiveVerticesManager};
 use crate::render::render_context_manager::RenderContextManager;
@@ -60,7 +60,7 @@ impl Instance {
 // Hmm we might be able to batch together different meshes. group models based on shadows, lighting, transparency etc
 struct RenderBatch {
     instance_buffer: Buffer,
-    primitive: PrimitiveDefinition,
+    model_id: String,
     instance_count: u32,
 }
 
@@ -252,18 +252,20 @@ impl Renderer {
             });
 
             self.render_batches.drain(..).for_each(|render_group| {
+                let model_definition = self.model_manager.get_model_3d(&render_group.model_id);
+                let first_primitive = model_definition.primitives.first().expect("Models have at least one primitive"); // We only render one primitive right now
                 let primitive_vertices = self
                     .primitive_vertices_manager
-                    .get_primitive_vertices(&render_group.primitive.vertices_id);
+                    .get_primitive_vertices(&first_primitive.vertices_id);
                 let pipeline = &self.render_context_manager.render_pipeline;
                 render_pass.set_pipeline(pipeline);
 
                 let color = self
                     .color_manager
-                    .get_color_bind_group(&render_group.primitive.color_definition.id);
+                    .get_color_bind_group(&first_primitive.color_definition.id);
                 let texture_bind_group = self
                     .texture_manager
-                    .get_bind_group(render_group.primitive.texture_definition.as_ref());
+                    .get_bind_group(first_primitive.texture_definition.as_ref());
 
                 render_pass.set_bind_group(0, color, &[]);
                 render_pass.set_bind_group(1, texture_bind_group, &[]);
@@ -376,8 +378,9 @@ impl Renderer {
 
     #[allow(clippy::cast_possible_truncation)]
     fn create_render_batches(&mut self, game_state: &GameState) {
+        // TODO what is the difference again? naming?
         let mut render_batches: Vec<RenderBatch> = Vec::new();
-        let mut render_groups: HashMap<String, Vec<&String>> = HashMap::new();
+        let mut render_groups: HashMap<String, Vec<String>> = HashMap::new();
 
         game_state
             .entities
@@ -389,8 +392,8 @@ impl Renderer {
                     .contains_key(entity.as_str())
             })
             .for_each(|entity| {
-                let model_id = game_state.get_graphics(entity).unwrap().model_id.clone();
-                render_groups.entry(model_id).or_default().push(entity);
+                let model_id = game_state.get_graphics(entity).expect("Entity contains 3d component").model_id.clone();
+                render_groups.entry(model_id).or_default().push(entity.clone());
             });
 
         for (model_id, entity_group) in render_groups {
@@ -398,17 +401,20 @@ impl Renderer {
             let instance_group: Vec<Instance> = entity_group
                 .into_iter()
                 .map(|entity| {
-                    let size = game_state.get_size(entity);
-                    let rotation = game_state.get_rotation(entity);
-                    Self::convert_instance(game_state.get_position(entity).unwrap(), size, rotation)
+                    let size = game_state.get_size(&entity);
+                    let rotation = game_state.get_rotation(&entity);
+                    Self::convert_instance(game_state.get_position(&entity).unwrap(), size, rotation)
                 })
                 .collect();
             let instance_buffer = Self::create_instance_buffer(&self.device, &instance_group);
-            let model = self.model_manager.get_model_3d(&model_id);
-            let primitive = model.primitives.first().unwrap(); //.primitive_vertices_id.clone();
+            // let model = self.model_manager.get_model_3d(&model_id);
+            // let primitive = model.primitives.first().expect("Models contain at least one primitive");
             let render_group = RenderBatch {
                 instance_buffer,
-                primitive: primitive.clone(), // TODO i dont like cloning here... maybe pass an id to the primitive definition and then retrieve the whole definition from a map?
+                // Probably should be model when models have multiple primitives
+                // TODO we should be able to consume rendergroups?
+                model_id, // TODO i dont like cloning here... maybe pass an id to the primitive definition and then retrieve the whole definition from a map?
+                // primitive: primitive.clone(), // TODO i dont like cloning here... maybe pass an id to the primitive definition and then retrieve the whole definition from a map?
                 instance_count: instance_group.len() as u32,
             };
             render_batches.push(render_group);
@@ -485,27 +491,24 @@ impl Renderer {
 
     pub fn load_primitive_vertices_to_memory(
         &mut self,
-        primitive_vertices: Vec<PrimitiveVertices>,
+        primitive_vertices: &Vec<PrimitiveVertices>,
     ) {
         for primitive_vertices in primitive_vertices {
-            let vertices_id = primitive_vertices.name.clone();
             self.primitive_vertices_manager
                 .load_primitive_vertices_to_memory(&self.device, primitive_vertices);
-            self.model_manager.added_vertices(&vertices_id);
+            self.model_manager.added_vertices(&primitive_vertices.name);
         }
     }
 
     pub fn load_color_to_memory(&mut self, color_definition: &ColorDefinition) {
-        let color_id = color_definition.id.clone();
         self.color_manager
             .load_color_to_memory(&self.device, color_definition);
-        self.model_manager.added_color(&color_id);
+        self.model_manager.added_color(&color_definition.id);
     }
 
     pub fn load_material_to_memory(&mut self, asset: &ImageAsset) {
-        let texture_id = asset.name.clone();
         self.texture_manager
             .load_material_to_memory(&self.device, &self.queue, asset);
-        self.model_manager.added_texture(&texture_id);
+        self.model_manager.added_texture(&asset.name);
     }
 }

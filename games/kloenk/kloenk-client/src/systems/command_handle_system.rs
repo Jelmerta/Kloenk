@@ -32,6 +32,9 @@ impl CommandHandleSystem {
                 ActionEffect::PickupNoItemInRange => {
                     "No item found around you to pick up.".clone_into(&mut ui_state.action_text);
                 }
+                ActionEffect::PlaceItemNotInInventory => {
+                    "Tried to place an item not in your inventory, how did that happen?".clone_into(&mut ui_state.action_text);
+                }
                 ActionEffect::PlaceItemNonPlaceable => {
                     "Cannot place outside placeable area.".clone_into(&mut ui_state.action_text);
                 }

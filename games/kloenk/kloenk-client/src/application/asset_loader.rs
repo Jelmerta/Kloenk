@@ -9,7 +9,6 @@ pub struct ImageAsset {
     pub data: Vec<u8>,
 }
 
-// TODO should probably contain transcoded image?
 #[derive(Debug)]
 pub enum ImageEncoding {
     BC1,
@@ -53,11 +52,11 @@ fn detect_format(header: &Header, header10: Option<&Header10>) -> ImageEncoding 
             _ => panic!("Unexpected DXGI format {:?}", header10.dxgi_format),
         }
     } else {
-        match header.spf.fourcc.clone().unwrap() {
-            FourCC(FourCC::BC1_UNORM) => ImageEncoding::BC1,
+        match header.spf.fourcc {
+            Some(FourCC(FourCC::BC1_UNORM)) => ImageEncoding::BC1,
             _ => panic!(
                 "Unexpected DXGI format {:?}",
-                header.spf.fourcc.clone().unwrap()
+                header.spf.fourcc
             ),
         }
     }

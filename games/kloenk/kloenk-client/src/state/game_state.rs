@@ -137,7 +137,7 @@ impl GameState {
         entities.push(tree.clone());
 
         let tree_graphics = Graphics3D {
-            model_id: "tree".to_owned(),
+            model_id: tree.clone(),
         };
         graphics_3d_components.insert(tree.clone(), tree_graphics);
 
@@ -208,33 +208,34 @@ impl GameState {
         storable_components: &mut HashMap<String, Storable>,
         description_components: &mut HashMap<String, Description>,
     ) {
+        let sword = "sword".to_owned();
         for i in 1..71 {
-            let sword = "sword".to_owned() + &i.to_string();
-            entities.push(sword.clone());
+            let sword_id = sword.clone() + &i.to_string();
+            entities.push(sword_id.clone());
 
             let sword_graphics = Graphics3D {
-                model_id: "sword".to_owned(),
+                model_id: sword.clone(),
             };
-            graphics_3d_components.insert(sword.clone(), sword_graphics);
+            graphics_3d_components.insert(sword_id.clone(), sword_graphics);
 
             let sword_graphics_inventory = Graphics2D {
                 material_id: "sword_inventory".to_owned(),
             };
-            graphics_2d_components.insert(sword.clone(), sword_graphics_inventory);
+            graphics_2d_components.insert(sword_id.clone(), sword_graphics_inventory);
 
             let sword_position = Point3 {
                 x: i.to_f32().unwrap() + 0.1,
                 y: 0.75,
                 z: i.to_f32().unwrap() + 0.1,
             };
-            position_components.insert(sword.clone(), sword_position);
+            position_components.insert(sword_id.clone(), sword_position);
 
             let size = Scale {
                 x: 0.5,
                 y: 0.5,
                 z: 0.5,
             };
-            size_components.insert(sword.clone(), size);
+            size_components.insert(sword_id.clone(), size);
 
             let sword_hitbox_min = sword_position.sub_element_wise(Point3::new(0.26, 0.26, 0.26));
             let sword_hitbox_max = sword_position.add_element_wise(Point3::new(0.26, 0.26, 0.26));
@@ -242,7 +243,7 @@ impl GameState {
                 box_corner_min: sword_hitbox_min,
                 box_corner_max: sword_hitbox_max,
             };
-            hitbox_components.insert(sword.clone(), sword_hitbox);
+            hitbox_components.insert(sword_id.clone(), sword_hitbox);
 
             let sword_storable = Storable {
                 shape: ItemShape {
@@ -250,9 +251,9 @@ impl GameState {
                     height: 1,
                 },
             };
-            storable_components.insert(sword.clone(), sword_storable);
+            storable_components.insert(sword_id.clone(), sword_storable);
             description_components.insert(
-                sword.clone(),
+                sword_id.clone(),
                 Description {
                     text: "Sword of Tungstenator".to_owned(),
                 },
@@ -271,31 +272,31 @@ impl GameState {
         storable_components: &mut HashMap<Entity, Storable>,
         description_components: &mut HashMap<String, Description>,
     ) {
-        let shield = "shield".to_owned();
-        entities.push(shield.clone());
+        let shield_id = "shield".to_owned();
+        entities.push(shield_id.clone());
         let shield_graphics = Graphics3D {
-            model_id: shield.clone(),
+            model_id: shield_id.clone(),
         };
-        graphics_3d_components.insert(shield.clone(), shield_graphics);
+        graphics_3d_components.insert(shield_id.clone(), shield_graphics);
 
         let shield_graphics_inventory = Graphics2D {
             material_id: "shield_inventory".to_owned(),
         };
-        graphics_2d_components.insert(shield.clone(), shield_graphics_inventory);
+        graphics_2d_components.insert(shield_id.clone(), shield_graphics_inventory);
 
         let shield_position = Point3 {
             x: -2.8,
             y: 0.75,
             z: -2.7,
         };
-        position_components.insert(shield.clone(), shield_position);
+        position_components.insert(shield_id.clone(), shield_position);
 
         let size = Scale {
             x: 0.5,
             y: 0.5,
             z: 0.5,
         };
-        size_components.insert(shield.clone(), size);
+        size_components.insert(shield_id.clone(), size);
 
         let shield_hitbox_min = shield_position.sub_element_wise(Point3::new(0.26, 0.26, 0.26));
         let shield_hitbox_max = shield_position.add_element_wise(Point3::new(0.26, 0.26, 0.26));
@@ -303,7 +304,7 @@ impl GameState {
             box_corner_min: shield_hitbox_min,
             box_corner_max: shield_hitbox_max,
         };
-        hitbox_components.insert(shield.clone(), shield_hitbox);
+        hitbox_components.insert(shield_id.clone(), shield_hitbox);
 
         let shield_storable = Storable {
             shape: ItemShape {
@@ -311,9 +312,9 @@ impl GameState {
                 height: 2,
             },
         };
-        storable_components.insert(shield.clone(), shield_storable);
+        storable_components.insert(shield_id.clone(), shield_storable);
         description_components.insert(
-            shield.clone(),
+            shield_id.clone(),
             Description {
                 text: "Shield of Hydrogax".to_owned(),
             },
@@ -433,14 +434,14 @@ impl GameState {
     }
 
     fn load_camera(entities: &mut Vec<Entity>, camera_components: &mut HashMap<String, Camera>) {
-        let camera = "camera".to_owned();
-        entities.push(camera.clone());
+        let camera_id = "camera".to_owned();
+        entities.push(camera_id.clone());
         let camera_component = Camera::new();
-        camera_components.insert(camera.clone(), camera_component);
+        camera_components.insert(camera_id.clone(), camera_component);
     }
 
     fn load_camera_ui(entities: &mut Vec<Entity>, camera_components: &mut HashMap<String, Camera>) {
-        let camera = "camera_ui".to_owned();
+        let camera_id = "camera_ui".to_owned();
         let mut camera_component = Camera::new();
         camera_component.eye = Point3 {
             x: 0.0,
@@ -456,8 +457,8 @@ impl GameState {
 
         camera_component.z_near = -1.0;
         camera_component.z_far = 1.0;
-        entities.push(camera.clone());
-        camera_components.insert(camera.clone(), camera_component);
+        entities.push(camera_id.clone());
+        camera_components.insert(camera_id.clone(), camera_component);
     }
 
     pub fn get_graphics(&self, entity: &str) -> Option<&Graphics3D> {

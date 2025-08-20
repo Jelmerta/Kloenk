@@ -1,4 +1,4 @@
-use crate::state::ui_state::UserAction;
+use crate::state::ui_state::{RenderCommand, UserAction};
 use crate::state::{
     frame_state::FrameState,
     input::Input,
@@ -58,13 +58,20 @@ impl ChatSystem {
         }
         match frame_state
             .gui
-            .color_button(window, 500, chat_window.rect, input, "black")
+            .button_handle(window, chat_window.rect, input)
         {
             UserAction::None => {}
             UserAction::Hover => {}
             UserAction::LeftClick => {}
             UserAction::RightClick => {}
         }
+
+        let chat_render_command = RenderCommand::Texture {
+            layer: 500,
+            ui_element: chat_window.rect,
+            model_id: "black_square".to_owned(),
+        };
+        frame_state.gui.render_commands.push(chat_render_command);
 
         // TODO Interact with
         if let InputState::Normal = ui_state.input_state {

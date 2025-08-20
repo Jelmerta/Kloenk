@@ -28,7 +28,7 @@ impl GameSystem {
         frame_state: &mut FrameState,
         audio_state: &mut AudioState,
     ) {
-        *frame_state = FrameState::new_frame(frame_state);
+        frame_state.new_frame();
 
         InventorySystem::display_inventory_item_menu(
             window,

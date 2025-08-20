@@ -73,10 +73,8 @@ impl ModelManager {
                 return false;
             }
 
-            if primitive.texture_definition.is_some()
-                && !self
-                .loaded_textures
-                .contains(&primitive.texture_definition.clone().unwrap().id)
+            if let Some(texture_definition) = &primitive.texture_definition
+                && !self.loaded_textures.contains(&texture_definition.id)
             {
                 return false;
             }

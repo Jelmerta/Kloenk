@@ -100,14 +100,14 @@ impl PrimitiveVerticesManager {
             vertices: SQUARE_TEX.into(),
             indices: SQUARE_INDICES.to_vec(),
         };
-        primitive_vertices_manager.load_primitive_vertices_to_memory(device, square);
+        primitive_vertices_manager.load_primitive_vertices_to_memory(device, &square);
 
         let cube = PrimitiveVertices {
             name: "CUBE".to_owned(),
             vertices: CUBE_TEX.into(),
             indices: CUBE_INDICES.to_vec(),
         };
-        primitive_vertices_manager.load_primitive_vertices_to_memory(device, cube);
+        primitive_vertices_manager.load_primitive_vertices_to_memory(device, &cube);
 
         primitive_vertices_manager
     }
@@ -120,7 +120,7 @@ impl PrimitiveVerticesManager {
     pub fn load_primitive_vertices_to_memory(
         &mut self,
         device: &Device,
-        primitive_vertices: PrimitiveVertices,
+        primitive_vertices: &PrimitiveVertices,
     ) {
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
@@ -141,7 +141,7 @@ impl PrimitiveVerticesManager {
             num_indices,
         };
         self.primitive_vertices_map
-            .insert(primitive_vertices.name, primitive_vertices_gpu);
+            .insert(primitive_vertices.name.clone(), primitive_vertices_gpu);
     }
 
     // TODO overload for colored vertices?

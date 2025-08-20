@@ -1,7 +1,7 @@
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
-use crate::state::ui_state::{DialogueState, UIElement, UIState, UserAction};
+use crate::state::ui_state::{DialogueState, RenderCommand, UIElement, UIState, UserAction};
 use crate::systems::dialogue_manager::DialogueManager;
 use crate::systems::position_manager::PositionManager;
 use cgmath::Point2;
@@ -37,16 +37,15 @@ impl DialogueSystem {
             }
 
             // Open dialogue
-
             let dialogue = game_state
                 .dialogue_components
                 .get(near_dialog_interactable)
-                .unwrap();
+                .expect("Dialogue component should exist");
 
             ui_state.dialogue_state = DialogueState::Npc {
-                mouse_position: input.mouse_position_ui,
+                render_position: input.mouse_position_ui,
                 npc_entity_id: near_dialog_interactable.to_owned(),
-                dialogue_id: dialogue.clone().dialogue_id,
+                dialogue_id: dialogue.dialogue_id.clone(),
             };
             frame_state.handled_e_click = true;
         }
@@ -59,21 +58,28 @@ impl DialogueSystem {
         input: &Input,
         frame_state: &mut FrameState,
     ) {
+        let mut dialogue_render_commands = Vec::new();
         let mut new_dialogue_state = None;
         if let DialogueState::Npc {
-            mouse_position,
+            render_position,
             npc_entity_id,
             dialogue_id,
         } = &ui_state.dialogue_state
         {
             let dialogue_rect = UIElement::new_rect(
-                Point2::new(mouse_position.x + 0.01, mouse_position.y + 0.05),
+                Point2::new(render_position.x + 0.01, render_position.y + 0.05),
                 Point2::new(0.16, 0.05),
             );
+            let dialogue_render_command = RenderCommand::Texture {
+                layer: 150,
+                ui_element: dialogue_rect,
+                model_id: "black_square".to_owned(),
+            };
+            dialogue_render_commands.push(dialogue_render_command);
 
             match frame_state
                 .gui
-                .color_button(window, 150, dialogue_rect, input, "black")
+                .button_handle(window, dialogue_rect, input)
             {
                 UserAction::None => {}
                 UserAction::Hover => {}
@@ -84,30 +90,40 @@ impl DialogueSystem {
             let dialogue_manager = DialogueManager::new();
             let dialogue_text = dialogue_manager.get_dialogue(dialogue_id).unwrap();
 
-            frame_state.gui.text(
+            let dialogue_text_render_command = frame_state.gui.build_text_render_command(
                 300,
                 dialogue_rect,
-                &dialogue_text.clone().text,
+                &dialogue_text.text,
                 [0.8, 0.8, 0.0],
             );
+            dialogue_render_commands.push(dialogue_text_render_command);
 
             let close_button_rect =
                 dialogue_rect.inner_rect_maintain_ratio_x(Point2::new(0.9, 0.05), 0.10);
-            match frame_state.gui.image_button(
+
+            let close_button_render_command = RenderCommand::Texture {
+                layer: 310,
+                ui_element: close_button_rect,
+                model_id: "close_button".to_owned(),
+            };
+            dialogue_render_commands.push(close_button_render_command);
+            match frame_state.gui.button_handle(
                 window,
-                310,
                 close_button_rect,
-                "close_button",
                 input,
             ) {
                 UserAction::None | UserAction::RightClick => {}
                 UserAction::Hover => {
                     // Feels kinda silly/hacky to overlay hover image
-                    match frame_state.gui.image_button(
+                    let close_button_hover_render_command = RenderCommand::Texture {
+                        layer: 311,
+                        ui_element: close_button_rect,
+                        model_id: "close_button_hover".to_owned(),
+                    };
+                    dialogue_render_commands.push(close_button_hover_render_command);
+                    match frame_state.gui.button_handle(
                         window,
-                        311,
                         close_button_rect,
-                        "close_button_hover",
                         input,
                     ) {
                         UserAction::None | UserAction::Hover | UserAction::RightClick => {}
@@ -137,7 +153,14 @@ impl DialogueSystem {
             }
         }
         if let Some(new_state) = new_dialogue_state {
+            match new_state {
+                DialogueState::Closed => {}
+                DialogueState::Npc { .. } => {
+                    frame_state.gui.render_commands.append(&mut dialogue_render_commands);
+                }
+            }
             ui_state.dialogue_state = new_state;
         }
+        frame_state.gui.render_commands.append(&mut dialogue_render_commands);
     }
 }
