@@ -118,15 +118,16 @@ impl Renderer {
             .await
             .expect("Failed to create device. One must be available.");
 
-        let surface_format = Bgra8Unorm;
+        let capabilities = surface.get_capabilities(&adapter);
+        log::error!("Supported capabilities: {:?}", capabilities);
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: surface_format,
+            format: Bgra8Unorm, // For native (vulkan) this can be Srgb, and view_formats can then be empty, but WebGPU fails: "WebGPU doesn't support using sRGB texture formats as the output for a surface. " - https://sotrh.github.io/learn-wgpu/intermediate/tutorial13-hdr/#output-too-dark-on-webgpu. Could make an if wasm flag.
             width: window_size.width.max(1),
             height: window_size.height.max(1),
             present_mode: AutoVsync,
             alpha_mode: Auto,
-            view_formats: vec![surface_format.add_srgb_suffix()], // Adding srgb view for webgpu. When using config.format we need to add_srgb_suffix() as well TODO also required on desktop? or only web?
+            view_formats: vec![Bgra8UnormSrgb], // Adding srgb view for webgpu to get right colours. When using config.format we need to add_srgb_suffix() as well
             desired_maximum_frame_latency: 1, // faster than default frame display. Guessing Chrome just always sets this to 2, because there's 1 frame extra delay according to performance tab
         };
         surface.configure(&device, &config);

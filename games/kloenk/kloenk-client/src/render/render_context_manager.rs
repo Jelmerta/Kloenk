@@ -87,9 +87,8 @@ impl RenderContextManager {
                 module: &shader,
                 entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState {
-                    format: config.format.add_srgb_suffix(), // required for web srgb otherwise shows bland colours could add this only if wasm32 TODO check with dds
-                    // blend: Some(wgpu::BlendState::REPLACE), Original used in color pipeline
-                    blend: Some(wgpu::BlendState::ALPHA_BLENDING), // Seems to be necessary for webp to correctly show transparency? on desktop i did not need count 2, on web getting error without count 2. not fully understanding this yet. i suppose if we do not use webp we do not need this. could make specific pipeline for webp who knows TODO check with dds
+                    format: config.format.add_srgb_suffix(), // Set view format to srgb, required for WebGPU otherwise shows bland colours could add this only if wasm32
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
                 compilation_options: PipelineCompilationOptions::default(),
