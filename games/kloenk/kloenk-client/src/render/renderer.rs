@@ -130,7 +130,7 @@ impl Renderer {
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![surface_format.add_srgb_suffix()], // Adding srgb view for webgpu. When using config.format we need to add_srgb_suffix() as well TODO also required on desktop? or only web?
-            desired_maximum_frame_latency: 1, // faster than default frame display
+            desired_maximum_frame_latency: 0, // faster than default frame display
         };
         surface.configure(&device, &config);
 

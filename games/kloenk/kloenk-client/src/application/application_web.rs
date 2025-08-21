@@ -361,6 +361,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 engine.input_handler.process_scroll(&delta);
             }
             WindowEvent::RedrawRequested => {
+                engine.window().request_redraw();
                 GameSystem::update(
                     &engine.window,
                     &mut engine.game_state,
@@ -395,8 +396,6 @@ impl ApplicationHandler<CustomEvent> for Application {
                         log::warn!("Other error");
                     }
                 }
-
-                engine.window().request_redraw();
             }
             _ => {}
         }

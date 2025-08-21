@@ -82,7 +82,6 @@ impl Input {
 
     pub fn update(&mut self, keycode: KeyCode, state: ElementState) {
         let is_pressed = state == ElementState::Pressed;
-        log::error!("Pressed: {:?}", is_pressed);
 
         match keycode {
             KeyCode::KeyW => {
