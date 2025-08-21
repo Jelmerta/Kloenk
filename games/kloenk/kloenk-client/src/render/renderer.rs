@@ -2,10 +2,7 @@ use cgmath::{prelude::*, Point3, Vector3};
 use std::collections::HashMap;
 use std::iter;
 use std::sync::Arc;
-use wgpu::{
-    Buffer, CommandEncoder, Device, Features, InstanceFlags, MemoryHints, Queue,
-    SurfaceConfiguration, TextureView, Trace,
-};
+use wgpu::{Buffer, CommandEncoder, Device, Features, InstanceFlags, MemoryHints, PresentMode, Queue, SurfaceConfiguration, TextureView, Trace};
 
 use crate::application::ImageAsset;
 use crate::render::camera::Camera;
@@ -127,10 +124,11 @@ impl Renderer {
             format: surface_format,
             width: window_size.width.max(1),
             height: window_size.height.max(1),
-            present_mode: surface_caps.present_modes[0],
+            // present_mode: surface_caps.present_modes[0],
+            present_mode: PresentMode::AutoNoVsync,
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![surface_format.add_srgb_suffix()], // Adding srgb view for webgpu. When using config.format we need to add_srgb_suffix() as well TODO also required on desktop? or only web?
-            desired_maximum_frame_latency: 0, // faster than default frame display
+            desired_maximum_frame_latency: 1, // faster than default frame display, probably falls back to 1. Guessing Chrome just always sets this to 2, because there's 1 frame extra delay according to performance tab
         };
         surface.configure(&device, &config);
 
