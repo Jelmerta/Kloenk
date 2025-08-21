@@ -21,7 +21,7 @@ use std::sync::Arc;
 use wgpu::util::DeviceExt;
 use wgpu::CompositeAlphaMode::Auto;
 use wgpu::PresentMode::AutoVsync;
-use wgpu::TextureFormat::Bgra8UnormSrgb;
+use wgpu::TextureFormat::{Bgra8Unorm, Bgra8UnormSrgb};
 use wgpu::{
     Backend, Buffer, CommandEncoder, Device, Features, InstanceFlags, MemoryHints, Queue,
     SurfaceConfiguration, TextureView, Trace,
@@ -118,15 +118,15 @@ impl Renderer {
             .await
             .expect("Failed to create device. One must be available.");
 
-        let surface_format = Bgra8UnormSrgb;
+        let surface_format = Bgra8Unorm;
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: Bgra8UnormSrgb,
+            format: surface_format,
             width: window_size.width.max(1),
             height: window_size.height.max(1),
             present_mode: AutoVsync,
             alpha_mode: Auto,
-            view_formats: vec![surface_format.add_srgb_suffix()],
+            view_formats: vec![surface_format.add_srgb_suffix()], // Adding srgb view for webgpu. When using config.format we need to add_srgb_suffix() as well TODO also required on desktop? or only web?
             desired_maximum_frame_latency: 1, // faster than default frame display. Guessing Chrome just always sets this to 2, because there's 1 frame extra delay according to performance tab
         };
         surface.configure(&device, &config);
