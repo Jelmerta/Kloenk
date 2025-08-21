@@ -36,9 +36,9 @@ impl Texture {
             size: texture_size,
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
+            dimension: TextureDimension::D2,
             format: texture_format,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+            usage: TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_DST,
             label: Some(&image.name),
             view_formats: &[],
         });
