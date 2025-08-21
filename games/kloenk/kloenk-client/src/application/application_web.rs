@@ -194,11 +194,17 @@ impl ApplicationHandler<CustomEvent> for Application {
                 window,
             };
 
-            let init_event = event_loop_proxy
-                .send_event(CustomEvent::StateInitializationEvent(Box::new(engine)));
-            if let Err(e) = init_event {
-                panic!("Failed to send initialization event {}.", e);
-            }
+            // let init_event = event_loop_proxy
+            //     .send_event(CustomEvent::StateInitializationEvent(Box::new(engine)));
+            // if let Err(e) = init_event {
+            //     panic!("Failed to send initialization event {}.", e);
+            // }
+
+            event_loop_proxy
+                .send_event(CustomEvent::StateInitializationEvent(Box::new(engine)))
+                .unwrap_or_else(|_| {
+                    panic!("Failed to send initialization event");
+                });
         });
     }
 
