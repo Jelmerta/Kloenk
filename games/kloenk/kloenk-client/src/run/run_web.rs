@@ -10,7 +10,7 @@ pub fn run() {
         init_with_level(log::Level::Debug).expect("Couldn't initialize logger");
     }
 
-    let event_loop = EventLoop::<CustomEvent>::with_user_event().build().unwrap();
+    let event_loop = EventLoop::<CustomEvent>::with_user_event().build().expect("Couldn't build event loop");
 
     let application: Application = Application::new(&event_loop);
     event_loop.spawn_app(application);

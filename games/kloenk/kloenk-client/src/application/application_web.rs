@@ -60,6 +60,7 @@ pub enum Asset {
     Texture(ImageAsset),
 }
 
+// #[derive(Debug)]
 pub enum CustomEvent {
     StateInitializationEvent(Box<Engine>), // Boxing as Engine is quite large and other enum instance must be large enough to hold its largest variant.
     WebResizedEvent, // Only sent on web when window gets resized. Resized event only seems to send event on dpi change (browser zoom or system scale ratio) which is insufficient
@@ -193,11 +194,11 @@ impl ApplicationHandler<CustomEvent> for Application {
                 window,
             };
 
-            event_loop_proxy
-                .send_event(CustomEvent::StateInitializationEvent(Box::new(engine)))
-                .unwrap_or_else(|_| {
-                    panic!("Failed to send initialization event");
-                });
+            let init_event = event_loop_proxy
+                .send_event(CustomEvent::StateInitializationEvent(Box::new(engine)));
+            if let Err(e) = init_event {
+                panic!("Failed to send initialization event {}.", e);
+            }
         });
     }
 

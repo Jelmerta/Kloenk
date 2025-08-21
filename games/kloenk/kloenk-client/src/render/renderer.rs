@@ -1,9 +1,3 @@
-use cgmath::{prelude::*, Point3, Vector3};
-use std::collections::HashMap;
-use std::iter;
-use std::sync::Arc;
-use wgpu::{Buffer, CommandEncoder, Device, Features, InstanceFlags, MemoryHints, PresentMode, Queue, SurfaceConfiguration, TextureView, Trace};
-
 use crate::application::ImageAsset;
 use crate::render::camera::Camera;
 use crate::render::camera_manager::CameraManager;
@@ -20,7 +14,18 @@ use crate::state::components::Scale;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::{RenderCommand, UIElement, UIState};
+use cgmath::{prelude::*, Point3, Vector3};
+use std::collections::HashMap;
+use std::iter;
+use std::sync::Arc;
 use wgpu::util::DeviceExt;
+use wgpu::CompositeAlphaMode::Auto;
+use wgpu::PresentMode::AutoVsync;
+use wgpu::TextureFormat::Bgra8UnormSrgb;
+use wgpu::{
+    Backend, Buffer, CommandEncoder, Device, Features, InstanceFlags, MemoryHints, Queue,
+    SurfaceConfiguration, TextureView, Trace,
+};
 use winit::dpi::PhysicalSize;
 use winit::window::Window;
 
@@ -81,16 +86,17 @@ impl Renderer {
             .await
             .unwrap();
 
-        // Dev flag log?
-        // let backend = adapter.get_info().backend;
-        // match backend {
-        //     Backend::Vulkan => log::info!("Using Vulkan backend"),
-        //     Backend::Metal => log::info!("Using Metal backend"),
-        //     Backend::Dx12 => log::info!("Using DirectX 12 backend"),
-        //     Backend::Gl => log::info!("Using OpenGL backend (likely WebGL)"),
-        //     Backend::BrowserWebGpu => log::info!("Using Browser's WebGPU backend"),
-        //     Backend::Noop => log::info!("No graphics backend"),
-        // }
+        #[cfg(debug_assertions)] {
+            let backend = adapter.get_info().backend;
+            match backend {
+                Backend::Vulkan => log::debug!("Using Vulkan backend"),
+                Backend::Metal => log::debug!("Using Metal backend"),
+                Backend::Dx12 => log::debug!("Using DirectX 12 backend"),
+                Backend::Gl => log::debug!("Using OpenGL backend (likely WebGL)"),
+                Backend::BrowserWebGpu => log::debug!("Using Browser's WebGPU backend"),
+                Backend::Noop => log::debug!("No graphics backend"),
+            }
+        }
 
         // Add gpu compression formats
         let available_features = adapter.features();
@@ -103,31 +109,24 @@ impl Renderer {
 
         let (device, queue) = adapter
             .request_device(&wgpu::DeviceDescriptor {
-                label: None,
+                label: Some("Device Descriptor"),
                 required_features: desired_features,
                 required_limits: wgpu::Limits::default(),
-                memory_hints: MemoryHints::default(),
+                memory_hints: MemoryHints::Performance,
                 trace: Trace::default(),
             })
             .await
-            .unwrap();
+            .expect("Failed to create device. One must be available.");
 
-        let surface_caps = surface.get_capabilities(&adapter);
-        let surface_format = surface_caps
-            .formats
-            .iter()
-            .copied()
-            .find(wgpu::TextureFormat::is_srgb)
-            .unwrap_or(surface_caps.formats[0]);
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: surface_format,
+            format: Bgra8UnormSrgb,
             width: window_size.width.max(1),
             height: window_size.height.max(1),
-            // present_mode: surface_caps.present_modes[0],
-            present_mode: PresentMode::AutoNoVsync,
-            alpha_mode: surface_caps.alpha_modes[0],
-            view_formats: vec![surface_format.add_srgb_suffix()], // Adding srgb view for webgpu. When using config.format we need to add_srgb_suffix() as well TODO also required on desktop? or only web?
+            present_mode: AutoVsync,
+            alpha_mode: Auto,
+            view_formats: vec![],
+            // Maybe if we set novsync it can be set to 2 again, just to fill frame buffers?
             desired_maximum_frame_latency: 1, // faster than default frame display, probably falls back to 1. Guessing Chrome just always sets this to 2, because there's 1 frame extra delay according to performance tab
         };
         surface.configure(&device, &config);
@@ -251,7 +250,10 @@ impl Renderer {
 
             self.render_batches.drain(..).for_each(|render_group| {
                 let model_definition = self.model_manager.get_model_3d(&render_group.model_id);
-                let first_primitive = model_definition.primitives.first().expect("Models have at least one primitive"); // We only render one primitive right now
+                let first_primitive = model_definition
+                    .primitives
+                    .first()
+                    .expect("Models have at least one primitive"); // We only render one primitive right now
                 let primitive_vertices = self
                     .primitive_vertices_manager
                     .get_primitive_vertices(&first_primitive.vertices_id);
@@ -390,8 +392,15 @@ impl Renderer {
                     .contains_key(entity.as_str())
             })
             .for_each(|entity| {
-                let model_id = game_state.get_graphics(entity).expect("Entity contains 3d component").model_id.clone();
-                render_groups.entry(model_id).or_default().push(entity.clone());
+                let model_id = game_state
+                    .get_graphics(entity)
+                    .expect("Entity contains 3d component")
+                    .model_id
+                    .clone();
+                render_groups
+                    .entry(model_id)
+                    .or_default()
+                    .push(entity.clone());
             });
 
         for (model_id, entity_group) in render_groups {
@@ -401,7 +410,11 @@ impl Renderer {
                 .map(|entity| {
                     let size = game_state.get_size(&entity);
                     let rotation = game_state.get_rotation(&entity);
-                    Self::convert_instance(game_state.get_position(&entity).unwrap(), size, rotation)
+                    Self::convert_instance(
+                        game_state.get_position(&entity).unwrap(),
+                        size,
+                        rotation,
+                    )
                 })
                 .collect();
             let instance_buffer = Self::create_instance_buffer(&self.device, &instance_group);
