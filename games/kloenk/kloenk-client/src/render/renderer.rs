@@ -118,6 +118,7 @@ impl Renderer {
             .await
             .expect("Failed to create device. One must be available.");
 
+        let surface_format = Bgra8UnormSrgb;
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: Bgra8UnormSrgb,
@@ -125,9 +126,8 @@ impl Renderer {
             height: window_size.height.max(1),
             present_mode: AutoVsync,
             alpha_mode: Auto,
-            view_formats: vec![],
-            // Maybe if we set novsync it can be set to 2 again, just to fill frame buffers?
-            desired_maximum_frame_latency: 1, // faster than default frame display, probably falls back to 1. Guessing Chrome just always sets this to 2, because there's 1 frame extra delay according to performance tab
+            view_formats: vec![surface_format.add_srgb_suffix()],
+            desired_maximum_frame_latency: 1, // faster than default frame display. Guessing Chrome just always sets this to 2, because there's 1 frame extra delay according to performance tab
         };
         surface.configure(&device, &config);
 
