@@ -43,8 +43,8 @@ impl FrameState {
         self.action_effects = Vec::new();
     }
 
-    pub fn add_object(&mut self, object: Entity) {
-        self.objects_on_cursor.push(object);
+    pub fn add_object_on_cursor(&mut self, object: &Entity) {
+        self.objects_on_cursor.push(object.to_owned());
     }
 
     pub fn get_objects_on_cursor(&self) -> &Vec<Entity> {

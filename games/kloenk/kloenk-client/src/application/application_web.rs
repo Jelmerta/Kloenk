@@ -239,9 +239,10 @@ impl ApplicationHandler<CustomEvent> for Application {
                             let texture_definition_clone = texture_id.clone();
                             spawn_local(async move {
                                 // TODO check if not already loaded first
-                                let image_texture_asset =
-                                    AssetLoader::load_image_asset(&texture_definition_clone.file_name)
-                                        .await;
+                                let image_texture_asset = AssetLoader::load_image_asset(
+                                    &texture_definition_clone.file_name,
+                                )
+                                    .await;
                                 event_loop
                                     .send_event(CustomEvent::AssetLoaded(Texture(
                                         image_texture_asset,
@@ -360,8 +361,6 @@ impl ApplicationHandler<CustomEvent> for Application {
                 engine.input_handler.process_scroll(&delta);
             }
             WindowEvent::RedrawRequested => {
-                engine.window().request_redraw();
-
                 GameSystem::update(
                     &engine.window,
                     &mut engine.game_state,
@@ -396,6 +395,8 @@ impl ApplicationHandler<CustomEvent> for Application {
                         log::warn!("Other error");
                     }
                 }
+
+                engine.window().request_redraw();
             }
             _ => {}
         }

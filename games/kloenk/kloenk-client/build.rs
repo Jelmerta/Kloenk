@@ -18,7 +18,7 @@ fn main() -> Result<()> {
     copy_items(&paths_to_copy, &target_dir, &copy_options)
         .map_err(|e| anyhow!("Failed to copy items: {:?}", e))?;
 
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(target_family = "wasm")]
     {
         let paths_to_copy = vec!["web"];
         copy_items(&paths_to_copy, &target_dir, &copy_options)

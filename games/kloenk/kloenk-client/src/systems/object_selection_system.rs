@@ -60,6 +60,7 @@ impl ObjectSelectionSystem {
                     ItemPickupSystem::item_pickup(game_state, frame_state, item);
                     new_menu_state = &Closed;
                     frame_state.handled_left_click = true;
+                    // TODO just return
                 }
                 UserAction::Hover => text_color = [0.8, 0.8, 0.0],
             }
@@ -111,7 +112,7 @@ impl ObjectSelectionSystem {
             object_selection_render_commands.push(examine_text_render_command);
         }
         frame_state.gui.render_commands.append(&mut object_selection_render_commands);
-        ui_state.menu_state = new_menu_state.clone();
+        ui_state.menu_state = new_menu_state.clone(); // TODO prob not needed if return on close, as there's no change?
     }
 
     fn should_open_menu(
@@ -124,12 +125,10 @@ impl ObjectSelectionSystem {
         }
 
         if frame_state.handled_right_click {
-            log::error!("Cannot open menu2");
             return false;
         }
 
         if selected_objects.is_empty() {
-            log::error!("Cannot open menu3");
             return false;
         }
         true

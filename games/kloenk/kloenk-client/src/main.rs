@@ -12,7 +12,7 @@ fn main() {
     run::run();
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(target_family = "wasm")]
 mod wasm {
     use wasm_bindgen::prelude::*;
     #[wasm_bindgen(start)]

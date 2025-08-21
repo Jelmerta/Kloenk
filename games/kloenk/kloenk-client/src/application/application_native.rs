@@ -185,7 +185,7 @@ impl ApplicationHandler for Application {
                 engine.renderer.resize(physical_size);
             }
             WindowEvent::RedrawRequested => {
-                engine.window().request_redraw();
+                log::error!("New frame");
 
                 GameSystem::update(
                     &engine.window,
@@ -221,6 +221,8 @@ impl ApplicationHandler for Application {
                         log::warn!("Other error");
                     }
                 }
+                engine.window().request_redraw(); // TODO should this not be at the end?
+                log::error!("Rendering finished");
             }
             _ => {}
         }

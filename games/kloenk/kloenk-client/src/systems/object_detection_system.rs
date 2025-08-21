@@ -72,7 +72,7 @@ impl ObjectDetectionSystem {
         frame_state.objects_on_cursor = Vec::new(); // Statement only needed as long as we run this method twice per frame
         for (entity, hitbox) in &game_state.hitbox_components {
             if Self::intersection(&ray, hitbox) {
-                frame_state.add_object(entity.clone());
+                frame_state.add_object_on_cursor(entity);
             }
         }
 

@@ -16,7 +16,9 @@ impl ItemPickupSystem {
     ) {
         let player = "player";
 
+        log::error!("handle item_pickup_keyboard");
         if input.e_pressed.is_toggled_on() && !frame_state.handled_e_click {
+            log::error!("toggled!"); // TODO what if its like: yes we did see pickup this frame but its only visible next frame? lets check that
             let near_pickup = PositionManager::find_nearest_pickup(
                 &game_state.position_components,
                 &game_state.storable_components,
