@@ -1,6 +1,6 @@
 //TODO wondering if this needs access to renderer / FIFO/mailbox information
 
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use wgpu::PresentMode;
 
 pub struct FramerateHandler {
@@ -10,10 +10,15 @@ pub struct FramerateHandler {
 }
 
 impl FramerateHandler {
-    pub fn new(present_mode: PresentMode) -> Self {
+    pub fn new(monitor_capable_fps: Option<u32>, present_mode: PresentMode) -> Self {
         FramerateHandler {
             frame_times: Vec::with_capacity(60),
-            target_fps:,
+            target_fps: match present_mode {
+                PresentMode::AutoNoVsync => { monitor_capable_fps }
+                PresentMode::Mailbox => { monitor_capable_fps }
+                _ => panic!("Present mode not supported")
+            },
+            delta_time: Duration,
         }
     }
 
