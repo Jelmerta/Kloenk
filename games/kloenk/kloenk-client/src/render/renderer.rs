@@ -20,8 +20,8 @@ use std::iter;
 use std::sync::Arc;
 use wgpu::util::DeviceExt;
 use wgpu::CompositeAlphaMode::Auto;
-use wgpu::PresentMode::AutoVsync;
-use wgpu::TextureFormat::{Bgra8Unorm, Bgra8UnormSrgb};
+use wgpu::PresentMode::{AutoVsync, Fifo, Mailbox};
+use wgpu::TextureFormat::{Bgra8Unorm, Bgra8UnormSrgb, Rgba8Unorm, Rgba8UnormSrgb};
 use wgpu::{
     Backend, Buffer, CommandEncoder, Device, Features, InstanceFlags, MemoryHints, Queue,
     SurfaceConfiguration, TextureView, Trace,
@@ -119,15 +119,27 @@ impl Renderer {
             .expect("Failed to create device. One must be available.");
 
         let capabilities = surface.get_capabilities(&adapter);
-        log::error!("Supported capabilities: {:?}", capabilities);
+        let preferred_surface_texture_format = capabilities.formats[0]; // https://developer.chrome.com/blog/new-in-webgpu-127#dawn_updates "Instead, use wgpu::Surface::GetCapabilities() to get the list of supported formats, then use formats[0]"
+        let mut view_formats = Vec::new();
+        // "WebGPU doesn't support using sRGB texture formats as the output for a surface. " - https://sotrh.github.io/learn-wgpu/intermediate/tutorial13-hdr/#output-too-dark-on-webgpu.
+        // Adding srgb view for webgpu to get right colours. When using config.format we need to add_srgb_suffix() as well
+        if !preferred_surface_texture_format.is_srgb() {
+            view_formats.push(preferred_surface_texture_format.add_srgb_suffix());
+        }
+        let present_mode = if capabilities.present_modes.contains(&Mailbox) {
+            Mailbox
+            // Fifo
+        } else {
+            AutoVsync
+        };
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: Bgra8Unorm, // For native (vulkan) this can be Srgb, and view_formats can then be empty, but WebGPU fails: "WebGPU doesn't support using sRGB texture formats as the output for a surface. " - https://sotrh.github.io/learn-wgpu/intermediate/tutorial13-hdr/#output-too-dark-on-webgpu. Could make an if wasm flag.
+            format: preferred_surface_texture_format,
             width: window_size.width.max(1),
             height: window_size.height.max(1),
-            present_mode: AutoVsync,
+            present_mode, // TODO Check Mailbox, otherwise FIFO/fiforelaxed? No tearing
             alpha_mode: Auto,
-            view_formats: vec![Bgra8UnormSrgb], // Adding srgb view for webgpu to get right colours. When using config.format we need to add_srgb_suffix() as well
+            view_formats,
             desired_maximum_frame_latency: 1, // faster than default frame display. Guessing Chrome just always sets this to 2, because there's 1 frame extra delay according to performance tab
         };
         surface.configure(&device, &config);

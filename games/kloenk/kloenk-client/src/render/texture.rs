@@ -157,10 +157,10 @@ impl Depth {
             size,
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
+            dimension: TextureDimension::D2,
             format: Self::DEPTH_FORMAT,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
-            view_formats: &[Self::DEPTH_FORMAT],
+            usage: TextureUsages::RENDER_ATTACHMENT, // | TextureUsages::TEXTURE_BINDING, TODO depth is not used in shader is it? dont need texture binding? unlike what sotrh suggests?
+            view_formats: &[],
         };
         let texture = device.create_texture(&descriptor);
 

@@ -9,7 +9,7 @@ use winit::event::ElementState;
 use crate::state::input::Input;
 use std::sync::Arc;
 use winit::dpi::LogicalSize;
-use winit::event_loop::ActiveEventLoop;
+use winit::event_loop::{ActiveEventLoop, ControlFlow};
 use winit::window::{Cursor, CustomCursor, Fullscreen, Icon, Window, WindowId};
 
 use crate::state::frame_state::FrameState;
@@ -61,6 +61,7 @@ impl Application {
 
 impl ApplicationHandler for Application {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        event_loop.set_control_flow(ControlFlow::Poll); // TODO
         // Note: This is more of a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
         // We want to have ownership of the zoom level ourselves. We therefore disregard the dpi ratio and always attempt to render the same image
@@ -87,9 +88,12 @@ impl ApplicationHandler for Application {
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
-        if let Some(monitor) = window.current_monitor() {
+        if let Some(monitor) = window.current_monitor() { // TODO monitor can change and should be changeable
             let fullscreen_video_mode = monitor.video_modes().next().unwrap();
             let _ = window.request_inner_size(fullscreen_video_mode.size());
+            if let Some(hz) = monitor.refresh_rate_millihertz() { // TODO Max/intended frame rate cap
+                log::info!("hertz: {}", hz);
+            }
             window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
         }
 
@@ -156,6 +160,7 @@ impl ApplicationHandler for Application {
                 },
                 ..
             } => event_loop.exit(),
+            // TODO ModifiersChanged? like shift ctrl. is this more for typing?
             WindowEvent::KeyboardInput {
                 event:
                 KeyEvent {
@@ -180,11 +185,14 @@ impl ApplicationHandler for Application {
             WindowEvent::MouseWheel { delta, .. } => {
                 engine.input_handler.process_scroll(&delta);
             }
+            // TODO ScaleFactorChanged? check DPI change
             // // Web uses custom resize event as web only sends event on dpi changes
             WindowEvent::Resized(physical_size) => {
                 engine.renderer.resize(physical_size);
             }
+            // TODO handle window going out of focus/out of view (occluded)
             WindowEvent::RedrawRequested => {
+                // event_loop.set_control_flow(ControlFlow::);
                 engine.window().request_redraw(); // TODO should this not be at the end?
 
                 GameSystem::update(

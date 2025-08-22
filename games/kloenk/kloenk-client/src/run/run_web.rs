@@ -10,6 +10,9 @@ pub fn run() {
     init_with_level(log::Level::Debug).expect("Couldn't initialize logger");
     // }
 
+    // TODO maybe check and handle this case:
+    // wgpu::util::is_browser_webgpu_supported()
+
     let event_loop = EventLoop::<CustomEvent>::with_user_event()
         .build()
         .expect("Couldn't build event loop");
