@@ -18,15 +18,15 @@ impl FramerateHandler {
                 PresentMode::Mailbox => { monitor_capable_fps }
                 _ => panic!("Present mode not supported")
             },
-            delta_time: Duration,
+            delta_time: Duration::from_millis(0), // TODO
         }
     }
 
     pub fn update(&mut self) {
         let now = Instant::now();
-        let previous_time = self.frame_times.last().or().expect();
-        let delta_time = now.duration_since(*previous_time);
+        // let previous_time = self.frame_times.last().or().expect();
+        // let delta_time = now.duration_since(*previous_time);
 
-        self.delta_time = delta_time;
+        // self.delta_time = delta_time;
     }
 }

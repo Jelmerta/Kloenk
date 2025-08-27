@@ -1,4 +1,3 @@
-use crate::application::AudioState;
 use crate::state::components::{Entity, Hitbox, Rotation};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
@@ -6,6 +5,7 @@ use crate::systems::collision_manager::CollisionManager;
 use cgmath::{InnerSpace, Point3, Vector2};
 use std::f32::consts::PI;
 use std::ops::Sub;
+use hydrox::AudioSystem;
 
 pub const BASE_SPEED: f32 = 0.01;
 pub const CHARACTER_ROTATION_SPEED_DEGREES: f32 = 5.0;
@@ -16,7 +16,7 @@ impl MovementSystem {
     pub fn resolve_movement(
         game_state: &mut GameState,
         input: &Input,
-        audio_state: &mut AudioState,
+        audio_system: &mut AudioSystem,
     ) {
         let mut movement_speed: f32 = BASE_SPEED;
         if input.left_shift_pressed.is_pressed {
@@ -52,7 +52,7 @@ impl MovementSystem {
             ),
         };
         if Self::is_walkable(game_state, &desired_position)
-            && !Self::is_colliding(&desired_player_hitbox, game_state, audio_state)
+            && !Self::is_colliding(&desired_player_hitbox, game_state, audio_system)
         {
             Self::update_rotation(game_state, desired_position);
             game_state.remove_position("player");
@@ -79,7 +79,7 @@ impl MovementSystem {
     fn is_colliding(
         desired_player_hitbox: &Hitbox,
         game_state: &GameState,
-        audio_state: &mut AudioState,
+        audio_system: &mut AudioSystem,
     ) -> bool {
         let interactable_entities: Vec<&Entity> = game_state
             .entities
@@ -95,10 +95,13 @@ impl MovementSystem {
             let entity_hitbox = game_state.get_hitbox(entity).unwrap();
 
             if CollisionManager::check_collision(desired_player_hitbox, entity_hitbox) {
-                #[allow(irrefutable_let_patterns)]
-                if let AudioState::Loaded(audio_system) = audio_state {
-                    audio_system.play_sound("bonk");
-                } // else audio not loaded
+                audio_system.play_sound("bonk"); // TODO add check for is_active in audio hydrox
+
+                // #[allow(irrefutable_let_patterns)]
+                //
+                // if let AudioState::Loaded(audio_system) = audio_state {
+                //     audio_system.play_sound("bonk");
+                // } // else audio not loaded
 
                 return true;
             }

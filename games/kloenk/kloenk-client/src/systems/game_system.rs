@@ -1,4 +1,3 @@
-use crate::application::AudioState;
 use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
@@ -15,6 +14,7 @@ use crate::systems::movement_system::MovementSystem;
 use crate::systems::object_detection_system::ObjectDetectionSystem;
 use crate::systems::object_selection_system::ObjectSelectionSystem;
 use std::sync::Arc;
+use hydrox::AudioSystem;
 use winit::window::Window;
 
 pub struct GameSystem {}
@@ -26,7 +26,7 @@ impl GameSystem {
         ui_state: &mut UIState,
         input: &mut Input,
         frame_state: &mut FrameState,
-        audio_state: &mut AudioState,
+        audio_system: &mut AudioSystem,
     ) {
         frame_state.new_frame();
 
@@ -53,7 +53,7 @@ impl GameSystem {
 
         DialogueSystem::handle_open_dialogue_keyboard(game_state, ui_state, input, frame_state);
 
-        MovementSystem::resolve_movement(game_state, input, audio_state);
+        MovementSystem::resolve_movement(game_state, input, audio_system);
 
         // Visual stuff (pre-render)
         CameraSystem::update_camera(window, game_state, input);

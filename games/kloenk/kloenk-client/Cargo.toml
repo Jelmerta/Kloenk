@@ -9,8 +9,11 @@ repository = "https://github.com/Jelmerta/Kloenk/"
 description = "Custom Rust engine targeting WASM with WebGpu (with the dream of creating a multiplayer online game)"
 license = "GPL-3.0-or-later"
 
+[build-dependencies]
+anyhow = "1.0"
+fs_extra = "1.3"
+
 [dependencies]
-winit = { version = "0.30", default-features = false, features = ["rwh_06"] } # TODO are these features needed for both desktop and web? I think x11 feature is needed for linux? , "x11"
 log = "0.4" # dev only
 bytemuck = "1.23"
 cgmath = "0.18"
@@ -21,9 +24,12 @@ ddsfile = "0.5"
 
 hydrox = { git = "https://github.com/Jelmerta/Hydrox.git" }
 
-[build-dependencies]
-anyhow = "1.0"
-fs_extra = "1.3"
+[target.x86_64-unknown-linux-gnu.dependencies]
+winit = { version = "0.30", default-features = false, features = ["x11",  "rwh_06"] }
+
+[target.x86_64-pc-windows-msvc.dependencies]
+#winit = { version = "0.30", default-features = false, features = ["rwh_06"] }
+# TODO winit for wasm
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = { version = "0.11", default-features = false } # dev only
@@ -31,6 +37,8 @@ wgpu = { version = "26.0", default-features = false, features = ["vulkan"] }
 pollster = "0.4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+#winit = { version = "0.30", default-features = false, features = ["rwh_06"] }
+winit = { version = "0.30", default-features = false}
 console_error_panic_hook = "0.1" # dev only
 console_log = "1.0" # dev only
 wgpu = { version = "26.0", default-features = false, features = ["webgpu"] }

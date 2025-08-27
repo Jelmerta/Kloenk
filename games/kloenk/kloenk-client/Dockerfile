@@ -34,15 +34,15 @@ FROM rust AS builder
 COPY --from=planner /app/recipe.json recipe.json
 #https://sharnoff.io/blog/why-rust-compiler-slow, wondering if we even want this. yes it's slow once but then it's just cached anyway
 #-Zshare-generics?
-RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-threshold=10 -Cllvm-args=-inlinehint-threshold=10' \
+#Adding global-base=1024 for wasm-opt --low-memory-unused
+RUN RUSTFLAGS='-Clink-arg=--global-base=1024 -Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-threshold=10 -Cllvm-args=-inlinehint-threshold=10' \
     cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-unknown --target-dir target
 
 # wasm-opt options: https://manpages.debian.org/testing/binaryen/wasm-opt.1.en.html#enable~4
 COPY . .
-RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-threshold=10 -Cllvm-args=-inlinehint-threshold=10' \
+RUN RUSTFLAGS='-Clink-arg=--global-base=1024 -Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-threshold=10 -Cllvm-args=-inlinehint-threshold=10' \
     cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk.wasm --target web --out-dir bg_output --out-name kloenk --no-typescript --omit-imports --omit-default-module-path --split-linked-modules --remove-name-section --remove-producers-section \
-# low memory unused TODO : You need to tell wasm-ld not to use address 1024 or below for globals (emcc does it automatically) for that to be safe. \
 && wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm --converge --enable-bulk-memory --enable-nontrapping-float-to-int --strip-producers --coalesce-locals --simplify-locals --low-memory-unused --traps-never-happen --ignore-implicit-traps --fast-math --flatten --rereloop -O4 --gufa -Oz \
 &&  uglifyjs ./bg_output/kloenk.js --compress passes=3,pure_getters=true,unsafe_math=true --mangle toplevel=true --output bg_output/kloenk.js \
 && mkdir output \

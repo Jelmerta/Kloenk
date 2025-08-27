@@ -20,8 +20,7 @@ use std::iter;
 use std::sync::Arc;
 use wgpu::util::DeviceExt;
 use wgpu::CompositeAlphaMode::Auto;
-use wgpu::PresentMode::{AutoVsync, Fifo, Mailbox};
-use wgpu::TextureFormat::{Bgra8Unorm, Bgra8UnormSrgb, Rgba8Unorm, Rgba8UnormSrgb};
+use wgpu::PresentMode::{AutoVsync, Mailbox};
 use wgpu::{
     Backend, Buffer, CommandEncoder, Device, Features, InstanceFlags, MemoryHints, Queue,
     SurfaceConfiguration, TextureView, Trace,
@@ -119,6 +118,8 @@ impl Renderer {
             .expect("Failed to create device. One must be available.");
 
         let capabilities = surface.get_capabilities(&adapter);
+        #[cfg(debug_assertions)]
+        log::debug!("{capabilities:?}");
         let preferred_surface_texture_format = capabilities.formats[0]; // https://developer.chrome.com/blog/new-in-webgpu-127#dawn_updates "Instead, use wgpu::Surface::GetCapabilities() to get the list of supported formats, then use formats[0]"
         let mut view_formats = Vec::new();
         // "WebGPU doesn't support using sRGB texture formats as the output for a surface. " - https://sotrh.github.io/learn-wgpu/intermediate/tutorial13-hdr/#output-too-dark-on-webgpu.
@@ -126,6 +127,7 @@ impl Renderer {
         if !preferred_surface_texture_format.is_srgb() {
             view_formats.push(preferred_surface_texture_format.add_srgb_suffix());
         }
+        // We mostly value performance and no tearing here
         let present_mode = if capabilities.present_modes.contains(&Mailbox) {
             Mailbox
             // Fifo
@@ -211,6 +213,7 @@ impl Renderer {
         self.render_ui(window, game_state, frame_state, &view, &mut encoder);
 
         self.queue.submit(iter::once(encoder.finish()));
+        window.pre_present_notify();
         output.present();
         self.text_writer.reset_for_frame();
 

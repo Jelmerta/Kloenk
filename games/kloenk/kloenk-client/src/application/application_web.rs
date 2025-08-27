@@ -1,5 +1,5 @@
 use winit::application::ApplicationHandler;
-use winit::event_loop::{EventLoop, EventLoopProxy};
+use winit::event_loop::{ControlFlow, EventLoop, EventLoopProxy};
 use winit::{
     event::{KeyEvent, WindowEvent},
     keyboard::PhysicalKey,
@@ -29,6 +29,7 @@ use crate::state::ui_state::UIState;
 use crate::systems::game_system::GameSystem;
 use winit::keyboard::KeyCode;
 
+// TODO define engine same as for native, needs to be used as same interface
 pub struct Engine {
     pub renderer: Renderer,
     pub game_state: GameState,
@@ -37,7 +38,7 @@ pub struct Engine {
     pub frame_state: FrameState,
     pub window: Arc<Window>,
 
-    pub audio_state: AudioState,
+    pub audio_system: AudioSystem,
 }
 
 // On web, AudioSystem is loaded after user has used a gesture. This is to get rid of this warning in Chrome:
@@ -69,6 +70,7 @@ pub enum CustomEvent {
 }
 pub struct Application {
     application_state: State,
+    audio_state: AudioState,
     event_loop_proxy: EventLoopProxy<CustomEvent>,
 }
 
@@ -76,15 +78,17 @@ impl Application {
     pub fn new(event_loop: &EventLoop<CustomEvent>) -> Application {
         Application {
             application_state: State::Uninitialized,
+            audio_state: AudioState::NotLoaded,
             event_loop_proxy: event_loop.create_proxy(),
         }
     }
 
-    fn load_audio_player(event_loop_proxy: &EventLoopProxy<CustomEvent>, engine: &mut Engine) {
+    // event_loop_proxy: &EventLoopProxy<CustomEvent>,
+    fn load_audio_player(application: &mut Application) {
         let mut new_loading_state = None;
-        if let AudioState::NotLoaded = engine.audio_state {
+        if let AudioState::NotLoaded = application.audio_state {
             new_loading_state = Some(AudioState::Loading);
-            let event_loop_proxy_clone = event_loop_proxy.clone();
+            let event_loop_proxy_clone = application.event_loop_proxy.clone();
             spawn_local(async move {
                 let audio_system = AudioSystem::new().await;
 
@@ -98,7 +102,7 @@ impl Application {
             });
         }
         if let Some(new_state) = new_loading_state {
-            engine.audio_state = new_state;
+            application.audio_state = new_state;
         }
     }
 }
@@ -111,6 +115,7 @@ pub enum State {
 
 impl ApplicationHandler<CustomEvent> for Application {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        event_loop.set_control_flow(ControlFlow::Poll); // TODO
         match self.application_state {
             State::Initializing | State::Initialized(_) => return,
             State::Uninitialized => {
@@ -122,10 +127,6 @@ impl ApplicationHandler<CustomEvent> for Application {
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
         // We want to have ownership of the zoom level ourselves. We therefore disregard the dpi ratio and always attempt to render the same image
         // Note: 0.0 would lead to error on x11 so we define a minimum size of 1 by 1
-        // TODO test if disabling this works #[allow(unused_mut)]
-        // let mut initial_width = 1.0;
-        // #[allow(unused_mut)]
-        // let mut initial_height = 1.0;
         let web_window = web_sys::window().expect("Window should exist");
         // Personal reminder to probably never use window's inner width. Visual viewport returns a float
         let viewport = &web_window
@@ -154,6 +155,7 @@ impl ApplicationHandler<CustomEvent> for Application {
             .with_title("Kloenk!")
             .with_inner_size(LogicalSize::new(initial_width, initial_height))
             .with_active(true)
+            .with_visible(false)
             // Not so happy with browser only supporting 32x32 without edge failures. Other option is using larger image and mirroring or rotating the image near right/bottom border. Rendering the cursor leads to slight trailing which feels not great in a game so probably want to use system supported, limited cursor
             .with_cursor(event_loop.create_custom_cursor(CustomCursor::from_url(
                 String::from("assets/cursor.webp"),
@@ -190,15 +192,9 @@ impl ApplicationHandler<CustomEvent> for Application {
                 ui_state: UIState::new(),
                 input_handler: Input::new(),
                 frame_state: FrameState::new(),
-                audio_state: AudioState::NotLoaded,
+                audio_system: AudioSystem::new().await,
                 window,
             };
-
-            // let init_event = event_loop_proxy
-            //     .send_event(CustomEvent::StateInitializationEvent(Box::new(engine)));
-            // if let Err(e) = init_event {
-            //     panic!("Failed to send initialization event {}.", e);
-            // }
 
             event_loop_proxy
                 .send_event(CustomEvent::StateInitializationEvent(Box::new(engine)))
@@ -311,13 +307,8 @@ impl ApplicationHandler<CustomEvent> for Application {
                 let physical_size = logical_size.to_physical(web_window.device_pixel_ratio());
                 engine.renderer.resize(physical_size);
             }
-            CustomEvent::AudioStateChanged(audio_state) => match self.application_state {
-                State::Uninitialized | State::Initializing => {
-                    panic!("Expected application to be loaded")
-                }
-                State::Initialized(ref mut engine) => {
-                    engine.audio_state = audio_state;
-                }
+            CustomEvent::AudioStateChanged(audio_state) =>  {
+                self.audio_state = audio_state;
             },
         }
     }
@@ -347,7 +338,9 @@ impl ApplicationHandler<CustomEvent> for Application {
                 // Loading audio only after user has gestured on web
                 // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
                 if key_is_gesture(key) {
-                    Self::load_audio_player(&self.event_loop_proxy, engine);
+                    // TODO hydrox set active remove again?
+                    // engine.audio_system.set_active();
+                    Self::load_audio_player(self);
                 }
             }
             WindowEvent::MouseInput { state, button, .. } => {
@@ -355,7 +348,7 @@ impl ApplicationHandler<CustomEvent> for Application {
 
                 // Loading audio only after user has gestured on web
                 // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
-                Self::load_audio_player(&self.event_loop_proxy, engine);
+                Self::load_audio_player(self);
             }
             WindowEvent::CursorMoved { position, .. } => {
                 engine.input_handler.process_mouse_movement(
@@ -375,7 +368,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                     &mut engine.ui_state,
                     &mut engine.input_handler,
                     &mut engine.frame_state,
-                    &mut engine.audio_state,
+                    &mut engine.audio_system,
                 );
 
                 match engine.renderer.render(
@@ -403,6 +396,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                         log::warn!("Other error");
                     }
                 }
+                engine.window.set_visible(true); // TODO really only needs to be done once
             }
             _ => {}
         }

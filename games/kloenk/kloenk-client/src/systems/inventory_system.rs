@@ -24,7 +24,7 @@ impl InventorySystem {
         }
 
         let inventory_graphics = game_state
-            .get_graphics_inventory("sword1") // TODO inventory graphics
+            .get_graphics_inventory("sword1")
             .unwrap();
         if !inventory_window.is_visible {
             return;
@@ -38,7 +38,7 @@ impl InventorySystem {
 
         let inventory_items = game_state.get_in_storages("player");
 
-        // TODO besides rendering, we can stop checking user input? mouse click can only be on one location?
+        // TODO besides rendering, we can stop checking user input? mouse click can only be on one location? Maybe this should be done by looping over all entities
         for (entity, in_storage) in &inventory_items {
             let storable = game_state.storable_components.get(entity.as_str()).unwrap();
             let item_image = game_state.get_graphics_inventory(entity).unwrap();
@@ -57,7 +57,7 @@ impl InventorySystem {
                 model_id: item_image.material_id.clone(),
             };
             frame_state.gui.render_commands.push(inventory_item_command);
-
+            
             match frame_state.gui.button_handle(window, image_element, input) {
                 UserAction::None | UserAction::Hover => {}
                 UserAction::LeftClick => {
@@ -140,7 +140,7 @@ impl InventorySystem {
                     ItemPlacementSystem::place_item(
                         game_state,
                         &mut frame_state.action_effects,
-                        &item,
+                        item,
                     );
                     ui_state.menu_state = Closed;
                     frame_state.handled_left_click = true;

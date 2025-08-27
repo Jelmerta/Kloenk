@@ -6,6 +6,7 @@ pub fn run() {
     env_logger::builder()
         .filter(None, log::LevelFilter::Info)
         .filter(Some("wgpu_hal::vulkan"), log::LevelFilter::Error)
+        .filter(Some("kloenk"), log::LevelFilter::Debug)
         .init();
 
     let event_loop = EventLoop::new().expect("Couldn't create event loop");

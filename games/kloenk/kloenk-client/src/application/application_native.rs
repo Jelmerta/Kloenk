@@ -4,7 +4,7 @@ use winit::{
     keyboard::PhysicalKey,
 };
 
-use winit::event::ElementState;
+use winit::event::{DeviceEvent, DeviceId, ElementState, StartCause};
 
 use crate::state::input::Input;
 use std::sync::Arc;
@@ -29,18 +29,13 @@ pub struct Engine {
     pub input_handler: Input,
     pub frame_state: FrameState,
     pub window: Arc<Window>,
-    pub audio_state: AudioState, // todo just audio_system or sth once we have event system working better
+    // pub audio_state: AudioState, // todo just audio_system or sth once we have event system working better
+    pub audio_system: AudioSystem,
 }
 
-impl Engine {
-    pub fn window(&self) -> &Window {
-        &self.window
-    }
-}
-
-pub enum AudioState {
-    Loaded(AudioSystem),
-}
+// pub enum AudioState {
+//     Loaded(AudioSystem),
+// }
 
 pub enum State {
     Uninitialized,
@@ -60,16 +55,20 @@ impl Application {
 }
 
 impl ApplicationHandler for Application {
+    fn new_events(&mut self, _: &ActiveEventLoop, _: StartCause) {
+        // todo!()
+    }
+
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        #[cfg(debug_assertions)]
+        log::debug!("Resumed loop");
         event_loop.set_control_flow(ControlFlow::Poll); // TODO
         // Note: This is more of a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
         // We want to have ownership of the zoom level ourselves. We therefore disregard the dpi ratio and always attempt to render the same image
         // Note: 0.0 would lead to error on x11 so we define a minimum size of 1 by 1
-        #[allow(unused_mut)]
-        let mut initial_width = 1.0;
-        #[allow(unused_mut)]
-        let mut initial_height = 1.0;
+        let initial_width = 1.0;
+        let initial_height = 1.0;
 
         let window_attributes;
         let cursor_binary = pollster::block_on(load_binary("cursor.rgba")).unwrap();
@@ -84,6 +83,7 @@ impl ApplicationHandler for Application {
             .with_inner_size(LogicalSize::new(initial_width, initial_height))
             .with_active(true)
             .with_cursor(Cursor::Custom(custom_cursor))
+            .with_visible(false)
             .with_window_icon(window_icon);
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
@@ -92,7 +92,7 @@ impl ApplicationHandler for Application {
             let fullscreen_video_mode = monitor.video_modes().next().unwrap();
             let _ = window.request_inner_size(fullscreen_video_mode.size());
             if let Some(hz) = monitor.refresh_rate_millihertz() { // TODO Max/intended frame rate cap
-                log::info!("hertz: {}", hz);
+                log::info!("hertz: {hz}");
             }
             window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
         }
@@ -128,6 +128,7 @@ impl ApplicationHandler for Application {
 
         let audio_system = pollster::block_on(AudioSystem::new());
 
+        window.set_visible(true);
         self.application_state = State::Initialized(Box::new(Engine {
             renderer,
             game_state: GameState::new(),
@@ -135,7 +136,7 @@ impl ApplicationHandler for Application {
             input_handler: Input::new(),
             frame_state: FrameState::new(),
             window: window.clone(),
-            audio_state: AudioState::Loaded(audio_system),
+            audio_system,
         }));
     }
 
@@ -193,7 +194,7 @@ impl ApplicationHandler for Application {
             // TODO handle window going out of focus/out of view (occluded)
             WindowEvent::RedrawRequested => {
                 // event_loop.set_control_flow(ControlFlow::);
-                engine.window().request_redraw(); // TODO should this not be at the end?
+                // engine.window().request_redraw(); // TODO should this not be at the end?
 
                 GameSystem::update(
                     &engine.window,
@@ -201,9 +202,10 @@ impl ApplicationHandler for Application {
                     &mut engine.ui_state,
                     &mut engine.input_handler,
                     &mut engine.frame_state,
-                    &mut engine.audio_state,
+                    &mut engine.audio_system,
                 );
 
+                // engine.window.pre_present_notify()
                 match engine.renderer.render(
                     &engine.window,
                     &mut engine.game_state,
@@ -232,5 +234,34 @@ impl ApplicationHandler for Application {
             }
             _ => {}
         }
+    }
+
+    // Interesting: Can provide device information even when not focused. I would hope I cannot read keyboard input from other windows though.
+    fn device_event(&mut self, _: &ActiveEventLoop, _: DeviceId, _: DeviceEvent) {
+        // todo!()
+    }
+
+    fn about_to_wait(&mut self, _: &ActiveEventLoop) {
+        match &self.application_state {
+            State::Uninitialized => {}
+            State::Initialized(engine) => {
+                engine.window.request_redraw()
+            }
+        }
+    }
+
+    fn suspended(&mut self, _: &ActiveEventLoop) {
+        log::debug!("Suspended application");
+        // pause rendering? i mean this just works on its own does it not? what is recommended here?
+    }
+
+    fn exiting(&mut self, _: &ActiveEventLoop) {
+        #[cfg(debug_assertions)]
+        log::error!("Exiting");
+    }
+
+    fn memory_warning(&mut self, _: &ActiveEventLoop) {
+        #[cfg(debug_assertions)]
+        log::warn!("Memory warning");
     }
 }
