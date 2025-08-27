@@ -29,13 +29,8 @@ pub struct Engine {
     pub input_handler: Input,
     pub frame_state: FrameState,
     pub window: Arc<Window>,
-    // pub audio_state: AudioState, // todo just audio_system or sth once we have event system working better
     pub audio_system: AudioSystem,
 }
-
-// pub enum AudioState {
-//     Loaded(AudioSystem),
-// }
 
 pub enum State {
     Uninitialized,

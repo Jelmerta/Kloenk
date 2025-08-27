@@ -4,7 +4,7 @@ use crate::render::camera_manager::CameraManager;
 use crate::render::color_manager::ColorManager;
 use crate::render::instance::InstanceRaw;
 use crate::render::material_manager::TextureManager;
-use crate::render::model::{ColorDefinition, Draw};
+use crate::render::model::{ColorDefinition};
 use crate::render::model_manager::ModelManager;
 use crate::render::primitive_vertices_manager::{PrimitiveVertices, PrimitiveVerticesManager};
 use crate::render::render_context_manager::RenderContextManager;
@@ -287,8 +287,15 @@ impl Renderer {
                 render_pass.set_bind_group(1, texture_bind_group, &[]);
                 render_pass.set_bind_group(2, self.camera_manager.get_bind_group("camera_3d"), &[]);
                 render_pass.set_vertex_buffer(1, render_group.instance_buffer.slice(..));
-                render_pass
-                    .draw_primitive_instanced(primitive_vertices, 0..render_group.instance_count);
+                render_pass.set_vertex_buffer(0, primitive_vertices.vertex_buffer.slice(..));
+                render_pass.set_index_buffer(
+                    primitive_vertices.index_buffer.slice(..),
+                    wgpu::IndexFormat::Uint16,
+                );
+                render_pass.draw_indexed(0..primitive_vertices.num_indices, 0, 0..render_group.instance_count);
+
+                // render_pass
+                //     .draw_primitive_instanced(primitive_vertices, 0..render_group.instance_count);
             });
 
             drop(render_pass);
@@ -512,7 +519,13 @@ impl Renderer {
         let primitive_vertices = self
             .primitive_vertices_manager
             .get_primitive_vertices(&primitive.vertices_id);
-        render_pass_ui.draw_primitive_instanced(primitive_vertices, 0..instance_count);
+        render_pass_ui.set_vertex_buffer(0, primitive_vertices.vertex_buffer.slice(..));
+        render_pass_ui.set_index_buffer(
+            primitive_vertices.index_buffer.slice(..),
+            wgpu::IndexFormat::Uint16,
+        );
+        render_pass_ui.draw_indexed(0..primitive_vertices.num_indices, 0, 0..instance_count);
+
         drop(render_pass_ui);
     }
 
