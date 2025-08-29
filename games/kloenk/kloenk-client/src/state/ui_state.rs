@@ -17,7 +17,7 @@ impl UIWindow {
 }
 
 pub enum RenderCommand {
-    Texture {
+    Model {
         layer: u32,
         ui_element: UIElement,
         model_id: String,
@@ -160,11 +160,11 @@ pub enum DialogueState {
 #[derive(Clone)]
 pub enum MenuState {
     Closed,
-    World {
+    WorldAction {
         render_position: Point2<f32>,
         item: Entity,
     },
-    Inventory {
+    InventoryAction {
         render_position: Point2<f32>,
         item: Entity,
     },

@@ -2,12 +2,14 @@ use crate::application::{ImageAsset, ImageEncoding};
 use anyhow::{Ok, Result};
 use wgpu::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
 
+const BC_BLOCK_SIZE: u32 = 4;
+
 pub struct Texture {
     pub view: wgpu::TextureView,
     pub sampler: wgpu::Sampler,
 }
 
-// Probably just a specific instance of Texture?
+// TODO Probably just a specific instance of Texture?
 pub struct Depth {
     pub view: wgpu::TextureView,
 }
@@ -23,13 +25,15 @@ impl Texture {
             ImageEncoding::BC7 => TextureFormat::Bc7RgbaUnormSrgb,
         };
 
-        let block_size = 4; // TODO static constant thing
-        let blocks_wide = image.dimensions.pixel_width.div_ceil(block_size);
-        let blocks_high = image.dimensions.pixel_height.div_ceil(block_size);
+        let blocks_wide = image.dimensions.pixel_width.div_ceil(BC_BLOCK_SIZE);
+        let blocks_high = image.dimensions.pixel_height.div_ceil(BC_BLOCK_SIZE);
+
+        let padded_width = blocks_wide * BC_BLOCK_SIZE;
+        let padded_height = blocks_high * BC_BLOCK_SIZE;
 
         let texture_size = Extent3d {
-            width: blocks_wide * block_size,  // padded width
-            height: blocks_high * block_size, // padded height
+            width: padded_width,
+            height: padded_height,
             depth_or_array_layers: 1,
         };
         let texture = device.create_texture(&wgpu::TextureDescriptor {
@@ -47,9 +51,11 @@ impl Texture {
             ImageEncoding::BC1 => 8,
             ImageEncoding::BC7 => 16,
         };
-        // Based on blocks, not pixels
+
         let bytes_per_row = blocks_wide * bytes_per_block;
 
+        // Wrapper method, we perform a lot of similar actions... Might want to use this instead.
+        // device.create_texture_with_data(queue, desc, order, data);
         queue.write_texture(
             wgpu::TexelCopyTextureInfo {
                 texture: &texture,
@@ -60,19 +66,14 @@ impl Texture {
             &image.data,
             wgpu::TexelCopyBufferLayout {
                 offset: 0,
-                // bytes_per_row: Some(4 * image.dimensions.pixel_width),  rgba
                 bytes_per_row: Some(bytes_per_row),
                 rows_per_image: Some(image.dimensions.pixel_height),
             },
             texture_size,
         );
 
-        // TODO difference?
-        // device.create_texture_with_data()
-
         let view = texture.create_view(&wgpu::TextureViewDescriptor {
             label: Some("Image view"),
-            // format: Some(self.config.format.add_srgb_suffix()), ?
             ..Default::default()
         });
         let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
@@ -159,7 +160,7 @@ impl Depth {
             sample_count: 1,
             dimension: TextureDimension::D2,
             format: Self::DEPTH_FORMAT,
-            usage: TextureUsages::RENDER_ATTACHMENT, // | TextureUsages::TEXTURE_BINDING, TODO depth is not used in shader is it? dont need texture binding? unlike what sotrh suggests?
+            usage: TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[],
         };
         let texture = device.create_texture(&descriptor);

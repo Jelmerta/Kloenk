@@ -13,7 +13,7 @@ impl ItemPlacementSystem {
     ) {
         let storage_component = game_state.in_storage_components.get_mut(item_unwrap);
         if storage_component.is_none() {
-            #[cfg(debug_assertions)]
+            #[cfg(feature = "debug-logging")]
             log::error!("Tried to place item that's not in inventory"); // Interesting to maybe send this to server to keep track of
             action_effects.push(ActionEffect::PlaceItemNotInInventory);
             return;

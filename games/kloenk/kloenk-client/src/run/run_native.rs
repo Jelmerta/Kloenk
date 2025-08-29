@@ -2,7 +2,7 @@ use crate::application::Application;
 use winit::event_loop::EventLoop;
 
 pub fn run() {
-    #[cfg(debug_assertions)]
+    #[cfg(feature = "debug-logging")]
     env_logger::builder()
         .filter(None, log::LevelFilter::Info)
         .filter(Some("wgpu_hal::vulkan"), log::LevelFilter::Error)

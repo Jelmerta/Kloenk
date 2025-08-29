@@ -23,25 +23,8 @@ impl TextureManager {
             bind_group_layout: texture_layout,
             textures_gpu: textures,
         }
-
-        // let default_image_asset = ImageAsset {
-        //     name: "black".to_string(),
-        //     dimensions: TextureDimensions {},
-        //     encoding: ImageEncoding::BC1,
-        //     data: vec![],
-        // };
-        // material_manager.load_material(device, queue);
-        // TODO load default material
-        //
-        // material_manager
     }
 
-    // pub fn get_texture(&self, material_name: &str) -> &TexturesGpu {
-    //     self.textures.get(material_name).unwrap()
-    // }
-
-    // TODO if none found, 1x1 white texture
-    // pub fn get_bind_group(&self, material_name: &str) -> &BindGroup {
     pub fn get_bind_group(&self, texture_definition: Option<&TextureDefinition>) -> &BindGroup {
         let texture_id = texture_definition.as_ref().map(|td| td.id.as_str());
         self.textures_gpu

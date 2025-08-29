@@ -14,7 +14,7 @@ anyhow = "1.0"
 fs_extra = "1.3"
 
 [dependencies]
-log = "0.4" # dev only
+log = { version =  "0.4", optional = true}
 bytemuck = "1.23"
 cgmath = "0.18"
 anyhow = { version = "1.0", default-features = false }
@@ -29,18 +29,17 @@ winit = { version = "0.30", default-features = false, features = ["x11",  "rwh_0
 
 [target.x86_64-pc-windows-msvc.dependencies]
 #winit = { version = "0.30", default-features = false, features = ["rwh_06"] }
-# TODO winit for wasm
+# TODO winit for windows
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-env_logger = { version = "0.11", default-features = false } # dev only
+env_logger = { version = "0.11", default-features = false, optional = true}
 wgpu = { version = "26.0", default-features = false, features = ["vulkan"] }
 pollster = "0.4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-#winit = { version = "0.30", default-features = false, features = ["rwh_06"] }
-winit = { version = "0.30", default-features = false}
-console_error_panic_hook = "0.1" # dev only
-console_log = "1.0" # dev only
+winit = { version = "0.30", default-features = false, features = ["rwh_06"] }
+console_error_panic_hook = { version = "0.1", optional = true }
+console_log = { version = "1.0", optional = true }
 wgpu = { version = "26.0", default-features = false, features = ["webgpu"] }
 wasm-bindgen = { version = "0.2", default-features = false }
 wasm-bindgen-futures = "0.4"
@@ -53,6 +52,9 @@ web-sys = { version = "0.3", features = [# todo check which are not needed
     "HtmlCanvasElement",
 ] }
 reqwest = { version = "0.12", default-features = false }
+
+[features]
+debug-logging = ["log", "env_logger", "console_error_panic_hook", "console_log"]
 
 [[bin]]
 name = "kloenk"

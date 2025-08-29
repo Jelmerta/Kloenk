@@ -6,7 +6,6 @@ pub mod material_manager;
 pub mod model;
 pub mod model_loader;
 pub mod model_manager;
-pub mod preload_manager;
 pub mod primitive_vertices_manager;
 mod render_context_manager;
 pub mod renderer;

@@ -70,7 +70,7 @@ impl DialogueSystem {
                 Point2::new(render_position.x + 0.01, render_position.y + 0.05),
                 Point2::new(0.16, 0.05),
             );
-            let dialogue_render_command = RenderCommand::Texture {
+            let dialogue_render_command = RenderCommand::Model {
                 layer: 150,
                 ui_element: dialogue_rect,
                 model_id: "black_square".to_owned(),
@@ -101,7 +101,7 @@ impl DialogueSystem {
             let close_button_rect =
                 dialogue_rect.inner_rect_maintain_ratio_x(Point2::new(0.9, 0.05), 0.10);
 
-            let close_button_render_command = RenderCommand::Texture {
+            let close_button_render_command = RenderCommand::Model {
                 layer: 310,
                 ui_element: close_button_rect,
                 model_id: "close_button".to_owned(),
@@ -115,7 +115,7 @@ impl DialogueSystem {
                 UserAction::None | UserAction::RightClick => {}
                 UserAction::Hover => {
                     // Feels kinda silly/hacky to overlay hover image
-                    let close_button_hover_render_command = RenderCommand::Texture {
+                    let close_button_hover_render_command = RenderCommand::Model {
                         layer: 311,
                         ui_element: close_button_rect,
                         model_id: "close_button_hover".to_owned(),

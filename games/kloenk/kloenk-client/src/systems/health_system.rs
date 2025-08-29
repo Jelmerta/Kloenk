@@ -17,7 +17,7 @@ impl HealthSystem {
     ) {
         let health_rect_outside =
             UIElement::new_rect(Point2::new(0.125, 0.90), Point2::new(0.075, 0.05));
-        let dialogue_render_command = RenderCommand::Texture {
+        let dialogue_render_command = RenderCommand::Model {
             layer: 300,
             ui_element: health_rect_outside,
             model_id: "black_square".to_owned(),
@@ -42,7 +42,7 @@ impl HealthSystem {
             Point2::new(0.05, 0.05),
             Point2::new(0.05 + percentage_health_bar, 0.95),
         );
-        let dialogue_render_command = RenderCommand::Texture {
+        let dialogue_render_command = RenderCommand::Model {
             layer: 350,
             ui_element: health_rect_inside,
             model_id: "blood_red_square".to_owned(),

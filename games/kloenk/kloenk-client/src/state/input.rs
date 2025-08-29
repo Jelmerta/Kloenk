@@ -71,8 +71,8 @@ impl Input {
 
             left_shift_pressed: KeyPress::default(),
 
-            mouse_position_ndc: Point2::new(0.0, 0.0), // TODO what's a default position for the mouse?
-            mouse_position_ui: Point2::new(0.0, 0.0),
+            mouse_position_ndc: Point2::new(0.0, 0.0),
+            mouse_position_ui: Point2::new(0.5, 0.5),
             right_mouse_clicked: KeyPress::default(),
             left_mouse_clicked: KeyPress::default(),
 
@@ -185,7 +185,6 @@ impl Input {
         );
     }
 
-    #[allow(clippy::cast_possible_truncation)]
     pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
         self.scrolled_amount = match delta {
             MouseScrollDelta::PixelDelta(PhysicalPosition {

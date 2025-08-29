@@ -21,10 +21,7 @@ use std::sync::Arc;
 use wgpu::util::DeviceExt;
 use wgpu::CompositeAlphaMode::Auto;
 use wgpu::PresentMode::{AutoVsync, Mailbox};
-use wgpu::{
-    Backend, Buffer, CommandEncoder, Device, Features, InstanceFlags, MemoryHints, Queue,
-    SurfaceConfiguration, TextureView, Trace,
-};
+use wgpu::{Adapter, Backend, Buffer, CommandEncoder, Device, Features, MemoryHints, Queue, SurfaceConfiguration, TextureView, Trace};
 use winit::dpi::PhysicalSize;
 use winit::window::Window;
 
@@ -42,8 +39,10 @@ pub struct Renderer {
     render_context_manager: RenderContextManager,
 
     depth_texture: texture::Depth,
-    render_batches: Vec<RenderBatch>, // TODO Probably group by mesh otherwise we cannot batch? Also maybe this is a RenderBatch?
+    render_batches: Vec<RenderBatch>,
     text_writer: TextWriter,
+
+    is_first_render: bool,
 }
 
 pub struct Instance {
@@ -59,6 +58,7 @@ impl Instance {
 }
 
 // Hmm we might be able to batch together different meshes. group models based on shadows, lighting, transparency etc
+// TODO Camera is also a bind group...
 struct RenderBatch {
     instance_buffer: Buffer,
     model_id: String,
@@ -68,14 +68,15 @@ struct RenderBatch {
 impl Renderer {
     pub async fn new(window: Arc<Window>) -> Renderer {
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::all(),
-            flags: InstanceFlags::empty(), // Remove Vulkan validation layer as this leads to tons of unhelpful logging (and VK_LAYER_KHRONOS_validation does not seem to exist? not debugging this)
+            backends: wgpu::Backends::PRIMARY,
             ..Default::default()
         });
 
+        #[cfg(feature = "debug-logging")]
+        log::debug!("Wgsl features: {:?}", instance.wgsl_language_features());
+
         let window_size = window.inner_size();
         let surface = instance.create_surface(window).unwrap();
-
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::HighPerformance,
@@ -85,32 +86,20 @@ impl Renderer {
             .await
             .unwrap();
 
-        #[cfg(debug_assertions)] {
-            let backend = adapter.get_info().backend;
-            match backend {
-                Backend::Vulkan => log::debug!("Using Vulkan backend"),
-                Backend::Metal => log::debug!("Using Metal backend"),
-                Backend::Dx12 => log::debug!("Using DirectX 12 backend"),
-                Backend::Gl => log::debug!("Using OpenGL backend (likely WebGL)"),
-                Backend::BrowserWebGpu => log::debug!("Using Browser's WebGPU backend"),
-                Backend::Noop => log::debug!("No graphics backend"),
-            }
-        }
+        #[cfg(feature = "debug-logging")]
+        log::debug!("GPU adapter info: {:?}", adapter.get_info());
+        #[cfg(feature = "debug-logging")]
+        log::debug!("GPU Features: {:?}", adapter.features());
+        #[cfg(feature = "debug-logging")]
+        log::debug!("GPU limits: {:?}", adapter.limits());
 
-        // Add gpu compression formats
-        let available_features = adapter.features();
-        let mut desired_features = Features::empty();
-        if available_features.contains(Features::TEXTURE_COMPRESSION_BC) {
-            desired_features |= Features::TEXTURE_COMPRESSION_BC;
-        } else {
-            panic!("We expect BC compression to be supported right now. More support later")
-        }
+        let desired_features = Self::create_gpu_compression_format_feature(&adapter);
 
         let (device, queue) = adapter
             .request_device(&wgpu::DeviceDescriptor {
                 label: Some("Device Descriptor"),
                 required_features: desired_features,
-                required_limits: wgpu::Limits::default(),
+                required_limits: wgpu::Limits::downlevel_webgl2_defaults(), // Ideally only request what is needed: At some point make our own limits
                 memory_hints: MemoryHints::Performance,
                 trace: Trace::default(),
             })
@@ -118,7 +107,7 @@ impl Renderer {
             .expect("Failed to create device. One must be available.");
 
         let capabilities = surface.get_capabilities(&adapter);
-        #[cfg(debug_assertions)]
+        #[cfg(feature = "debug-logging")]
         log::debug!("{capabilities:?}");
         let preferred_surface_texture_format = capabilities.formats[0]; // https://developer.chrome.com/blog/new-in-webgpu-127#dawn_updates "Instead, use wgpu::Surface::GetCapabilities() to get the list of supported formats, then use formats[0]"
         let mut view_formats = Vec::new();
@@ -127,10 +116,8 @@ impl Renderer {
         if !preferred_surface_texture_format.is_srgb() {
             view_formats.push(preferred_surface_texture_format.add_srgb_suffix());
         }
-        // We mostly value performance and no tearing here
         let present_mode = if capabilities.present_modes.contains(&Mailbox) {
             Mailbox
-            // Fifo
         } else {
             AutoVsync
         };
@@ -139,7 +126,7 @@ impl Renderer {
             format: preferred_surface_texture_format,
             width: window_size.width.max(1),
             height: window_size.height.max(1),
-            present_mode, // TODO Check Mailbox, otherwise FIFO/fiforelaxed? No tearing
+            present_mode,
             alpha_mode: Auto,
             view_formats,
             desired_maximum_frame_latency: 1, // faster than default frame display. Guessing Chrome just always sets this to 2, because there's 1 frame extra delay according to performance tab
@@ -177,7 +164,19 @@ impl Renderer {
             depth_texture,
             render_batches: Vec::new(),
             text_writer,
+            is_first_render: true,
         }
+    }
+
+    fn create_gpu_compression_format_feature(adapter: &Adapter) -> Features {
+        let available_features = adapter.features();
+        let mut desired_features = Features::empty();
+        if available_features.contains(Features::TEXTURE_COMPRESSION_BC) {
+            desired_features |= Features::TEXTURE_COMPRESSION_BC;
+        } else {
+            panic!("We expect BC compression to be supported right now. More support later")
+        }
+        desired_features
     }
 
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
@@ -215,6 +214,10 @@ impl Renderer {
         self.queue.submit(iter::once(encoder.finish()));
         window.pre_present_notify();
         output.present();
+        if self.is_first_render {
+            window.set_visible(true);
+            self.is_first_render = false;
+        }
         self.text_writer.reset_for_frame();
 
         Ok(())
@@ -286,16 +289,13 @@ impl Renderer {
                 render_pass.set_bind_group(0, color, &[]);
                 render_pass.set_bind_group(1, texture_bind_group, &[]);
                 render_pass.set_bind_group(2, self.camera_manager.get_bind_group("camera_3d"), &[]);
-                render_pass.set_vertex_buffer(1, render_group.instance_buffer.slice(..));
                 render_pass.set_vertex_buffer(0, primitive_vertices.vertex_buffer.slice(..));
+                render_pass.set_vertex_buffer(1, render_group.instance_buffer.slice(..));
                 render_pass.set_index_buffer(
                     primitive_vertices.index_buffer.slice(..),
                     wgpu::IndexFormat::Uint16,
                 );
                 render_pass.draw_indexed(0..primitive_vertices.num_indices, 0, 0..render_group.instance_count);
-
-                // render_pass
-                //     .draw_primitive_instanced(primitive_vertices, 0..render_group.instance_count);
             });
 
             drop(render_pass);
@@ -320,7 +320,7 @@ impl Renderer {
             .gui
             .render_commands
             .sort_by_key(|render_command| match render_command {
-                RenderCommand::Texture { layer, .. } | RenderCommand::Text { layer, .. } => *layer,
+                RenderCommand::Model { layer, .. } | RenderCommand::Text { layer, .. } => *layer,
             });
 
         for render_command in frame_state.gui.render_commands.drain(..) {
@@ -333,14 +333,14 @@ impl Renderer {
                 } => {
                     self.text_writer.add(window, &rect, &text, &color);
                 }
-                RenderCommand::Texture {
+                RenderCommand::Model {
                     layer: _layer,
                     ui_element: rect,
-                    model_id: texture_model_id, // TODO is this mesh or model?
+                    model_id: texture_model_id,
                 } => {
                     self.draw_ui(window, view, encoder, &texture_model_id, &rect);
                 }
-            } // TODO or maybe call it widget?
+            }
         }
         self.text_writer
             .write(&self.device, &self.queue, encoder, view, window);
@@ -399,12 +399,11 @@ impl Renderer {
         }
     }
 
-    #[allow(clippy::cast_possible_truncation)]
     fn create_render_batches(&mut self, game_state: &GameState) {
-        // TODO what is the difference again? naming?
-        let mut render_batches: Vec<RenderBatch> = Vec::new();
-        let mut render_groups: HashMap<String, Vec<String>> = HashMap::new();
+        let mut bind_group_entities: HashMap<String, Vec<String>> = HashMap::new();
 
+        // TODO Group by identical bind groups instead of by model id
+        // i think we have to iterate over each primitive in the model? though theoretically we can group primitives instead if they have different properties. shared textures for different models we probably would want to render same time in order not to change bind groups again
         game_state
             .entities
             .iter()
@@ -420,14 +419,15 @@ impl Renderer {
                     .expect("Entity contains 3d component")
                     .model_id
                     .clone();
-                render_groups
+                bind_group_entities
                     .entry(model_id)
                     .or_default()
                     .push(entity.clone());
             });
 
-        for (model_id, entity_group) in render_groups {
-            // TODO? i think we have to iterate over each primitive in the model?
+        // TODO what is the difference again between groups and batch? naming?
+        let mut render_batches: Vec<RenderBatch> = Vec::new();
+        for (model_id, entity_group) in bind_group_entities.drain() {
             let instance_group: Vec<Instance> = entity_group
                 .into_iter()
                 .map(|entity| {
@@ -441,17 +441,12 @@ impl Renderer {
                 })
                 .collect();
             let instance_buffer = Self::create_instance_buffer(&self.device, &instance_group);
-            // let model = self.model_manager.get_model_3d(&model_id);
-            // let primitive = model.primitives.first().expect("Models contain at least one primitive");
-            let render_group = RenderBatch {
+            let render_batch = RenderBatch {
                 instance_buffer,
-                // Probably should be model when models have multiple primitives
-                // TODO we should be able to consume rendergroups?
-                model_id, // TODO i dont like cloning here... maybe pass an id to the primitive definition and then retrieve the whole definition from a map?
-                // primitive: primitive.clone(), // TODO i dont like cloning here... maybe pass an id to the primitive definition and then retrieve the whole definition from a map?
+                model_id,
                 instance_count: instance_group.len() as u32,
             };
-            render_batches.push(render_group);
+            render_batches.push(render_batch);
         }
         self.render_batches = render_batches;
     }
@@ -471,7 +466,7 @@ impl Renderer {
         ui_element: &UIElement,
     ) {
         let model = self.model_manager.get_model_2d(model_id);
-        let primitive = model.primitives.first().unwrap(); // todo multiple primitives
+        let primitive = model.primitives.first().unwrap(); // We assume one primitive per model right now
 
         let pipeline = &self.render_context_manager.render_pipeline;
 
@@ -504,7 +499,7 @@ impl Renderer {
 
         let texture = self
             .texture_manager
-            .get_bind_group(primitive.texture_definition.as_ref()); // TODO consume instead of clone? just pass id?
+            .get_bind_group(primitive.texture_definition.as_ref());
 
         render_pass_ui.set_pipeline(pipeline);
         render_pass_ui.set_bind_group(0, color, &[]);
@@ -515,11 +510,11 @@ impl Renderer {
         let instance_buffer = Self::create_instance_buffer(&self.device, &[element_instance]);
         let instance_count = 1;
 
-        render_pass_ui.set_vertex_buffer(1, instance_buffer.slice(..));
         let primitive_vertices = self
             .primitive_vertices_manager
             .get_primitive_vertices(&primitive.vertices_id);
         render_pass_ui.set_vertex_buffer(0, primitive_vertices.vertex_buffer.slice(..));
+        render_pass_ui.set_vertex_buffer(1, instance_buffer.slice(..));
         render_pass_ui.set_index_buffer(
             primitive_vertices.index_buffer.slice(..),
             wgpu::IndexFormat::Uint16,

@@ -1,7 +1,7 @@
 use crate::state::frame_state::{ActionEffect, ActionRequest, FrameState};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
-use crate::state::ui_state::MenuState::{Closed, Inventory};
+use crate::state::ui_state::MenuState::{Closed, InventoryAction};
 use crate::state::ui_state::{RenderCommand, UIElement, UIState, UserAction};
 use crate::systems::item_placement_system::ItemPlacementSystem;
 use cgmath::Point2;
@@ -23,17 +23,11 @@ impl InventorySystem {
             inventory_window.is_visible = !inventory_window.is_visible;
         }
 
-        let inventory_graphics = game_state
-            .get_graphics_inventory("sword1")
-            .unwrap();
         if !inventory_window.is_visible {
             return;
         }
 
-        frame_state
-            .gui
-            .image(100, inventory_window.rect, &inventory_graphics.material_id);
-
+        frame_state.gui.add_color_command(100, &inventory_window.rect, "black");
         let inventory_ecs = game_state.get_storage("player").unwrap();
 
         let inventory_items = game_state.get_in_storages("player");
@@ -51,7 +45,7 @@ impl InventorySystem {
             let image_element = inventory_window
                 .rect
                 .inner_rect(Point2::new(left, top), Point2::new(right, bottom));
-            let inventory_item_command = RenderCommand::Texture {
+            let inventory_item_command = RenderCommand::Model {
                 layer: 150,
                 ui_element: image_element,
                 model_id: item_image.material_id.clone(),
@@ -76,7 +70,7 @@ impl InventorySystem {
                         continue;
                     }
 
-                    ui_state.menu_state = Inventory {
+                    ui_state.menu_state = InventoryAction {
                         render_position: input.mouse_position_ui,
                         item: (*entity).clone(),
                     };
@@ -108,7 +102,7 @@ impl InventorySystem {
         // If inventory closes, we do not add the render commands
         let mut inventory_render_commands = Vec::new();
 
-        if let Inventory {
+        if let InventoryAction {
             render_position,
             item,
         } = &ui_state.menu_state.clone() // I guess this is fine, might not need to think about pattern to update enum in match while borrowing
@@ -117,7 +111,7 @@ impl InventorySystem {
                 Point2::new(render_position.x + 0.015, render_position.y + 0.005),
                 Point2::new(0.065, 0.025),
             );
-            let drop_button_render_command = RenderCommand::Texture {
+            let drop_button_render_command = RenderCommand::Model {
                 layer: 200,
                 ui_element: drop_button_rect,
                 model_id: "black_square".to_owned(),
@@ -142,6 +136,7 @@ impl InventorySystem {
                         &mut frame_state.action_effects,
                         item,
                     );
+                    // TODO Should we not just be able to return here? no need to evaluate examine as we will close after this action. Nothing needs rendered
                     ui_state.menu_state = Closed;
                     frame_state.handled_left_click = true;
                     return;
@@ -163,7 +158,7 @@ impl InventorySystem {
                     Point2::new(render_position.x + 0.015, render_position.y + 0.055),
                     Point2::new(0.065, 0.025),
                 );
-                let examine_render_command = RenderCommand::Texture {
+                let examine_render_command = RenderCommand::Model {
                     layer: 200,
                     ui_element: examine_button_rect,
                     model_id: "black_square".to_owned(),

@@ -192,7 +192,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 ui_state: UIState::new(),
                 input_handler: Input::new(),
                 frame_state: FrameState::new(),
-                audio_system: AudioSystem::new().await,
+                audio_system: AudioSystem::new().await, // TODO Empty audio_system, load later
                 window,
             };
 
@@ -207,9 +207,9 @@ impl ApplicationHandler<CustomEvent> for Application {
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: CustomEvent) {
         match event {
             CustomEvent::StateInitializationEvent(mut engine) => {
-                #[cfg(debug_assertions)]
+                #[cfg(feature = "debug-logging")]
                 log::debug!("Received initialization event");
-                
+
                 engine.renderer.resize(engine.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
                 engine.window.request_redraw(); // TODO are these resizes here necessary?
 
@@ -363,7 +363,6 @@ impl ApplicationHandler<CustomEvent> for Application {
                 engine.input_handler.process_scroll(&delta);
             }
             WindowEvent::RedrawRequested => {
-                engine.window().request_redraw();
                 GameSystem::update(
                     &engine.window,
                     &mut engine.game_state,
@@ -378,29 +377,39 @@ impl ApplicationHandler<CustomEvent> for Application {
                     &mut engine.game_state,
                     &mut engine.frame_state,
                 ) {
-                    Ok(()) => {}
+                    Ok(()) => {
+
+                    }
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
                         engine.renderer.resize(engine.window.inner_size());
                     }
                     Err(wgpu::SurfaceError::OutOfMemory) => {
-                        #[cfg(debug_assertions)]
-                        log::error!("Out of memory");
+                        #[cfg(feature = "debug-logging")]
+                        log::warn!("Out of memory");
                         event_loop.exit();
                     }
 
                     Err(wgpu::SurfaceError::Timeout) => {
-                        #[cfg(debug_assertions)]
+                        #[cfg(feature = "debug-logging")]
                         log::warn!("Surface timeout");
                     }
 
                     Err(wgpu::SurfaceError::Other) => {
-                        #[cfg(debug_assertions)]
+                        #[cfg(feature = "debug-logging")]
                         log::warn!("Other error");
                     }
                 }
-                engine.window.set_visible(true); // TODO really only needs to be done once
+
             }
             _ => {}
+        }
+    }
+    fn about_to_wait(&mut self, _: &ActiveEventLoop) {
+        match &self.application_state {
+            State::Initialized(engine) => {
+                engine.window().request_redraw();
+            }
+            _ => ()
         }
     }
 }

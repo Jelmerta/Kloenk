@@ -22,7 +22,7 @@ impl ObjectSelectionSystem {
         let selected_objects = &frame_state.objects_on_cursor;
 
         if Self::should_open_menu(input, frame_state, selected_objects) {
-            ui_state.menu_state = MenuState::World {
+            ui_state.menu_state = MenuState::WorldAction {
                 render_position: input.mouse_position_ui,
                 item: selected_objects.first().expect("Selected objects is not empty").clone(),
             };
@@ -31,7 +31,7 @@ impl ObjectSelectionSystem {
 
         let mut object_selection_render_commands = Vec::new();
         let mut new_menu_state = &ui_state.menu_state;
-        if let MenuState::World {
+        if let MenuState::WorldAction {
             render_position,
             item,
         } = &ui_state.menu_state
@@ -40,7 +40,7 @@ impl ObjectSelectionSystem {
                 Point2::new(render_position.x + 0.015, render_position.y + 0.005),
                 Point2::new(0.065, 0.025),
             );
-            let pickup_menu_render_command = RenderCommand::Texture {
+            let pickup_menu_render_command = RenderCommand::Model {
                 layer: 200,
                 ui_element: pickup_menu_rect,
                 model_id: "black_square".to_owned(),
@@ -77,7 +77,7 @@ impl ObjectSelectionSystem {
                 Point2::new(render_position.x + 0.015, render_position.y + 0.055),
                 Point2::new(0.065, 0.025),
             );
-            let examine_menu_render_command = RenderCommand::Texture {
+            let examine_menu_render_command = RenderCommand::Model {
                 layer: 200,
                 ui_element: examine_menu_rect,
                 model_id: "black_square".to_owned(),

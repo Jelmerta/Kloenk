@@ -66,7 +66,7 @@ impl ChatSystem {
             UserAction::RightClick => {}
         }
 
-        let chat_render_command = RenderCommand::Texture {
+        let chat_render_command = RenderCommand::Model {
             layer: 500,
             ui_element: chat_window.rect,
             model_id: "black_square".to_owned(),

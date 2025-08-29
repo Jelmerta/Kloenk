@@ -27,10 +27,9 @@ impl ModelLoader {
         }
     }
 
-    // Assume for now one model for each gltf
+    // We assume one model for each gltf
     // Maybe at some point we just want to preload a scene?
     pub async fn preload_gltf(model_path: &str) -> Vec<ModelDefinition> {
-        // let data = include_bytes!("../../assets/gozer.gltf"); // TODO just hardcoded the one model into memory as we don't want to introduce async here probably
         let data = load_binary(model_path)
             .await
             .unwrap_or_else(|_| panic!("Path {model_path} could not be found")); // TODO should retry or something

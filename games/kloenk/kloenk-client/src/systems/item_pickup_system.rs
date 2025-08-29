@@ -56,7 +56,6 @@ impl ItemPickupSystem {
         }
     }
 
-    // TODO want more errors for mouse less for keyboard
     pub fn item_pickup(
         game_state: &mut GameState,
         frame_state: &mut FrameState,

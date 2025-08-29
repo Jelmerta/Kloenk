@@ -55,7 +55,7 @@ impl ApplicationHandler for Application {
     }
 
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        #[cfg(debug_assertions)]
+        #[cfg(feature = "debug-logging")]
         log::debug!("Resumed loop");
         event_loop.set_control_flow(ControlFlow::Poll); // TODO
         // Note: This is more of a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
@@ -86,8 +86,11 @@ impl ApplicationHandler for Application {
         if let Some(monitor) = window.current_monitor() { // TODO monitor can change and should be changeable
             let fullscreen_video_mode = monitor.video_modes().next().unwrap();
             let _ = window.request_inner_size(fullscreen_video_mode.size());
-            if let Some(hz) = monitor.refresh_rate_millihertz() { // TODO Max/intended frame rate cap
-                log::info!("hertz: {hz}");
+            #[cfg(feature = "debug-logging")]
+            {
+                if let Some(hz) = monitor.refresh_rate_millihertz() { // TODO Max/intended frame rate cap
+                    log::debug!("Monitor hertz ms: {hz}");
+                }
             }
             window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
         }
@@ -123,7 +126,6 @@ impl ApplicationHandler for Application {
 
         let audio_system = pollster::block_on(AudioSystem::new());
 
-        window.set_visible(true);
         self.application_state = State::Initialized(Box::new(Engine {
             renderer,
             game_state: GameState::new(),
@@ -188,9 +190,6 @@ impl ApplicationHandler for Application {
             }
             // TODO handle window going out of focus/out of view (occluded)
             WindowEvent::RedrawRequested => {
-                // event_loop.set_control_flow(ControlFlow::);
-                // engine.window().request_redraw(); // TODO should this not be at the end?
-
                 GameSystem::update(
                     &engine.window,
                     &mut engine.game_state,
@@ -200,7 +199,6 @@ impl ApplicationHandler for Application {
                     &mut engine.audio_system,
                 );
 
-                // engine.window.pre_present_notify()
                 match engine.renderer.render(
                     &engine.window,
                     &mut engine.game_state,
@@ -211,18 +209,18 @@ impl ApplicationHandler for Application {
                         engine.renderer.resize(engine.window.inner_size());
                     }
                     Err(wgpu::SurfaceError::OutOfMemory) => {
-                        #[cfg(debug_assertions)]
-                        log::error!("Out of memory");
+                        #[cfg(feature = "debug-logging")]
+                        log::warn!("Out of memory");
                         event_loop.exit();
                     }
 
                     Err(wgpu::SurfaceError::Timeout) => {
-                        #[cfg(debug_assertions)]
+                        #[cfg(feature = "debug-logging")]
                         log::warn!("Surface timeout");
                     }
 
                     Err(wgpu::SurfaceError::Other) => {
-                        #[cfg(debug_assertions)]
+                        #[cfg(feature = "debug-logging")]
                         log::warn!("Other error");
                     }
                 }
@@ -246,17 +244,18 @@ impl ApplicationHandler for Application {
     }
 
     fn suspended(&mut self, _: &ActiveEventLoop) {
+        #[cfg(feature = "debug-logging")]
         log::debug!("Suspended application");
         // pause rendering? i mean this just works on its own does it not? what is recommended here?
     }
 
     fn exiting(&mut self, _: &ActiveEventLoop) {
-        #[cfg(debug_assertions)]
-        log::error!("Exiting");
+        #[cfg(feature = "debug-logging")]
+        log::debug!("Exiting");
     }
 
     fn memory_warning(&mut self, _: &ActiveEventLoop) {
-        #[cfg(debug_assertions)]
+        #[cfg(feature = "debug-logging")]
         log::warn!("Memory warning");
     }
 }

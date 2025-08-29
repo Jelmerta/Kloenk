@@ -20,14 +20,14 @@ impl CloseMenuSystem {
         }
 
         match &ui_state.menu_state {
-            MenuState::World {
+            MenuState::WorldAction {
                 render_position: _render_position,
                 item: _item,
             } => {
                 frame_state.handled_left_click = true;
                 ui_state.menu_state = Closed;
             }
-            MenuState::Inventory {
+            MenuState::InventoryAction {
                 render_position: _render_position,
                 item: _item,
             } => {

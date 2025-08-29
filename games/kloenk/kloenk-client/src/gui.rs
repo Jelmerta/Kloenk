@@ -15,14 +15,33 @@ impl Gui {
         }
     }
 
-    pub fn image(&mut self, layer: u32, rect: UIElement, image_name: &str) {
-        let image_command = RenderCommand::Texture {
+    pub fn color(&mut self, layer: u32, ui_element: &UIElement, color: &str) {
+        let model_command = RenderCommand::Model {
             layer,
-            ui_element: rect,
-            model_id: image_name.to_owned(),
+            ui_element: *ui_element,
+            model_id: color.to_owned() + "_square",
         };
-        self.render_commands.push(image_command);
     }
+
+    // TODO Reuse for health and stuff?
+    pub fn add_color_command(&mut self, layer: u32, ui_element: &UIElement, color: &str) {
+        let model_command = RenderCommand::Model {
+            layer,
+            ui_element: *ui_element,
+            model_id: color.to_owned() + "_square",
+        };
+        self.render_commands.push(model_command);
+    }
+
+
+    // pub fn image(&mut self, layer: u32, rect: UIElement, image_name: &str) {
+    //     let image_command = RenderCommand::Model {
+    //         layer,
+    //         ui_element: rect,
+    //         model_id: image_name.to_owned(),
+    //     };
+    //     self.render_commands.push(image_command);
+    // }
 
     pub fn button_handle(
         &mut self,

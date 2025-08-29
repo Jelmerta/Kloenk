@@ -55,7 +55,6 @@ pub struct TextWriter {
     queue: Vec<TextContext>,
 }
 
-#[allow(clippy::cast_possible_truncation)]
 impl TextWriter {
     pub async fn new(device: &Device, queue: &Queue, config: &SurfaceConfiguration) -> Self {
         // TODO load as resource later, not blocking the renderer?
@@ -156,7 +155,6 @@ impl TextWriter {
             .unwrap();
     }
 
-    #[allow(clippy::cast_possible_truncation)]
     fn write_text_buffer(&mut self, encoder: &mut CommandEncoder, view: &TextureView) {
         {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
