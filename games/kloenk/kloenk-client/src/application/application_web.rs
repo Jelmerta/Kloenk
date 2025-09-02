@@ -53,6 +53,7 @@ pub struct Engine {
 // }
 
 pub enum GesturedState {
+    #[allow(dead_code)]
     Gestured,
     NotGestured,
 }
@@ -80,6 +81,7 @@ pub enum CustomEvent {
 pub struct Application {
     application_state: State,
     // audio_state: AudioState,
+    #[allow(dead_code)]
     gestured_state: GesturedState,
     event_loop_proxy: EventLoopProxy<CustomEvent>,
 }

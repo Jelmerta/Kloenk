@@ -21,7 +21,7 @@ use winit::keyboard::KeyCode;
 use crate::application::framerate_handler::UpdateTickHandler;
 use crate::render::model_loader::ModelLoader;
 use crate::render::renderer::Renderer;
-use hydrox::{load_binary, AudioSystem};
+use hydrox::{load_binary, AudioSystem, Sound};
 
 pub struct Engine {
     pub game_state: GameState,
@@ -165,8 +165,9 @@ impl ApplicationHandler for Application {
             }
         }
 
-        let audio_system = AudioSystem::new();
-        pollster::block_on(audio_system.load_sound("bonk", Sound { bytes: load_binary("bonk.wav") }));
+        let mut audio_system = AudioSystem::new();
+        let bonk = pollster::block_on(load_binary("bonk.wav")).expect("bonk exists");
+        audio_system.load_sound("bonk", &Sound { bytes: bonk });
 
         self.application_state = State::Initialized(Box::new(Engine {
             renderer,
