@@ -15,11 +15,11 @@ COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
 #Disable for now to speed up iterations without complaints
-FROM rust AS checker
-COPY . .
+#FROM rust AS checker
+#COPY . .
 #RUN cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -W clippy::pedantic -W clippy::all -Dwarnings
 # Clippy list to disable: clippy::unreadable-literal?
-RUN cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -W clippy::all -Dwarnings
+#RUN cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -W clippy::all -Dwarnings
 
 FROM rust AS auditor
 COPY . .
@@ -36,7 +36,7 @@ COPY --from=planner /app/recipe.json recipe.json
 #-Zshare-generics?
 #Adding global-base=1024 for wasm-opt --low-memory-unused
 RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-threshold=10 -Cllvm-args=-inlinehint-threshold=10' \
-    cargo chef cook --release --recipe-path recipe.json --target wasm32-unknown-unknown --target-dir target
+    cargo chef cook --features debug-logging --release --recipe-path recipe.json --target wasm32-unknown-unknown --target-dir target
 
 # wasm-opt options: https://manpages.debian.org/testing/binaryen/wasm-opt.1.en.html#enable~4
 COPY . .
@@ -53,7 +53,7 @@ RUN RUSTFLAGS='-Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-thres
 FROM debian:bookworm-slim
 
 # Force stages to be run
-COPY --from=checker /etc/hostname /dev/null
+#COPY --from=checker /etc/hostname /dev/null
 COPY --from=auditor /etc/hostname /dev/null
 #COPY --from=formatchecker /etc/hostname /dev/null
 
