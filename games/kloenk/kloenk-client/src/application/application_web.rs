@@ -18,7 +18,7 @@ use winit::event::StartCause;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{CustomCursor, Window, WindowId};
 
-use crate::application::framerate_handler::FramerateHandler;
+use crate::application::framerate_handler::UpdateTickHandler;
 use crate::application::Asset::{Color, Texture, Vertices};
 use crate::application::{AssetLoader, ImageAsset};
 use crate::render::model::ColorDefinition;
@@ -39,7 +39,7 @@ pub struct Engine {
     pub input_handler: Input,
     pub frame_state: FrameState,
     pub window: Arc<Window>,
-    pub framerate_handler: FramerateHandler,
+    pub framerate_handler: UpdateTickHandler,
     pub audio_system: AudioSystem,
 }
 
@@ -234,7 +234,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 input_handler: Input::new(),
                 frame_state: FrameState::new(),
                 audio_system: AudioSystem::new().await, // TODO Empty audio_system, load later
-                framerate_handler: FramerateHandler::new(),
+                framerate_handler: UpdateTickHandler::new(),
                 window,
             };
 
