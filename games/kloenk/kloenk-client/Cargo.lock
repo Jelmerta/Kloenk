@@ -967,7 +967,7 @@ checksum = "6dbf3de79e51f3d586ab4cb9d5c3e2c14aa28ed23d180cf89b4df0454a69cc87"
 [[package]]
 name = "hydrox"
 version = "0.1.0"
-source = "git+https://github.com/Jelmerta/Hydrox.git#688b4fa7daf9fcd662beb4735141f82fae61dd8e"
+source = "git+https://github.com/Jelmerta/Hydrox.git#0ef5208a78a16b0a5d3cffaabeb975eafdf27bed"
 dependencies = [
  "hydrox-audio",
  "hydrox-core",
@@ -981,7 +981,7 @@ dependencies = [
 [[package]]
 name = "hydrox-audio"
 version = "0.1.0"
-source = "git+https://github.com/Jelmerta/Hydrox.git#688b4fa7daf9fcd662beb4735141f82fae61dd8e"
+source = "git+https://github.com/Jelmerta/Hydrox.git#0ef5208a78a16b0a5d3cffaabeb975eafdf27bed"
 dependencies = [
  "hydrox-utils",
  "rodio",
@@ -990,32 +990,32 @@ dependencies = [
 [[package]]
 name = "hydrox-core"
 version = "0.1.0"
-source = "git+https://github.com/Jelmerta/Hydrox.git#688b4fa7daf9fcd662beb4735141f82fae61dd8e"
+source = "git+https://github.com/Jelmerta/Hydrox.git#0ef5208a78a16b0a5d3cffaabeb975eafdf27bed"
 
 [[package]]
 name = "hydrox-ecs"
 version = "0.1.0"
-source = "git+https://github.com/Jelmerta/Hydrox.git#688b4fa7daf9fcd662beb4735141f82fae61dd8e"
+source = "git+https://github.com/Jelmerta/Hydrox.git#0ef5208a78a16b0a5d3cffaabeb975eafdf27bed"
 
 [[package]]
 name = "hydrox-graphics"
 version = "0.1.0"
-source = "git+https://github.com/Jelmerta/Hydrox.git#688b4fa7daf9fcd662beb4735141f82fae61dd8e"
+source = "git+https://github.com/Jelmerta/Hydrox.git#0ef5208a78a16b0a5d3cffaabeb975eafdf27bed"
 
 [[package]]
 name = "hydrox-input"
 version = "0.1.0"
-source = "git+https://github.com/Jelmerta/Hydrox.git#688b4fa7daf9fcd662beb4735141f82fae61dd8e"
+source = "git+https://github.com/Jelmerta/Hydrox.git#0ef5208a78a16b0a5d3cffaabeb975eafdf27bed"
 
 [[package]]
 name = "hydrox-ui"
 version = "0.1.0"
-source = "git+https://github.com/Jelmerta/Hydrox.git#688b4fa7daf9fcd662beb4735141f82fae61dd8e"
+source = "git+https://github.com/Jelmerta/Hydrox.git#0ef5208a78a16b0a5d3cffaabeb975eafdf27bed"
 
 [[package]]
 name = "hydrox-utils"
 version = "0.1.0"
-source = "git+https://github.com/Jelmerta/Hydrox.git#688b4fa7daf9fcd662beb4735141f82fae61dd8e"
+source = "git+https://github.com/Jelmerta/Hydrox.git#0ef5208a78a16b0a5d3cffaabeb975eafdf27bed"
 dependencies = [
  "anyhow",
  "reqwest",

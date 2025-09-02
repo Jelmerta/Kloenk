@@ -95,6 +95,7 @@ impl MovementSystem {
             let entity_hitbox = game_state.get_hitbox(entity).unwrap();
 
             if CollisionManager::check_collision(desired_player_hitbox, entity_hitbox) {
+                // audio_system.play_sound("bonk"); // TODO add check for is_active in audio hydrox
                 audio_system.play_sound("bonk"); // TODO add check for is_active in audio hydrox
 
                 // #[allow(irrefutable_let_patterns)]

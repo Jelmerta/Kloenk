@@ -165,7 +165,8 @@ impl ApplicationHandler for Application {
             }
         }
 
-        let audio_system = pollster::block_on(AudioSystem::new());
+        let audio_system = AudioSystem::new();
+        pollster::block_on(audio_system.load_sound("bonk", Sound { bytes: load_binary("bonk.wav") }));
 
         self.application_state = State::Initialized(Box::new(Engine {
             renderer,

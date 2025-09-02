@@ -8,7 +8,7 @@ use winit::{
 use winit::platform::web::{CustomCursorExtWebSys, WindowExtWebSys};
 
 use crate::state::input::Input;
-use hydrox::AudioSystem;
+use hydrox::{load_binary, AudioSystem, Sound};
 use std::sync::Arc;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
@@ -19,7 +19,7 @@ use winit::event_loop::ActiveEventLoop;
 use winit::window::{CustomCursor, Window, WindowId};
 
 use crate::application::framerate_handler::UpdateTickHandler;
-use crate::application::Asset::{Color, Texture, Vertices};
+use crate::application::Asset::{Audio, Color, Texture, Vertices};
 use crate::application::{AssetLoader, ImageAsset};
 use crate::render::model::ColorDefinition;
 use crate::render::model_loader::ModelLoader;
@@ -45,10 +45,16 @@ pub struct Engine {
 
 // On web, AudioSystem is loaded after user has used a gesture. This is to get rid of this warning in Chrome:
 // The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://goo.gl/7K7WLu
-pub enum AudioState {
-    NotLoaded,
-    Loading,
-    Loaded(AudioSystem),
+// pub enum AudioState {
+//     NotLoaded,
+//     Loading,
+//     Loaded(AudioSystem),
+// Loaded,
+// }
+
+pub enum GesturedState {
+    Gestured,
+    NotGestured,
 }
 
 impl Engine {
@@ -61,18 +67,20 @@ pub enum Asset {
     Vertices(Vec<PrimitiveVertices>),
     Color(ColorDefinition),
     Texture(ImageAsset),
+    Audio(Sound),
 }
 
 // #[derive(Debug)]
 pub enum CustomEvent {
     StateInitializationEvent(Box<Engine>), // Boxing as Engine is quite large and other enum instance must be large enough to hold its largest variant.
     WebResizedEvent, // Only sent on web when window gets resized. Resized event only seems to send event on dpi change (browser zoom or system scale ratio) which is insufficient
-    AudioStateChanged(AudioState),
+    // AudioStateChanged(AudioState),
     AssetLoaded(Asset),
 }
 pub struct Application {
     application_state: State,
-    audio_state: AudioState,
+    // audio_state: AudioState,
+    gestured_state: GesturedState,
     event_loop_proxy: EventLoopProxy<CustomEvent>,
 }
 
@@ -80,33 +88,40 @@ impl Application {
     pub fn new(event_loop: &EventLoop<CustomEvent>) -> Application {
         Application {
             application_state: State::Uninitialized,
-            audio_state: AudioState::NotLoaded,
+            // audio_state: AudioState::NotLoaded,
+            gestured_state: GesturedState::NotGestured,
             event_loop_proxy: event_loop.create_proxy(),
         }
     }
 
-    // event_loop_proxy: &EventLoopProxy<CustomEvent>,
-    fn load_audio_player(application: &mut Application) {
-        let mut new_loading_state = None;
-        if let AudioState::NotLoaded = application.audio_state {
-            new_loading_state = Some(AudioState::Loading);
-            let event_loop_proxy_clone = application.event_loop_proxy.clone();
-            spawn_local(async move {
-                let audio_system = AudioSystem::new().await;
-
-                event_loop_proxy_clone
-                    .send_event(CustomEvent::AudioStateChanged(AudioState::Loaded(
-                        audio_system,
-                    )))
-                    .unwrap_or_else(|_| {
-                        panic!("Failed to send audio state event");
-                    });
-            });
-        }
-        if let Some(new_state) = new_loading_state {
-            application.audio_state = new_state;
-        }
-    }
+    // fn load_audio_player(application: &mut Application) {
+    //     if let AudioState::NotLoaded = application.audio_state {
+    //         application.audio_state = AudioState::Loading;
+    //         let event_loop_proxy_clone = application.event_loop_proxy.clone();
+    //
+    //         match &mut application.application_state {
+    //             State::Uninitialized => {
+    //                 // TODO should not happen
+    //                 panic!("Huh?");
+    //             }
+    //             State::Initializing => {
+    //                 // TODO should not happen
+    //                 panic!("Huh?");
+    //             }
+    //             State::Initialized(engine) => {
+    //                 spawn_local(async move {
+    //                     event_loop_proxy_clone
+    //                         .send_event(CustomEvent::AudioStateChanged(AudioState::Loaded
+    //                                                                    audio_system,
+    //                         ))
+    //                         .unwrap_or_else(|_| {
+    //                             panic!("Failed to send audio state event");
+    //                         });
+    //                 });
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 pub enum State {
@@ -233,7 +248,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 ui_state: UIState::new(),
                 input_handler: Input::new(),
                 frame_state: FrameState::new(),
-                audio_system: AudioSystem::new().await, // TODO Empty audio_system, load later
+                audio_system: AudioSystem::new(), // TODO Empty audio_system, load later
                 framerate_handler: UpdateTickHandler::new(),
                 window,
             };
@@ -313,6 +328,15 @@ impl ApplicationHandler<CustomEvent> for Application {
                     }
                 }
 
+                let event_loop = self.event_loop_proxy.clone();
+                spawn_local(async move {
+                    let sound_bytes = load_binary("bonk.wav").await.expect("Sound should exist");
+                    let sound = Sound { bytes: sound_bytes };
+
+                    event_loop
+                        .send_event(CustomEvent::AssetLoaded(Audio(sound))).ok();
+                });
+
                 self.application_state = State::Initialized(engine);
             }
             CustomEvent::AssetLoaded(asset) => {
@@ -328,6 +352,9 @@ impl ApplicationHandler<CustomEvent> for Application {
                         }
                         Texture(texture_asset) => {
                             engine.renderer.load_material_to_memory(&texture_asset);
+                        }
+                        Audio(sound) => {
+                            engine.audio_system.load_sound("bonk", &sound);
                         }
                     }
                 } else {
@@ -351,9 +378,9 @@ impl ApplicationHandler<CustomEvent> for Application {
                 let physical_size = logical_size.to_physical(web_window.device_pixel_ratio());
                 engine.renderer.resize(physical_size);
             }
-            CustomEvent::AudioStateChanged(audio_state) => {
-                self.audio_state = audio_state;
-            }
+            // CustomEvent::AudioStateChanged(audio_state) => {
+            //     self.audio_state = audio_state;
+            // }
         }
     }
 
@@ -384,7 +411,8 @@ impl ApplicationHandler<CustomEvent> for Application {
                 if key_is_gesture(key) {
                     // TODO hydrox set active remove again?
                     // engine.audio_system.set_active();
-                    Self::load_audio_player(self);
+                    // Self::load_audio_player(self);
+                    // TODO just set audio system active?
                 }
             }
             WindowEvent::MouseInput { state, button, .. } => {
@@ -392,7 +420,8 @@ impl ApplicationHandler<CustomEvent> for Application {
 
                 // Loading audio only after user has gestured on web
                 // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
-                Self::load_audio_player(self);
+                // Self::load_audio_player(self);
+                // TODO just set audio system active?
             }
             WindowEvent::CursorMoved { position, .. } => {
                 engine.input_handler.process_mouse_movement(
