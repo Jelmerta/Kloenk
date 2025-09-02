@@ -15,24 +15,24 @@ impl Gui {
         }
     }
 
-    pub fn color(&mut self, layer: u32, ui_element: &UIElement, color: &str) {
-        let model_command = RenderCommand::Model {
+    pub fn create_color_command(
+        &mut self,
+        layer: u32,
+        ui_element: &UIElement,
+        color: &str,
+    ) -> RenderCommand {
+        RenderCommand::Model {
             layer,
             ui_element: *ui_element,
             model_id: color.to_owned() + "_square",
-        };
+        }
     }
 
     // TODO Reuse for health and stuff?
     pub fn add_color_command(&mut self, layer: u32, ui_element: &UIElement, color: &str) {
-        let model_command = RenderCommand::Model {
-            layer,
-            ui_element: *ui_element,
-            model_id: color.to_owned() + "_square",
-        };
-        self.render_commands.push(model_command);
+        let command = self.create_color_command(layer, ui_element, color);
+        self.render_commands.push(command);
     }
-
 
     // pub fn image(&mut self, layer: u32, rect: UIElement, image_name: &str) {
     //     let image_command = RenderCommand::Model {
@@ -67,7 +67,13 @@ impl Gui {
         self.render_commands.push(text_command);
     }
 
-    pub fn build_text_render_command(&mut self, layer: u32, rect: UIElement, text: &str, color: [f32; 3]) -> RenderCommand {
+    pub fn build_text_render_command(
+        &mut self,
+        layer: u32,
+        rect: UIElement,
+        text: &str,
+        color: [f32; 3],
+    ) -> RenderCommand {
         RenderCommand::Text {
             layer,
             rect,

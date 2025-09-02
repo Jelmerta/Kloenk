@@ -3,9 +3,9 @@ use crate::state::game_state::GameState;
 use crate::state::input::Input;
 use crate::systems::collision_manager::CollisionManager;
 use cgmath::{InnerSpace, Point3, Vector2};
+use hydrox::AudioSystem;
 use std::f32::consts::PI;
 use std::ops::Sub;
-use hydrox::AudioSystem;
 
 pub const BASE_SPEED: f32 = 0.01;
 pub const CHARACTER_ROTATION_SPEED_DEGREES: f32 = 5.0;

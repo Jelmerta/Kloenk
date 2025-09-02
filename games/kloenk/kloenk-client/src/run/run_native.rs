@@ -5,12 +5,13 @@ pub fn run() {
     #[cfg(feature = "debug-logging")]
     env_logger::builder()
         .filter(None, log::LevelFilter::Info)
-        .filter(Some("wgpu_hal::vulkan"), log::LevelFilter::Error)
         .filter(Some("kloenk"), log::LevelFilter::Debug)
         .init();
 
     let event_loop = EventLoop::new().expect("Couldn't create event loop");
 
     let mut application: Application = Application::new();
-    event_loop.run_app(&mut application).expect("Failed to start running event loop");
+    event_loop
+        .run_app(&mut application)
+        .expect("Failed to start running event loop");
 }

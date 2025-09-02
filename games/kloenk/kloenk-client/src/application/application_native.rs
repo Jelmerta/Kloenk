@@ -18,17 +18,20 @@ use crate::state::ui_state::UIState;
 use crate::systems::game_system::GameSystem;
 use winit::keyboard::KeyCode;
 
+use crate::application::framerate_handler::FramerateHandler;
 use crate::render::model_loader::ModelLoader;
 use crate::render::renderer::Renderer;
 use hydrox::{load_binary, AudioSystem};
 
 pub struct Engine {
-    pub renderer: Renderer,
     pub game_state: GameState,
     pub ui_state: UIState,
-    pub input_handler: Input,
     pub frame_state: FrameState,
-    pub window: Arc<Window>,
+
+    pub input_handler: Input, // TODO if we do really need this: maybe more like input_state?
+    pub window: Arc<Window>, // TODO Is the only reason for having this in engine to access inner size? although that might still be valid reason. dont want to copy the data
+    pub renderer: Renderer,
+    pub framerate_handler: FramerateHandler,
     pub audio_system: AudioSystem,
 }
 
@@ -50,14 +53,51 @@ impl Application {
 }
 
 impl ApplicationHandler for Application {
-    fn new_events(&mut self, _: &ActiveEventLoop, _: StartCause) {
-        // todo!()
+    fn new_events(&mut self, event_loop: &ActiveEventLoop, cause: StartCause) {
+        match cause {
+            StartCause::ResumeTimeReached { .. } => {}
+            StartCause::WaitCancelled { .. } => {}
+            StartCause::Poll => match &mut self.application_state {
+                State::Uninitialized => {}
+                State::Initialized(engine) => {
+                    while engine.framerate_handler.should_update() {
+                        engine.renderer.updating();
+                        #[cfg(feature = "debug-logging")]
+                        log::debug!("updating");
+                        GameSystem::update(
+                            &engine.window,
+                            &mut engine.game_state,
+                            &mut engine.ui_state,
+                            &mut engine.input_handler,
+                            &mut engine.frame_state,
+                            &mut engine.audio_system,
+                        );
+                        engine.renderer.updated(
+                            &engine.window,
+                            &mut engine.frame_state,
+                            &mut engine.game_state,
+                        );
+                        engine.framerate_handler.updated();
+                    }
+                    #[cfg(feature = "debug-logging")]
+                    log::debug!("drawing");
+                    engine.window.request_redraw();
+                }
+            },
+            StartCause::Init => {
+                event_loop.set_control_flow(ControlFlow::Poll);
+            }
+        }
     }
 
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         #[cfg(feature = "debug-logging")]
         log::debug!("Resumed loop");
-        event_loop.set_control_flow(ControlFlow::Poll); // TODO
+
+        let State::Uninitialized = self.application_state else {
+            return;
+        };
+
         // Note: This is more of a logical size than a physical size. https://docs.rs/bevy/latest/bevy/window/struct.WindowResolution.html
         // For example: System scale or web zoom can change physical size, but not this value. (we could have a menu to change this though.)
         // We want to have ownership of the zoom level ourselves. We therefore disregard the dpi ratio and always attempt to render the same image
@@ -83,13 +123,14 @@ impl ApplicationHandler for Application {
 
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
-        if let Some(monitor) = window.current_monitor() { // TODO monitor can change and should be changeable
+        if let Some(monitor) = window.current_monitor() {
             let fullscreen_video_mode = monitor.video_modes().next().unwrap();
             let _ = window.request_inner_size(fullscreen_video_mode.size());
+
             #[cfg(feature = "debug-logging")]
             {
-                if let Some(hz) = monitor.refresh_rate_millihertz() { // TODO Max/intended frame rate cap
-                    log::debug!("Monitor hertz ms: {hz}");
+                if let Some(mhz) = monitor.refresh_rate_millihertz() {
+                    log::debug!("Monitor millihertz: {mhz}");
                 }
             }
             window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
@@ -128,6 +169,7 @@ impl ApplicationHandler for Application {
 
         self.application_state = State::Initialized(Box::new(Engine {
             renderer,
+            framerate_handler: FramerateHandler::new(),
             game_state: GameState::new(),
             ui_state: UIState::new(),
             input_handler: Input::new(),
@@ -135,6 +177,7 @@ impl ApplicationHandler for Application {
             window: window.clone(),
             audio_system,
         }));
+        window.set_visible(true); // Not sure why, but cannot draw (just on windows? not tested elsewhere) without the window being visible -> set_visible also implicit seems to start requesting redraws
     }
 
     fn window_event(
@@ -184,26 +227,17 @@ impl ApplicationHandler for Application {
                 engine.input_handler.process_scroll(&delta);
             }
             // TODO ScaleFactorChanged? check DPI change
-            // // Web uses custom resize event as web only sends event on dpi changes
             WindowEvent::Resized(physical_size) => {
                 engine.renderer.resize(physical_size);
             }
             // TODO handle window going out of focus/out of view (occluded)
             WindowEvent::RedrawRequested => {
-                GameSystem::update(
-                    &engine.window,
-                    &mut engine.game_state,
-                    &mut engine.ui_state,
-                    &mut engine.input_handler,
-                    &mut engine.frame_state,
-                    &mut engine.audio_system,
-                );
-
-                match engine.renderer.render(
-                    &engine.window,
-                    &mut engine.game_state,
-                    &mut engine.frame_state,
-                ) {
+                // TODO Wondering if we should do something with extrapolation: lag / MS_PER_UPDATE. Maybe only for animations etc
+                // https://gameprogrammingpatterns.com/game-loop.html: The renderer knows each game object and its current velocity. doubt it
+                // maybe an option?
+                // maybe only perform if off by some amount like 2ms?
+                // maybe we do run an update() on a cloned version? not the real state. slow updat
+                match engine.renderer.render(&engine.window) {
                     Ok(()) => {}
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
                         engine.renderer.resize(engine.window.inner_size());
@@ -232,15 +266,6 @@ impl ApplicationHandler for Application {
     // Interesting: Can provide device information even when not focused. I would hope I cannot read keyboard input from other windows though.
     fn device_event(&mut self, _: &ActiveEventLoop, _: DeviceId, _: DeviceEvent) {
         // todo!()
-    }
-
-    fn about_to_wait(&mut self, _: &ActiveEventLoop) {
-        match &self.application_state {
-            State::Uninitialized => {}
-            State::Initialized(engine) => {
-                engine.window.request_redraw()
-            }
-        }
     }
 
     fn suspended(&mut self, _: &ActiveEventLoop) {

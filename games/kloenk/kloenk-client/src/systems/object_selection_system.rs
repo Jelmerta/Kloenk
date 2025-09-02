@@ -24,7 +24,10 @@ impl ObjectSelectionSystem {
         if Self::should_open_menu(input, frame_state, selected_objects) {
             ui_state.menu_state = MenuState::WorldAction {
                 render_position: input.mouse_position_ui,
-                item: selected_objects.first().expect("Selected objects is not empty").clone(),
+                item: selected_objects
+                    .first()
+                    .expect("Selected objects is not empty")
+                    .clone(),
             };
             frame_state.handled_right_click = true;
         }
@@ -111,7 +114,10 @@ impl ObjectSelectionSystem {
             );
             object_selection_render_commands.push(examine_text_render_command);
         }
-        frame_state.gui.render_commands.append(&mut object_selection_render_commands);
+        frame_state
+            .gui
+            .render_commands
+            .append(&mut object_selection_render_commands);
         ui_state.menu_state = new_menu_state.clone(); // TODO prob not needed if return on close, as there's no change?
     }
 

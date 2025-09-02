@@ -34,7 +34,7 @@ impl ObjectDetectionSystem {
         input: &mut Input,
         frame_state: &mut FrameState,
     ) {
-        let camera = game_state.get_camera_mut("camera").unwrap();
+        let camera = game_state.get_camera_mut("camera_3d").unwrap();
 
         let ray_clip_near = Vector4::new(
             input.mouse_position_ndc.x,

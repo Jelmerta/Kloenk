@@ -7,7 +7,7 @@ mod application_web;
 mod application_native;
 
 mod asset_loader;
-// mod framerate_handler;
+mod framerate_handler;
 
 #[cfg(not(target_family = "wasm"))]
 pub use application_native::*;

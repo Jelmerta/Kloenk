@@ -77,10 +77,7 @@ impl DialogueSystem {
             };
             dialogue_render_commands.push(dialogue_render_command);
 
-            match frame_state
-                .gui
-                .button_handle(window, dialogue_rect, input)
-            {
+            match frame_state.gui.button_handle(window, dialogue_rect, input) {
                 UserAction::None => {}
                 UserAction::Hover => {}
                 UserAction::LeftClick => {}
@@ -107,11 +104,10 @@ impl DialogueSystem {
                 model_id: "close_button".to_owned(),
             };
             dialogue_render_commands.push(close_button_render_command);
-            match frame_state.gui.button_handle(
-                window,
-                close_button_rect,
-                input,
-            ) {
+            match frame_state
+                .gui
+                .button_handle(window, close_button_rect, input)
+            {
                 UserAction::None | UserAction::RightClick => {}
                 UserAction::Hover => {
                     // Feels kinda silly/hacky to overlay hover image
@@ -121,11 +117,10 @@ impl DialogueSystem {
                         model_id: "close_button_hover".to_owned(),
                     };
                     dialogue_render_commands.push(close_button_hover_render_command);
-                    match frame_state.gui.button_handle(
-                        window,
-                        close_button_rect,
-                        input,
-                    ) {
+                    match frame_state
+                        .gui
+                        .button_handle(window, close_button_rect, input)
+                    {
                         UserAction::None | UserAction::Hover | UserAction::RightClick => {}
                         UserAction::LeftClick => {
                             new_dialogue_state = Some(DialogueState::Closed);
@@ -156,11 +151,17 @@ impl DialogueSystem {
             match new_state {
                 DialogueState::Closed => {}
                 DialogueState::Npc { .. } => {
-                    frame_state.gui.render_commands.append(&mut dialogue_render_commands);
+                    frame_state
+                        .gui
+                        .render_commands
+                        .append(&mut dialogue_render_commands);
                 }
             }
             ui_state.dialogue_state = new_state;
         }
-        frame_state.gui.render_commands.append(&mut dialogue_render_commands);
+        frame_state
+            .gui
+            .render_commands
+            .append(&mut dialogue_render_commands);
     }
 }

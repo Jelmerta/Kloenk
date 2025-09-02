@@ -33,7 +33,7 @@ impl FrameState {
         }
     }
 
-    pub fn new_frame(&mut self) {
+    pub fn new_update(&mut self) {
         self.handled_left_click = false;
         self.handled_right_click = false;
         self.handled_e_click = false;

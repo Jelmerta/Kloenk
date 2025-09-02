@@ -54,10 +54,7 @@ fn detect_format(header: &Header, header10: Option<&Header10>) -> ImageEncoding 
     } else {
         match header.spf.fourcc {
             Some(FourCC(FourCC::BC1_UNORM)) => ImageEncoding::BC1,
-            _ => panic!(
-                "Unexpected DXGI format {:?}",
-                header.spf.fourcc
-            ),
+            _ => panic!("Unexpected DXGI format {:?}", header.spf.fourcc),
         }
     }
 }

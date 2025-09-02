@@ -6,7 +6,8 @@ use winit::platform::web::EventLoopExtWebSys;
 
 /// # Panics
 pub fn run() {
-    #[cfg(feature = "debug-logging")] {
+    #[cfg(feature = "debug-logging")]
+    {
         std::panic::set_hook(Box::new(console_error_panic_hook::hook));
         init_with_level(log::Level::Debug).expect("Couldn't initialize logger");
     }

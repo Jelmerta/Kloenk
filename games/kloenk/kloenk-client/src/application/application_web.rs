@@ -14,9 +14,11 @@ use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::spawn_local;
 use winit::dpi::LogicalSize;
+use winit::event::StartCause;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{CustomCursor, Window, WindowId};
 
+use crate::application::framerate_handler::FramerateHandler;
 use crate::application::Asset::{Color, Texture, Vertices};
 use crate::application::{AssetLoader, ImageAsset};
 use crate::render::model::ColorDefinition;
@@ -37,7 +39,7 @@ pub struct Engine {
     pub input_handler: Input,
     pub frame_state: FrameState,
     pub window: Arc<Window>,
-
+    pub framerate_handler: FramerateHandler,
     pub audio_system: AudioSystem,
 }
 
@@ -114,8 +116,47 @@ pub enum State {
 }
 
 impl ApplicationHandler<CustomEvent> for Application {
+    fn new_events(&mut self, event_loop: &ActiveEventLoop, cause: StartCause) {
+        match cause {
+            StartCause::ResumeTimeReached { .. } => {}
+            StartCause::WaitCancelled { .. } => {}
+            StartCause::Poll => match &mut self.application_state {
+                State::Uninitialized => {}
+                State::Initializing => {}
+                State::Initialized(engine) => {
+                    while engine.framerate_handler.should_update() {
+                        engine.renderer.updating();
+                        #[cfg(feature = "debug-logging")]
+                        log::debug!("updating");
+                        GameSystem::update(
+                            &engine.window,
+                            &mut engine.game_state,
+                            &mut engine.ui_state,
+                            &mut engine.input_handler,
+                            &mut engine.frame_state,
+                            &mut engine.audio_system,
+                        );
+                        engine.renderer.updated(
+                            &engine.window,
+                            &mut engine.frame_state,
+                            &mut engine.game_state,
+                        );
+                        engine.framerate_handler.updated();
+                    }
+                    #[cfg(feature = "debug-logging")]
+                    log::debug!("drawing");
+                    engine.window.request_redraw();
+                }
+            },
+            StartCause::Init => {
+                event_loop.set_control_flow(ControlFlow::Poll); // TODO?  maybe in init?
+            }
+        }
+    }
+
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        event_loop.set_control_flow(ControlFlow::Poll); // TODO
+        #[cfg(feature = "debug-logging")]
+        log::debug!("Resumed loop");
         match self.application_state {
             State::Initializing | State::Initialized(_) => return,
             State::Uninitialized => {
@@ -193,6 +234,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 input_handler: Input::new(),
                 frame_state: FrameState::new(),
                 audio_system: AudioSystem::new().await, // TODO Empty audio_system, load later
+                framerate_handler: FramerateHandler::new(),
                 window,
             };
 
@@ -309,9 +351,9 @@ impl ApplicationHandler<CustomEvent> for Application {
                 let physical_size = logical_size.to_physical(web_window.device_pixel_ratio());
                 engine.renderer.resize(physical_size);
             }
-            CustomEvent::AudioStateChanged(audio_state) =>  {
+            CustomEvent::AudioStateChanged(audio_state) => {
                 self.audio_state = audio_state;
-            },
+            }
         }
     }
 
@@ -363,23 +405,8 @@ impl ApplicationHandler<CustomEvent> for Application {
                 engine.input_handler.process_scroll(&delta);
             }
             WindowEvent::RedrawRequested => {
-                GameSystem::update(
-                    &engine.window,
-                    &mut engine.game_state,
-                    &mut engine.ui_state,
-                    &mut engine.input_handler,
-                    &mut engine.frame_state,
-                    &mut engine.audio_system,
-                );
-
-                match engine.renderer.render(
-                    &engine.window,
-                    &mut engine.game_state,
-                    &mut engine.frame_state,
-                ) {
-                    Ok(()) => {
-
-                    }
+                match engine.renderer.render(&engine.window) {
+                    Ok(()) => {}
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
                         engine.renderer.resize(engine.window.inner_size());
                     }
@@ -399,17 +426,9 @@ impl ApplicationHandler<CustomEvent> for Application {
                         log::warn!("Other error");
                     }
                 }
-
-            }
-            _ => {}
-        }
-    }
-    fn about_to_wait(&mut self, _: &ActiveEventLoop) {
-        match &self.application_state {
-            State::Initialized(engine) => {
                 engine.window().request_redraw();
             }
-            _ => ()
+            _ => {}
         }
     }
 }

@@ -27,7 +27,9 @@ impl InventorySystem {
             return;
         }
 
-        frame_state.gui.add_color_command(100, &inventory_window.rect, "black");
+        frame_state
+            .gui
+            .add_color_command(100, &inventory_window.rect, "black");
         let inventory_ecs = game_state.get_storage("player").unwrap();
 
         let inventory_items = game_state.get_in_storages("player");
@@ -51,7 +53,7 @@ impl InventorySystem {
                 model_id: item_image.material_id.clone(),
             };
             frame_state.gui.render_commands.push(inventory_item_command);
-            
+
             match frame_state.gui.button_handle(window, image_element, input) {
                 UserAction::None | UserAction::Hover => {}
                 UserAction::LeftClick => {
@@ -105,7 +107,8 @@ impl InventorySystem {
         if let InventoryAction {
             render_position,
             item,
-        } = &ui_state.menu_state.clone() // I guess this is fine, might not need to think about pattern to update enum in match while borrowing
+        } = &ui_state.menu_state.clone()
+        // I guess this is fine, might not need to think about pattern to update enum in match while borrowing
         {
             let drop_button_rect = UIElement::new_rect(
                 Point2::new(render_position.x + 0.015, render_position.y + 0.005),

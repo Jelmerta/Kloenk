@@ -24,6 +24,7 @@ impl KeyPress {
     }
 }
 
+// TODO do we need to wait for a frame? Can we not do an update inbetween frame?
 #[derive(Debug)]
 pub struct Input {
     pub w_pressed: KeyPress,
@@ -33,6 +34,7 @@ pub struct Input {
 
     pub i_pressed: KeyPress,
     pub e_pressed: KeyPress,
+    pub m_pressed: KeyPress,
 
     pub up_pressed: KeyPress,
     pub down_pressed: KeyPress,
@@ -61,6 +63,7 @@ impl Input {
 
             i_pressed: KeyPress::default(),
             e_pressed: KeyPress::default(),
+            m_pressed: KeyPress::default(),
 
             up_pressed: KeyPress::default(),
             down_pressed: KeyPress::default(),
@@ -108,6 +111,10 @@ impl Input {
                 self.e_pressed.set_press_state(is_pressed);
             }
 
+            KeyCode::KeyM => {
+                self.m_pressed.set_press_state(is_pressed);
+            }
+
             KeyCode::ShiftLeft => {
                 self.left_shift_pressed.set_press_state(is_pressed);
             }
@@ -143,6 +150,7 @@ impl Input {
         self.d_pressed.update_end_frame();
         self.i_pressed.update_end_frame();
         self.e_pressed.update_end_frame();
+        self.m_pressed.update_end_frame();
         self.up_pressed.update_end_frame();
         self.down_pressed.update_end_frame();
         self.left_pressed.update_end_frame();

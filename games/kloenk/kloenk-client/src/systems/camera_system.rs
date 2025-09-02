@@ -15,11 +15,12 @@ const SCROLL_FACTOR: f32 = 0.3;
 pub struct CameraSystem {}
 
 impl CameraSystem {
-    pub fn update_camera(window: &Arc<Window>, game_state: &mut GameState, input: &mut Input) {
+    // Note: both camera and camera target can move, and therefore needs update on either of those changes. TODO could check for this
+    pub fn update_3d_camera(window: &Arc<Window>, game_state: &mut GameState, input: &mut Input) {
         Self::setup_camera_target(game_state, input);
         Self::setup_camera(game_state);
         let camera = game_state
-            .get_camera_mut("camera")
+            .get_camera_mut("camera_3d")
             .expect("Camera should exist");
         camera.update_view_projection_matrix(window);
         camera.update_inverse_matrix();
@@ -38,7 +39,7 @@ impl CameraSystem {
         let rad_y = f32::to_radians(player_camera.rotation_y_degrees);
 
         let camera = game_state
-            .get_camera_mut("camera")
+            .get_camera_mut("camera_3d")
             .expect("Camera should exist");
         camera.eye = Point3 {
             x: player_position.x + player_camera.distance * rad_y.sin() * rad_x.cos(),

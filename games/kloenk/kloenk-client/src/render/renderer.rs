@@ -4,7 +4,7 @@ use crate::render::camera_manager::CameraManager;
 use crate::render::color_manager::ColorManager;
 use crate::render::instance::InstanceRaw;
 use crate::render::material_manager::TextureManager;
-use crate::render::model::{ColorDefinition};
+use crate::render::model::ColorDefinition;
 use crate::render::model_manager::ModelManager;
 use crate::render::primitive_vertices_manager::{PrimitiveVertices, PrimitiveVerticesManager};
 use crate::render::render_context_manager::RenderContextManager;
@@ -21,7 +21,10 @@ use std::sync::Arc;
 use wgpu::util::DeviceExt;
 use wgpu::CompositeAlphaMode::Auto;
 use wgpu::PresentMode::{AutoVsync, Mailbox};
-use wgpu::{Adapter, Backend, Buffer, CommandEncoder, Device, Features, MemoryHints, Queue, SurfaceConfiguration, TextureView, Trace};
+use wgpu::{
+    Adapter, Buffer, CommandEncoder, Device, Features, InstanceFlags, MemoryHints, Queue,
+    RenderPass, SurfaceConfiguration, TextureView, Trace,
+};
 use winit::dpi::PhysicalSize;
 use winit::window::Window;
 
@@ -40,6 +43,7 @@ pub struct Renderer {
 
     depth_texture: texture::Depth,
     render_batches: Vec<RenderBatch>,
+    ui_render_batches: Vec<UiRenderBatch>,
     text_writer: TextWriter,
 
     is_first_render: bool,
@@ -65,10 +69,17 @@ struct RenderBatch {
     instance_count: u32,
 }
 
+// maybe just like renderbatch, there should also be instances right? multiple swords in inventory lead to same draw?
+struct UiRenderBatch {
+    model_id: String,
+    instance_buffer: Buffer,
+}
+
 impl Renderer {
     pub async fn new(window: Arc<Window>) -> Renderer {
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::PRIMARY,
+            flags: InstanceFlags::empty(), // Disable Vulkan validation layers
             ..Default::default()
         });
 
@@ -99,7 +110,7 @@ impl Renderer {
             .request_device(&wgpu::DeviceDescriptor {
                 label: Some("Device Descriptor"),
                 required_features: desired_features,
-                required_limits: wgpu::Limits::downlevel_webgl2_defaults(), // Ideally only request what is needed: At some point make our own limits
+                required_limits: wgpu::Limits::defaults(), // Ideally only request what is needed: At some point make our own limits. 4k requires: `Surface` width and height must be within the maximum supported texture size. Requested was (3840, 2160), maximum extent for either dimension is 2048.
                 memory_hints: MemoryHints::Performance,
                 trace: Trace::default(),
             })
@@ -163,6 +174,7 @@ impl Renderer {
             render_context_manager,
             depth_texture,
             render_batches: Vec::new(),
+            ui_render_batches: Vec::new(),
             text_writer,
             is_first_render: true,
         }
@@ -189,12 +201,7 @@ impl Renderer {
         }
     }
 
-    pub fn render(
-        &mut self,
-        window: &Arc<Window>,
-        game_state: &mut GameState,
-        frame_state: &mut FrameState,
-    ) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self, window: &Arc<Window>) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor {
             label: Some("Render view"),
@@ -208,8 +215,8 @@ impl Renderer {
                 label: Some("Render Encoder"),
             });
 
-        self.render_world(game_state, &view, &mut encoder);
-        self.render_ui(window, game_state, frame_state, &view, &mut encoder);
+        self.render_world(&view, &mut encoder);
+        self.render_ui(&view, &mut encoder); // TODO maybe render UI first if we use stencil buffer
 
         self.queue.submit(iter::once(encoder.finish()));
         window.pre_present_notify();
@@ -218,132 +225,108 @@ impl Renderer {
             window.set_visible(true);
             self.is_first_render = false;
         }
-        self.text_writer.reset_for_frame();
 
         Ok(())
     }
 
-    fn render_world(
-        &mut self,
-        game_state: &mut GameState,
-        view: &TextureView,
-        encoder: &mut CommandEncoder,
-    ) {
-        self.create_render_batches(game_state);
-
-        let camera = game_state
-            .camera_components
-            .get_mut("camera")
-            .expect("Camera components should exist");
-        self.camera_manager
-            .update_buffer("camera_3d", &self.queue, camera);
-
-        {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view,
-                    depth_slice: None,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                    view: &self.depth_texture.view,
-                    depth_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(1.0),
-                        store: wgpu::StoreOp::Store,
+    fn render_world(&mut self, view: &TextureView, encoder: &mut CommandEncoder) {
+        let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("Render Pass"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                view,
+                depth_slice: None,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color {
+                        r: 0.1,
+                        g: 0.2,
+                        b: 0.3,
+                        a: 1.0,
                     }),
-                    stencil_ops: None,
+                    store: wgpu::StoreOp::Store,
+                },
+            })],
+            depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                view: &self.depth_texture.view,
+                depth_ops: Some(wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(1.0),
+                    store: wgpu::StoreOp::Store,
                 }),
-                occlusion_query_set: None,
-                timestamp_writes: None,
-            });
+                stencil_ops: None,
+            }),
+            occlusion_query_set: None,
+            timestamp_writes: None,
+        });
 
-            self.render_batches.drain(..).for_each(|render_group| {
-                let model_definition = self.model_manager.get_model_3d(&render_group.model_id);
-                let first_primitive = model_definition
-                    .primitives
-                    .first()
-                    .expect("Models have at least one primitive"); // We only render one primitive right now
-                let primitive_vertices = self
-                    .primitive_vertices_manager
-                    .get_primitive_vertices(&first_primitive.vertices_id);
-                let pipeline = &self.render_context_manager.render_pipeline;
-                render_pass.set_pipeline(pipeline);
+        for render_group in &self.render_batches {
+            let model_definition = self.model_manager.get_model_3d(&render_group.model_id);
+            let first_primitive = model_definition
+                .primitives
+                .first()
+                .expect("Models have at least one primitive"); // We only render one primitive right now
+            let primitive_vertices = self
+                .primitive_vertices_manager
+                .get_primitive_vertices(&first_primitive.vertices_id);
+            let pipeline = &self
+                .render_context_manager
+                .render_contexts
+                .get("3d")
+                .expect("3d render pipeline exists");
+            render_pass.set_pipeline(pipeline); // TODO there is only one pipeline atm... just set once?
 
-                let color = self
-                    .color_manager
-                    .get_color_bind_group(&first_primitive.color_definition.id);
-                let texture_bind_group = self
-                    .texture_manager
-                    .get_bind_group(first_primitive.texture_definition.as_ref());
+            let color = self
+                .color_manager
+                .get_color_bind_group(&first_primitive.color_definition.id);
+            let texture_bind_group = self
+                .texture_manager
+                .get_bind_group(first_primitive.texture_definition.as_ref());
 
-                render_pass.set_bind_group(0, color, &[]);
-                render_pass.set_bind_group(1, texture_bind_group, &[]);
-                render_pass.set_bind_group(2, self.camera_manager.get_bind_group("camera_3d"), &[]);
-                render_pass.set_vertex_buffer(0, primitive_vertices.vertex_buffer.slice(..));
-                render_pass.set_vertex_buffer(1, render_group.instance_buffer.slice(..));
-                render_pass.set_index_buffer(
-                    primitive_vertices.index_buffer.slice(..),
-                    wgpu::IndexFormat::Uint16,
-                );
-                render_pass.draw_indexed(0..primitive_vertices.num_indices, 0, 0..render_group.instance_count);
-            });
-
-            drop(render_pass);
+            render_pass.set_bind_group(0, color, &[]);
+            render_pass.set_bind_group(1, texture_bind_group, &[]);
+            render_pass.set_bind_group(2, self.camera_manager.get_bind_group("camera_3d"), &[]);
+            render_pass.set_vertex_buffer(0, primitive_vertices.vertex_buffer.slice(..));
+            render_pass.set_vertex_buffer(1, render_group.instance_buffer.slice(..));
+            render_pass.set_index_buffer(
+                primitive_vertices.index_buffer.slice(..),
+                wgpu::IndexFormat::Uint16,
+            );
+            render_pass.draw_indexed(
+                0..primitive_vertices.num_indices,
+                0,
+                0..render_group.instance_count,
+            );
         }
     }
 
-    fn render_ui(
-        &mut self,
-        window: &Arc<Window>,
-        game_state: &mut GameState,
-        frame_state: &mut FrameState,
-        view: &TextureView,
-        encoder: &mut CommandEncoder,
-    ) {
-        let camera = game_state
-            .camera_components
-            .get_mut("camera_ui")
-            .expect("Camera components should exist");
-        self.set_camera_data_ui(camera, window);
+    fn render_ui(&mut self, view: &TextureView, encoder: &mut CommandEncoder) {
+        // TODO we could even fill the render pass earlier than starting of render... UI is not gonna be updated in between update and render i think...
+        let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("Render Pass UI"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                view,
+                depth_slice: None,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Load,
+                    store: wgpu::StoreOp::Store,
+                },
+            })],
+            depth_stencil_attachment: None,
+            occlusion_query_set: None,
+            timestamp_writes: None,
+        });
 
-        frame_state
-            .gui
-            .render_commands
-            .sort_by_key(|render_command| match render_command {
-                RenderCommand::Model { layer, .. } | RenderCommand::Text { layer, .. } => *layer,
-            });
+        let pipeline = &self
+            .render_context_manager
+            .render_contexts
+            .get("ui")
+            .expect("ui render pipeline exists");
+        render_pass_ui.set_pipeline(pipeline);
+        render_pass_ui.set_bind_group(2, self.camera_manager.get_bind_group("camera_2d"), &[]);
 
-        for render_command in frame_state.gui.render_commands.drain(..) {
-            match render_command {
-                RenderCommand::Text {
-                    layer: _layer,
-                    rect,
-                    text,
-                    color,
-                } => {
-                    self.text_writer.add(window, &rect, &text, &color);
-                }
-                RenderCommand::Model {
-                    layer: _layer,
-                    ui_element: rect,
-                    model_id: texture_model_id,
-                } => {
-                    self.draw_ui(window, view, encoder, &texture_model_id, &rect);
-                }
-            }
-        }
-        self.text_writer
-            .write(&self.device, &self.queue, encoder, view, window);
+        self.draw_ui(&mut render_pass_ui);
+
+        self.text_writer.write_text_buffer(&mut render_pass_ui);
     }
 
     fn create_instance_buffer(device: &Device, instance_group: &[Instance]) -> Buffer {
@@ -399,6 +382,7 @@ impl Renderer {
         }
     }
 
+    // TODO one of the most expensive methods. Maybe just check the diff of the game state and update the batches accordingly by removing/adding to batches
     fn create_render_batches(&mut self, game_state: &GameState) {
         let mut bind_group_entities: HashMap<String, Vec<String>> = HashMap::new();
 
@@ -451,77 +435,47 @@ impl Renderer {
         self.render_batches = render_batches;
     }
 
-    fn set_camera_data_ui(&mut self, camera: &mut Camera, window: &Arc<Window>) {
+    fn update_camera_data_ui(&mut self, camera: &mut Camera, window: &Arc<Window>) {
+        // TODO hmm maybe only needs called on resize?
         camera.update_view_projection_matrix(window); // TODO hmm i think camera matrix is updated in systems for 3d but for ui we do it here... one place for all.
         self.camera_manager
             .update_buffer("camera_2d", &self.queue, camera);
     }
 
-    fn draw_ui(
-        &mut self,
-        window: &Arc<Window>,
-        view: &TextureView,
-        encoder: &mut CommandEncoder,
-        model_id: &str,
-        ui_element: &UIElement,
-    ) {
-        let model = self.model_manager.get_model_2d(model_id);
-        let primitive = model.primitives.first().unwrap(); // We assume one primitive per model right now
+    fn draw_ui(&mut self, render_pass: &mut RenderPass) {
+        for render_batch in &self.ui_render_batches {
+            let model = self.model_manager.get_model_2d(&render_batch.model_id);
+            let primitive = model
+                .primitives
+                .first()
+                .expect("Every model has one primitive right now");
 
-        let pipeline = &self.render_context_manager.render_pipeline;
+            let color = self
+                .color_manager
+                .get_color_bind_group(&primitive.color_definition.id);
 
-        let mut render_pass_ui = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("Render Pass UI"),
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view,
-                depth_slice: None,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Load,
-                    store: wgpu::StoreOp::Store,
-                },
-            })],
-            depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                view: &self.depth_texture.view,
-                depth_ops: Some(wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(1.0),
-                    store: wgpu::StoreOp::Store,
-                }),
-                stencil_ops: None,
-            }),
-            occlusion_query_set: None,
-            timestamp_writes: None,
-        });
+            let texture = self
+                .texture_manager
+                .get_bind_group(primitive.texture_definition.as_ref());
 
-        let color = self
-            .color_manager
-            .get_color_bind_group(&primitive.color_definition.id);
+            render_pass.set_bind_group(0, color, &[]);
+            render_pass.set_bind_group(1, texture, &[]);
 
-        let texture = self
-            .texture_manager
-            .get_bind_group(primitive.texture_definition.as_ref());
+            // let element_instance = Self::create_ui_element_instance(window, *ui_element);
+            // let instance_buffer = Self::create_instance_buffer(&self.device, &[element_instance]); // TODO pretty expensive method call, can be done earlier. Don't generate buffers during rendering
+            let instance_count = 1;
 
-        render_pass_ui.set_pipeline(pipeline);
-        render_pass_ui.set_bind_group(0, color, &[]);
-        render_pass_ui.set_bind_group(1, texture, &[]);
-        render_pass_ui.set_bind_group(2, self.camera_manager.get_bind_group("camera_2d"), &[]);
-
-        let element_instance = Self::create_ui_element_instance(window, *ui_element);
-        let instance_buffer = Self::create_instance_buffer(&self.device, &[element_instance]);
-        let instance_count = 1;
-
-        let primitive_vertices = self
-            .primitive_vertices_manager
-            .get_primitive_vertices(&primitive.vertices_id);
-        render_pass_ui.set_vertex_buffer(0, primitive_vertices.vertex_buffer.slice(..));
-        render_pass_ui.set_vertex_buffer(1, instance_buffer.slice(..));
-        render_pass_ui.set_index_buffer(
-            primitive_vertices.index_buffer.slice(..),
-            wgpu::IndexFormat::Uint16,
-        );
-        render_pass_ui.draw_indexed(0..primitive_vertices.num_indices, 0, 0..instance_count);
-
-        drop(render_pass_ui);
+            let primitive_vertices = self
+                .primitive_vertices_manager
+                .get_primitive_vertices(&primitive.vertices_id);
+            render_pass.set_vertex_buffer(0, primitive_vertices.vertex_buffer.slice(..));
+            render_pass.set_vertex_buffer(1, render_batch.instance_buffer.slice(..));
+            render_pass.set_index_buffer(
+                primitive_vertices.index_buffer.slice(..),
+                wgpu::IndexFormat::Uint16,
+            );
+            render_pass.draw_indexed(0..primitive_vertices.num_indices, 0, 0..instance_count);
+        }
     }
 
     pub fn load_primitive_vertices_to_memory(
@@ -545,5 +499,70 @@ impl Renderer {
         self.texture_manager
             .load_material_to_memory(&self.device, &self.queue, asset);
         self.model_manager.added_texture(&asset.name);
+    }
+
+    // TODO maybe also make sure render does not get called during this period
+    pub fn updating(&mut self) {
+        self.text_writer.reset_for_update();
+    }
+
+    pub fn updated(
+        &mut self,
+        window: &Arc<Window>,
+        frame_state: &mut FrameState,
+        game_state: &mut GameState,
+    ) {
+        self.create_render_batches(game_state);
+
+        let camera = game_state
+            .camera_components
+            .get_mut("camera_3d")
+            .expect("Camera components should exist");
+        self.camera_manager
+            .update_buffer("camera_3d", &self.queue, camera);
+
+        let camera = game_state
+            .camera_components
+            .get_mut("camera_ui")
+            .expect("Camera components should exist");
+        self.update_camera_data_ui(camera, window);
+
+        frame_state
+            .gui
+            .render_commands
+            .sort_by_key(|render_command| match render_command {
+                RenderCommand::Model { layer, .. } | RenderCommand::Text { layer, .. } => *layer,
+            });
+
+        // TODO not true batches, all with 1 instance
+        let mut ui_render_batches = Vec::new();
+        for command in &frame_state.gui.render_commands {
+            match command {
+                RenderCommand::Model {
+                    layer: _layer,
+                    ui_element,
+                    model_id,
+                } => {
+                    let element_instance = Self::create_ui_element_instance(window, *ui_element);
+                    let instance_buffer =
+                        Self::create_instance_buffer(&self.device, &[element_instance]); // TODO pretty expensive method call, can be done earlier. Don't generate buffers during rendering
+                    ui_render_batches.push(UiRenderBatch {
+                        model_id: model_id.to_owned(),
+                        instance_buffer,
+                    })
+                }
+                RenderCommand::Text {
+                    layer: _layer,
+                    rect,
+                    text,
+                    color,
+                } => {
+                    // TODO expensive call, maybe only call upon changes
+                    self.text_writer.add(window, rect, text, color);
+                }
+            }
+        }
+        self.ui_render_batches = ui_render_batches;
+        self.text_writer.prepare(&self.device, &self.queue, window);
     }
 }

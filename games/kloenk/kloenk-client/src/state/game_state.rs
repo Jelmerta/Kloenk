@@ -69,7 +69,7 @@ impl GameState {
             &mut description_components,
             &mut dialogue_components,
         );
-        Self::load_camera(&mut entities, &mut camera_components);
+        Self::load_camera_3d(&mut entities, &mut camera_components);
         Self::load_camera_ui(&mut entities, &mut camera_components);
 
         Self::load_shield(
@@ -433,8 +433,8 @@ impl GameState {
         );
     }
 
-    fn load_camera(entities: &mut Vec<Entity>, camera_components: &mut HashMap<String, Camera>) {
-        let camera_id = "camera".to_owned();
+    fn load_camera_3d(entities: &mut Vec<Entity>, camera_components: &mut HashMap<String, Camera>) {
+        let camera_id = "camera_3d".to_owned();
         entities.push(camera_id.clone());
         let camera_component = Camera::new();
         camera_components.insert(camera_id.clone(), camera_component);
@@ -517,10 +517,10 @@ impl GameState {
         self.camera_target_components.get_mut(entity)
     }
 
-    #[allow(dead_code)]
-    pub fn get_camera(&self, entity: &str) -> Option<&Camera> {
-        self.camera_components.get(entity)
-    }
+    // #[allow(dead_code)]
+    // pub fn get_camera(&self, entity: &str) -> Option<&Camera> {
+    //     self.camera_components.get(entity)
+    // }
 
     pub fn get_camera_mut(&mut self, entity: &str) -> Option<&mut Camera> {
         self.camera_components.get_mut(entity)

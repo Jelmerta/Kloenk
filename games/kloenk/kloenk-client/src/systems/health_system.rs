@@ -22,7 +22,10 @@ impl HealthSystem {
             ui_element: health_rect_outside,
             model_id: "black_square".to_owned(),
         };
-        frame_state.gui.render_commands.push(dialogue_render_command);
+        frame_state
+            .gui
+            .render_commands
+            .push(dialogue_render_command);
         match frame_state
             .gui
             .button_handle(window, health_rect_outside, input)
@@ -47,7 +50,10 @@ impl HealthSystem {
             ui_element: health_rect_inside,
             model_id: "blood_red_square".to_owned(),
         };
-        frame_state.gui.render_commands.push(dialogue_render_command);
+        frame_state
+            .gui
+            .render_commands
+            .push(dialogue_render_command);
 
         match frame_state
             .gui

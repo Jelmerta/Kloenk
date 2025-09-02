@@ -165,7 +165,8 @@ impl ModelManager {
             "grass.dds",
         ));
 
-        model_manager.add_required_model(ModelLoader::make_preload_model("tree", "CUBE", "tree.dds"));
+        model_manager
+            .add_required_model(ModelLoader::make_preload_model("tree", "CUBE", "tree.dds"));
 
         // TODO let's just say we need material gozer.dds and maybe gozer2.dds for this. how would we load this?
 

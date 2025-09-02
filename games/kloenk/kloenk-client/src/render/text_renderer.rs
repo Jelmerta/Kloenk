@@ -4,9 +4,8 @@ use glyphon::{
     SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
 };
 use hydrox::load_binary;
-// use itertools::Itertools;
 use std::sync::Arc;
-use wgpu::{CommandEncoder, Device, Queue, SurfaceConfiguration, TextureView};
+use wgpu::{Device, Queue, RenderPass, SurfaceConfiguration};
 use winit::window::Window;
 
 const DEFAULT_FONT_SIZE: f32 = 24.0;
@@ -49,7 +48,7 @@ impl TextContext {
 pub struct TextWriter {
     text_renderer: TextRenderer,
     pub font_system: FontSystem,
-    swash_cache: SwashCache,
+    swash_cache: SwashCache, // TODO when to empty? does this grow?
     viewport: Viewport,
     atlas: TextAtlas,
     queue: Vec<TextContext>,
@@ -81,7 +80,7 @@ impl TextWriter {
         }
     }
 
-    pub fn reset_for_frame(&mut self) {
+    pub fn reset_for_update(&mut self) {
         self.atlas.trim();
         self.queue.clear();
     }
@@ -100,14 +99,14 @@ impl TextWriter {
         );
         buffer.set_size(
             &mut self.font_system,
-            Some(window.inner_size().width as f32),
+            Some(window.inner_size().width as f32), // TODO does not change on resize?
             Some(window.inner_size().height as f32),
         );
         buffer.set_text(
             &mut self.font_system,
             text,
             &Attrs::new().family(Family::Name("Playwrite NL")),
-            Shaping::Advanced,
+            Shaping::Basic,
         );
         buffer.shape_until_scroll(&mut self.font_system, false);
 
@@ -118,19 +117,9 @@ impl TextWriter {
         });
     }
 
-    pub fn write(
-        &mut self,
-        device: &Device,
-        queue: &Queue,
-        encoder: &mut CommandEncoder,
-        view: &TextureView,
-        window: &Arc<Window>,
-    ) {
-        self.prepare(device, queue, window);
-        self.write_text_buffer(encoder, view);
-    }
-
-    fn prepare(&mut self, device: &Device, queue: &Queue, window: &Arc<Window>) {
+    // TODO only call when UI changes?
+    pub fn prepare(&mut self, device: &Device, queue: &Queue, window: &Arc<Window>) {
+        // TODO only update viewport on resize?
         self.viewport.update(
             queue,
             Resolution {
@@ -139,6 +128,8 @@ impl TextWriter {
             },
         );
 
+        // TODO seems pretty heavyweight method, probably check. Even if only one text area changes, we need to call it with all? Maybe just create new atlas/queue for the updated parts?
+        // TODO wonder if we don't want our own text rendering. Just disable more expensive things like kerning/shaping
         self.text_renderer
             .prepare(
                 device,
@@ -152,31 +143,14 @@ impl TextWriter {
                     .collect::<Vec<_>>(),
                 &mut self.swash_cache,
             )
-            .unwrap();
+            .unwrap(); // TODO handle error
     }
 
-    fn write_text_buffer(&mut self, encoder: &mut CommandEncoder, view: &TextureView) {
-        {
-            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: None,
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view,
-                    depth_slice: None,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Load,
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
-            });
-
-            self.text_renderer
-                .render(&self.atlas, &self.viewport, &mut pass)
-                .unwrap();
-            drop(pass);
-        }
+    // TODO prepare earlier? also if this helps note that this is an expensive method to call apparently
+    // glyphon even uses its own pipeline, probably own shader. sounds pretty inefficient. maybe it's fine since we can reuse render pass at least?
+    pub fn write_text_buffer(&mut self, render_pass: &mut RenderPass) {
+        self.text_renderer
+            .render(&self.atlas, &self.viewport, render_pass)
+            .unwrap();
     }
 }

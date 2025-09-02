@@ -10,11 +10,12 @@ use crate::systems::dialogue_system::DialogueSystem;
 use crate::systems::health_system::HealthSystem;
 use crate::systems::inventory_system::InventorySystem;
 use crate::systems::item_pickup_system::ItemPickupSystem;
+use crate::systems::monitor_change_system::MonitorChangeSystem;
 use crate::systems::movement_system::MovementSystem;
 use crate::systems::object_detection_system::ObjectDetectionSystem;
 use crate::systems::object_selection_system::ObjectSelectionSystem;
-use std::sync::Arc;
 use hydrox::AudioSystem;
+use std::sync::Arc;
 use winit::window::Window;
 
 pub struct GameSystem {}
@@ -28,7 +29,9 @@ impl GameSystem {
         frame_state: &mut FrameState,
         audio_system: &mut AudioSystem,
     ) {
-        frame_state.new_frame();
+        frame_state.new_update();
+
+        MonitorChangeSystem::update_monitor(input, window);
 
         InventorySystem::display_inventory_item_menu(
             window,
@@ -56,7 +59,7 @@ impl GameSystem {
         MovementSystem::resolve_movement(game_state, input, audio_system);
 
         // Visual stuff (pre-render)
-        CameraSystem::update_camera(window, game_state, input);
+        CameraSystem::update_3d_camera(window, game_state, input);
 
         DialogueSystem::display_dialogue(window, game_state, ui_state, input, frame_state);
         ChatSystem::handle_chat(window, ui_state, input, frame_state);

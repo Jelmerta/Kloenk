@@ -1,7 +1,7 @@
 FROM rust:1.88 AS rust
 
 RUN rustup target add wasm32-unknown-unknown \
-#	&& rustup component add clippy rustfmt \
+	&& rustup component add clippy rustfmt \
 	&& cargo install wasm-bindgen-cli cargo-audit cargo-chef wasm-opt \
     && apt-get update && apt-get install -y nodejs npm \
     && npm install -g uglify-js
@@ -19,7 +19,7 @@ FROM rust AS checker
 COPY . .
 #RUN cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -W clippy::pedantic -W clippy::all -Dwarnings
 # Clippy list to disable: clippy::unreadable-literal?
-RUN cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -W -W clippy::all -Dwarnings
+RUN cargo clippy --target wasm32-unknown-unknown --release --target-dir target --locked -- -W clippy::all -Dwarnings
 
 FROM rust AS auditor
 COPY . .
@@ -41,7 +41,8 @@ RUN RUSTFLAGS='-Clink-arg=--global-base=1024 -Cllvm-args=-inline-threshold=10 -C
 # wasm-opt options: https://manpages.debian.org/testing/binaryen/wasm-opt.1.en.html#enable~4
 COPY . .
 RUN RUSTFLAGS='-Clink-arg=--global-base=1024 -Cllvm-args=-inline-threshold=10 -Cllvm-args=-inlinedefault-threshold=10 -Cllvm-args=-inlinehint-threshold=10' \
-    cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk \
+#    cargo build --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk \
+    cargo build --features debug-logging --target wasm32-unknown-unknown --release --target-dir target --frozen --bin kloenk \
 && wasm-bindgen target/wasm32-unknown-unknown/release/kloenk.wasm --target web --out-dir bg_output --out-name kloenk --no-typescript --omit-imports --omit-default-module-path --split-linked-modules --remove-name-section --remove-producers-section \
 && wasm-opt bg_output/kloenk_bg.wasm -o bg_output/kloenk.wasm --converge --enable-bulk-memory --enable-nontrapping-float-to-int --strip-producers --coalesce-locals --simplify-locals --low-memory-unused --traps-never-happen --ignore-implicit-traps --fast-math --flatten --rereloop -O4 --gufa -Oz \
 &&  uglifyjs ./bg_output/kloenk.js --compress passes=3,pure_getters=true,unsafe_math=true --mangle toplevel=true --output bg_output/kloenk.js \
@@ -52,8 +53,8 @@ RUN RUSTFLAGS='-Clink-arg=--global-base=1024 -Cllvm-args=-inline-threshold=10 -C
 FROM debian:bookworm-slim
 
 # Force stages to be run
-#COPY --from=checker /etc/hostname /dev/null
+COPY --from=checker /etc/hostname /dev/null
 COPY --from=auditor /etc/hostname /dev/null
-#COPY --from=formatchecker /etc/hostname /dev/null
+COPY --from=formatchecker /etc/hostname /dev/null
 
 COPY --from=builder /app/output/ /app/output/
