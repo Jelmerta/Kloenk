@@ -18,7 +18,7 @@ use crate::state::ui_state::UIState;
 use crate::systems::game_system::GameSystem;
 use winit::keyboard::KeyCode;
 
-use crate::application::framerate_handler_native::UpdateTickHandler;
+use crate::application::update_tick_handler_native::UpdateTickHandler;
 use crate::render::model_loader::ModelLoader;
 use crate::render::renderer::Renderer;
 use hydrox::{load_binary, AudioSystem, Sound};
@@ -31,7 +31,7 @@ pub struct Engine {
     pub input_handler: Input, // TODO if we do really need this: maybe more like input_state?
     pub window: Arc<Window>, // TODO Is the only reason for having this in engine to access inner size? although that might still be valid reason. dont want to copy the data
     pub renderer: Renderer,
-    pub framerate_handler: UpdateTickHandler,
+    pub update_tick_handler: UpdateTickHandler,
     pub audio_system: AudioSystem,
 }
 
@@ -60,7 +60,7 @@ impl ApplicationHandler for Application {
             StartCause::Poll => match &mut self.application_state {
                 State::Uninitialized => {}
                 State::Initialized(engine) => {
-                    while engine.framerate_handler.should_update() {
+                    while engine.update_tick_handler.should_update() {
                         engine.renderer.updating();
                         #[cfg(feature = "debug-logging")]
                         log::debug!("updating");
@@ -77,7 +77,7 @@ impl ApplicationHandler for Application {
                             &mut engine.frame_state,
                             &mut engine.game_state,
                         );
-                        engine.framerate_handler.updated();
+                        engine.update_tick_handler.updated();
                     }
                     #[cfg(feature = "debug-logging")]
                     log::debug!("drawing");
@@ -171,7 +171,7 @@ impl ApplicationHandler for Application {
 
         self.application_state = State::Initialized(Box::new(Engine {
             renderer,
-            framerate_handler: UpdateTickHandler::new(),
+            update_tick_handler: UpdateTickHandler::new(),
             game_state: GameState::new(),
             ui_state: UIState::new(),
             input_handler: Input::new(),
