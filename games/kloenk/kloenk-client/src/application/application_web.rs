@@ -143,8 +143,6 @@ impl ApplicationHandler<CustomEvent> for Application {
                 State::Initialized(engine) => {
                     while engine.framerate_handler.should_update() {
                         engine.renderer.updating();
-                        #[cfg(feature = "debug-logging")]
-                        log::debug!("updating");
                         GameSystem::update(
                             &engine.window,
                             &mut engine.game_state,
@@ -160,8 +158,6 @@ impl ApplicationHandler<CustomEvent> for Application {
                         );
                         engine.framerate_handler.updated();
                     }
-                    #[cfg(feature = "debug-logging")]
-                    log::debug!("drawing");
                     engine.window.request_redraw();
                 }
             },

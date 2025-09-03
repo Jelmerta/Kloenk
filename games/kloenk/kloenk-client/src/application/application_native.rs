@@ -62,8 +62,6 @@ impl ApplicationHandler for Application {
                 State::Initialized(engine) => {
                     while engine.update_tick_handler.should_update() {
                         engine.renderer.updating();
-                        #[cfg(feature = "debug-logging")]
-                        log::debug!("updating");
                         GameSystem::update(
                             &engine.window,
                             &mut engine.game_state,
@@ -79,8 +77,6 @@ impl ApplicationHandler for Application {
                         );
                         engine.update_tick_handler.updated();
                     }
-                    #[cfg(feature = "debug-logging")]
-                    log::debug!("drawing");
                     engine.window.request_redraw();
                 }
             },
@@ -130,7 +126,7 @@ impl ApplicationHandler for Application {
             #[cfg(feature = "debug-logging")]
             {
                 if let Some(mhz) = monitor.refresh_rate_millihertz() {
-                    log::debug!("Monitor millihertz: {mhz}");
+                    log::debug!("Monitor millihertz: {mhz}"); // TODO check monitor refresh rate of 144hz screen with wrong cable
                 }
             }
             window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));

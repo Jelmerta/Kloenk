@@ -76,12 +76,12 @@ incremental = true
 opt-level = "z"
 panic = "abort"
 codegen-units = 1
-#lto = "fat"
-#strip = true
-#debug = "none"
-lto = false  # Enable to use profiler in devtools
-strip = false
-debug = true
+lto = "fat"
+strip = true
+debug = "none"
+#lto = false  # Enable to use profiler in devtools
+#strip = false
+#debug = true
 
 [profile.release.package."*"]
 opt-level = "z"
