@@ -6,6 +6,7 @@ pub struct UpdateTickHandler {
     accumulated_time_nanos: u32,
 }
 
+// Time probably needs to be retrieved from server in order to match ticks
 impl UpdateTickHandler {
     pub fn new() -> Self {
         UpdateTickHandler {
@@ -16,9 +17,10 @@ impl UpdateTickHandler {
     }
 
     pub fn should_update(&mut self) -> bool {
-        let time_to_add_nanos = self.last_update_time.elapsed().as_nanos() as u32;
-        self.accumulated_time_nanos += time_to_add_nanos;
-        self.last_update_time = Instant::now();
+        let now = Instant::now();
+        let elapsed_nanos = now.duration_since(self.last_update_time).as_nanos() as u32;
+        self.accumulated_time_nanos += elapsed_nanos;
+        self.last_update_time = now;
         self.accumulated_time_nanos > self.target_tick_time_nano_seconds
     }
 

@@ -18,7 +18,7 @@ use crate::state::ui_state::UIState;
 use crate::systems::game_system::GameSystem;
 use winit::keyboard::KeyCode;
 
-use crate::application::framerate_handler::UpdateTickHandler;
+use crate::application::framerate_handler_native::UpdateTickHandler;
 use crate::render::model_loader::ModelLoader;
 use crate::render::renderer::Renderer;
 use hydrox::{load_binary, AudioSystem, Sound};

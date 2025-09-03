@@ -18,7 +18,7 @@ use winit::event::StartCause;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{CustomCursor, Window, WindowId};
 
-use crate::application::framerate_handler::UpdateTickHandler;
+use crate::application::framerate_handler_native::UpdateTickHandler;
 use crate::application::Asset::{Audio, Color, Texture, Vertices};
 use crate::application::{AssetLoader, ImageAsset};
 use crate::render::model::ColorDefinition;
