@@ -329,10 +329,14 @@ impl ApplicationHandler<CustomEvent> for Application {
                 let event_loop = self.event_loop_proxy.clone();
                 spawn_local(async move {
                     let sound_bytes = load_binary("bonk.wav").await.expect("Sound should exist");
-                    let sound = Sound { bytes: sound_bytes };
+                    let sound = Sound {
+                        name: "bonk".to_owned(),
+                        bytes: sound_bytes,
+                    };
 
                     event_loop
-                        .send_event(CustomEvent::AssetLoaded(Audio(sound))).ok();
+                        .send_event(CustomEvent::AssetLoaded(Audio(sound)))
+                        .ok();
                 });
 
                 self.application_state = State::Initialized(engine);
@@ -375,8 +379,7 @@ impl ApplicationHandler<CustomEvent> for Application {
 
                 let physical_size = logical_size.to_physical(web_window.device_pixel_ratio());
                 engine.renderer.resize(physical_size);
-            }
-            // CustomEvent::AudioStateChanged(audio_state) => {
+            } // CustomEvent::AudioStateChanged(audio_state) => {
             //     self.audio_state = audio_state;
             // }
         }
