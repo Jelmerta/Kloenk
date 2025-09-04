@@ -84,6 +84,7 @@ impl ModelManager {
         true
     }
 
+    // Only async for gltf... can we change this or just how it is? would like this to not be blocking for render
     pub async fn new() -> ModelManager {
         let mut model_manager = ModelManager {
             required_models: HashMap::new(),

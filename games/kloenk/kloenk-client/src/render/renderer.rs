@@ -391,7 +391,7 @@ impl Renderer {
         game_state
             .entities
             .iter()
-            .filter(|entity| game_state.get_position(entity.as_ref()).is_some())
+            .filter(|entity| game_state.get_position(entity).is_some())
             .filter(|entity| {
                 game_state
                     .graphics_3d_components

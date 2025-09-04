@@ -52,11 +52,11 @@ pub struct Engine {
 // Loaded,
 // }
 
-pub enum GesturedState {
-    #[allow(dead_code)]
-    Gestured,
-    NotGestured,
-}
+// pub enum GesturedState {
+//     #[allow(dead_code)]
+//     Gestured,
+//     NotGestured,
+// }
 
 impl Engine {
     pub fn window(&self) -> &Window {
@@ -81,8 +81,8 @@ pub enum CustomEvent {
 pub struct Application {
     application_state: State,
     // audio_state: AudioState,
-    #[allow(dead_code)]
-    gestured_state: GesturedState,
+    // #[allow(dead_code)]
+    // gestured_state: GesturedState,
     event_loop_proxy: EventLoopProxy<CustomEvent>,
 }
 
@@ -91,7 +91,7 @@ impl Application {
         Application {
             application_state: State::Uninitialized,
             // audio_state: AudioState::NotLoaded,
-            gestured_state: GesturedState::NotGestured,
+            // gestured_state: GesturedState::NotGestured,
             event_loop_proxy: event_loop.create_proxy(),
         }
     }
@@ -246,7 +246,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 ui_state: UIState::new(),
                 input_handler: Input::new(),
                 frame_state: FrameState::new(),
-                audio_system: AudioSystem::new(), // TODO Empty audio_system, load later
+                audio_system: AudioSystem::new_load_later(),
                 framerate_handler: UpdateTickHandler::new(),
                 window,
             };
@@ -407,6 +407,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 // Loading audio only after user has gestured on web
                 // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
                 if key_is_gesture(key) {
+                    engine.audio_system.load();
                     // TODO hydrox set active remove again?
                     // engine.audio_system.set_active();
                     // Self::load_audio_player(self);
@@ -420,6 +421,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 // Thought of callback or observer pattern but that honestly seems way too complex compared to this.
                 // Self::load_audio_player(self);
                 // TODO just set audio system active?
+                engine.audio_system.load();
             }
             WindowEvent::CursorMoved { position, .. } => {
                 engine.input_handler.process_mouse_movement(
