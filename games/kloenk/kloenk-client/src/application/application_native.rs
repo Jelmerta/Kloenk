@@ -163,7 +163,13 @@ impl ApplicationHandler for Application {
 
         let mut audio_system = AudioSystem::new();
         let bonk = pollster::block_on(load_binary("bonk.wav")).expect("bonk exists");
-        audio_system.load_sound("bonk", &Sound { bytes: bonk });
+        audio_system.load_sound(
+            "bonk",
+            &Sound {
+                name: "bonk".to_owned(),
+                bytes: bonk,
+            },
+        );
 
         self.application_state = State::Initialized(Box::new(Engine {
             renderer,
