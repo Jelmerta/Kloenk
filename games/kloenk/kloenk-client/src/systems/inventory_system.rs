@@ -111,10 +111,22 @@ impl InventorySystem {
         } = &ui_state.menu_state.clone()
         // I guess this is fine, might not need to think about pattern to update enum in match while borrowing
         {
-            let drop_button_rect = UIElement::new_rect(
-                Point2::new(render_position.x + 0.015, render_position.y + 0.005),
-                Point2::new(0.065, 0.025),
+            let menu_rect = UIElement::new_rect(
+                Point2::new(render_position.x + 0.015, render_position.y + 0.030),
+                Point2::new(0.065, 0.05),
             );
+            let menu_render_command = RenderCommand::Model {
+                layer: 200,
+                ui_element: menu_rect,
+                model_id: "black_square".to_owned(),
+            };
+            inventory_render_commands.push(menu_render_command);
+
+            let drop_button_rect = menu_rect.inner_rect(
+                Point2::new(0.01, 0.01),
+                Point2::new(0.99, 0.49),
+            );
+
             let drop_button_render_command = RenderCommand::Model {
                 layer: 200,
                 ui_element: drop_button_rect,
@@ -150,7 +162,7 @@ impl InventorySystem {
 
             let drop_item_text_render_command = frame_state.gui.build_text_render_command(
                 300,
-                drop_button_rect.inner_rect(Point2::new(0.01, 0.01), Point2::new(0.99, 0.99)),
+                menu_rect.inner_rect(Point2::new(0.01, 0.01), Point2::new(0.99, 0.49)),
                 "Drop item",
                 text_color,
             );
@@ -158,9 +170,9 @@ impl InventorySystem {
 
             // Examine button
             if game_state.description_components.contains_key(item) {
-                let examine_button_rect = UIElement::new_rect(
-                    Point2::new(render_position.x + 0.015, render_position.y + 0.055),
-                    Point2::new(0.065, 0.025),
+                let examine_button_rect = menu_rect.inner_rect(
+                    Point2::new(0.01, 0.51),
+                    Point2::new(0.99, 0.99),
                 );
                 let examine_render_command = RenderCommand::Model {
                     layer: 200,
@@ -195,8 +207,8 @@ impl InventorySystem {
 
                 let examine_text_render_command = frame_state.gui.build_text_render_command(
                     300,
-                    examine_button_rect
-                        .inner_rect(Point2::new(0.01, 0.01), Point2::new(0.99, 0.99)),
+                    menu_rect
+                        .inner_rect(Point2::new(0.01, 0.51), Point2::new(0.99, 0.99)),
                     "Examine item",
                     text_color,
                 );
