@@ -2,7 +2,7 @@ FROM rust:1.88 AS rust
 
 RUN rustup target add wasm32-unknown-unknown \
 	&& rustup component add clippy rustfmt \
-	&& cargo install wasm-bindgen-cli cargo-audit cargo-chef wasm-opt \
+	&& cargo install cargo-audit wasm-bindgen-cli cargo-chef wasm-opt \
     && apt-get update && apt-get install -y nodejs npm \
     && npm install -g uglify-js
 WORKDIR /app
