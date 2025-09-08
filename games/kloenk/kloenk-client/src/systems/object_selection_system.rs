@@ -32,8 +32,6 @@ impl ObjectSelectionSystem {
             frame_state.handled_right_click = true;
         }
 
-        #[cfg(feature = "debug-logging")]
-        log::debug!("Objection selection system");
         let mut object_selection_render_commands = Vec::new();
         let mut new_menu_state = &ui_state.menu_state;
         if let MenuState::WorldAction {
@@ -135,8 +133,6 @@ impl ObjectSelectionSystem {
             .render_commands
             .append(&mut object_selection_render_commands);
         ui_state.menu_state = new_menu_state.clone(); // TODO prob not needed if return on close, as there's no change?
-        #[cfg(feature = "debug-logging")]
-        log::debug!("Objection selection system end");
     }
 
     fn should_open_menu(
