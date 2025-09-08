@@ -12,9 +12,9 @@ use winit::dpi::LogicalSize;
 use winit::event_loop::{ActiveEventLoop, ControlFlow};
 use winit::window::{Cursor, CustomCursor, Fullscreen, Icon, Window, WindowId};
 
-use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::UIState;
+use crate::state::update_state::UpdateState;
 use crate::systems::game_system::GameSystem;
 use winit::keyboard::KeyCode;
 
@@ -24,14 +24,15 @@ use crate::render::renderer::Renderer;
 use hydrox::{load_binary, AudioSystem, Sound};
 
 pub struct Engine {
+    pub update_tick_handler: UpdateTickHandler,
+
     pub game_state: GameState,
     pub ui_state: UIState,
-    pub frame_state: FrameState,
+    pub frame_state: UpdateState,
 
-    pub input_handler: Input, // TODO if we do really need this: maybe more like input_state?
+    pub input_handler: Input,
     pub window: Arc<Window>, // TODO Is the only reason for having this in engine to access inner size? although that might still be valid reason. dont want to copy the data
     pub renderer: Renderer,
-    pub update_tick_handler: UpdateTickHandler,
     pub audio_system: AudioSystem,
 }
 
@@ -129,7 +130,8 @@ impl ApplicationHandler for Application {
                     log::debug!("Monitor millihertz: {mhz}"); // TODO check monitor refresh rate of 144hz screen with wrong cable
                 }
             }
-            window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
+            // window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
+            window.set_fullscreen(None);
         }
 
         let mut renderer = pollster::block_on(Renderer::new(window.clone()));
@@ -177,7 +179,7 @@ impl ApplicationHandler for Application {
             game_state: GameState::new(),
             ui_state: UIState::new(),
             input_handler: Input::new(),
-            frame_state: FrameState::new(),
+            frame_state: UpdateState::new(),
             window: window.clone(),
             audio_system,
         }));

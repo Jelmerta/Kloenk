@@ -8,8 +8,9 @@ use std::sync::Arc;
 use wgpu::{Device, Queue, RenderPass, SurfaceConfiguration};
 use winit::window::Window;
 
-const DEFAULT_FONT_SIZE: f32 = 24.0;
+const DEFAULT_FONT_SIZE: f32 = 32.0;
 const DEFAULT_FONT_HEIGHT: f32 = 1080.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
+const DEFAULT_FONT_WIDTH: f32 = 1920.0; // Using a default resolution to scale by, as dpi/pixelratio is independent of window size
 
 struct TextContext {
     buffer: Buffer,
@@ -18,7 +19,7 @@ struct TextContext {
 }
 
 impl TextContext {
-    fn to_text_area(&self, window: &Arc<Window>) -> TextArea<'_> {
+    fn to_text_area(&mut self, window: &Arc<Window>) -> TextArea<'_> {
         // Hm... Kind of implicit conversion logic hidden deep...
         let text_color = [
             (self.color[0].clamp(0.0, 1.0) * 255.0).round() as u8,
@@ -27,16 +28,18 @@ impl TextContext {
         ];
 
         // Left side is adjusted by first undoing window ratio and then scaling by 16:9
-        let left = self.ui_element.ui_coordinate_origin.x
-            - (self.ui_element.width() / 2.0)
-            * (window.inner_size().height as f32 / window.inner_size().width as f32)
-            * (16.0 / 9.0);
-        let top = self.ui_element.top();
+        // let left = self.ui_element.ui_coordinate_origin.x
+        //     - (self.ui_element.width() / 2.0);
+        // * (window.inner_size().height as f32 / window.inner_size().width as f32)
+        // * (16.0 / 9.0);
+        // let top = self.ui_element.top();
 
+        // TODO not the right place...
+        self.ui_element.update(&window.inner_size());
         TextArea {
             buffer: &self.buffer,
-            top: top * window.inner_size().height as f32,
-            left: left * window.inner_size().width as f32,
+            top: self.ui_element.scaled_anchor_y + self.ui_element.scaled_y, //top * window.inner_size().height as f32,
+            left: self.ui_element.scaled_anchor_x + self.ui_element.scaled_x, //left * window.inner_size().width as f32,
             scale: 1.0,
             bounds: TextBounds::default(),
             default_color: Color::rgb(text_color[0], text_color[1], text_color[2]),
@@ -88,19 +91,25 @@ impl TextWriter {
     pub fn add(
         &mut self,
         window: &Arc<Window>,
-        ui_element: &UIElement,
+        ui_element: &mut UIElement,
         text: &str,
         color: &[f32; 3],
     ) {
-        let font_size = window.inner_size().height as f32 / DEFAULT_FONT_HEIGHT * DEFAULT_FONT_SIZE;
+        ui_element.update(&window.inner_size());
+        // TODO assertion `left != right` failed: line height cannot be 0
+        //   left: 0.0
+        //  right: 0.0
+        let font_size = f32::min(1.0, window.inner_size().width as f32 / DEFAULT_FONT_WIDTH) * f32::min(1.0, window.inner_size().height as f32 / DEFAULT_FONT_HEIGHT) * DEFAULT_FONT_SIZE;
         let mut buffer = Buffer::new(
             &mut self.font_system,
             Metrics::new(font_size, font_size * 2.0),
         );
         buffer.set_size(
             &mut self.font_system,
-            Some(window.inner_size().width as f32), // TODO does not change on resize?
-            Some(window.inner_size().height as f32),
+            Some(ui_element.scaled_width),
+            Some(ui_element.scaled_height),
+            // Some(window.inner_size().width as f32), // TODO does not change on resize?
+            // Some(window.inner_size().height as f32),
         );
         buffer.set_text(
             &mut self.font_system,
@@ -138,7 +147,7 @@ impl TextWriter {
                 &mut self.atlas,
                 &self.viewport,
                 self.queue
-                    .iter()
+                    .iter_mut()
                     .map(|text_context| text_context.to_text_area(window))
                     .collect::<Vec<_>>(),
                 &mut self.swash_cache,

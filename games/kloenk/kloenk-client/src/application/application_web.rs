@@ -25,9 +25,9 @@ use crate::render::model::ColorDefinition;
 use crate::render::model_loader::ModelLoader;
 use crate::render::primitive_vertices_manager::PrimitiveVertices;
 use crate::render::renderer::Renderer;
-use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::UIState;
+use crate::state::update_state::UpdateState;
 use crate::systems::game_system::GameSystem;
 use winit::keyboard::KeyCode;
 
@@ -37,7 +37,7 @@ pub struct Engine {
     pub game_state: GameState,
     pub ui_state: UIState,
     pub input_handler: Input,
-    pub frame_state: FrameState,
+    pub frame_state: UpdateState,
     pub window: Arc<Window>,
     pub framerate_handler: UpdateTickHandler,
     pub audio_system: AudioSystem,
@@ -202,7 +202,7 @@ impl ApplicationHandler<CustomEvent> for Application {
         let viewport = &web_window
             .visual_viewport()
             .expect("Visual viewport should exist");
-        viewport.set_onresize(Some(closure.as_ref().unchecked_ref()));
+        viewport.set_onresize(Some(closure.as_ref().unchecked_ref())); // TODO called too often maybe, should maybe only be sent once user is finished resizing, otherwise every small change gets resized when dragging window during resize... quite expensive
         closure.forget(); // Wondering if this approach is graceful enough
 
         let window_attributes = Window::default_attributes()
@@ -245,7 +245,7 @@ impl ApplicationHandler<CustomEvent> for Application {
                 game_state: GameState::new(),
                 ui_state: UIState::new(),
                 input_handler: Input::new(),
-                frame_state: FrameState::new(),
+                frame_state: UpdateState::new(),
                 audio_system: AudioSystem::new_load_later(),
                 framerate_handler: UpdateTickHandler::new(),
                 window,

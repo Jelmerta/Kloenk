@@ -1,12 +1,12 @@
-use crate::state::frame_state::{ActionEffect, ActionRequest, FrameState};
 use crate::state::game_state::GameState;
 use crate::state::ui_state::UIState;
+use crate::state::update_state::{ActionEffect, ActionRequest, UpdateState};
 use crate::systems::item_placement_system::ItemPlacementSystem;
 
 pub struct CommandHandleSystem {}
 
 impl CommandHandleSystem {
-    pub fn handle_action_requests(game_state: &mut GameState, frame_state: &mut FrameState) {
+    pub fn handle_action_requests(game_state: &mut GameState, frame_state: &mut UpdateState) {
         frame_state
             .action_requests
             .iter()
@@ -21,7 +21,7 @@ impl CommandHandleSystem {
             });
     }
 
-    pub fn handle_action_effects(ui_state: &mut UIState, frame_state: &mut FrameState) {
+    pub fn handle_action_effects(ui_state: &mut UIState, frame_state: &mut UpdateState) {
         frame_state
             .action_effects
             .iter()

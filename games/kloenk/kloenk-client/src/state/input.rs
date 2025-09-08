@@ -187,9 +187,9 @@ impl Input {
             x: ((2.0 * mouse_position.x) / window_width as f64 - 1.0) as f32,
             y: (1.0 - (2.0 * mouse_position.y) / window_height as f64) as f32,
         };
-        self.mouse_position_ui = Point2::new(
-            self.mouse_position_ndc.x / 2.0 + 0.5,
-            -self.mouse_position_ndc.y / 2.0 + 0.5,
+        self.mouse_position_ui = Point2::new( // TODO this basically is not UI space since UI space
+                                              self.mouse_position_ndc.x / 2.0 + 0.5,
+                                              -self.mouse_position_ndc.y / 2.0 + 0.5,
         );
     }
 

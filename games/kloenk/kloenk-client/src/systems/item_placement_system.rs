@@ -1,6 +1,6 @@
 use crate::state::components::{Entity, Hitbox};
-use crate::state::frame_state::ActionEffect;
 use crate::state::game_state::GameState;
+use crate::state::update_state::ActionEffect;
 use crate::systems::collision_manager::CollisionManager;
 use cgmath::{ElementWise, Point3};
 

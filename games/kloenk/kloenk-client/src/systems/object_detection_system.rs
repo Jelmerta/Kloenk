@@ -1,7 +1,7 @@
 use crate::state::components::{Entity, Hitbox};
-use crate::state::frame_state::{ActionEffect, FrameState};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
+use crate::state::update_state::{ActionEffect, UpdateState};
 use crate::systems::position_manager::PositionManager;
 use cgmath::num_traits::Float;
 use cgmath::{InnerSpace, Point3, Vector3, Vector4};
@@ -23,7 +23,7 @@ impl ObjectDetectionSystem {
     pub fn setup_detection_for_frame(
         game_state: &mut GameState,
         input: &mut Input,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
     ) {
         Self::find_world_object_on_cursor(game_state, input, frame_state);
         Self::set_nearest_object(game_state, frame_state);
@@ -32,7 +32,7 @@ impl ObjectDetectionSystem {
     fn find_world_object_on_cursor(
         game_state: &mut GameState,
         input: &mut Input,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
     ) {
         let camera = game_state.get_camera_mut("camera_3d").unwrap();
 
@@ -82,7 +82,7 @@ impl ObjectDetectionSystem {
             .push(ActionEffect::ItemSelected { found_objects_text });
     }
 
-    fn set_nearest_object(game_state: &GameState, frame_state: &mut FrameState) {
+    fn set_nearest_object(game_state: &GameState, frame_state: &mut UpdateState) {
         let player_position = game_state
             .get_position("player")
             .expect("Player position should exist");

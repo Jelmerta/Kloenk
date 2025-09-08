@@ -1,7 +1,7 @@
 use crate::gui::Gui;
 use crate::state::components::Entity;
 
-pub struct FrameState {
+pub struct UpdateState {
     pub objects_on_cursor: Vec<Entity>,
     nearest_object: Option<Entity>, //In orthographic we can't just calculate this by ray distance (all objects on plane will be same distance)
 
@@ -16,8 +16,8 @@ pub struct FrameState {
     pub action_effects: Vec<ActionEffect>,
 }
 
-impl FrameState {
-    pub fn new() -> FrameState {
+impl UpdateState {
+    pub fn new() -> UpdateState {
         Self {
             objects_on_cursor: Vec::new(),
             nearest_object: None,

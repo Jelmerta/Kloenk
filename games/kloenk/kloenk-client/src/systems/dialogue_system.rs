@@ -1,7 +1,7 @@
-use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
 use crate::state::ui_state::{DialogueState, RenderCommand, UIElement, UIState, UserAction};
+use crate::state::update_state::UpdateState;
 use crate::systems::dialogue_manager::DialogueManager;
 use crate::systems::position_manager::PositionManager;
 use cgmath::Point2;
@@ -17,7 +17,7 @@ impl DialogueSystem {
         game_state: &GameState,
         ui_state: &mut UIState,
         input: &Input,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
     ) {
         if input.e_pressed.is_toggled_on()
             && !frame_state.handled_e_click
@@ -56,7 +56,7 @@ impl DialogueSystem {
         game_state: &GameState,
         ui_state: &mut UIState,
         input: &Input,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
     ) {
         let mut dialogue_render_commands = Vec::new();
         let mut new_dialogue_state = None;
@@ -68,7 +68,7 @@ impl DialogueSystem {
         {
             let dialogue_rect = UIElement::new_rect(
                 Point2::new(render_position.x + 0.01, render_position.y + 0.05),
-                Point2::new(0.16, 0.05),
+                Point2::new(0.16, 0.06),
             );
             let dialogue_render_command = RenderCommand::Model {
                 layer: 150,

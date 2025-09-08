@@ -11,9 +11,9 @@ use crate::render::render_context_manager::RenderContextManager;
 use crate::render::text_renderer::TextWriter;
 use crate::render::texture;
 use crate::state::components::Scale;
-use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::ui_state::{RenderCommand, UIElement, UIState};
+use crate::state::update_state::UpdateState;
 use cgmath::{prelude::*, Point3, Vector3};
 use std::collections::HashMap;
 use std::iter;
@@ -365,16 +365,18 @@ impl Renderer {
         }
     }
 
-    pub fn create_ui_element_instance(window: &Arc<Window>, rect: UIElement) -> Instance {
+    pub fn create_ui_element_instance(window: &Arc<Window>, rect: &mut UIElement) -> Instance {
+        rect.update(&window.inner_size());
         Instance {
             position: Vector3 {
                 x: UIState::clip_space_element_position_x(rect, window),
-                y: UIState::convert_clip_space_y(rect.top()),
+                // y: UIState::convert_clip_space_y(rect.top()),
+                y: UIState::clip_space_element_position_y(rect, window),
                 z: 0.0,
             },
             scale: cgmath::Matrix4::from_diagonal(cgmath::Vector4::new(
-                UIState::convert_scale_x(rect.width()),
-                UIState::convert_scale_y(rect.height()),
+                UIState::convert_scale_x(rect.scaled_width, window),
+                UIState::convert_scale_y(rect.scaled_height, window),
                 1.0,
                 1.0,
             )),
@@ -509,7 +511,7 @@ impl Renderer {
     pub fn updated(
         &mut self,
         window: &Arc<Window>,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
         game_state: &mut GameState,
     ) {
         self.create_render_batches(game_state);
@@ -536,14 +538,14 @@ impl Renderer {
 
         // TODO not true batches, all with 1 instance
         let mut ui_render_batches = Vec::new();
-        for command in &frame_state.gui.render_commands {
+        for command in &mut frame_state.gui.render_commands {
             match command {
                 RenderCommand::Model {
                     layer: _layer,
                     ui_element,
                     model_id,
                 } => {
-                    let element_instance = Self::create_ui_element_instance(window, *ui_element);
+                    let element_instance = Self::create_ui_element_instance(window, ui_element);
                     let instance_buffer =
                         Self::create_instance_buffer(&self.device, &[element_instance]); // TODO pretty expensive method call, can be done earlier. Don't generate buffers during rendering
                     ui_render_batches.push(UiRenderBatch {

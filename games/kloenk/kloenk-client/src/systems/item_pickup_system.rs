@@ -1,6 +1,6 @@
-use crate::state::frame_state::{ActionEffect, FrameState};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
+use crate::state::update_state::{ActionEffect, UpdateState};
 use crate::systems::position_manager::PositionManager;
 use crate::systems::storage_manager::StorageManager;
 
@@ -12,7 +12,7 @@ impl ItemPickupSystem {
     pub fn handle_item_pickup_keyboard(
         game_state: &mut GameState,
         input: &Input,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
     ) {
         let player = "player";
 
@@ -39,7 +39,7 @@ impl ItemPickupSystem {
     pub fn handle_item_pickup_mouse(
         game_state: &mut GameState,
         input: &Input,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
     ) {
         if !input.left_mouse_clicked.is_toggled_on() {
             return;
@@ -58,7 +58,7 @@ impl ItemPickupSystem {
 
     pub fn item_pickup(
         game_state: &mut GameState,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
         near_pickup: &str,
     ) -> bool {
         let pickup = game_state.storable_components.get(near_pickup);

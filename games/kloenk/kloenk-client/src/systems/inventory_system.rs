@@ -1,8 +1,8 @@
-use crate::state::frame_state::{ActionEffect, ActionRequest, FrameState};
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
 use crate::state::ui_state::MenuState::{Closed, InventoryAction};
 use crate::state::ui_state::{RenderCommand, UIElement, UIState, UserAction};
+use crate::state::update_state::{ActionEffect, ActionRequest, UpdateState};
 use crate::systems::item_placement_system::ItemPlacementSystem;
 use cgmath::Point2;
 use std::sync::Arc;
@@ -16,7 +16,7 @@ impl InventorySystem {
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &mut Input,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
     ) {
         let inventory_window = ui_state.windows.get_mut("inventory").unwrap();
         if input.i_pressed.is_toggled_on() {
@@ -27,6 +27,7 @@ impl InventorySystem {
             return;
         }
 
+        &inventory_window.rect.update(&window.inner_size());
         frame_state
             .gui
             .add_color_command(100, &inventory_window.rect, "black");
@@ -88,7 +89,7 @@ impl InventorySystem {
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &Input,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
     ) {
         Self::handle_inventory_menu_state(window, game_state, ui_state, input, frame_state);
     }
@@ -99,7 +100,7 @@ impl InventorySystem {
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &Input,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
     ) {
         // If inventory closes, we do not add the render commands
         let mut inventory_render_commands = Vec::new();

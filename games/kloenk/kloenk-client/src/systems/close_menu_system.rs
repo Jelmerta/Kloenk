@@ -1,7 +1,7 @@
-use crate::state::frame_state::FrameState;
 use crate::state::input::Input;
 use crate::state::ui_state::MenuState::Closed;
 use crate::state::ui_state::{MenuState, UIState};
+use crate::state::update_state::UpdateState;
 
 pub struct CloseMenuSystem {}
 
@@ -9,7 +9,7 @@ impl CloseMenuSystem {
     pub fn check_to_close_menu(
         ui_state: &mut UIState,
         input: &Input,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
     ) {
         if frame_state.handled_left_click {
             return;

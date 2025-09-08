@@ -1,7 +1,7 @@
-use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
 use crate::state::ui_state::{RenderCommand, UIElement, UserAction};
+use crate::state::update_state::UpdateState;
 use cgmath::Point2;
 use std::sync::Arc;
 use winit::window::Window;
@@ -13,7 +13,7 @@ impl HealthSystem {
         window: &Arc<Window>,
         game_state: &GameState,
         input: &Input,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
     ) {
         let health_rect_outside =
             UIElement::new_rect(Point2::new(0.125, 0.90), Point2::new(0.075, 0.05));

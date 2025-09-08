@@ -1,7 +1,7 @@
-use crate::state::frame_state::FrameState;
 use crate::state::game_state::GameState;
 use crate::state::input::Input;
 use crate::state::ui_state::UIState;
+use crate::state::update_state::UpdateState;
 use crate::systems::camera_system::CameraSystem;
 use crate::systems::chat_system::ChatSystem;
 use crate::systems::close_menu_system::CloseMenuSystem;
@@ -26,7 +26,7 @@ impl GameSystem {
         game_state: &mut GameState,
         ui_state: &mut UIState,
         input: &mut Input,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
         audio_system: &mut AudioSystem,
     ) {
         frame_state.new_update();

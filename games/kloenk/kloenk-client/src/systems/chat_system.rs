@@ -1,8 +1,8 @@
 use crate::state::ui_state::{RenderCommand, UserAction};
 use crate::state::{
-    frame_state::FrameState,
     input::Input,
     ui_state::{InputState, UIState},
+    update_state::UpdateState,
 };
 use std::sync::Arc;
 use winit::window::Window;
@@ -14,7 +14,7 @@ impl ChatSystem {
         window: &Arc<Window>,
         ui_state: &mut UIState,
         input: &Input,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
     ) {
         let mut new_input_state = None;
         match ui_state.input_state {
@@ -50,7 +50,7 @@ impl ChatSystem {
         window: &Arc<Window>,
         ui_state: &mut UIState,
         input: &Input,
-        frame_state: &mut FrameState,
+        frame_state: &mut UpdateState,
     ) {
         let chat_window = ui_state.windows.get("chat").unwrap();
         if !chat_window.is_visible {

@@ -46,9 +46,10 @@ impl Gui {
     pub fn button_handle(
         &mut self,
         window: &Arc<Window>,
-        ui_element: UIElement,
+        mut ui_element: UIElement,
         input: &Input,
     ) -> UserAction {
+        // let element_contains = ui_element.contains(input.mouse_position_ui, window);
         let element_contains = ui_element.contains(input.mouse_position_ui, window);
         if element_contains && input.left_mouse_clicked.is_toggled_on() {
             return UserAction::LeftClick;
