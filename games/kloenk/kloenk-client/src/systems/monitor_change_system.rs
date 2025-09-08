@@ -10,7 +10,7 @@ impl MonitorChangeSystem {
     pub fn update_monitor(input: &Input, window: &Arc<Window>) {
         if input.m_pressed.is_toggled_on() {
             let monitors: Vec<MonitorHandle> = window.available_monitors().collect();
-            if monitors.len() == 1 {
+            if monitors.len() <= 1 {
                 return;
             }
 

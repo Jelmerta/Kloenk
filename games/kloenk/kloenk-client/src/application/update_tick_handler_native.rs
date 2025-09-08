@@ -2,7 +2,7 @@ use std::time::{Duration, Instant};
 
 pub struct UpdateTickHandler {
     target_tick_time_nano_seconds: u32,
-    last_update_time: Instant,
+    last_update_time: Instant, // https://old.reddit.com/r/rust/comments/1nbrwj4/hotpath_a_simple_rust_profiler_that_shows_exactly/  I'd advise against using stds Instant for measuring performance
     accumulated_time_nanos: u32,
 }
 
