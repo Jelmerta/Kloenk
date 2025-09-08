@@ -99,17 +99,15 @@ impl TextWriter {
         // TODO assertion `left != right` failed: line height cannot be 0
         //   left: 0.0
         //  right: 0.0
-        let font_size = f32::min(1.0, window.inner_size().width as f32 / DEFAULT_FONT_WIDTH) * f32::min(1.0, window.inner_size().height as f32 / DEFAULT_FONT_HEIGHT) * DEFAULT_FONT_SIZE;
+        let font_size = f32::min(1.0, window.inner_size().height as f32 / DEFAULT_FONT_HEIGHT) * DEFAULT_FONT_SIZE;
         let mut buffer = Buffer::new(
             &mut self.font_system,
             Metrics::new(font_size, font_size * 2.0),
         );
         buffer.set_size(
             &mut self.font_system,
-            Some(ui_element.scaled_width),
+            Some(ui_element.scaled_width), // TODO does not change on resize?
             Some(ui_element.scaled_height),
-            // Some(window.inner_size().width as f32), // TODO does not change on resize?
-            // Some(window.inner_size().height as f32),
         );
         buffer.set_text(
             &mut self.font_system,
