@@ -27,7 +27,7 @@ impl InventorySystem {
             return;
         }
 
-        &inventory_window.rect.update(&window.inner_size());
+        inventory_window.rect.update(&window.inner_size());
         frame_state
             .gui
             .add_color_command(100, &inventory_window.rect, "black");

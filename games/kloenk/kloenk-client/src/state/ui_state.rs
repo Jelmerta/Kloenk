@@ -38,8 +38,8 @@ pub enum UserAction {
     RightClick,
 }
 
-const SCREEN_REFERENCE_WIDTH: f32 = 1920.0;
-const SCREEN_REFERENCE_HEIGHT: f32 = 1080.0;
+pub const SCREEN_REFERENCE_WIDTH: f32 = 1920.0;
+pub const SCREEN_REFERENCE_HEIGHT: f32 = 1080.0;
 
 #[derive(Copy, Clone)]
 pub struct UIElement {
@@ -303,65 +303,26 @@ impl UIState {
         let scale = 1.0;
         let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
         let viewport_half_width = scale * resolution;
-        -viewport_half_width + 2.0 * viewport_half_width * ((ui_element.scaled_anchor_x + ui_element.scaled_x) / window.inner_size().width as f32)
+        -viewport_half_width + Self::convert_scale_x(ui_element.scaled_anchor_x + ui_element.scaled_x, window)
     }
 
     pub fn clip_space_element_position_y(ui_element: &UIElement, window: &Arc<Window>) -> f32 {
         let viewport_half_height = 1.0;
-        viewport_half_height - 2.0 * viewport_half_height * ((ui_element.scaled_anchor_y + ui_element.scaled_y) / window.inner_size().height as f32)
+        viewport_half_height - Self::convert_scale_y(ui_element.scaled_anchor_y + ui_element.scaled_y, window)
     }
-
-    // pub fn clip_space_element_position_x(ui_element: UIElement, window: &Arc<Window>) -> f32 {
-    //     let scale = 1.0;
-    //     let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
-    //     let width = scale * resolution;
-    //     let distance_left = Self::convert_scale_x(ui_element.left, window);
-    //     -width + 2.0 * width * ui_element.ui_coordinate_origin.x + distance_left
-    // }
-
-    // pub fn clip_space_element_position_y(ui_element: UIElement, window: &Arc<Window>) -> f32 {
-    //     let scale = 1.0;
-    //     // let resolution = window.inner_size().height as f32 / window.inner_size().width as f32;
-    //     // let height = scale * resolution;
-    //     let distance_top = Self::convert_scale_y(ui_element.top, window);
-    //     -(-scale + 2.0 * scale * ui_element.ui_coordinate_origin.y + distance_top)
-    // }
 
     // TODO logic probably should be in ui element not in rendering, just calculate there upon window size change. also needed for contains
     pub fn convert_scale_x(value: f32, window: &Arc<Window>) -> f32 {
         let scale = 1.0;
-        // let scale = f32::min(1.0, window.inner_size().width as f32 / 1920.0)
-        //     * f32::min(1.0, window.inner_size().height as f32 / 1080.0);
         let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
-        // let resolution = 16.0 / 9.0;
-        // let resolution = window.inner_size().width as f32 / window.inner_size().height as f32;
         let viewport_width = 2.0 * scale * resolution;
 
         value / window.inner_size().width as f32 * viewport_width
     }
 
-    pub fn convert_clip_space_y(value: f32) -> f32 {
-        let scale = 1.0;
-        let height = scale;
-        height - 2.0 * value * height
-    }
-
     pub fn convert_scale_y(value: f32, window: &Arc<Window>) -> f32 {
-        // let scale = 1.0;
-        // let scale = f32::min(
-        //     1.0,
-        //     (window.inner_size().width as f32 / 1920.0)
-        //         * (window.inner_size().height as f32 / 1080.0),
-        // );
         let viewport_half_height = 1.0;
 
         value / window.inner_size().height as f32 * viewport_half_height * 2.0
     }
-
-    // pub fn convert_scale_y_resolution(value: f32) -> f32 {
-    //     let scale = 1.0;
-    //     let resolution = 16.0 / 9.0;
-    //     let height = scale;
-    //     value * height * 2.0
-    // }
 }

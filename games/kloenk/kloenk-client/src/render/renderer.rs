@@ -370,7 +370,6 @@ impl Renderer {
         Instance {
             position: Vector3 {
                 x: UIState::clip_space_element_position_x(rect, window),
-                // y: UIState::convert_clip_space_y(rect.top()),
                 y: UIState::clip_space_element_position_y(rect, window),
                 z: 0.0,
             },

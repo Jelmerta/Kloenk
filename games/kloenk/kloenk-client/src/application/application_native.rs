@@ -130,8 +130,9 @@ impl ApplicationHandler for Application {
                     log::debug!("Monitor millihertz: {mhz}"); // TODO check monitor refresh rate of 144hz screen with wrong cable
                 }
             }
-            // window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
-            window.set_fullscreen(None);
+            // TODO simple toggleable fullscreen for testing
+            window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
+            // window.set_fullscreen(None);
         }
 
         let mut renderer = pollster::block_on(Renderer::new(window.clone()));
@@ -168,7 +169,7 @@ impl ApplicationHandler for Application {
         audio_system.load_sound(
             "bonk",
             &Sound {
-                name: "bonk".to_owned(),
+                name: "bonk".to_string(),
                 bytes: bonk,
             },
         );
