@@ -44,6 +44,7 @@ pub struct TextWriter {
     viewport: Viewport,
     atlas: TextAtlas,
     queue: Vec<TextContext>,
+    is_ready: bool,
 }
 
 impl TextWriter {
@@ -65,16 +66,16 @@ impl TextWriter {
             viewport,
             atlas,
             queue: Vec::new(),
+            is_ready: false,
         }
     }
 
     pub fn load_font_to_memory(&mut self, font: FontAsset) {
         self.font_system.db_mut().load_font_data(font.data);
+        self.is_ready = true;
     }
 
     pub fn reset_for_update(&mut self) {
-        #[cfg(feature = "debug-logging")]
-        log::debug!("cache size {} and {}", self.swash_cache.image_cache.len(), self.swash_cache.outline_command_cache.len());
         self.atlas.trim();
         self.queue.clear();
     }
@@ -86,6 +87,10 @@ impl TextWriter {
         text: &str,
         color: &[f32; 3],
     ) {
+        if !self.is_ready {
+            return;
+        }
+
         ui_element.update(&window.inner_size());
         // TODO assertion `left != right` failed: line height cannot be 0
         //   left: 0.0
@@ -117,6 +122,10 @@ impl TextWriter {
 
     // TODO only call when UI changes?
     pub fn prepare(&mut self, device: &Device, queue: &Queue, window: &Arc<Window>) {
+        if !self.is_ready {
+            return;
+        }
+
         // TODO only update viewport on resize?
         self.viewport.update(
             queue,
@@ -151,6 +160,9 @@ impl TextWriter {
     // TODO prepare earlier? also if this helps note that this is an expensive method to call apparently
     // glyphon even uses its own pipeline, probably own shader. sounds pretty inefficient. maybe it's fine since we can reuse render pass at least?
     pub fn write_text_buffer(&mut self, render_pass: &mut RenderPass) {
+        if !self.is_ready {
+            return;
+        }
         self.text_renderer
             .render(&self.atlas, &self.viewport, render_pass)
             .unwrap();
