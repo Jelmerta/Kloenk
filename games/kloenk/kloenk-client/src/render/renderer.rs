@@ -1,4 +1,4 @@
-use crate::application::ImageAsset;
+use crate::application::{FontAsset, ImageAsset};
 use crate::render::camera::Camera;
 use crate::render::camera_manager::CameraManager;
 use crate::render::color_manager::ColorManager;
@@ -500,6 +500,10 @@ impl Renderer {
         self.texture_manager
             .load_material_to_memory(&self.device, &self.queue, asset);
         self.model_manager.added_texture(&asset.name);
+    }
+
+    pub fn load_font_to_memory(&mut self, font: FontAsset) {
+        self.text_writer.load_font_to_memory(font);
     }
 
     // TODO maybe also make sure render does not get called during this period

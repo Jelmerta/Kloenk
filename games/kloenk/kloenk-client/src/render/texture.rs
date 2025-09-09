@@ -9,12 +9,12 @@ pub struct Texture {
     pub sampler: wgpu::Sampler,
 }
 
-// TODO Probably just a specific instance of Texture?
 pub struct Depth {
     pub view: wgpu::TextureView,
 }
 
 impl Texture {
+    // Reference wrapper method, we perform a lot of similar actions: device.create_texture_with_data(queue, desc, order, data);
     pub fn from_image(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -54,8 +54,7 @@ impl Texture {
 
         let bytes_per_row = blocks_wide * bytes_per_block;
 
-        // Wrapper method, we perform a lot of similar actions... Might want to use this instead.
-        // device.create_texture_with_data(queue, desc, order, data);
+
         queue.write_texture(
             wgpu::TexelCopyTextureInfo {
                 texture: &texture,
@@ -89,7 +88,6 @@ impl Texture {
         Ok(Self { view, sampler })
     }
 
-    // Or generally for rgb
     pub fn white_1x1(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Self> {
         let size = Extent3d {
             width: 1,

@@ -19,6 +19,7 @@ use crate::systems::game_system::GameSystem;
 use winit::keyboard::KeyCode;
 
 use crate::application::update_tick_handler_native::UpdateTickHandler;
+use crate::application::FontAsset;
 use crate::render::model_loader::ModelLoader;
 use crate::render::renderer::Renderer;
 use hydrox::{load_binary, AudioSystem, Sound};
@@ -136,6 +137,11 @@ impl ApplicationHandler for Application {
         }
 
         let mut renderer = pollster::block_on(Renderer::new(window.clone()));
+        let font = pollster::block_on(load_binary("PlaywriteNL-Minimal.ttf")).expect("Font asset should exist");
+        renderer.load_font_to_memory(FontAsset {
+            name: "playwrite".to_owned(),
+            data: font,
+        });
         for (_, model) in renderer.model_manager.get_active_models().clone() {
             // TODO maybe first make sure uniqueness before loading
             for primitive in &model.primitives {

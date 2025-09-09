@@ -9,6 +9,12 @@ pub struct ImageAsset {
     pub data: Vec<u8>,
 }
 
+pub struct FontAsset {
+    #[allow(dead_code)]
+    pub name: String,
+    pub data: Vec<u8>,
+}
+
 #[derive(Debug)]
 pub enum ImageEncoding {
     BC1,

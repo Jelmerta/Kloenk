@@ -6,7 +6,6 @@ use winit::window::{Fullscreen, Window};
 pub struct MonitorChangeSystem {}
 
 impl MonitorChangeSystem {
-    // TODO how does this work on web? should i just handle events there? is this code not relevant for web at all?
     pub fn update_monitor(input: &Input, window: &Arc<Window>) {
         if input.m_pressed.is_toggled_on() {
             let monitors: Vec<MonitorHandle> = window.available_monitors().collect();

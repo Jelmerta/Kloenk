@@ -19,8 +19,8 @@ use winit::event_loop::ActiveEventLoop;
 use winit::window::{CustomCursor, Window, WindowId};
 
 use crate::application::update_tick_handler_web::UpdateTickHandler;
-use crate::application::Asset::{Audio, Color, Texture, Vertices};
-use crate::application::{AssetLoader, ImageAsset};
+use crate::application::Asset::{Audio, Color, Font, Texture, Vertices};
+use crate::application::{AssetLoader, FontAsset, ImageAsset};
 use crate::render::model::ColorDefinition;
 use crate::render::model_loader::ModelLoader;
 use crate::render::primitive_vertices_manager::PrimitiveVertices;
@@ -69,6 +69,7 @@ pub enum Asset {
     Color(ColorDefinition),
     Texture(ImageAsset),
     Audio(Sound),
+    Font(FontAsset),
 }
 
 // #[derive(Debug)]
@@ -268,6 +269,14 @@ impl ApplicationHandler<CustomEvent> for Application {
                 engine.renderer.resize(engine.window.inner_size()); // Web inner size request does not seem to lead to resized event, but also does not seem to immediately apply. Arbitrarily hope resize is done and apply resize here...
                 engine.window.request_redraw(); // TODO are these resizes here necessary?
 
+                let event_loop = self.event_loop_proxy.clone();
+                spawn_local(async move {
+                    let font = load_binary("PlaywriteNL-Minimal.ttf").await.expect("Font asset should exist"); // TODO retry?
+                    event_loop.send_event(CustomEvent::AssetLoaded(Asset::Font(FontAsset { name: "playwrite".to_owned(), data: font }))).unwrap_or_else(|_| {
+                        panic!("Failed to send font load event");
+                    });
+                });
+
                 // TODO make a method for loading the models
                 // Getting quickly through setup stage such that renderer can start rendering first frame
                 // TODO wondering about order loading models/request redraw? below is blocking anyway for until next window draw event? prob does not matter much
@@ -356,7 +365,11 @@ impl ApplicationHandler<CustomEvent> for Application {
                             engine.renderer.load_material_to_memory(&texture_asset);
                         }
                         Audio(sound) => {
+                            // TODO maybe not clone just move?
                             engine.audio_system.load_sound("bonk", &sound);
+                        }
+                        Font(font) => {
+                            engine.renderer.load_font_to_memory(font);
                         }
                     }
                 } else {

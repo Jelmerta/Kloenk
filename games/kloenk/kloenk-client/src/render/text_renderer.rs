@@ -1,10 +1,10 @@
+use crate::application::FontAsset;
 use crate::state::ui_state;
 use crate::state::ui_state::UIElement;
 use glyphon::{
     fontdb, Attrs, Buffer, Cache, Color, Family, FontSystem, Metrics, Resolution, Shaping,
     SwashCache, TextArea, TextAtlas, TextBounds, TextRenderer, Viewport,
 };
-use hydrox::load_binary;
 use std::sync::Arc;
 use wgpu::{Device, Queue, RenderPass, SurfaceConfiguration};
 use winit::window::Window;
@@ -19,7 +19,6 @@ struct TextContext {
 
 impl TextContext {
     fn to_text_area(&self) -> TextArea<'_> {
-        // Hm... Kind of implicit conversion logic hidden deep...
         let text_color = [
             (self.color[0].clamp(0.0, 1.0) * 255.0).round() as u8,
             (self.color[1].clamp(0.0, 1.0) * 255.0).round() as u8,
@@ -41,7 +40,7 @@ impl TextContext {
 pub struct TextWriter {
     text_renderer: TextRenderer,
     pub font_system: FontSystem,
-    swash_cache: SwashCache, // TODO when to empty? does this grow?
+    swash_cache: SwashCache, // Stays empty. Seems like Glyphon always uses cache.get_image_uncached
     viewport: Viewport,
     atlas: TextAtlas,
     queue: Vec<TextContext>,
@@ -49,11 +48,7 @@ pub struct TextWriter {
 
 impl TextWriter {
     pub async fn new(device: &Device, queue: &Queue, config: &SurfaceConfiguration) -> Self {
-        // TODO load as resource later, not blocking the renderer?
-        let font_data = load_binary("PlaywriteNL-Minimal.ttf").await.unwrap(); // TODO retry?
-
-        let mut fontdb = fontdb::Database::new();
-        fontdb.load_font_data(font_data);
+        let fontdb = fontdb::Database::new();
         let font_system = FontSystem::new_with_locale_and_db("en-US".to_owned(), fontdb);
 
         let swash_cache = SwashCache::new();
@@ -73,7 +68,13 @@ impl TextWriter {
         }
     }
 
+    pub fn load_font_to_memory(&mut self, font: FontAsset) {
+        self.font_system.db_mut().load_font_data(font.data);
+    }
+
     pub fn reset_for_update(&mut self) {
+        #[cfg(feature = "debug-logging")]
+        log::debug!("cache size {} and {}", self.swash_cache.image_cache.len(), self.swash_cache.outline_command_cache.len());
         self.atlas.trim();
         self.queue.clear();
     }
