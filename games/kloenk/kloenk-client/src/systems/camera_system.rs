@@ -22,6 +22,8 @@ impl CameraSystem {
         let camera = game_state
             .get_camera_mut("camera_3d")
             .expect("Camera should exist");
+        #[cfg(feature = "debug-logging")]
+        log::debug!("3d");
         camera.update_view_projection_matrix(window);
         camera.update_inverse_matrix();
     }

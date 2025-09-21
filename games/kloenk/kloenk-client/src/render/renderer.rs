@@ -281,6 +281,7 @@ impl Renderer {
                 .texture_manager
                 .get_bind_group(first_primitive.texture_definition.as_ref());
 
+            // render_pass.set_viewport()
             render_pass.set_bind_group(0, color, &[]);
             render_pass.set_bind_group(1, texture_bind_group, &[]);
             render_pass.set_bind_group(2, self.camera_manager.get_bind_group("camera_3d"), &[]);
